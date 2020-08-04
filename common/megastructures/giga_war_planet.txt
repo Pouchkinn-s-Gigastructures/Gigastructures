@@ -1,0 +1,147 @@
+war_planet_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	portrait = "GFX_megastructure_construction_background"
+	construction_blocks_others = no
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_war_planet }
+
+	build_time = 1800
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 10000
+			influence = 100
+		}
+		upkeep = { energy = 5 }
+	}
+
+	potential = {
+		has_technology = giga_tech_war_planet
+		NOT = { has_global_flag = warplanet_disabled }
+	}
+
+	possible = { custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from } }
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "must_build_around_barren_ship"		OR = { is_planet_class = pc_barren is_planet_class = pc_barren_cold } }
+			custom_tooltip = { fail_text = "must_build_size_25"					planet_size >= 25 }
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	giga_planet_has_megastructure = no }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } colonizeable_planet = no }
+			custom_tooltip = { fail_text = "requires_not_asteroid"				is_asteroid = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+		}
+	}
+
+	ai_weight = {
+		factor = 1
+		modifier = {
+			factor = 1000
+			from = { has_country_flag = pangalactic_defense_league }
+		}
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.2701 } }	# Notification
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+			set_planet_size = 25
+		}
+	}
+}
+
+war_planet_1 = {
+	entity = "construction_platform_entity"
+	portrait = "GFX_megastructure_moon"
+	construction_blocks_others = no
+	upgrade_from = { war_planet_0 }
+
+	ai_weight = { factor = 5 }
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 3500 }
+		upkeep = {
+			energy = 75
+			alloys = 30
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warplanet_disabled } }
+	possible = { from = { has_technology = giga_tech_war_planet } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.2702 } }	# Notification
+		fromfrom.planet = { change_pc = pc_planetship }
+	}
+}
+
+war_planet_2 = {
+	entity = "giga_planetship_thrusters_entity"
+	construction_entity = "giga_planetship_thrusters_entity"
+	portrait = "GFX_megastructure_moon"
+	construction_blocks_others = no
+	upgrade_from = { war_planet_1 }
+
+	ai_weight = { factor = 5 }
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 75000 }
+		upkeep = {
+			energy = 75
+			alloys = 30
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warplanet_disabled } }
+	possible = { from = { has_technology = giga_tech_war_planet } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.2703 } }	# Notification
+	}
+}
+
+war_planet_3 = {
+	entity = "giga_planetship_full_entity"
+	construction_entity = "giga_planetship_gun_entity"
+	portrait = "GFX_megastructure_moon"
+	construction_blocks_others = no
+	upgrade_from = { war_planet_2 }
+
+	ai_weight = { factor = 5 }
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 100000 }
+		upkeep = {
+			energy = 75
+			alloys = 30
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warplanet_disabled } }
+	possible = { from = { has_technology = giga_tech_war_planet } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = {
+			country_event = { id = giga_dialog.2704 }	# Notification
+			giga_planet_craft = yes
+		}
+		last_created_fleet = { set_location = fromfrom.planet }
+		fromfrom.planet = { remove_planet = yes }
+		remove_megastructure = fromfrom
+	}
+}

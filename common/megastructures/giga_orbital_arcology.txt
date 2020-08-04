@@ -1,0 +1,99 @@
+orbital_arcology_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	portrait = "GFX_megastructure_construction_background"
+	construction_blocks_others = no
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_orbital_arcologies }
+
+	build_time = 900
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 1500
+			influence = 75
+		}
+		upkeep = {
+			energy = 5
+			alloys = 5
+		}
+	}
+
+	potential = {
+		has_technology = giga_tech_orbital_arcologies
+		NOT = { has_global_flag = orbital_arcologies_disabled }
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border"					is_inside_border = from }
+		custom_tooltip = { fail_text = "requires_surveyed_system"				giga_system_is_surveyed = yes }
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_surveyed_planet"			is_surveyed = { who = prev.from status = yes } }
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	giga_planet_has_megastructure = no }
+			custom_tooltip = { fail_text = "requires_not_asteroid"				is_asteroid = no }
+			custom_tooltip = { fail_text = "must_build_around_habitable_planet"	is_colony = yes }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+		}
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.901 } }	# Notification
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+		}
+	}
+}
+
+orbital_arcology_1 = {
+	entity = ""
+	construction_entity = "orbital_arcology_21_entity"
+	portrait = "GFX_megastructure_construction_background"
+	construction_blocks_others = no
+	upgrade_from = { orbital_arcology_0 }
+	upgrade_desc = hide
+
+	build_time = 900
+	resources = {
+		category = megastructures
+		cost = { trigger = { planet = { planet_size < 13 } }					alloys = 4000 }
+		cost = { trigger = { planet = { planet_size >= 13 planet_size <= 21 } }	alloys = 5000 }
+		cost = { trigger = { planet = { planet_size > 21 } }					alloys = 6000 }
+	}
+
+	potential = { NOT = { has_global_flag = orbital_arcologies_disabled } }
+	possible = { from = { has_technology = giga_tech_orbital_arcologies } }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.902 } }	# Notification
+		fromfrom.planet = {
+			if = {
+				limit = { planet_size < 13 }
+				add_modifier = { modifier = "orbital_arcology_modifier_1" days = -1 }
+				create_ambient_object = { type = "giga_size_13_ring" use_3d_location = yes location = this }
+			}
+			else_if = {
+				limit = { planet_size >= 13 planet_size <= 21 }
+				add_modifier = { modifier = "orbital_arcology_modifier_2" days = -1 }
+				create_ambient_object = { type = "giga_size_21_ring" use_3d_location = yes location = this }
+			}
+			else_if = {
+				limit = { planet_size > 21 }
+				add_modifier = { modifier = "orbital_arcology_modifier_3" days = -1 }
+				create_ambient_object = { type = "giga_size_25_ring" use_3d_location = yes location = this }
+			}
+		}
+		remove_megastructure = fromfrom
+	}
+}

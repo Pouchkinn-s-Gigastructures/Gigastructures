@@ -1,0 +1,140 @@
+terraform_toxic_0 = {
+	entity = "giga_consite_5_5_entity"
+	construction_entity = "giga_consite_5_5_entity"
+	portrait = "GFX_megastructure_construction_background"
+	construction_blocks_others = no
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_terraform_toxic }
+
+	build_time = @p0_build_time_terraform_toxic
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = @p0_cost_01_terraform_toxic
+			influence = @p0_cost_02_terraform_toxic
+		}
+		upkeep = { energy = @p0_upkeep_01_terraform_toxic }
+	}
+
+	potential = {
+		has_technology = giga_tech_terraform_toxic
+		NOT = { has_global_flag = terraform_toxic_disabled }
+	}
+
+	possible = { custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from } }
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "must_build_around_toxic"			is_planet_class = pc_toxic }
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	giga_planet_has_megastructure = no }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } colonizeable_planet = no }
+			custom_tooltip = { fail_text = "requires_not_asteroid"				is_asteroid = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+		}
+	}
+
+	ai_weight = {
+		factor = 5
+		modifier = { factor = 5 fromfrom.planet = { planet_size > 20 } }
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.3901 } }	# Notification
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+		}
+	}
+}
+
+terraform_toxic_1 = {
+	entity = "atmo_purifier_just_rings_entity"
+	construction_entity = "atmo_purifier_just_rings_entity"
+	portrait = "GFX_megastructure_toxic_world"
+	construction_blocks_others = no
+	upgrade_from = { terraform_toxic_0 }
+
+	ai_weight = { factor = 5 }
+	build_time = @p1_build_time_terraform_toxic
+	resources = {
+		category = megastructures
+		cost = { alloys = @p1_cost_01_terraform_toxic }
+		upkeep = {
+			alloys = @p1_upkeep_01_terraform_toxic
+			energy = @p1_upkeep_02_terraform_toxic
+		}
+	}
+
+	potential = { NOT = { has_global_flag = terraform_toxic_disabled } }
+	possible = { from = { has_technology = giga_tech_terraform_toxic } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.3902 } }	# Notification
+	}
+}
+
+terraform_toxic_2 = {
+	entity = "atmo_purifier_rings_entity"
+	construction_entity = "atmo_purifier_just_poles_entity"
+	portrait = "GFX_megastructure_toxic_world"
+	construction_blocks_others = no
+	upgrade_from = { terraform_toxic_1 }
+
+	ai_weight = { factor = 5 }
+	build_time = @p2_build_time_terraform_toxic
+	resources = {
+		category = megastructures
+		cost = { alloys = @p2_cost_01_terraform_toxic }
+		upkeep = {
+			alloys = @p2_upkeep_01_terraform_toxic
+			energy = @p2_upkeep_02_terraform_toxic
+		}
+	}
+
+	potential = { NOT = { has_global_flag = terraform_toxic_disabled } }
+	possible = { from = { has_technology = giga_tech_terraform_toxic } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.3903 } }	# Notification
+	}
+}
+
+terraform_toxic_3 = {
+	entity = ""
+	portrait = "GFX_megastructure_toxic_world"
+	construction_blocks_others = no
+	upgrade_from = { terraform_toxic_2 }
+
+	ai_weight = { factor = 5 }
+	build_time = @p3_build_time_terraform_toxic
+	resources = {
+		category = megastructures
+		cost = { energy = @p3_cost_01_terraform_toxic }
+	}
+
+	potential = { NOT = { has_global_flag = terraform_toxic_disabled } }
+	possible = { from = { has_technology = giga_tech_terraform_toxic } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.3904 } }	# Notification
+		fromfrom.planet = {
+			remove_planet_flag = megastructure
+			remove_planet_flag = has_megastructure
+		    change_pc = pc_ll_foggy
+			add_modifier = { modifier = lifeless_foggy }
+			add_modifier = { modifier = lifeless_foggy_gases days = 1800 }
+			while = { count = 10 giga_create_planet_deposits = yes }
+		}
+		remove_megastructure = fromfrom
+	}
+}

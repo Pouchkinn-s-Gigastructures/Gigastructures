@@ -1,0 +1,158 @@
+eq_shipyard_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	construction_blocks_others = no
+	prerequisites = { giga_tech_equatorial_shipyard }
+
+	build_time = 1800
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 2500
+			influence = 200
+		}
+	}
+
+	potential = {
+		has_technology = giga_tech_equatorial_shipyard
+		NOT = { has_global_flag = shipyard_disabled }
+	}
+	possible = { custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from } }
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	giga_planet_has_megastructure = no }
+			custom_tooltip = { fail_text = "requires_smaller_than_25"			planet_size <= 25 }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } colonizeable_planet = no }
+			custom_tooltip = { fail_text = "must_build_around_molten"			is_planet_class = pc_molten }
+			custom_tooltip = { fail_text = "requires_not_minor_planetary_body"	is_asteroid = no is_moon = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+		}
+	}
+
+	ai_weight = {
+		weight = 100	# Default = 100
+		modifier = {
+			factor = 10
+			from = {
+				OR = {
+					has_ethic = ethic_militarist
+					has_ethic = ethic_fanatic_militarist
+					has_civic = civic_machine_terminator
+					has_civic = civic_fanatic_purifiers
+					has_civic = civic_hive_devouring_swarm
+					is_at_war = yes
+				}
+			}
+		}
+		modifier = { factor = 0.10	from = { has_monthly_income = { resource = alloys value < 50 } } }
+		modifier = { factor = 0.00	from = { count_owned_megastructure = { limit = { is_megastructure_type = eq_shipyard_2 } count > 2 } } }
+		modifier = { factor = 0.15	from = { count_owned_megastructure = { limit = { is_megastructure_type = eq_shipyard_2 } count = 2 } } }
+		modifier = { factor = 0.25	from = { count_owned_megastructure = { limit = { is_megastructure_type = eq_shipyard_2 } count = 1 } } }
+		modifier = {
+			factor = 0
+			from = {
+				OR = {
+					has_megastructure = eq_shipyard_0
+					has_megastructure = eq_shipyard_1
+				}
+			}
+		}
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.3601 } }	# Notification
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+		}
+	}
+}
+
+eq_shipyard_1 = {
+	entity = "fixed_planetary_ring_inner_scaffold_two_entity"
+	construction_entity = "fixed_planetary_ring_inner_scaffold_two_entity"
+	portrait = "GFX_megastructure_molten_world"
+	construction_blocks_others = no
+	upgrade_from = { eq_shipyard_0 }
+
+	build_time = 1800
+	resources = {
+		category = megastructures
+		cost = { alloys = 5000 }
+		upkeep = { energy = 10 }
+	}
+
+	potential = { NOT = { has_global_flag = shipyard_disabled } }
+	possible = { from = { has_technology = giga_tech_equatorial_shipyard } }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		fromfrom.planet = { every_moon = { remove_planet = yes } }
+	}
+}
+
+eq_shipyard_2 = {
+	entity = "big_planetary_ring_game_01_entity"
+	construction_entity = "planetary_ring_game_construction_entity"
+	portrait = "GFX_megastructure_molten_world"
+	construction_blocks_others = no
+	upgrade_from = { eq_shipyard_1 }
+
+	build_time = 1800
+	resources = {
+		category = megastructures
+		cost = { alloys = 5000 }
+		upkeep = { energy = 50 }
+	}
+
+	potential = { NOT = { has_global_flag = shipyard_disabled } }
+	possible = { from = { has_technology = giga_tech_equatorial_shipyard } }
+
+	ship_modifier = {		ship_starting_experience_add = 50 }
+	country_modifier = {	starbase_shipyard_build_speed_mult = 0.05 }
+	station_modifier = {
+		starbase_shipyard_capacity_add = 8
+		starbase_shipyard_build_speed_mult = 0.5
+		starbase_shipyard_build_cost_mult = -0.1
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = {
+			country_event = { id = giga_dialog.3602 }				# Notification
+			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
+		}
+		spawn_planet = {
+			class = "pc_equatorial_shipyard"
+			location = fromfrom.planet
+			orbit_location = yes
+			orbit_angle_offset = 0
+			orbit_distance_offset = 0
+			size = 12
+			has_ring = no
+
+			init_effect = {
+				set_name = "Processing Ring"
+				set_planet_entity = { entity = "planetary_ring_game_01_entity" }
+				surveyed = { set_surveyed = yes surveyor = from }
+				clear_blockers = yes
+				set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+				set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+				set_planet_flag = colony_event			# Vanilla uses to prevent unwanted events on planets
+				set_planet_flag = giga_equatorial_shipyard
+				add_modifier = { modifier = ringyard_alloys days = -1 }
+			}
+		}
+	}
+}

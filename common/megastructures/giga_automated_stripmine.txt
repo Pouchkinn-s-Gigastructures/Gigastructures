@@ -1,0 +1,136 @@
+automated_stripmine_0 = {
+	entity = "giga_consite_5_5_entity"
+	construction_entity = "giga_consite_5_5_entity"
+	portrait = "GFX_megastructure_construction_background"
+	construction_blocks_others = no
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_automated_stripmine_2 }
+
+	build_time = @p0_build_time_automated_stripmine
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = @p0_cost_01_automated_stripmine
+			influence = @p0_cost_02_automated_stripmine
+		}
+		upkeep = { energy = @p0_upkeep_01_automated_stripmine }
+	}
+
+	potential = {
+		has_technology = giga_tech_automated_stripmine_2
+		NOT = { has_global_flag = drill_disabled }
+	}
+
+	possible = { custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from } }
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	giga_planet_has_megastructure = no }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } colonizeable_planet = no }
+			custom_tooltip = { fail_text = "already_stripmined"					NOR = { has_planet_flag = stripminedplanet is_planet_class = pc_core_mined } }
+			custom_tooltip = { fail_text = "requires_not_minor_planetary_body"	is_asteroid = no is_moon = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+			custom_tooltip = {
+				fail_text = "cant_build_around_gas"
+				NOR = {
+					is_planet_class = pc_shrouded
+					is_planet_class = pc_gas_giant
+					is_planet_class = pc_gigabrown_dwarf
+				}
+			}
+		}
+	}
+
+	ai_weight = {
+		weight = 100	# Default = 100
+		modifier = { factor = 2		fromfrom.planet = { planet_size > 25 } }
+		modifier = { factor = 1.5	fromfrom.planet = { planet_size > 20 } }
+		modifier = { factor = 1.5	fromfrom.planet = { planet_size > 15 } }
+		modifier = { factor = 0.5	fromfrom.planet = { planet_size < 10 } }
+		modifier = { factor = 3		from = { has_monthly_income = { resource = minerals value < 200 } } }
+		modifier = { factor = 0.1	from = { has_monthly_income = { resource = minerals value >= 200 } } }
+		modifier = { factor = 0.00	from = { count_owned_megastructure = { limit = { is_megastructure_type = automated_stripmine_2 } count >= 7 } } }
+		modifier = { factor = 0.05	from = { count_owned_megastructure = { limit = { is_megastructure_type = automated_stripmine_2 } count >= 5 } } }
+		modifier = { factor = 0.10	from = { count_owned_megastructure = { limit = { is_megastructure_type = automated_stripmine_2 } count = 4 } } }
+		modifier = { factor = 0.15	from = { count_owned_megastructure = { limit = { is_megastructure_type = automated_stripmine_2 } count = 3 } } }
+		modifier = { factor = 0.20	from = { count_owned_megastructure = { limit = { is_megastructure_type = automated_stripmine_2 } count = 2 } } }
+		modifier = { factor = 0.25	from = { count_owned_megastructure = { limit = { is_megastructure_type = automated_stripmine_2 } count = 1 } } }
+		modifier = {
+			factor = 0
+			from = {
+				OR = {
+					has_megastructure = automated_stripmine_0
+					has_megastructure = automated_stripmine_1
+				}
+			}
+		}
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.3301 } }	# Notification
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+		}
+	}
+}
+
+automated_stripmine_1 = {
+	entity = "automated_stripmine_1_part_big_no_beam_entity"
+	construction_entity = "automated_stripmine_1_part_big_no_beam_entity"
+	portrait = "GFX_megastructure_barren"
+	construction_blocks_others = no
+	upgrade_from = { automated_stripmine_0 }
+
+	build_time = @p1_build_time_automated_stripmine
+	resources = {
+		category = megastructures
+		cost = { alloys = @p1_cost_01_automated_stripmine }
+		upkeep = {
+			alloys = @p1_upkeep_01_automated_stripmine
+			energy = @p1_upkeep_02_automated_stripmine
+		}
+	}
+
+	potential = { NOT = { has_global_flag = drill_disabled } }
+	possible = { from = { has_technology = giga_tech_automated_stripmine_2 } }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.3302 } }	# Notification
+	}
+}
+
+automated_stripmine_2 = {
+	entity = "automated_stripmine_1_part_big_entity"
+	portrait = "GFX_megastructure_barren"
+	construction_blocks_others = no
+	upgrade_from = { automated_stripmine_1 }
+
+	build_time = @p2_build_time_automated_stripmine
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = @p2_cost_01_automated_stripmine
+			energy = @p2_cost_02_automated_stripmine
+		}
+		upkeep = { energy = @p2_upkeep_01_automated_stripmine }
+		produces = { minerals = @p2_produces_01_automated_stripmine }
+	}
+
+	potential = { NOT = { has_global_flag = drill_disabled } }
+	possible = { from = { has_technology = giga_tech_automated_stripmine_2 } }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.3303 } }	# Notification
+	}
+}

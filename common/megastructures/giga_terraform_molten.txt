@@ -1,0 +1,144 @@
+terraform_molten_0 = {
+	entity = "giga_consite_5_5_entity"
+	construction_entity = "giga_consite_5_5_entity"
+	portrait = "GFX_megastructure_construction_background"
+	construction_blocks_others = no
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_terraform_molten }
+
+	build_time = @p0_build_time_terraform_molten
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = @p0_cost_01_terraform_molten
+			influence = @p0_cost_02_terraform_molten
+		}
+		upkeep = { energy = @p0_upkeep_01_terraform_molten }
+	}
+
+	potential = {
+		has_technology = giga_tech_terraform_molten
+		NOT = { has_global_flag = geothermal_disabled }
+	}
+
+	possible = { custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from } }
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "must_build_around_molten"			is_planet_class = pc_molten }
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	giga_planet_has_megastructure = no }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } colonizeable_planet = no }
+			custom_tooltip = { fail_text = "requires_not_asteroid"				is_asteroid = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+		}
+	}
+
+	ai_weight = {
+		factor = 5
+		modifier = { factor = 5 fromfrom.planet = { planet_size > 20 } }
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.4001 } }	# Notification
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+		}
+	}
+}
+
+terraform_molten_1 = {
+	entity = "geothermal_stabilizer_1_entity"
+	construction_entity = "geothermal_stabilizer_1_entity"
+	portrait = "GFX_megastructure_molten_world"
+	construction_blocks_others = no
+	upgrade_from = { terraform_molten_0 }
+
+	ai_weight = { factor = 5 }
+	build_time = @p1_build_time_terraform_molten
+	resources = {
+		category = megastructures
+		cost = { alloys = @p1_cost_01_terraform_molten }
+		upkeep = {
+			alloys = @p1_upkeep_01_terraform_molten
+			energy = @p1_upkeep_02_terraform_molten
+		}
+	}
+
+	potential = { NOT = { has_global_flag = geothermal_disabled } }
+	possible = { from = { has_technology = giga_tech_terraform_molten } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.4002 } }	# Notification
+	}
+}
+
+terraform_molten_2 = {
+	entity = "geothermal_stabilizer_2_entity"
+	construction_entity = "geothermal_stabilizer_2_construction_entity"
+	portrait = "GFX_megastructure_molten_world"
+	construction_blocks_others = no
+	upgrade_from = { terraform_molten_1 }
+
+	ai_weight = { factor = 5 }
+	build_time = @p2_build_time_terraform_molten
+	resources = {
+		category = megastructures
+		cost = { alloys = @p2_cost_01_terraform_molten }
+		upkeep = {
+			alloys = @p2_upkeep_01_terraform_molten
+			energy = @p2_upkeep_02_terraform_molten
+		}
+	}
+
+	potential = { NOT = { has_global_flag = geothermal_disabled } }
+	possible = { from = { has_technology = giga_tech_terraform_molten } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.4003 } }	# Notification
+	}
+}
+
+terraform_molten_3 = {
+	entity = ""
+	construction_entity = "geothermal_stabilizer_3_entity"
+	portrait = "GFX_megastructure_molten_world"
+	construction_blocks_others = no
+	upgrade_from = { terraform_molten_2 }
+
+	ai_weight = { factor = 5 }
+	build_time = @p3_build_time_terraform_molten
+	resources = {
+		category = megastructures
+		cost = { energy = @p3_cost_01_terraform_molten }
+	}
+
+	potential = { NOT = { has_global_flag = geothermal_disabled } }
+	possible = { from = { has_technology = giga_tech_terraform_molten } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = {
+			country_event = { id = giga_dialog.4004 }				# Notification
+			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
+		}
+		fromfrom.planet = {
+			remove_planet_flag = megastructure
+			remove_planet_flag = has_megastructure
+		    change_pc = pc_ll_torrid
+			add_modifier = { modifier = lifeless_torrid }
+			add_modifier = { modifier = lifeless_torrid_tectonics days = 1800 }
+			while = { count = 10 giga_create_planet_deposits = yes }
+		}
+		remove_megastructure = fromfrom
+	}
+}

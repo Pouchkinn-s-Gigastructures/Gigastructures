@@ -1,0 +1,120 @@
+lunar_disco_ball_0 = {
+	entity = "giga_consite_5_5_entity"
+	construction_entity = "giga_consite_5_5_entity"
+	portrait = "GFX_megastructure_construction_background"
+	construction_blocks_others = no
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_disco_moon }
+
+	build_time = 1800
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 2500
+			influence = 75
+		}
+		upkeep = {
+			energy = 5
+		}
+	}
+
+	potential = {
+		has_technology = giga_tech_disco_moon
+		NOT = { has_global_flag = disco_moon_disabled }
+	}
+
+	possible = { custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from } }
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "must_build_around_moon"				is_moon = yes }
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	giga_planet_has_megastructure = no }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } colonizeable_planet = no }
+			custom_tooltip = { fail_text = "requires_not_asteroid"				is_asteroid = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+		}
+	}
+
+	ai_weight = { factor = 0 }
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.201 } }	# Notification
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+		}
+	}
+}
+
+lunar_disco_ball_1 = {
+	entity = ""
+	portrait = "GFX_megastructure_construction_background"
+	construction_blocks_others = no
+	upgrade_from = { lunar_disco_ball_0 }
+
+	build_time = 2500
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 2500
+			energy = 5000
+		}
+		upkeep = {
+			energy = 10
+			alloys = 10
+		}
+	}
+
+	potential = { NOT = { has_global_flag = disco_moon_disabled } }
+	possible = { from = { has_technology = giga_tech_disco_moon } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.202 } }	# Notification
+	}
+}
+
+lunar_disco_ball_2 = {
+	entity = ""
+	portrait = "GFX_megastructure_disco_moon"
+	construction_blocks_others = no
+	upgrade_from = { lunar_disco_ball_1 }
+
+	build_time = 2500
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 2000
+			rare_crystals = 1500
+			energy = 10000
+		}
+	}
+
+	potential = { NOT = { has_global_flag = disco_moon_disabled } }
+	possible = { from = { has_technology = giga_tech_disco_moon } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.203 } }	# Notification
+		fromfrom.planet = {
+			change_pc = pc_disco_moon
+			set_planet_entity = { entity = "giga_disco_moon" graphical_culture = fromfrom }
+			solar_system = {
+				random_system_planet = {
+					limit = { any_moon = { is_same_value = prevprevprev } }
+					add_modifier = { modifier = "disco_moon_modifier" days = -1 }
+					every_moon = {
+						limit = { NOT = { is_same_value = prevprevprev } }
+						add_modifier = { modifier = "disco_moon_modifier" days = -1 }
+					}
+				}
+			}
+		}
+		remove_megastructure = fromfrom
+	}
+}

@@ -1,0 +1,363 @@
+war_system_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	portrait = "GFX_megastructure_construction_background"
+	construction_blocks_others = no
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_war_system_1 }
+
+	ai_weight = { factor = 0 }
+	build_time = 1800
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 10000
+			influence = 200
+		}
+		upkeep = { energy = 5 }
+	}
+
+	potential = {
+		has_technology = giga_tech_war_system_1
+		has_ascension_perk = ap_systemcraft
+		NOT = { has_global_flag = systemcraft_disabled }
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_no_habitable_planets"		NOT = { any_system_planet = { is_colony = yes } } }
+		custom_tooltip = { fail_text = "requires_inside_border"				is_inside_border = from }
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "must_build_around_star"			is_star = yes }
+		}
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.2802 } }	# Notification
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+		}
+	}
+}
+
+war_system_1 = {
+	entity = "systemcraft_sun_container_entity"
+	construction_entity = "systemcraft_sun_container_entity"
+	portrait = "GFX_megastructure_moon"
+	construction_blocks_others = no
+	upgrade_from = { war_system_0 }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 100000 }
+		upkeep = {
+			energy = 100
+			alloys = 50
+		}
+	}
+
+	potential = { NOT = { has_global_flag = systemcraft_disabled } }
+	possible = {
+		from = {
+			has_technology = giga_tech_war_system_1
+			has_technology = giga_tech_war_system_2
+			has_ascension_perk = ap_systemcraft
+		}
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		every_system_planet = { limit = { is_star = no } remove_planet = yes }
+		set_asteroid_belt = { radius = 0 }
+		from = { country_event = { id = giga_dialog.2803 } }	# Notification
+	}
+}
+
+war_system_2 = {
+	entity = "systemcraft_thrusters_entity"
+	construction_entity = "systemcraft_thrusters_construction_entity"
+	portrait = "GFX_megastructure_moon"
+	construction_blocks_others = no
+	upgrade_from = { war_system_1 }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 100000 }
+		upkeep = {
+			energy = 250
+			alloys = 100
+		}
+	}
+
+	potential = { NOT = { has_global_flag = systemcraft_disabled } }
+	possible = {
+		from = {
+			has_technology = giga_tech_war_system_1
+			has_technology = giga_tech_war_system_2
+			has_technology = giga_tech_war_system_3
+			has_ascension_perk = ap_systemcraft
+		}
+		custom_tooltip = {
+			fail_text = "requires_behemoth_planetcraft_1_moon_2"
+			count_system_ships = { limit = { is_ship_size = giga_planet_behemoth }	count >= 1 }
+			count_system_ships = { limit = { is_ship_size = giga_massive_planet }	count >= 2 }
+		}
+	}
+
+	on_build_start = {
+		random_fleet_in_system = {
+			limit = {
+				any_owned_ship = { is_ship_size = giga_planet_behemoth }
+				exists = owner
+				owner = { is_same_value = root.from }
+			}
+			random_owned_ship = {
+				limit = { is_ship_size = giga_planet_behemoth }
+				delete_ship = this
+			}
+		}
+		while = {
+			count = 2
+			random_fleet_in_system = {
+				limit = {
+					any_owned_ship = { is_ship_size = giga_massive_planet }
+					exists = owner
+					owner = { is_same_value = root.from }
+				}
+				random_owned_ship = {
+					limit = { is_ship_size = giga_massive_planet }
+					delete_ship = this
+				}
+			}
+		}
+	}
+	on_build_complete = {
+		from = { country_event = { id = giga_dialog.2804 } }	# Notification
+	}
+}
+
+war_system_3 = {
+	entity = "systemcraft_sides_entity"
+	construction_entity = "systemcraft_sides_construction_entity"
+	portrait = "GFX_megastructure_moon"
+	construction_blocks_others = no
+	upgrade_from = { war_system_2 }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 100000 }
+		upkeep = {
+			energy = 500
+			alloys = 150
+		}
+	}
+
+	potential = { NOT = { has_global_flag = systemcraft_disabled } }
+	possible = {
+		from = {
+			has_technology = giga_tech_war_system_1
+			has_technology = giga_tech_war_system_2
+			has_technology = giga_tech_war_system_3
+			has_technology = giga_tech_war_system_4
+			has_ascension_perk = ap_systemcraft
+		}
+		custom_tooltip = {
+			fail_text = "requires_moon_2"
+			count_system_ships = { limit = { is_ship_size = giga_massive_planet } count >= 2 }
+		}
+	}
+
+	on_build_start = {
+		while = {
+			count = 2
+			random_fleet_in_system = {
+				limit = {
+					any_owned_ship = { is_ship_size = giga_massive_planet }
+					exists = owner
+					owner = { is_same_value = root.from }
+				}
+				random_owned_ship = {
+					limit = { is_ship_size = giga_massive_planet }
+					delete_ship = this
+				}
+			}
+		}
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.2805 } }	# Notification
+	}
+}
+
+war_system_4 = {
+	entity = "systemcraft_front_entity"
+	construction_entity = "systemcraft_front_construction_entity"
+	portrait = "GFX_megastructure_moon"
+	construction_blocks_others = no
+	upgrade_from = { war_system_3 }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 100000 }
+		upkeep = {
+			energy = 750
+			alloys = 500
+		}
+	}
+
+	potential = { NOT = { has_global_flag = systemcraft_disabled } }
+	possible = {
+		from = {
+			has_technology = giga_tech_war_system_1
+			has_technology = giga_tech_war_system_2
+			has_technology = giga_tech_war_system_3
+			has_technology = giga_tech_war_system_4
+			has_technology = giga_tech_war_system_5
+			has_ascension_perk = ap_systemcraft
+		}
+		custom_tooltip = {
+			fail_text = "requires_behemoth_planetcraft_2"
+			count_system_ships = { limit = { is_ship_size = giga_planet_behemoth } count >= 2 }
+		}
+	}
+
+	on_build_start = {
+		while = {
+			count = 2
+			random_fleet_in_system = {
+				limit = {
+					any_owned_ship = { is_ship_size = giga_planet_behemoth }
+					exists = owner
+					owner = { is_same_value = root.from }
+				}
+				random_owned_ship = {
+					limit = { is_ship_size = giga_planet_behemoth }
+					delete_ship = this
+				}
+			}
+		}
+	}
+	on_build_complete = {
+		from = { country_event = { id = giga_dialog.2806 } }	# Notification
+	}
+}
+
+war_system_5 = {
+	entity = "systemcraft_completed_entity"
+	construction_entity = "systemcraft_completed_construction_entity"
+	portrait = "GFX_megastructure_moon"
+	construction_blocks_others = no
+	upgrade_from = { war_system_4 }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 100000 }
+		upkeep = {
+			energy = 750
+			alloys = 500
+		}
+	}
+
+	potential = { NOT = { has_global_flag = systemcraft_disabled } }
+	possible = {
+		from = {
+			has_technology = giga_tech_war_system_1
+			has_technology = giga_tech_war_system_2
+			has_technology = giga_tech_war_system_3
+			has_technology = giga_tech_war_system_4
+			has_technology = giga_tech_war_system_5
+			has_ascension_perk = ap_systemcraft
+		}
+		custom_tooltip = { fail_text = "requires_systemcraft_crew"		from = { has_country_flag = systemcraft_crew_required } }
+		custom_tooltip = {
+			fail_text = "requires_behemoth_planetcraft_1_moon_1"
+			count_system_ships = { limit = { is_ship_size = giga_planet_behemoth }	count >= 1 }
+			count_system_ships = { limit = { is_ship_size = giga_massive_planet }	count >= 1 }
+		}
+	}
+
+	on_build_start = {
+		from = { remove_country_flag = systemcraft_crew_required }
+
+		random_fleet_in_system = {
+			limit = {
+				any_owned_ship = { is_ship_size = giga_massive_planet }
+				exists = owner
+				owner = { is_same_value = root.from }
+			}
+			random_owned_ship = {
+				limit = { is_ship_size = giga_massive_planet }
+				delete_ship = this
+			}
+		}
+
+		random_fleet_in_system = {
+			limit = {
+				any_owned_ship = { is_ship_size = giga_planet_behemoth }
+				exists = owner
+				owner = { is_same_value = root.from }
+			}
+			random_owned_ship = {
+				limit = { is_ship_size = giga_planet_behemoth }
+				delete_ship = this
+			}
+		}
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = {
+			country_event = { id = giga_dialog.2807 }	# Notification
+			giga_system_craft = yes
+		}
+		last_created_fleet = { set_location = star }
+
+		if = {
+			limit = {
+				from = { is_at_war = yes }
+				NOT = { has_global_flag = war_in_heaven_ongoing }
+			}
+			random_list = {
+				30 = {}
+				70 = {
+					random_country = {
+						limit = {
+							relative_power = { who = root.from category = fleet value <= equivalent }
+							is_at_war_with = root.from
+							is_ai = yes
+							NOR = {
+								has_civic = civic_machine_terminator
+								has_civic = civic_hive_devouring_swarm
+								has_civic = civic_fanatic_purifiers
+							}
+							OR = {
+								is_country_type = fallen_empire
+								is_country_type = awakened_fallen_empire
+								is_country_type = default
+							}
+						}
+						save_event_target_as = systemcraft_surrender_empire
+					}
+					from = { country_event = { id = giga_dialog.2809 days = 1 } }		# Country surrenders
+				}
+			}
+		}
+
+		remove_megastructure = fromfrom
+	}
+}

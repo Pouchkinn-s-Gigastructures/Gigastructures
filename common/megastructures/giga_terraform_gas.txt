@@ -1,0 +1,146 @@
+macro_stabilizer_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	portrait = "GFX_megastructure_construction_background"
+	construction_blocks_others = no
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_terraform_gas }
+
+	build_time = 1800
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 5000
+			influence = 100
+		}
+		upkeep = { energy = 5 }
+	}
+
+	potential = {
+		has_technology = giga_tech_terraform_gas
+		NOT = { has_global_flag = terraform_gasgiant_disabled }
+	}
+
+	possible = { custom_tooltip = { fail_text = "requires_inside_border" is_inside_border = from } }
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "must_build_around_gas"				is_planet_class = pc_gas_giant }
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	giga_planet_has_megastructure = no }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } colonizeable_planet = no }
+			custom_tooltip = { fail_text = "requires_not_minor_planetary_body"	is_asteroid = no is_moon = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+		}
+	}
+
+	ai_weight = {
+		factor = 15
+
+		modifier = {
+			factor = 0.1
+			from = {
+				OR = {
+					has_megastructure = macro_stabilizer_0
+					has_megastructure = macro_stabilizer_1
+					has_megastructure = macro_stabilizer_2
+					has_megastructure = macro_stabilizer_3
+				}
+			}
+		}
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.301 } }	# Notification
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+		}
+	}
+}
+
+macro_stabilizer_1 = {
+	entity = "gas_giant_terraformer_rings_entity"
+	construction_entity = "gas_giant_terraformer_rings_entity"
+	portrait = "GFX_megastructure_gas_giant"
+	construction_blocks_others = no
+	upgrade_from = { macro_stabilizer_0 }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 2500 }
+		upkeep = { energy = 10 }
+	}
+
+	potential = { NOT = { has_global_flag = terraform_gasgiant_disabled } }
+	possible = { from = { has_technology = giga_tech_terraform_gas } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.302 } }	# Notification
+	}
+}
+
+macro_stabilizer_2 = {
+	entity = "gas_giant_terraformer_entity"
+	construction_entity = "gas_giant_terraformer_thingies_entity"
+	portrait = "GFX_megastructure_gas_giant"
+	construction_blocks_others = no
+	upgrade_from = { macro_stabilizer_1 }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 3500 }
+		upkeep = { energy = 10 }
+	}
+
+	potential = { NOT = { has_global_flag = terraform_gasgiant_disabled } }
+	possible = { from = { has_technology = giga_tech_terraform_gas } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.303 } }	# Notification
+	}
+}
+
+macro_stabilizer_3 = {
+	entity = ""
+	portrait = "GFX_megastructure_gas_giant"
+	construction_blocks_others = no
+	upgrade_from = { macro_stabilizer_2 }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { energy = 10000 }
+	}
+
+	potential = { NOT = { has_global_flag = terraform_gasgiant_disabled } }
+	possible = { from = { has_technology = giga_tech_terraform_gas } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = {
+			country_event = { id = giga_dialog.304 }				# Notification
+			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
+		}
+		fromfrom.planet = {
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = megastructure
+		    change_pc = pc_habitable_gas_giant
+			set_planet_flag = colony_event
+			set_planet_flag = giga_hab_gas_giant
+			while = { count = 10 giga_create_planet_deposits = yes }
+			remove_modifier = helioforming_candidate
+		}
+		remove_megastructure = fromfrom
+	}
+}
