@@ -1,0 +1,185 @@
+#Dyson Sphere Site
+dyson_sphere_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	entity_offset = { x = -7 y = -7 }
+	prerequisites = { "tech_dyson_sphere" }
+
+	build_time = 1800
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 5000
+			influence = 300
+		}
+		upkeep = { energy = 5 }
+	}
+
+	possible = {
+		exists = starbase
+		custom_tooltip = { fail_text = "requires_inside_border"						is_inside_border = from }
+		custom_tooltip = { fail_text = "requires_surveyed_system"					giga_system_is_surveyed = yes }
+		custom_tooltip = { fail_text = "requires_no_habitable_planets"				giga_any_hab_planets = no }
+		custom_tooltip = { fail_text = "requires_no_black_hole_neutron_star_pulsar"	giga_is_special_star = no }
+		custom_tooltip = { fail_text = "requires_no_binary_trinary"					giga_is_bitrinary = no }
+		custom_tooltip = { fail_text = "requires_no_existing_megastructure"			has_no_non_gate_megastructure = yes }
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "must_build_around_star"					is_star = yes }
+			custom_tooltip = { fail_text = "requires_no_anomaly"					has_anomaly = no }
+		}
+	}
+
+	ai_weight = {
+		factor = 15
+		modifier = { factor = 0.1	starbase = { NOT = { has_starbase_size >= starbase_starfortress } } }
+		modifier = { factor = 0.1	any_neighbor_system = { exists = owner		NOT = { owner = { is_same_value = from } } } }
+	}
+
+	on_build_complete = {
+		set_star_flag = dyson_sphere_built
+		every_system_planet = { limit = { has_modifier = terraforming_candidate }	remove_modifier = terraforming_candidate }
+
+		from = { set_country_flag = built_dyson_sphere }
+		fromfrom.planet = {
+			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+			if = { limit = { has_orbital_station = yes } orbital_station = { dismantle = yes } }
+		}
+	}
+}
+
+#Dyson Sphere Frame
+dyson_sphere_1 = {
+	entity = "dyson_sphere_phase_01_entity"
+	construction_entity = "dyson_sphere_frame_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { dyson_sphere_0 }
+	prerequisites = { "tech_dyson_sphere" }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 10000 }
+	}
+}
+
+#Partial Dyson Sphere
+dyson_sphere_2 = {
+	entity = "dyson_sphere_phase_02_entity"
+	construction_entity = "dyson_sphere_part_1_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { dyson_sphere_1 }
+	prerequisites = { "tech_dyson_sphere" }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 10000 }
+		produces = { energy = 1000 }
+	}
+}
+
+#Partial Dyson Sphere
+dyson_sphere_3 = {
+	entity = "dyson_sphere_phase_03_entity"
+	construction_entity = "dyson_sphere_part_2_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { dyson_sphere_2 }
+	prerequisites = { "tech_dyson_sphere" }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 10000 }
+		produces = { energy = 2000 }
+	}
+}
+
+#Partial Dyson Sphere
+dyson_sphere_4 = {
+	entity = "dyson_sphere_phase_04_entity"
+	construction_entity = "dyson_sphere_part_3_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { dyson_sphere_3 }
+	prerequisites = { "tech_dyson_sphere" }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 10000 }
+		produces = { energy = 3000 }
+	}
+}
+
+#Dyson Sphere
+dyson_sphere_5 = {
+	entity = "dyson_sphere_phase_05_entity"
+	construction_entity = "dyson_sphere_part_4_entity"
+	portrait = "GFX_megastructure_dyson_sphere_background"
+	upgrade_from = { dyson_sphere_4 }
+	prerequisites = { "tech_dyson_sphere" }
+	show_prereqs = yes
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 10000 }
+		produces = { energy = 4000 }
+	}
+
+	on_build_complete = {
+		from = { set_country_flag = has_built_or_repaired_megastructure }
+
+		every_system_planet = {
+			if = {		limit = { is_planet_class = pc_barren }											change_pc = pc_barren_cold }
+			else_if = {	limit = { OR = { is_planet_class = pc_molten	is_planet_class = pc_toxic } }	change_pc = pc_frozen }
+		}
+	}
+}
+
+# Ruined Dyson Sphere
+dyson_sphere_ruined = {
+	entity = "dyson_sphere_destroyed_entity"
+	portrait = "GFX_megastructure_construction_background"
+	potential = { always = no }
+}
+
+# Restored Dyson Sphere
+dyson_sphere_restored = {
+	entity = "dyson_sphere_phase_05_entity"
+	construction_entity = "dyson_sphere_part_4_entity"
+	portrait = "GFX_megastructure_dyson_sphere_background"
+	upgrade_from = { dyson_sphere_ruined }
+
+	build_time = 7200
+	resources = {
+		category = megastructures
+		cost = { alloys = 20000 }
+		produces = { energy = 4000 }
+	}
+
+	possible = { from = { has_technology = tech_mega_engineering } }
+
+	on_build_start = { fromfrom = { set_graphical_culture = root.from } }
+	on_build_complete = {
+		every_system_planet = {
+			if = {		limit = { has_modifier = terraforming_candidate }								remove_modifier = terraforming_candidate }
+			if = {		limit = { is_planet_class = pc_barren }											change_pc = pc_barren_cold }
+			else_if = {	limit = { OR = { is_planet_class = pc_molten	is_planet_class = pc_toxic } }	change_pc = pc_frozen }
+		}
+		every_system_ambient_object = { destroy_ambient_object = this }
+		from = {
+			set_country_flag = has_built_or_repaired_megastructure
+			country_event = { id = utopia.2011 }
+		}
+		fromfrom.planet = {
+			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+		}
+	}
+}
