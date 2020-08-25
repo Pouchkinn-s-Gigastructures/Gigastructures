@@ -1,11 +1,12 @@
-namespace = nh_systems
+namespace = nhunter_origins
 
 ## ################################################### ##
 ##        ringworld start initialization clean up      ##
 ## ################################################### ##
 
+### Gatekeeper event
 event = {
-	id = nh_systems.5000
+	id = nhunter_origins.1000
 	hide_window = yes
 	is_triggered_only = yes
 
@@ -13,58 +14,63 @@ event = {
 		every_country = {
 			every_owned_planet = {
 				limit = { is_capital = yes }
-				planet_event = { id = nh_systems.5001 days = 0 }
-				planet_event = { id = nh_systems.5002 days = 0 }
+				planet_event = { id = nhunter_origins.1001 days = 0 }
 			}
 		}
 	}
 }
 
+### Homeworld section setup
 planet_event = {
-	id = nh_systems.5001
+	id = nhunter_origins.1001
 	hide_window = yes
 	is_triggered_only = yes
 
 	trigger = {
 		exists = owner
-		owner = { has_origin = origin_great_ring }
+		owner = {
+			OR = {
+				has_origin = origin_great_ring
+				has_origin = origin_interstellar_ring
+				has_origin = origin_penrose_ring
+			}
+		}
 	}
 
 	immediate = {
-
 		### stage removal of star flag used to block New Frontiers from overriding 'planet' classes
-		planet_event = { id = nh_systems.5009 days = 60 } # hopefully nothing bugs out in these 60 days
+		planet_event = { id = nhunter_origins.1009 days = 60 } # hopefully nothing bugs out in these 60 days
 		### remove rings (used to block New Frontier convert-to-tidally-locked code)
 		solar_system = {
 			every_system_planet = {
-				limit = { is_planet_class = pc_ringworld_habitable }
+				limit = {
+					OR = {
+						is_planet_class = pc_ringworld_habitable
+						is_planet_class = pc_interstellar_ringworld_habitable
+						is_planet_class = pc_giga_penrose_habitable
+					}
+				}
 				set_ring = no
 			}
 		}
 
 		# remove normal deposits
 		clear_deposits = yes
-		# fix deposits : add ringworld derposits
+		# set proper deposits
 		add_deposit = d_arcane_generator
 		add_deposit = d_decrepit_tunnels_1
 		add_deposit = d_decrepit_tunnels_2
 		add_deposit = d_decrepit_tunnels_3
-		add_deposit = d_great_ring_excavated_mountain
-		# AlphaMod deposits
+		# extra deposits dependent on origin
 		if = {
-			limit = {
-				has_global_flag = gf_alphamod_activated
-				NOT = { has_deposit = d_fuels_cache }
-			}
-			add_deposit = d_fuels_cache
+			limit = { owner = { has_origin = origin_great_ring } }
+			add_deposit = d_great_ring_excavated_mountain
 		}
 		if = {
-			limit = {
-				has_global_flag = gf_alphamod_activated
-				NOT = { has_deposit = d_biovault }
-			}
-			add_deposit = d_biovault
+			limit = { owner = { has_origin = origin_penrose_ring } }
+			add_deposit = d_arcane_mineral_generator
 		}
+
 		# special deposit blockers for DA/RS machines
 		if = {
 			limit = {
@@ -80,6 +86,22 @@ planet_event = {
 			add_deposit = d_segment_rubble_1
 			add_deposit = d_segment_rubble_2
 			add_deposit = d_segment_rubble_2
+		}
+
+		# AlphaMod deposits
+		if = {
+			limit = {
+				has_global_flag = gf_alphamod_activated
+				NOT = { has_deposit = d_fuels_cache }
+			}
+			add_deposit = d_fuels_cache
+		}
+		if = {
+			limit = {
+				has_global_flag = gf_alphamod_activated
+				NOT = { has_deposit = d_biovault }
+			}
+			add_deposit = d_biovault
 		}
 
 		# fix gamestart districts : remove 'normal' city districts
@@ -163,7 +185,7 @@ planet_event = {
 			add_district = district_rw_generator
 		}
 
-		# setup mining stations
+		# setup mining stations in the system
 		owner = {
 			save_event_target_as = great_ring_owner
 		}
@@ -180,107 +202,9 @@ planet_event = {
 	}
 }
 
+### star system clean-up
 planet_event = {
-	id = nh_systems.5002
-	hide_window = yes
-	is_triggered_only = yes
-
-	trigger = {
-		exists = owner
-		owner = { has_origin = origin_interstellar_ring }
-	}
-
-	immediate = {
-
-		### stage removal of star flag used to block New Frontiers from overriding 'planet' classes
-		planet_event = { id = nh_systems.5009 days = 60 } # hopefully nothing bugs out in these 60 days
-		### remove rings (used to block New Frontier convert-to-tidally-locked code)
-		solar_system = {
-			every_system_planet = {
-				limit = { is_planet_class = pc_interstellar_ringworld_habitable }
-				set_ring = no
-			}
-		}
-
-		# remove normal deposits
-		clear_deposits = yes
-		# set proper deposits
-		add_deposit = d_decrepit_tunnels_1
-		add_deposit = d_decrepit_tunnels_2
-		add_deposit = d_decrepit_tunnels_3
-		add_deposit = d_interstellar_hydroponics
-		# add_deposit = d_interstellar_fusion_powerplant ### energy is produced by the megastructure
-		# AlphaMod deposits
-		if = {
-			limit = {
-				has_global_flag = gf_alphamod_activated
-				NOT = { has_deposit = d_fuels_cache }
-			}
-			add_deposit = d_fuels_cache
-		}
-		if = {
-			limit = {
-				has_global_flag = gf_alphamod_activated
-				NOT = { has_deposit = d_biovault }
-			}
-			add_deposit = d_biovault
-		}
-
-		# fix gamestart districts : remove 'normal' city districts
-		while = {
-			limit = {
-				num_districts = { type = district_city value > 0 }
-			}
-			remove_district = district_city
-		}
-		# fix gamestart districts : remove 'normal' generator districts
-		while = {
-			limit = {
-				num_districts = { type = district_generator value > 0 }
-			}
-			remove_district = district_generator
-		}
-		# fix gamestart districts : remove 'normal' mining districts
-		while = {
-			limit = {
-				num_districts = { type = district_mining value > 0 }
-			}
-			remove_district = district_mining
-		}
-		# fix gamestart districts : remove 'normal' farming districts
-		while = {
-			limit = {
-				num_districts = { type = district_farming value > 0 }
-			}
-			remove_district = district_farming
-		}
-		# fix gamestart districts : add ringworld-proper districts : city
-		if = {
-			limit = {
-				exists = owner
-				owner = { is_regular_empire = yes }
-			}
-			add_district = district_rw_city
-		}
-		if = {
-			limit = {
-				exists = owner
-				owner = { is_hive_empire = yes }
-			}
-			add_district = district_rw_hive
-		}
-		if = {
-			limit = {
-				exists = owner
-				owner = { is_machine_empire = yes }
-			}
-			add_district = district_rw_nexus
-		}
-	}
-}
-
-planet_event = {
-	id = nh_systems.5009
+	id = nhunter_origins.1009
 	hide_window = yes
 	is_triggered_only = yes
 
