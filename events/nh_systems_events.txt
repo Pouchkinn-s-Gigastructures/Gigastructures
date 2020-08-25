@@ -1,0 +1,292 @@
+namespace = nh_systems
+
+## ################################################### ##
+##        ringworld start initialization clean up      ##
+## ################################################### ##
+
+event = {
+	id = nh_systems.5000
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		every_country = {
+			every_owned_planet = {
+				limit = { is_capital = yes }
+				planet_event = { id = nh_systems.5001 days = 0 }
+				planet_event = { id = nh_systems.5002 days = 0 }
+			}
+		}
+	}
+}
+
+planet_event = {
+	id = nh_systems.5001
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = owner
+		owner = { has_origin = origin_great_ring }
+	}
+
+	immediate = {
+
+		### stage removal of star flag used to block New Frontiers from overriding 'planet' classes
+		planet_event = { id = nh_systems.5009 days = 60 } # hopefully nothing bugs out in these 60 days
+		### remove rings (used to block New Frontier convert-to-tidally-locked code)
+		solar_system = {
+			every_system_planet = {
+				limit = { is_planet_class = pc_ringworld_habitable }
+				set_ring = no
+			}
+		}
+
+		# remove normal deposits
+		clear_deposits = yes
+		# fix deposits : add ringworld derposits
+		add_deposit = d_arcane_generator
+		add_deposit = d_decrepit_tunnels_1
+		add_deposit = d_decrepit_tunnels_2
+		add_deposit = d_decrepit_tunnels_3
+		add_deposit = d_great_ring_excavated_mountain
+		# AlphaMod deposits
+		if = {
+			limit = {
+				has_global_flag = gf_alphamod_activated
+				NOT = { has_deposit = d_fuels_cache }
+			}
+			add_deposit = d_fuels_cache
+		}
+		if = {
+			limit = {
+				has_global_flag = gf_alphamod_activated
+				NOT = { has_deposit = d_biovault }
+			}
+			add_deposit = d_biovault
+		}
+		# special deposit blockers for DA/RS machines
+		if = {
+			limit = {
+				exists = owner
+				owner = {
+					OR = {
+						has_valid_civic = civic_machine_servitor
+						has_valid_civic = civic_machine_assimilator
+					}
+				}
+			}
+			add_deposit = d_segment_rubble_1
+			add_deposit = d_segment_rubble_1
+			add_deposit = d_segment_rubble_2
+			add_deposit = d_segment_rubble_2
+		}
+
+		# fix gamestart districts : remove 'normal' city districts
+		while = {
+			limit = {
+				num_districts = { type = district_city value > 0 }
+			}
+			remove_district = district_city
+		}
+		# fix gamestart districts : remove 'normal' generator districts
+		while = {
+			limit = {
+				num_districts = { type = district_generator value > 0 }
+			}
+			remove_district = district_generator
+		}
+		# fix gamestart districts : remove 'normal' mining districts
+		while = {
+			limit = {
+				num_districts = { type = district_mining value > 0 }
+			}
+			remove_district = district_mining
+		}
+		# fix gamestart districts : remove 'normal' farming districts
+		while = {
+			limit = {
+				num_districts = { type = district_farming value > 0 }
+			}
+			remove_district = district_farming
+		}
+		# fix gamestart districts : add ringworld-proper districts : city
+		if = {
+			limit = {
+				exists = owner
+				owner = { is_regular_empire = yes }
+			}
+			add_district = district_rw_city
+		}
+		if = {
+			limit = {
+				exists = owner
+				owner = { is_hive_empire = yes }
+			}
+			add_district = district_rw_hive
+		}
+		if = {
+			limit = {
+				exists = owner
+				owner = { is_machine_empire = yes }
+			}
+			add_district = district_rw_nexus
+		}
+		# fix gamestart districts : add ringworld-proper districts : farming
+		if = {
+			limit = {
+				exists = owner
+				owner = {
+					OR = {
+						AND = {
+							is_lithoid = no
+							is_machine_empire = no
+						}
+						has_valid_civic = civic_machine_assimilator
+						has_valid_civic = civic_machine_servitor
+					}
+				}
+			}
+			add_district = district_rw_farming
+		}
+		# fix gamestart districts : add ringworld-proper districts : generator
+		if = {
+			limit = {
+				exists = owner
+				owner = {
+					OR = {
+						is_lithoid = yes
+						is_machine_empire = yes
+					}
+				}
+			}
+			add_district = district_rw_generator
+		}
+
+		# setup mining stations
+		owner = {
+			save_event_target_as = great_ring_owner
+		}
+		solar_system = {
+			every_system_planet = {
+				limit = { has_planet_flag = great_ring_mining_target }
+				create_mining_station = { owner = event_target:great_ring_owner }
+			}
+			every_system_planet = {
+				limit = { has_planet_flag = great_ring_research_target }
+				create_research_station = { owner = event_target:great_ring_owner }
+			}
+		}
+	}
+}
+
+planet_event = {
+	id = nh_systems.5002
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = owner
+		owner = { has_origin = origin_interstellar_ring }
+	}
+
+	immediate = {
+
+		### stage removal of star flag used to block New Frontiers from overriding 'planet' classes
+		planet_event = { id = nh_systems.5009 days = 60 } # hopefully nothing bugs out in these 60 days
+		### remove rings (used to block New Frontier convert-to-tidally-locked code)
+		solar_system = {
+			every_system_planet = {
+				limit = { is_planet_class = pc_interstellar_ringworld_habitable }
+				set_ring = no
+			}
+		}
+
+		# remove normal deposits
+		clear_deposits = yes
+		# set proper deposits
+		add_deposit = d_decrepit_tunnels_1
+		add_deposit = d_decrepit_tunnels_2
+		add_deposit = d_decrepit_tunnels_3
+		add_deposit = d_interstellar_hydroponics
+		# add_deposit = d_interstellar_fusion_powerplant ### energy is produced by the megastructure
+		# AlphaMod deposits
+		if = {
+			limit = {
+				has_global_flag = gf_alphamod_activated
+				NOT = { has_deposit = d_fuels_cache }
+			}
+			add_deposit = d_fuels_cache
+		}
+		if = {
+			limit = {
+				has_global_flag = gf_alphamod_activated
+				NOT = { has_deposit = d_biovault }
+			}
+			add_deposit = d_biovault
+		}
+
+		# fix gamestart districts : remove 'normal' city districts
+		while = {
+			limit = {
+				num_districts = { type = district_city value > 0 }
+			}
+			remove_district = district_city
+		}
+		# fix gamestart districts : remove 'normal' generator districts
+		while = {
+			limit = {
+				num_districts = { type = district_generator value > 0 }
+			}
+			remove_district = district_generator
+		}
+		# fix gamestart districts : remove 'normal' mining districts
+		while = {
+			limit = {
+				num_districts = { type = district_mining value > 0 }
+			}
+			remove_district = district_mining
+		}
+		# fix gamestart districts : remove 'normal' farming districts
+		while = {
+			limit = {
+				num_districts = { type = district_farming value > 0 }
+			}
+			remove_district = district_farming
+		}
+		# fix gamestart districts : add ringworld-proper districts : city
+		if = {
+			limit = {
+				exists = owner
+				owner = { is_regular_empire = yes }
+			}
+			add_district = district_rw_city
+		}
+		if = {
+			limit = {
+				exists = owner
+				owner = { is_hive_empire = yes }
+			}
+			add_district = district_rw_hive
+		}
+		if = {
+			limit = {
+				exists = owner
+				owner = { is_machine_empire = yes }
+			}
+			add_district = district_rw_nexus
+		}
+	}
+}
+
+planet_event = {
+	id = nh_systems.5009
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		solar_system = {
+			remove_star_flag = sol_sector
+		}
+	}
+}
