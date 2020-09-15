@@ -1,0 +1,139 @@
+namespace = giga_ring_origins
+
+### Gatekeeper event
+country_event = {
+	id = giga_ring_origins.001
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		OR = {
+			has_origin = origin_great_ring
+			has_origin = origin_interstellar_ring
+			has_origin = origin_penrose_ring
+		}
+	}
+
+	immediate = {
+		capital_scope = {
+			solar_system = {
+				remove_star_flag = sol_sector
+				every_system_planet = {
+					limit = {
+						OR = {
+							is_planet_class = pc_ringworld_habitable
+							is_planet_class = pc_interstellar_ringworld_habitable
+							is_planet_class = pc_giga_penrose_habitable
+						}
+					}
+					set_ring = no
+				}
+			}
+
+			clear_deposits = yes
+			remove_all_districts = yes
+
+			# Set proper deposits
+			add_deposit = d_arcane_generator
+			add_deposit = d_decrepit_tunnels_1
+			add_deposit = d_decrepit_tunnels_2
+			add_deposit = d_decrepit_tunnels_3
+
+			# extra deposits dependent on origin
+			if = {
+				limit = { root = { has_origin = origin_great_ring } }
+				add_deposit = d_great_ring_excavated_mountain
+			}
+			else_if = {
+				limit = { root = { has_origin = origin_penrose_ring } }
+				add_deposit = d_arcane_mineral_generator
+			}
+
+			# special deposit blockers for DA/RS machines
+			if = {
+				limit = {
+					root = {
+						OR = {
+							has_valid_civic = civic_machine_servitor
+							has_valid_civic = civic_machine_assimilator
+						}
+					}
+				}
+				add_deposit = d_segment_rubble_1
+				add_deposit = d_segment_rubble_1
+				add_deposit = d_segment_rubble_2
+				add_deposit = d_segment_rubble_2
+			}
+
+			# fix gamestart districts : add ringworld-proper districts : city
+			if = {
+				limit = { root = { is_regular_empire = yes } }
+				add_district = district_rw_city
+			}
+			else_if = {
+				limit = { root = { is_hive_empire = yes } }
+				add_district = district_rw_hive
+			}
+			else_if = {
+				limit = { root = { is_machine_empire = yes } }
+				add_district = district_rw_nexus
+			}
+
+			# fix gamestart districts : add ringworld-proper districts : farming
+			if = {
+				limit = {
+					root = {
+						OR = {
+							AND = {
+								is_lithoid = no
+								is_machine_empire = no
+							}
+							has_valid_civic = civic_machine_assimilator
+							has_valid_civic = civic_machine_servitor
+						}
+					}
+				}
+				add_district = district_rw_farming
+			}
+
+			# fix gamestart districts : add ringworld-proper districts : generator
+			if = {
+				limit = {
+					root = {
+						OR = {
+							is_lithoid = yes
+							is_machine_empire = yes
+						}
+					}
+				}
+				add_district = district_rw_generator
+			}
+
+			# setup mining stations in the system
+			solar_system = {
+				every_system_planet = {
+					if = {
+						limit = { has_planet_flag = great_ring_mining_target }
+						create_mining_station = { owner = root }
+					}
+					else_if = {
+						limit = { has_planet_flag = great_ring_research_target }
+						create_research_station = { owner = root }
+					}
+				}
+			}
+		}
+	}
+}
+
+### On relic Penrose sphere restored
+country_event = {
+	id = giga_ring_origins.002
+	title = "giga_ring_origins.002.name"
+	desc = "giga_ring_origins.002.desc"
+	picture = GFX_evt_black_hole
+	show_sound = event_dyson_sphere_build_complete
+	location = event_target:relic_penrose_sphere
+	is_triggered_only = yes
+	option = { name = EXCELLENT }
+}
