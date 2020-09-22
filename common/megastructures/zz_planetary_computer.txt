@@ -36,7 +36,8 @@ planetary_computer_0 = {
 	placement_rules = {
 		planet_possible = {
 			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
-			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } colonizeable_planet = no }
+			custom_tooltip = { fail_text = "requires_surveyed_planet"			is_surveyed = { who = prev.from status = yes } owner = { is_ai = no } }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } owner = { is_ai = yes } colonizeable_planet = no }
 			custom_tooltip = { fail_text = "requires_not_asteroid"				is_asteroid = no }
 			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
 			custom_tooltip = {
@@ -111,6 +112,7 @@ planetary_computer_0 = {
 		modifier = { factor = 1.5	from = { has_civic = civic_technocracy } }
 
 		# How many of this megastructure can the AI build?
+		modifier = { factor = 0.00 from = { has_country_flag = has_recently_built_planetary_computer } }
 		modifier = { factor = 0.00 from = { check_variable = { which = planetary_computer value > 3 } } }
 		modifier = { factor = 0.25 from = { check_variable = { which = planetary_computer value = 3 } } }
 		modifier = { factor = 0.50 from = { check_variable = { which = planetary_computer value = 2 } } }
@@ -129,15 +131,16 @@ planetary_computer_0 = {
 
 	on_build_complete = {
 		save_event_target_as = giga_system
-		fromfrom.planet = { save_event_target_as = giga_planet }
-		from = {
-			country_event = { id = giga_dialog.1301 }	# Notification
-			change_variable = { which = giga_current_planetary_computer value = 1 }
-		}
 		fromfrom.planet = {
+			save_event_target_as = giga_planet
 			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
 			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
 			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+		}
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_planetary_computer years = 230 }
+			country_event = { id = giga_dialog.1301 }	# Notification
+			change_variable = { which = giga_current_planetary_computer value = 1 }
 		}
 	}
 }

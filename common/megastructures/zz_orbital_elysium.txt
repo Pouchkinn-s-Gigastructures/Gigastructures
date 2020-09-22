@@ -79,6 +79,7 @@ orbital_elysium_0 = {
 		# Do we lean towards this from federation/ethic/civic?
 
 		# How many of this megastructure can the AI build?
+		modifier = { factor = 0.00 from = { has_country_flag = has_recently_built_giga_orbital_elysiums } }
 		modifier = { factor = 0.00	from = { check_variable = { which = giga_orbital_elysiums value > 3 } } }
 		modifier = { factor = 0.25	from = { check_variable = { which = giga_orbital_elysiums value = 3 } } }
 		modifier = { factor = 0.50	from = { check_variable = { which = giga_orbital_elysiums value = 2 } } }
@@ -87,8 +88,12 @@ orbital_elysium_0 = {
 
 	on_build_complete = {
 		save_event_target_as = giga_system
-		fromfrom.planet = { save_event_target_as = giga_planet }
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+		}
 		from = {
+			set_timed_country_flag = { flag = has_recently_built_giga_orbital_elysiums years = 20 }
 			country_event = { id = giga_dialog.1101 }	# Notification
 			change_variable = { which = giga_orbital_elysiums value = 1 }
 			change_variable = { which = giga_current_elysium value = 1 }
@@ -106,18 +111,13 @@ orbital_elysium_0 = {
 				add_modifier = { modifier = "orbital_elysium" days = -1 }
 				set_all_comms_surveyed = yes
 				clear_blockers = yes
+				set_planet_flag = forbid_guillis_planet_modifiers
 				set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
 				set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
 				set_planet_flag = colony_event			# Vanilla uses to prevent unwanted events on planets
 				set_planet_flag = giga_elysium
 			}
 		}
-		fromfrom = {
-			planet = {
-				if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
-				set_planet_flag = giga_elysium
-			}
-			delete_megastructure = fromfrom
-		}
+		remove_megastructure = fromfrom
 	}
 }
