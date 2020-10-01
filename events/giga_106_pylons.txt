@@ -1,0 +1,223 @@
+namespace = ehof_pylons
+
+# New Gateway Constructed
+country_event = {
+	id = ehof_pylons.001
+	title = "ehof_pylons.001.name"
+	desc = "ehof_pylons.001.desc"
+	diplomatic = yes
+	custom_gui = "giga_eventui_window"
+	picture_event_data = { room = "creator-gateway_room" }
+	show_sound = event_radio_chatter
+	is_triggered_only = yes
+	location = from
+	trigger = { NOT = { has_country_flag = ehof_gateway_built } }
+	immediate = {
+		from = { save_event_target_as = ehof_gateway_system }
+		set_country_flag = ehof_gateway_built
+	}
+	option = { custom_gui = "giga_eventui_option" name = EXCELLENT }
+}
+
+# Additional Gateways Constructed
+country_event = {
+	id = ehof_pylons.002
+	title = "ehof_pylons.001.name"
+	desc = "ehof_pylons.002.desc"
+	diplomatic = yes
+	custom_gui = "giga_eventui_window"
+	picture_event_data = { room = "creator-gateway_room" }
+	show_sound = event_radio_chatter
+	is_triggered_only = yes
+	location = from
+	trigger = { has_country_flag = ehof_gateway_built }
+	immediate = { from = { save_event_target_as = ehof_gateway_system } }
+	option = { custom_gui = "giga_eventui_option" name = EXCELLENT }
+}
+
+# Gateway Construction Site Finished
+country_event = {
+	id = ehof_pylons.003
+	title = "ehof_pylons.003.name"
+	desc = "ehof_pylons.003.desc"
+	diplomatic = yes
+	custom_gui = "giga_eventui_window"
+	picture_event_data = { room = "megastructure_construction_room" }
+	show_sound = event_radio_chatter
+	is_triggered_only = yes
+	location = from
+	immediate = { from = { save_event_target_as = ehof_gateway_system } }
+	option = { custom_gui = "giga_eventui_option" name = GOOD }
+}
+
+# Additional Gateways Reactivated
+country_event = {
+	id = ehof_pylons.004
+	title = "ehof_pylons.004.name"
+	desc = "ehof_pylons.004.desc"
+	diplomatic = yes
+	custom_gui = "giga_eventui_window"
+	picture_event_data = { room = "creator-gateway2_room" }
+	show_sound = event_radio_chatter
+	is_triggered_only = yes
+	location = from
+	immediate = { from = { save_event_target_as = ehof_gateway_system } }
+	option = { custom_gui = "giga_eventui_option" name = EXCELLENT }
+}
+
+# On gaining the tech, change all OWNED unknown gateways into disabled ones
+country_event = {
+	id = ehof_pylons.005
+	title = "ehof_pylons.005.name"
+	desc = "ehof_pylons.005.desc"
+	diplomatic = yes
+	custom_gui = "giga_eventui_window"
+	picture_event_data = { room = "creator-gateway2_room" }
+	show_sound = event_radio_chatter
+	is_triggered_only = yes
+
+    trigger = { last_increased_tech = tech_ehof_use_gateway }
+
+    immediate = {
+		hidden_effect = {
+			if = {
+				limit = { is_ai = yes }
+				every_system = {
+					limit = {
+						has_star_flag = ehof_ai_pylon
+						ehof_cohesive_system = yes
+						has_star_flag = ehof_system_created_by_@root
+						NOT = { has_star_flag = ehof_gateway_changed }
+					}
+					ehof_change_pylon = yes
+				}
+			}
+			else = {
+				every_system = {
+					limit = {
+						ehof_cohesive_system = yes
+						has_star_flag = ehof_system_created_by_@root
+						NOT = { has_star_flag = ehof_gateway_changed }
+					}
+					ehof_change_pylon = yes
+				}
+			}
+		}
+    }
+	option = { custom_gui = "giga_eventui_option" name = EXCELLENT }
+}
+
+# Remove vanilla gateways from isolated systems and refund cost
+country_event = {
+	id = ehof_pylons.006
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		from = {
+			is_megastructure_type = gateway_0
+			solar_system = { ehof_cohesive_system = yes }
+		}
+	}
+
+	immediate = {
+		from = { solar_system = { save_event_target_as = ehof_delete_gateway } }
+		country_event = { id = ehof_pylons.0061 days = 2 }
+	}
+}
+
+country_event = {
+	id = ehof_pylons.0061
+	title = "ehof_pylons.006.name"
+	desc = { trigger = { event_target:ehof_delete_gateway = { any_system_megastructure = { OR = { is_megastructure_type = ehof_gateway_unknown	is_megastructure_type = ehof_gateway_disabled } } } } text = "ehof_pylons.006.desc1" }
+	desc = { trigger = { event_target:ehof_delete_gateway = { any_system_megastructure = { OR = { is_megastructure_type = ehof_gateway			is_megastructure_type = ehof_gateway_restored } } } } text = "ehof_pylons.006.desc2" }
+	diplomatic = yes
+	custom_gui = "giga_eventui_window"
+	picture_event_data = { room = "megastructure_construction_room" }
+	show_sound = event_power_down
+	location = FROM
+	is_triggered_only = yes
+
+	immediate = {
+		event_target:ehof_delete_gateway = {
+			random_system_megastructure = {
+				limit = { is_megastructure_type = gateway_0 }
+				delete_megastructure = this
+			}
+		}
+	}
+
+	option = {
+		custom_gui = "giga_eventui_option"
+		default_hide_option = yes
+		name = "ehof_bad_response_02"
+		add_resource = { alloys = 2500 }
+		add_resource = { influence = 100 }
+	}
+}
+
+# On gaining the sm3 tech, activate your pgate
+country_event = {
+	id = ehof_pylons.007
+	title = "ehof_pylons.007.name"
+	desc = "ehof_pylons.007.desc"
+	diplomatic = yes
+	custom_gui = "giga_eventui_window"
+	picture_event_data = { room = "creator-gateway2_room" }
+	show_sound = event_radio_chatter
+	is_triggered_only = yes
+	location = event_target:pgate_active_system
+
+    trigger = {
+		last_increased_tech = tech_ehof_sentient_tier_3
+		is_ai = no
+	}
+
+    immediate = {
+		hidden_effect = {
+			every_system = {
+				limit = {
+					ehof_cohesive_system = yes
+					has_megastructure = ehof_pgate_unknown
+				}
+				save_event_target_as = pgate_active_system
+				every_system_megastructure = {
+					limit = { is_megastructure_type = ehof_pgate_unknown }
+					upgrade_megastructure_to = "ehof_pgate_gateway"
+					finish_upgrade = yes
+				}
+			}
+		}
+    }
+	option = { custom_gui = "giga_eventui_option" name = "ehof_pylons.007.option" }
+}
+
+# On gaining the sm3 tech, activate your pgate
+country_event = {
+	id = ehof_pylons.008
+	is_triggered_only = yes
+	hide_window = yes
+
+    trigger = {
+		any_system_within_border = { has_megastructure = ehof_pgate_unknown }
+		is_ai = yes
+		any_playable_country = {
+			is_ai = no
+			any_system_within_border = { has_megastructure = ehof_pgate_gateway }
+		}
+	}
+
+    immediate = {
+		every_system_within_border = {
+			limit = {
+				ehof_cohesive_system = yes
+				has_megastructure = ehof_pgate_unknown
+			}
+			every_system_megastructure = {
+				limit = { is_megastructure_type = ehof_pgate_unknown }
+				upgrade_megastructure_to = "ehof_pgate_gateway"
+				finish_upgrade = yes
+			}
+		}
+    }
+}

@@ -1,0 +1,487 @@
+namespace = compound_spawn
+
+# Trigger
+country_event = {
+	id = compound_spawn.000
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_country_type = global_event
+		has_global_flag = galactic_crisis_happened
+		NOR = {
+			has_global_flag = compound_disabled
+			has_global_flag = compound_invasion_happened
+		}
+		OR = {
+			has_global_flag = compound_capped_2
+			has_global_flag = compound_capped_3
+			has_global_flag = compound_capped_4
+			has_global_flag = compound_capped_s
+			AND = {
+				has_global_flag = war_in_heaven_started
+				NOT = { has_global_flag = war_in_heaven_ongoing }
+			}
+			AND = {
+				has_global_flag = ai_invasion_happened
+				NOT = { has_global_flag = ai_invasion_ongoing }
+			}
+			AND = {
+				has_global_flag = extradimensional_invasion_happened
+				has_global_flag = extradimensional_invasion_defeated
+			}
+			AND = {
+				has_global_flag = prethoryn_invasion_happened
+				NOT = { has_global_flag = ongoing_prethoryn_invasion }
+			}
+		}
+		any_playable_country = {
+			is_ai = no
+			check_variable = { which = ehof_phase value > 0 }
+		}
+	}
+
+	immediate = {
+		random_list = {
+			120 = { modifier = { factor = 0 has_global_flag = ehof_cheating } }
+			10 = {
+				modifier = { factor = 2 check_variable = { which = counting_ehof_usage value >= 20 } }
+				modifier = { factor = 3 check_variable = { which = counting_ehof_usage value >= 30 } }
+				modifier = { factor = 4 check_variable = { which = counting_ehof_usage value >= 40 } }
+				modifier = { factor = 5 check_variable = { which = counting_ehof_usage value >= 50 } }
+				set_global_flag = compound_invasion_happened
+				country_event = { id = compound_spawn.001 days = 2 }	# Spawn systems
+			}
+		}
+	}
+}
+
+country_event = {
+	id = compound_spawn.101
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_country_type = global_event
+		has_global_flag = galactic_crisis_happened
+		NOR = {
+			has_global_flag = giga_additional_crisis_spawned
+			has_global_flag = compound_disabled
+			has_global_flag = compound_capped_1
+			has_global_flag = compound_capped_2
+		}
+		OR = {
+			has_global_flag = war_in_heaven_started
+			has_global_flag = ai_invasion_happened
+			has_global_flag = extradimensional_invasion_happened
+			has_global_flag = prethoryn_invasion_happened
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = { has_global_flag = compound_capped_3 }
+			while = { count = 1 giga_spawn_crisis = yes }
+		}
+		else_if = {
+			limit = { has_global_flag = compound_capped_4 }
+			while = { count = 2 giga_spawn_crisis = yes }
+		}
+		else_if = {
+			limit = { has_global_flag = compound_capped_s }
+			random_list = {
+				1 = {}
+				1 = { while = { count = 1 giga_spawn_crisis = yes } }
+				1 = { while = { count = 2 giga_spawn_crisis = yes } }
+			}
+		}
+		set_global_flag = giga_additional_crisis_spawned
+	}
+}
+
+# Spawn compound country/cluster
+country_event = {
+	id = compound_spawn.001
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_global_flag = ehof_spawning_compound
+		set_crisis_sound = extradimensional_crisis_ambient_stage_1
+		set_crisis_stage_1 = yes
+
+		create_species = {
+			name = "NAME_Dark_Matter_Species"
+			class = "compound"
+			portrait = compound1
+			traits = {
+				trait = trait_psionic
+				trait = trait_hive_mind
+			}
+			immortal = yes
+			effect = { save_global_event_target_as = compound_species }
+		}
+		create_country = {
+			name = "NAME_The_Compound"
+			type = compound_empire
+			species = event_target:compound_species
+			ignore_initial_colony_error = yes
+			day_zero_contact = no
+			authority = auth_hive_mind
+			ethos = { ethic = ethic_gestalt_consciousness }
+			civics = {
+				civic = civic_hive_devouring_swarm
+				civic = civic_hive_one_mind
+			}
+			name_list = "compound"
+			flag = {
+				icon= {
+					category = "special"
+					file = "compound_flag.dds"
+				}
+				background= {
+					category = "backgrounds"
+					file = "hex.dds"
+				}
+				colors={
+					"indigo"
+					"black"
+					"null"
+					"null"
+				}
+			}
+		}
+		last_created_country = {
+			save_global_event_target_as = compound_country
+			create_leader = {
+				class = ruler
+				species = event_target:compound_species
+				immortal = yes
+				name = random
+				effect = { save_event_target_as = compound_ruler }
+			}
+			add_modifier = { modifier = compound_invincible days = -1 }
+			set_leader = event_target:compound_ruler
+			set_global_flag = compound_invasion_ongoing
+			set_graphical_culture = ehof_01
+			set_country_flag = day_0
+			create_ship_design = { design = "NAME_Aegis" } add_ship_design = last_created_design
+			create_ship_design = { design = "NAME_Bulwark" } add_ship_design = last_created_design
+			create_ship_design = { design = "NAME_Bastion" } add_ship_design = last_created_design
+			create_ship_design = { design = "NAME_Barricade" } add_ship_design = last_created_design
+		}
+
+		set_spawn_system_batch = begin
+		no_scope = {
+			spawn_system = { hyperlane = no min_distance >= 510 max_distance <= 520 min_orientation_angle = 314 max_orientation_angle = 316 initializer = "ehof_blackhole_systems_01"	 } } random_system = { limit = { has_star_flag = ehof_compound_system_1 }
+			spawn_system = { hyperlane = no min_distance >=  10 max_distance <=  20 min_orientation_angle = 300 max_orientation_angle = 60  initializer = "ehof_blackhole_systems_01"	 } } random_system = { limit = { has_star_flag = ehof_compound_system_2 }
+			spawn_system = { hyperlane = no min_distance >=  20 max_distance <=  30 min_orientation_angle = 10  max_orientation_angle = 80  initializer = "ehof_blackhole_systems_01"	 } } random_system = { limit = { has_star_flag = ehof_compound_system_2 }
+			spawn_system = { hyperlane = no min_distance >=  20 max_distance <=  30 min_orientation_angle = 280 max_orientation_angle = 350 initializer = "ehof_blackhole_systems_01"	 } } random_system = { limit = { has_star_flag = ehof_compound_system_3 }
+			spawn_system = { hyperlane = no min_distance >=  10 max_distance <=  20 min_orientation_angle = 10  max_orientation_angle = 80  initializer = "ehof_blackhole_systems_01"	 } } random_system = { limit = { has_star_flag = ehof_compound_system_3 }
+			spawn_system = { hyperlane = no min_distance >=  10 max_distance <=  20 min_orientation_angle = 280 max_orientation_angle = 350 initializer = "ehof_blackhole_systems_01"	 } } random_system = { limit = { has_star_flag = ehof_compound_system_3 }
+			spawn_system = { hyperlane = no min_distance >=  10 max_distance <=  20 min_orientation_angle = 100 max_orientation_angle = 170 initializer = "ehof_blackhole_systems_01"	 } } random_system = { limit = { has_star_flag = ehof_compound_system_5 }
+			spawn_system = { hyperlane = no min_distance >=  20 max_distance <=  30 min_orientation_angle = 10  max_orientation_angle = 80  initializer = "ehof_blackhole_systems_01"	 } } random_system = { limit = { has_star_flag = ehof_compound_system_8 }
+			spawn_system = { hyperlane = no min_distance >=  10 max_distance <=  20 min_orientation_angle = 280 max_orientation_angle = 80  initializer = "ehof_blackhole_systems_01"	 } } random_system = { limit = { has_star_flag = ehof_compound_system_9 }
+			spawn_system = { hyperlane = no min_distance >=  10 max_distance <=  20 min_orientation_angle = 10  max_orientation_angle = 70  initializer = "ehof_blackhole_systems_01"	 } } random_system = { limit = { has_star_flag = ehof_compound_system_9 }
+			spawn_system = { hyperlane = no min_distance >=  10 max_distance <=  20 min_orientation_angle = 290 max_orientation_angle = 350 initializer = "compound_capital_system" }
+		}
+
+		# add hyperlanes
+		event_target:ehof_compound_system_1 = {
+			add_hyperlane = { from = event_target:ehof_compound_system_1	to = event_target:ehof_compound_system_2 }
+		}
+		event_target:ehof_compound_system_2 = {
+			add_hyperlane = { from = event_target:ehof_compound_system_2		to = event_target:ehof_compound_system_3 }
+			add_hyperlane = { from = event_target:ehof_compound_system_2		to = event_target:ehof_compound_system_4 }
+		}
+		event_target:ehof_compound_system_3 = {
+			add_hyperlane = { from = event_target:ehof_compound_system_3		to = event_target:ehof_compound_system_5 }
+			add_hyperlane = { from = event_target:ehof_compound_system_3		to = event_target:ehof_compound_system_6 }
+			add_hyperlane = { from = event_target:ehof_compound_system_3		to = event_target:ehof_compound_system_7 }
+		}
+		event_target:ehof_compound_system_5 = {
+			add_hyperlane = { from = event_target:ehof_compound_system_5		to = event_target:ehof_compound_system_7 }
+			add_hyperlane = { from = event_target:ehof_compound_system_5		to = event_target:ehof_compound_system_8 }
+		}
+		event_target:ehof_compound_system_8 = {
+			add_hyperlane = { from = event_target:ehof_compound_system_8		to = event_target:ehof_compound_system_9 }
+		}
+		event_target:ehof_compound_system_9 = {
+			add_hyperlane = { from = event_target:ehof_compound_system_9		to = event_target:ehof_compound_system_10 }
+			add_hyperlane = { from = event_target:ehof_compound_system_9		to = event_target:compound_capital_system }
+		}
+		set_spawn_system_batch = end
+
+		every_system = {
+			limit = { ehof_compound_cluster = yes }
+
+			# Change planet classes
+			every_system_planet = { limit = { is_star = yes NOT = { has_planet_flag = compound_home_sphere } } change_pc = pc_black_hole }
+			every_system_planet = { limit = { is_star = no } change_pc = pc_ehof_planet }
+
+			# Create mining stations
+			every_system_planet = {
+				limit = {
+					has_deposit_for = shipclass_mining_station
+					has_mining_station = no
+				}
+				create_mining_station = { owner = event_target:compound_country }
+			}
+
+			# Create research stations
+			every_system_planet = {
+				limit = {
+					has_deposit_for = shipclass_research_station
+					has_research_station = no
+				}
+				create_research_station = { owner = event_target:compound_country }
+			}
+
+			# Create military stations
+			create_compound_system_stations = yes
+
+			# Create Starbases
+			create_starbase = {
+				size = starbase_ehof_05
+				owner = event_target:compound_country
+			}
+		}
+
+		every_country = {
+			limit = { ehof_default_country = yes }
+			establish_communications_no_message = event_target:compound_country
+		}
+
+		remove_global_flag = ehof_spawning_compound
+		country_event = { id = compound_spawn.002 days = 30 }
+	}
+}
+
+# Pick country to invade
+country_event = {
+	id = compound_spawn.002
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_crisis_sound = extradimensional_crisis_ambient_stage_2
+		set_crisis_stage_2 = yes
+
+		# AI Empire, has EHOF, no player in neighboring country and no player is neighboring their neighbor countries
+		if = {
+			limit = { any_country = { is_ai = yes check_variable = { which = ehof_phase value > 0 } NOT = { any_neighbor_country = { is_ai = no any_neighbor_country = { is_ai = no } } } } }
+			random_country = {
+				limit = { is_ai = yes check_variable = { which = ehof_phase value > 0 } NOT = { any_neighbor_country = { is_ai = no any_neighbor_country = { is_ai = no } } } }
+				set_country_flag = compound_seized_ehof_country
+				country_event = { id = compound_spawn.003 days = 2 }	# Begin the invasion
+			}
+		}
+		# AI Empire, has EHOF, no player in neighboring country
+		else_if = {
+			limit = { any_country = { is_ai = yes check_variable = { which = ehof_phase value > 0 } NOT = { any_neighbor_country = { is_ai = no } } } }
+			random_country = {
+				limit = { is_ai = yes check_variable = { which = ehof_phase value > 0 } NOT = { any_neighbor_country = { is_ai = no } } }
+				set_country_flag = compound_seized_ehof_country
+				country_event = { id = compound_spawn.003 days = 2 }	# Begin the invasion
+			}
+		}
+		# AI Empire, has EHOF
+		else_if = {
+			limit = { any_country = { is_ai = yes check_variable = { which = ehof_phase value > 0 } } }
+			random_country = {
+				limit = { is_ai = yes check_variable = { which = ehof_phase value > 0 } }
+				set_country_flag = compound_seized_ehof_country
+				country_event = { id = compound_spawn.003 days = 2 }	# Begin the invasion
+			}
+		}
+		# Player Empire, has EHOF
+		else = {
+			random_country = {
+				limit = { is_ai = no check_variable = { which = ehof_phase value > 0 } }
+				set_country_flag = compound_seized_ehof_country
+			}
+		}
+	}
+}
+
+# Seize megastructure system
+country_event = {
+	id = compound_spawn.003
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = { has_country_flag = compound_seized_ehof_country }
+
+	immediate = {
+		set_crisis_sound = extradimensional_crisis_ambient_stage_3
+		set_crisis_stage_3 = yes
+		# Awaken Fallen Empires
+		awaken_guardians_of_the_galaxy = yes
+		save_global_event_target_as = ehof_seized_country
+
+		every_country = {
+			limit = { ehof_default_country = yes }
+
+			# Notify everyone of the compound arrival
+			country_event = { id = compound_dialog.1 }
+
+			# Notify everyone of the solution in 10 years, if it hasn't already happened
+			country_event = { id = annihilator_dialog.014 days = 3600 }
+			if = { limit = { has_global_flag = ehof_cheating } country_event = { id = annihilator_dialog.014 days = 20 } }
+
+			# Notify everyone the traders are closed
+			if = {
+				limit = {
+					exists = event_target:ehof_trader_country
+					has_country_flag = ehof_traders_first_time
+				}
+				country_event = { id = ehof_mega_trader.013 days = 14 }
+			}
+		}
+
+		# Spawn wormhole in compound cluster
+		random_system = {
+			limit = { has_star_flag = ehof_compound_system_1 }
+			spawn_megastructure = {
+				type = "ehof_megastructure_compound_gateway_exit"
+				orbit_angle = @ehof_wormhole_angle
+				orbit_distance = @ehof_wormhole_distance
+				owner = event_target:compound_country
+				location = star
+				init_effect = { set_megastructure_flag = ehof_compound_nexus }
+			}
+		}
+
+		# Seize EHOF
+		random_system_within_border = {
+			limit = { has_star_flag = ehof_megastructure_system@root }
+
+			# Set Flags
+			remove_star_flag = ehof_megastructure_system@root
+			set_star_flag = ehof_compound_system
+			set_star_flag = compound_invasion_entry
+			save_global_event_target_as = compound_invasion_entry
+
+			# Starbase
+			if = {
+				limit = { exists = starbase }
+				starbase = { fleet = { delete_fleet = this } }
+			}
+			create_starbase = {
+				size = starbase_ehof_05
+				owner = event_target:compound_country
+			}
+			event_target:compound_country = { every_system_within_border = { prev = { change_variable = { which = compound_systems value = 1 } } } }
+
+			# Spawn initial fleets
+			star = {
+				planet_event = { id = compound_fleet_spawn.002 days = 2 }
+				planet_event = { id = compound_fleet_spawn.002 days = 4 }
+				planet_event = { id = compound_fleet_spawn.002 days = 6 }
+			}
+
+			# Spawn new EHOF
+			every_system_megastructure = {
+				limit = { is_an_ehof = yes }
+				delete_megastructure = this
+			}
+
+			if = {		limit = { root = { check_variable = { which = ehof_phase value = 1 } } } spawn_megastructure = { type = "ehof_compound_phase1" location = star owner = event_target:compound_country } }
+			else_if = {	limit = { root = { check_variable = { which = ehof_phase value = 2 } } } spawn_megastructure = { type = "ehof_compound_phase2" location = star owner = event_target:compound_country } }
+			else_if = {	limit = { root = { check_variable = { which = ehof_phase value = 3 } } } spawn_megastructure = { type = "ehof_compound_phase3" location = star owner = event_target:compound_country } }
+			else_if = {	limit = { root = { check_variable = { which = ehof_phase value = 4 } } } spawn_megastructure = { type = "ehof_compound_phase4" location = star owner = event_target:compound_country } }
+		}
+
+		# Mark planned expansion
+		every_system = {
+			limit = {
+				OR = {
+					AND = { galaxy_size = tiny		distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 2 } }
+					AND = { galaxy_size = small		distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 3 } }
+					AND = { galaxy_size = medium	distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 4 } }
+					AND = { galaxy_size = large		distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 5 } }
+					AND = { galaxy_size = huge		distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 6 } }
+				}
+			}
+			every_system_planet = { set_planet_flag = cant_build_here set_planet_flag = cant_target_this_planet } # Prevents NDB & QSO
+			set_star_flag = compound_expand
+		}
+
+		ehof_remove_mega_flags = yes
+	}
+}
+
+# Diplomacy
+country_event = {
+	id = compound_spawn.004
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		from = {
+			OR = {
+				is_country_type = compound_empire
+				is_country_type = creators
+			}
+		}
+	}
+
+	immediate = {
+		# Compound standard
+		if = {
+			limit = {
+				exists = event_target:compound_invasion_entry
+				from = {
+					is_country_type = compound_empire
+					NOT = { has_country_flag = compound_empire_berserk }
+				}
+			}
+			set_variable = { which = compound_greetings value = 0 }
+			random_list = {
+				25 = { change_variable = { which = compound_greetings value = 1 } }
+				25 = { change_variable = { which = compound_greetings value = 2 } }
+				25 = { change_variable = { which = compound_greetings value = 3 } }
+				25 = { change_variable = { which = compound_greetings value = 4 } }
+			}
+			country_event = { id = compound_dialog.4 }
+		}
+
+		# Compound berserk
+		if = {
+			limit = {
+				exists = event_target:compound_invasion_entry
+				from = { has_country_flag = compound_empire_berserk }
+			}
+			country_event = { id = compound_dialog.7 }
+		}
+
+		# SA standard
+		if = {
+			limit = {
+				from = {
+					is_country_type = creators
+					NOT = { any_owned_ship = { is_ship_size = annihilator_sk } }
+				}
+			}
+			set_variable = { which = creators_greetings value = 0 }
+			random_list = {
+				25 = { change_variable = { which = creators_greetings value = 1 } }
+				25 = { change_variable = { which = creators_greetings value = 2 } }
+				25 = { change_variable = { which = creators_greetings value = 3 } }
+				25 = { change_variable = { which = creators_greetings value = 4 } }
+			}
+			country_event = { id = annihilator_dialog.007 }
+		}
+
+		# SA dormant
+		if = {
+			limit = {
+				from = {
+					is_country_type = creators
+					any_owned_ship = { is_ship_size = annihilator_sk }
+				}
+			}
+			country_event = { id = annihilator_dialog.011 }
+		}
+	}
+}

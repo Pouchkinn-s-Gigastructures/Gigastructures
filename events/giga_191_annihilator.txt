@@ -1,0 +1,579 @@
+namespace = annihilator
+
+##################################################################################################################
+# ON ACTIONS EVENTS ##############################################################################################
+##################################################################################################################
+
+# on_country_destroyed - If discoverer dies, pass it to another country
+country_event = {
+	id = annihilator.000
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = event_target:discoverer_country
+		is_same_value = event_target:discoverer_country
+	}
+
+	immediate = {
+		if = {		limit = { any_country = { is_ai = no check_variable = { which = ehof_phase value > 0 } } }	random_country = { limit = { is_ai = no check_variable = { which = ehof_phase value > 0 } }	save_discoverer = yes } }
+		else_if = {	limit = { any_country = { is_ai = no } }													random_country = { limit = { is_ai = no }													save_discoverer = yes } }
+		else_if = {	limit = { any_country = { check_variable = { which = ehof_phase value > 0 } } }				random_country = { limit = { check_variable = { which = ehof_phase value > 0 } }			save_discoverer = yes } }
+		else = {																								random_country = { limit = { ehof_default_country = yes }									save_discoverer = yes } }
+	}
+}
+
+# on_entering_system_fleet - Update Annihlator Location
+fleet_event = {
+	id = annihilator.007
+	hide_window = yes
+	is_triggered_only = yes
+	trigger = { is_ship_size = annihilator }
+
+	immediate = {
+		solar_system.star = { set_annihilator_location = yes }
+
+		# Annihilator enters compound capital
+		if = {
+			limit = { from = { has_star_flag = compound_capital_system } }
+			every_country = {
+				limit = { ehof_default_country = yes }
+				country_event = { id = compound_dialog.9 }
+			}
+
+			# Annihilator moves to firing position
+			event_target:ehof_annihilator = {
+				set_aggro_range = 0
+				set_fleet_stance = passive
+				clear_fleet_actions = this
+				remove_global_flag = sa_target_defend
+				remove_global_flag = sa_target_compound
+				remove_global_flag = sa_target_sphere
+				remove_global_flag = sa_target_follow
+
+				queue_actions = {
+					find_random_planet = {
+						trigger = {
+							id = kill_sphere.1
+							has_planet_flag = sa_firing_source
+						}
+						found_planet = {
+							move_to = this
+							effect = {
+								id = kill_sphere.2
+								planet_event = { id = annihilator.008 days = 4 }
+							}
+						}
+					}
+					find_random_planet = {
+						trigger = {
+							id = kill_sphere.3
+							has_planet_flag = compound_home_sphere
+						}
+						found_planet = {
+							move_to = this
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+# on_fleet_destroyed_victim - Annihilator dealing with death
+country_event = {
+	id = annihilator.011
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		any_country = { is_country_type = creators }
+		fromfrom = {
+			OR = {
+				is_ship_size = annihilator
+				is_ship_size = annihilator_sk
+				is_same_value = event_target:discoverer_fleet
+			}
+		}
+	}
+
+	immediate = {
+
+		# Annihilator whilst attacking sphere
+		if = {
+			limit = { fromfrom = { is_ship_size = annihilator_sk } }
+			remove_global_flag = annihilator_destroyed_sphere
+			event_target:compound_capital_system = {
+				random_system_ambient_object = { limit = { has_ambient_object_flag = sa_firing_at_sphere } destroy_ambient_object = this }
+				random_system_planet = { limit = { has_planet_flag = sa_firing_source } annihilator_death = yes }
+			}
+			every_country = {
+				limit = { ehof_default_country = yes }
+				country_event = { id = annihilator_dialog.013 days = 30 }							# Notification: SA died whilst attacking sphere.
+			}
+			event_target:creators_country = { country_event = { id = annihilator.012 days = 5 } }	# Kill Annihilator (For Good)
+		}
+
+		# Annihilator discoverer fleet
+		else_if = {
+			limit = { fromfrom = { is_same_value = event_target:discoverer_fleet } }
+			clear_global_event_target = discoverer_fleet
+			event_target:discoverer_country = {
+				random_owned_fleet = {
+					limit = {
+						NOR = {
+							is_ship_class = shipclass_starbase
+							is_ship_class = shipclass_military_special
+							is_ship_class = shipclass_military_station
+							is_ship_class = shipclass_transport
+						}
+						fleet_power > 1
+					}
+					save_global_event_target_as = discoverer_fleet
+				}
+			}
+		}
+
+		# Annihilator
+		else_if = {
+			limit = { fromfrom = { is_ship_size = annihilator } }
+			remove_global_flag = annihilator_returned
+			set_timed_global_flag = { flag = annihilator_returning days = @ehof_ui_notification_time }
+		}
+	}
+}
+
+# on_monthly_pulse - Annihilator Fleet Order
+event = {
+    id = annihilator.013
+    hide_window = yes
+    is_triggered_only = yes
+
+    trigger = { any_country = { is_country_type = creators } }
+
+    immediate = {
+		if = {
+			limit = {
+				exists = event_target:ehof_annihilator
+				event_target:annihilator_location = { NOT = { is_same_value = event_target:compound_capital_system.star } }
+			}
+			if = {		limit = { exists = event_target:ehof_annihilator has_global_flag = sa_target_defend }	annihilator_defend = yes }
+			else_if = {	limit = { exists = event_target:ehof_annihilator has_global_flag = sa_target_compound }	annihilator_attack = yes }
+			else_if = {	limit = { exists = event_target:ehof_annihilator has_global_flag = sa_target_sphere }	annihilator_sphere = yes }
+			else_if = {	limit = { exists = event_target:ehof_annihilator has_global_flag = sa_target_follow }	annihilator_follow = yes }
+		}
+
+		event_target:creators_country = {
+			# If admiral dies, replace it
+			if = {
+				limit = { count_pool_leader = { limit = { leader_class = admiral } count < 1 } }
+				create_leader = {
+					class = admiral
+					species = event_target:creators_species
+					name = random
+					skill = 10
+					immortal = yes
+				}
+				last_created_leader = { save_global_event_target_as = annihilator_admiral }
+			}
+
+			# If SA dies, replace it and reward the compound with a fleet
+			if = {
+				limit = {
+					num_fleets < 1
+					has_global_flag = annihilator_spawned
+					NOR = {
+						has_global_flag = annihilator_dead
+						has_global_flag = annihilator_firing
+						has_global_flag = annihilator_shroud
+					}
+				}
+				event_target:compound_invasion_entry.star = { planet_event = { id = compound_fleet_spawn.002 } }	# Compound is rewarded
+				event_target:creators_country = {
+					set_global_flag = annihilator_shroud
+					country_event = { id = annihilator.005 days = @annihilator_shroud_time }						# Respawn Annihalor at discoverer capital
+				}
+			}
+		}
+	}
+}
+
+##################################################################################################################
+# TRIGGERED EVENTS ###############################################################################################
+##################################################################################################################
+# SPAWN EVENTS #
+################
+
+# Spawn Stellar Annihilator Country
+country_event = {
+	id = annihilator.001
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		# Species
+		create_species = {
+			name = "NAME_Stellar_Annihilator_Species"
+			class = creators
+			portrait = creators1
+			traits = random
+			effect = { save_global_event_target_as = creators_species }
+		}
+
+		# Country
+		create_country = {
+			name = "NAME_Stellar_Annihilator_Country"
+			type = "creators"
+			species = event_target:creators_species
+			name_list = "creators"
+			flag = {
+				icon= {
+					category = "special"
+					file = "creator_flag.dds"
+				}
+				background= {
+					category = "backgrounds"
+					file = "sa.dds"
+				}
+				colors={
+					"beige"
+					"beige"
+					"null"
+					"null"
+				}
+			}
+			ethos = random
+			authority = random
+			civics = random
+		}
+
+		# Set Leader / Graphical Culture
+		last_created_country = {
+			create_leader = {
+				class = admiral
+				species = event_target:creators_species
+				name = random
+				skill = 10
+				immortal = yes
+				effect = { save_global_event_target_as = annihilator_admiral }
+			}
+			create_leader = {
+				class = ruler
+				species = event_target:creators_species
+				name = random
+				immortal = yes
+				effect = { save_global_event_target_as = annihilator_ruler }
+			}
+			set_subject_of = {
+				who = event_target:discoverer_country
+				subject_type = guardian
+			}
+			add_modifier = { modifier = compound_weakness days = -1 }
+			set_leader = event_target:annihilator_ruler
+			set_graphical_culture = creators_01
+			set_country_flag = day_0
+			save_global_event_target_as = creators_country
+		}
+
+		# Open Comms
+		every_country = {
+			limit = { ehof_default_country = yes }
+			establish_communications_no_message = event_target:creators_country
+		}
+
+		# Contact players
+		every_country = {
+			limit = { is_ai = no }
+			country_event = { id = annihilator_dialog.001 days = 2 }
+		}
+	}
+}
+
+# If discoverer declines to repair the annihilator, ask someone else
+country_event = {
+	id = annihilator.015
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+
+		# Ask player who has not declined, with an EHOF
+		if = {
+			limit = {
+				any_country = {
+					is_ai = no
+					NOT = { has_country_flag = sa_picked_declined }
+					check_variable = { which = ehof_phase value > 0 }
+				}
+			}
+			random_country = {
+				limit = {
+					is_ai = no
+					NOT = { has_country_flag = sa_picked_declined }
+					check_variable = { which = ehof_phase value > 0 }
+				}
+				save_discoverer = yes
+				country_event = { id = annihilator_dialog.005 }
+			}
+		}
+
+		# Ask player who has not declined, without an EHOF
+		else_if = {
+			limit = { any_country = { is_ai = no NOT = { has_country_flag = sa_picked_declined } } }
+			random_country = {
+				limit = { is_ai = no NOT = { has_country_flag = sa_picked_declined } }
+				save_discoverer = yes
+				country_event = { id = annihilator_dialog.005 }
+			}
+		}
+
+		# Give AI with an EHOF
+		else_if = {
+			limit = {
+				any_country = {
+					check_variable = { which = ehof_phase value > 0 }
+					NOT = { has_country_flag = sa_picked_declined }
+				}
+			}
+			random_country = {
+				limit = {
+					check_variable = { which = ehof_phase value > 0 }
+					NOT = { has_country_flag = sa_picked_declined }
+				}
+				save_discoverer = yes
+				enable_special_project = {
+					name = "REPAIR_ANNIHILATOR"
+					owner = this
+					location = this.capital_scope
+				}
+			}
+		}
+
+		# Give AI without an EHOF
+		else = {
+			random_country = {
+				limit = {
+					is_ai = yes
+					ehof_default_country = yes
+				}
+				save_discoverer = yes
+				enable_special_project = {
+					name = "REPAIR_ANNIHILATOR"
+					owner = this
+					location = this.capital_scope
+				}
+			}
+		}
+	}
+}
+
+####################################
+# Stellar Annihilator End Sequence #
+####################################
+# Annihilator is at firing location
+planet_event = {
+	id = annihilator.008
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_global_flag = annihilator_firing
+
+		# Place fake Annihilator
+		event_target:compound_capital_system = {
+			random_system_planet = {
+				limit = { has_planet_flag = sa_firing_source }
+				create_ambient_object = {
+					type = "sa_firing_at_sphere"
+					location = this
+					use_3d_location = yes
+					base_angle_towards = star
+					entity_face_object = star
+					entity_offset = 0
+					entity_scale_to_size = yes
+					entity_offset_height = 17
+				}
+				last_created_ambient_object = { set_ambient_object_flag = sa_firing_at_sphere }
+			}
+		}
+
+		# Remove real Annihilator and place a fake one (For health bar)
+		delete_annihilator = yes
+		create_fleet = {
+			name = NAME_Stellar_Annihilator_SK
+			settings = {
+				uses_naval_capacity = no
+				spawn_debris = no
+				is_boss = yes
+			}
+			effect = {
+				create_ship = {
+					name = "NAME_Stellar_Annihilator_SK"
+					design = NAME_Stellar_Annihilator_SK
+					graphical_culture = "creators_01"
+				}
+				clear_global_event_target = ehof_annihilator
+				save_global_event_target_as = ehof_annihilator
+				set_owner = event_target:creators_country
+				set_formation_scale = 1
+				set_fleet_stance = passive
+				set_aggro_range_measure_from = self
+				set_aggro_range = 0
+				set_location = {
+					target = prev
+					distance = 0
+					angle = random
+				}
+				queue_actions = {
+					wait = 9999
+				}
+			}
+		}
+		set_global_flag = annihilator_destroyed_sphere
+		planet_event = { id = compound_end.001 days = @crisis_sa_destroy_sphere } # Time it takes to destroy sphere
+	}
+}
+
+# Remove Annihilator permanently
+country_event = {
+	id = annihilator.012
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		every_country = {
+			limit = { has_country_flag = annihilator_discoverer }
+			remove_country_flag = annihilator_discoverer
+		}
+		destroy_annihilator = yes
+		set_global_flag = annihilator_dead
+		clear_global_event_target = discoverer_country
+		clear_global_event_target = discoverer_fleet
+		clear_global_event_target = discoverer_system
+		remove_global_flag = annihilator_returned
+		remove_global_flag = annihilator_returning
+		random_country = { limit = { is_country_type = creators } destroy_country = yes }
+	}
+}
+
+################
+# SHROUD EVENTS #
+################
+# Shroud FTL: Compound capital if player reaches it first
+country_event = {
+	id = annihilator.006
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		event_target:compound_capital_system = {
+			NOT = {
+				any_fleet_in_system = {
+					OR = {
+						is_ship_size = annihilator
+						is_ship_size = annihilator_sk
+					}
+				}
+			}
+		}
+	}
+
+	immediate = {
+		event_target:compound_capital_system = {
+
+			# Spawn SA at a distance from sphere and set to passive
+			star = { set_annihilator_spawn = yes }
+			create_annihilator = yes
+			last_created_fleet = {
+				assign_leader = event_target:annihilator_admiral
+				set_formation_scale = 1
+				set_fleet_stance = passive
+				set_aggro_range_measure_from = self
+				set_aggro_range = 500
+				set_location = {
+					target = event_target:annihilator_spawn_here
+					distance = 200
+					angle = random
+				}
+			}
+
+			# Move the SA to firing position
+			event_target:ehof_annihilator = {
+				clear_fleet_actions = this
+				remove_global_flag = sa_target_defend
+				remove_global_flag = sa_target_compound
+				remove_global_flag = sa_target_sphere
+				remove_global_flag = sa_target_follow
+				queue_actions = {
+					find_random_planet = {
+						trigger = {
+							id = kill_sphere.4
+							has_planet_flag = sa_firing_source
+						}
+						found_planet = {
+							move_to = this
+							effect = {
+								id = kill_sphere.5
+								planet_event = { id = annihilator.008 days = 4 }
+							}
+						}
+					}
+					find_random_planet = {
+						trigger = {
+							id = kill_sphere.6
+							has_planet_flag = compound_home_sphere
+						}
+						found_planet = {
+							move_to = this
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+# Shroud FTL: Discoverer capital in x days
+country_event = {
+	id = annihilator.005
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_global_flag = annihilator_spawned
+		NOR = {
+			has_global_flag = annihilator_dead
+			exists = event_target:ehof_annihilator
+		}
+	}
+
+	immediate = {
+		remove_global_flag = annihilator_shroud
+		event_target:discoverer_country.capital_scope = { set_annihilator_spawn = yes }
+		annihilator_spawn = yes
+	}
+}
+
+# Shroud FTL: Followed fleet
+country_event = {
+	id = annihilator.016
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		remove_global_flag = annihilator_shroud
+		event_target:discoverer_fleet.solar_system.star = { set_annihilator_spawn = yes }
+		annihilator_spawn = yes
+
+		# Follow fleet
+		event_target:ehof_annihilator = {
+			clear_fleet_actions = this
+			clear_orders = yes
+			remove_auto_move_target = yes
+			auto_follow_fleet = {
+				target = event_target:discoverer_fleet
+				attack_fleet = no
+			}
+		}
+	}
+}
