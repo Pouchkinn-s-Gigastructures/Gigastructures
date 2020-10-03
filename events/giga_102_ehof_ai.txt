@@ -94,8 +94,8 @@ country_event = {
 
 		# Generate the system
 		if = { limit = { check_variable = { which = ehof_phase value >= 3 } } set_global_flag = ehof_can_roll_advanced }
-		if = { limit = { exists = event_target:ehof_system_creator } clear_global_event_target = ehof_system_creator }
-		save_global_event_target_as = ehof_system_creator
+		if = { limit = { exists = event_target:current_system_creator } clear_global_event_target = current_system_creator }
+		save_global_event_target_as = current_system_creator
 		ehof_generate_system = yes
 		random_country = { limit = { is_country_type = global_event } change_variable = { which = counting_ehof_usage value = 1 } }
 		set_country_flag = ehof_ai_system_ready
@@ -119,17 +119,26 @@ country_event = {
 		every_system = {
 			limit = {
 				has_star_flag = ehof_system_created_by_@root
-				ehof_cohesive_system = yes
+				cohesive_system = yes
 				NOT = { exists = starbase }
 			}
 
-			set_star_flag = ehof_visited_anyone
-			set_star_flag = ehof_visited@root
+			set_star_flag = empire_has_visited_anyone
+			set_star_flag = empire_has_visited@root
 			every_system_planet = { surveyed = { set_surveyed = yes surveyor = root } }
 			create_starbase = { size = starbase_outpost owner = root }
-			random_list = {
-				90 = { ehof_generate_hyperlane = yes }
-				10 = { while = { count = 2 ehof_generate_hyperlane = yes } }
+
+			# Create Hyperlane
+			root = { change_variable = { which = country_ehof_systems value = 1 } }
+			if = {
+				limit = {
+					has_star_flag = ehof_sector_system_@root										# Must be a sector system
+					root = { check_variable = { which = country_ehof_systems value > 1 } }			# Make sure the first system doesn't connect
+				}
+				random_list = {
+					90 = { ehof_generate_hyperlane = yes }
+					10 = { while = { count = 2 ehof_generate_hyperlane = yes } }
+				}
 			}
 
 			if = {
@@ -199,7 +208,7 @@ country_event = {
 		}
 		NOT = {
 			any_system_within_border = {
-				ehof_cohesive_system = yes
+				cohesive_system = yes
 				any_fleet_in_system = {
 					is_ship_class = shipclass_science_ship
 					exists = leader
@@ -211,7 +220,7 @@ country_event = {
 	immediate = {
 		set_timed_country_flag = { flag = ehof_ai_has_ship_in_cluster days = 180 }
 		random_system_within_border = {
-			limit = { ehof_cohesive_system = yes }
+			limit = { cohesive_system = yes }
 			create_fleet = {
 				effect = {
 					set_owner = root
@@ -241,7 +250,7 @@ country_event = {
 			limit = {
 				is_ship_class = shipclass_science_ship
 				exists = solar_system
-				solar_system = { ehof_cohesive_system = yes }
+				solar_system = { cohesive_system = yes }
 			}
 			count > 1
 		}
@@ -254,7 +263,7 @@ country_event = {
 					limit = {
 						is_ship_class = shipclass_science_ship
 						exists = solar_system
-						solar_system = { ehof_cohesive_system = yes }
+						solar_system = { cohesive_system = yes }
 					}
 					count > 1
 				}
@@ -263,7 +272,7 @@ country_event = {
 				limit = {
 					is_ship_class = shipclass_science_ship
 					exists = solar_system
-					solar_system = { ehof_cohesive_system = yes }
+					solar_system = { cohesive_system = yes }
 				}
 				fleet = {
 					if = {
@@ -288,38 +297,18 @@ country_event = {
 		ehof_default_country = yes
 
 		any_system_within_border = {
-			ehof_cohesive_system = yes
-
-			# Can upgrade pylon if
+			cohesive_system = yes
+			has_star_flag = ehof_sector_system_@root
 			OR = {
-				# Is not a sector system
-				NOT = { has_star_flag = ehof_sector_system_@root }
-
-				# Is the first system
-				AND = {
-					has_star_flag = ehof_sector_system_@root
-					OR = {
-						has_megastructure = ehof_pgate_gateway
-						has_megastructure = ehof_pgate_unknown
-					}
+				has_megastructure = ehof_pgate_gateway
+				has_megastructure = ehof_pgate_unknown
+				count_system = {
+					limit = { has_hyperlane_to = prev }
+					count >= 3
 				}
-
-				# Has 3 or more neighboring systems
-				AND = {
-					has_star_flag = ehof_sector_system_@root
-					count_system = {
-						limit = { has_hyperlane_to = prev }
-						count >= 3
-					}
-				}
-
-				# Has an neighboring country
-				AND = {
-					has_star_flag = ehof_sector_system_@root
-					any_neighbor_system = {
-						exists = owner
-						owner = { NOT = { is_same_value = root } }
-					}
+				any_neighbor_system = {
+					exists = owner
+					owner = { NOT = { is_same_value = root } }
 				}
 			}
 		}
@@ -328,46 +317,23 @@ country_event = {
 	immediate = {
 		every_system_within_border = {
 			limit = {
-				ehof_cohesive_system = yes
-
-				# Can upgrade pylon if
+				cohesive_system = yes
+				has_star_flag = ehof_sector_system_@root
 				OR = {
-					# Is not a sector system
-					NOT = { has_star_flag = ehof_sector_system_@root }
-
-					# Is the first system
-					AND = {
-						has_star_flag = ehof_sector_system_@root
-						OR = {
-							has_megastructure = ehof_pgate_gateway
-							has_megastructure = ehof_pgate_unknown
-						}
+					has_megastructure = ehof_pgate_gateway
+					has_megastructure = ehof_pgate_unknown
+					count_system = {
+						limit = { has_hyperlane_to = prev }
+						count >= 3
 					}
-
-					# Has 3 or more neighboring systems
-					AND = {
-						has_star_flag = ehof_sector_system_@root
-						count_system = {
-							limit = { has_hyperlane_to = prev }
-							count >= 3
-						}
-					}
-
-					# Has an neighboring country
-					AND = {
-						has_star_flag = ehof_sector_system_@root
-						any_neighbor_system = {
-							exists = owner
-							owner = { NOT = { is_same_value = root } }
-						}
+					any_neighbor_system = {
+						exists = owner
+						owner = { NOT = { is_same_value = root } }
 					}
 				}
 			}
 			set_star_flag = ehof_ai_pylon
-			if = {
-				limit = { root = { has_technology = tech_ehof_use_gateway } }
-				ehof_change_pylon = yes
-			}
+			upgrade_system_unknown_pylon = yes
 		}
 	}
 }
