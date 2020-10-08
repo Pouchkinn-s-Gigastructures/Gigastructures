@@ -593,24 +593,33 @@ country_event = {
 	hide_window = yes
 	is_triggered_only = yes
 
-	immediate = {
-		# Mod compatibility check error
-		country_event = { id = ehof_megastructure.004 days = 30 }
-
-		every_system = {
-			limit = {
-				has_star_flag = empire_home_system
-				NOT = { has_star_flag = ehof_precursor_spawned }
-				any_ship_in_system = {
-					is_ship_class = shipclass_starbase
-					owner = { ehof_default_country = yes }
-				}
+	trigger = {
+		capital_scope.solar_system = {
+			NOT = { has_star_flag = ehof_precursor_spawned }
+		}
+		OR = {
+			is_ai = no
+			any_country = {
+				is_country_type = global_event
+				check_variable = { which = chk_precursor_cap value < giga_ehof_ai_cap }
 			}
-			owner = { save_event_target_as = ehof_precursor_owner }
+		}
+	}
+
+	immediate = {
+		save_event_target_as = ehof_precursor_owner
+		if = {
+			limit = { is_ai = yes }
+			random_country = {
+				limit = { is_country_type = global_event }
+				change_variable = { which = chk_precursor_cap value = 1 }
+			}
+		}
+		capital_scope.solar_system = {
 			set_star_flag = ehof_precursor_spawned
 			random_system = {
 				limit = {
-					NOT = { has_star_flag = empire_home_system }
+					NOT = { is_same_value = prev }
 					distance = {
 						source = prev
 						use_bypasses = no
@@ -731,75 +740,93 @@ fleet_event = {
 # Stage 4
 fleet_event = {
 	id = ehof_megastructure.00531
-	title = ehof_megastructure.00531.name
-	desc = ehof_megastructure.00531.desc
+	title = "ehof_megastructure.00531.name"
+	desc = "ehof_megastructure.00531.desc"
 	picture = GFX_evt_orange_bolt
 	show_sound = event_dig_site
 	location = from
 	archaeology = yes
 	is_triggered_only = yes
 
+	after = { from = { set_site_progress_locked = no } }
 	immediate = {
+		from = { set_site_progress_locked = yes }
+
 		solar_system = {
 			random_system_planet = {
 				limit = { has_planet_flag = ehof_precursor@root.owner }
 				save_event_target_as = ehof_precursor
 			}
 		}
-		from = { set_site_progress_locked = yes }
 
-		owner = {
-			capital_scope.solar_system = {
-				random_list = {
-					5 = {
-						spawn_system = {
-							initializer = ehof_blackhole_init_system
-							min_jumps = 1
-							max_jumps = 3
+		owner.capital_scope.solar_system = {
+			random_list = {
+				3 = {
+					spawn_system = {
+						initializer = ehof_blackhole_init_system
+						min_distance = 10
+						max_distance = 40
+						max_jumps = 0
+					}
+					closest_system = {
+						limit = {
+							has_star_flag = additional_blackhole
+							NOT = { has_star_flag = ehof_blackhole_@root.owner }
 						}
-						closest_system = {
-							limit = {
-								has_star_flag = additional_blackhole
-								NOT = { has_star_flag = ehof_blackhole_@root.owner }
-							}
-							giga_field_system_debris = yes
-							set_star_flag = ehof_blackhole_@root.owner
-							root.owner = {
-								enable_special_project = {
-									name = EXPLORE_EHOF_PRECURSOR_NO_RUINED
-									location = prev.star
-									owner = this
-								}
+						every_neighbor_system = {
+							limit = { has_hyperlane_to = prev }
+							remove_hyperlane = { from = prev to = this }
+						}
+						random_list = {
+							3 = { while = { count = 1 ehof_generate_hyperlane = yes } }
+							2 = { while = { count = 2 ehof_generate_hyperlane = yes } }
+							1 = { while = { count = 3 ehof_generate_hyperlane = yes } }
+						}
+						giga_field_system_debris = yes
+						set_star_flag = ehof_blackhole_@root.owner
+						root.owner = {
+							enable_special_project = {
+								name = "EXPLORE_EHOF_PRECURSOR_NO_RUINED"
+								location = prev.star
+								owner = this
 							}
 						}
 					}
-					1 = {
-						spawn_system = {
-							initializer = ehof_unique_ruined
-							min_jumps = 1
-							max_jumps = 3
+				}
+				1 = {
+					spawn_system = {
+						initializer = ehof_unique_ruined
+						min_distance = 10
+						max_distance = 40
+						max_jumps = 0
+					}
+					closest_system = {
+						limit = {
+							has_star_flag = ruined_ehof_system
+							NOT = { has_star_flag = ehof_blackhole_@root.owner }
 						}
-						closest_system = {
-							limit = {
-								has_star_flag = ruined_ehof_system
-								NOT = { has_star_flag = ehof_blackhole_@root.owner }
-							}
-							set_star_flag = ehof_blackhole_@root.owner
-							root.owner = {
-								enable_special_project = {
-									name = EXPLORE_EHOF_PRECURSOR_RUINED
-									location = prev.star
-									owner = this
-								}
+						every_neighbor_system = {
+							limit = { has_hyperlane_to = prev }
+							remove_hyperlane = { from = prev to = this }
+						}
+						random_list = {
+							3 = { while = { count = 1 ehof_generate_hyperlane = yes } }
+							2 = { while = { count = 2 ehof_generate_hyperlane = yes } }
+							1 = { while = { count = 3 ehof_generate_hyperlane = yes } }
+						}
+						set_star_flag = ehof_blackhole_@root.owner
+						root.owner = {
+							enable_special_project = {
+								name = "EXPLORE_EHOF_PRECURSOR_RUINED"
+								location = prev.star
+								owner = this
 							}
 						}
 					}
 				}
 			}
 		}
-
 	}
-	after = { from = { set_site_progress_locked = no } }
 
 	option = {
 		default_hide_option = yes
@@ -870,14 +897,6 @@ country_event = {
 		add_tech_progress = { tech = tech_abstract_1 progress = 0.1 }
 		if = { limit = { has_ancrel = yes } small_artifact_reward = yes }
 	}
-}
-
-event = {
-	id = ehof_megastructure.006
-	hide_window = yes
-	is_triggered_only = yes
-
-	immediate = { set_global_flag = event_horizon_offset_facility }
 }
 
 # Mark system as visited
