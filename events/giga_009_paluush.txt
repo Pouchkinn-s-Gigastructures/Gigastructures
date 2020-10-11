@@ -384,6 +384,9 @@ country_event = {
 
 	option = {
 		name = "giga_paluush.400.a"
+		hidden_effect = {
+			country_event = { id = giga_paluush.402 days = 10 }
+		}
 	}
 }
 
@@ -405,7 +408,25 @@ planet_event = {
 	}
 }
 
+country_event = {
+	id = giga_paluush.402
+	title = "giga_paluush.402.title"
+	desc = "giga_paluush.402.desc"
+	show_sound = event_mystic_reveal
+	picture = GFX_evt_shrouded
+	is_triggered_only = yes
 
+	option = {
+		name = "giga_paluush.402.a"
+		add_relic = r_soul_of_grandbunny
+		if = {
+			limit = {
+				NOT = { has_technology = tech_psionic_theory }
+			}
+			add_research_option = tech_psionic_theory
+		}
+	}
+}
 
 namespace = giga_katzenland
 
@@ -699,6 +720,11 @@ fleet_event = {
 
 	option = {
 		name = "giga_katzenland.009.a"
+		trigger = {
+			owner = {
+				NOT = { has_country_flag = found_flusion_katzens }
+			}
+		}
 		owner = {
 			set_country_flag = found_katzenland_katzens
 			small_artifact_reward = yes
@@ -722,6 +748,509 @@ fleet_event = {
 				min = @tier5researchmin
 				max = @tier5researchmax
 			}
+		}
+	}
+
+	option = {
+		name = "giga_katzenland.009.b"
+		trigger = {
+			owner = {
+				has_country_flag = found_flusion_katzens
+			}
+		}
+		owner = {
+			hidden_effect = {
+				if = {
+					limit = {
+						has_country_flag = flusion_katzens_nuked
+						OR = {
+							has_ethic = ethic_militarist
+							has_ethic = ethic_fanatic_militarist
+							has_ethic = ethic_fanatic_xenophobe
+							has_valid_civic = civic_fanatic_purifiers
+							has_valid_civic = civic_hive_devouring_swarm
+							has_valid_civic = civic_machine_terminator
+						}
+					}
+					country_event = { id = giga_flusion.005 days = 60 random = 10 } #Reverse-engineer Katzen nuking
+				}
+			}
+			country_event = { id = giga_flusion.002 }
+			set_country_flag = found_katzenland_katzens
+			small_artifact_reward = yes
+			if = {
+				limit = {
+					NOT = { has_technology = giga_tech_terraform_barren }
+				}
+				add_research_option = giga_tech_terraform_barren
+				add_tech_progress = {
+					tech = giga_tech_terraform_barren
+					progress = 0.25
+				}
+			}
+			add_modifier = {
+				modifier = katzenland_terraform_knowledge
+				days = -1
+			}
+			add_monthly_resource_mult = {
+				resource = society_research
+				value = @tier5researchreward
+				min = @tier5researchmin
+				max = @tier5researchmax
+			}
+		}
+	}
+}
+
+namespace = giga_flusion
+
+#######################################################
+### Flusion ###########################################
+#######################################################
+ship_event = {
+	id = giga_flusion.001
+	title = "giga_flusion.001.name"
+	desc = "giga_flusion.001.desc"
+	picture = GFX_evt_assembly_fight
+	show_sound = event_primitive_civilization
+	location = from
+	is_triggered_only = yes
+	trigger = { 
+		from = { 
+			AND = {
+				has_planet_flag = gigaflusion
+				NOR = {
+					is_planet_class = pc_nuked # Not a nuclear war
+					is_planet_class = pc_katzenland # Didn't get invaded & nuked
+				}
+				owner = {
+					has_country_flag = flusion_primitives # Didn't get taken over
+				}
+			}
+		} 
+	}
+
+	immediate = {
+		owner = {
+			set_country_flag = found_flusion_katzens
+		}
+	}
+
+	option = {
+		name = "giga_flusion.001.a"
+		trigger = {
+			owner = {
+				NOT = { has_country_flag = found_katzenland_katzens }
+			}
+		}
+		owner = {
+			add_monthly_resource_mult = {
+				resource = society_research
+				value = @tier3researchreward
+				min = @tier3researchmin
+				max = @tier3researchmax
+			}
+		}
+	}
+
+	option = {
+		name = "giga_flusion.001.b"
+		trigger = {
+			owner = {
+				has_country_flag = found_katzenland_katzens
+			}
+		}
+		hidden_effect = {
+			owner = {
+				country_event = { id = giga_flusion.002 }
+			}
+		}
+	}
+}
+
+#Found both Katzenland and Flusion
+country_event = {
+	id = giga_flusion.002
+	title = "giga_flusion.002.name"
+	desc = "giga_flusion.002.desc"
+	picture = GFX_evt_atmospheric_flight
+	show_sound = event_alien_signal
+	is_triggered_only = yes
+
+	immediate = {
+		owner = {
+			set_country_flag = found_all_katzens
+		}
+	}
+
+	option = {
+		name = "giga_flusion.002.a"
+		add_monthly_resource_mult = {
+			resource = society_research
+			value = @tier5researchreward
+			min = @tier5researchmin
+			max = @tier5researchmax
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = @tier4unityreward
+			min = @tier4unitymin
+			max = @tier4unitymax
+		}
+	}
+}
+
+country_event = {
+	id = giga_flusion.003
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		from = {
+			AND = {
+				is_country_type = primitive
+				has_country_flag = flusion_primitives
+			}
+		}
+	}
+	
+	immediate = { 
+		if = {
+			limit = { #50% chance of katzen nuke if not genocidal
+				NOR = {
+					has_valid_civic = civic_fanatic_purifiers
+					has_valid_civic = civic_hive_devouring_swarm
+					has_valid_civic = civic_machine_terminator
+				}
+			}
+			random_list = {
+				70 = {
+					country_event = { id = giga_flusion.004 }
+				}
+				30 = {}
+			}
+		}
+		else_if = { #Katzens always nuke if genocidal
+			limit = {
+				OR = {
+					has_valid_civic = civic_fanatic_purifiers
+					has_valid_civic = civic_hive_devouring_swarm
+					has_valid_civic = civic_machine_terminator
+				}
+			}
+			country_event = { id = giga_flusion.004 }
+		}
+	}
+}
+
+#Katzens nuke Flusion
+country_event = {
+	id = giga_flusion.004
+	title = "giga_flusion.004.name"
+	desc = {
+		text = "giga_flusion.004.a.desc"
+		trigger = { NOT = { has_country_flag = found_katzenland_katzens } }		
+	}
+	desc = {
+		text = "giga_flusion.004.b.desc"
+		trigger = { has_country_flag = found_katzenland_katzens }		
+	}
+	picture = GFX_evt_relic_world_street
+	show_sound = event_air_raid_siren
+	is_triggered_only = yes
+
+	immediate = {
+		event_target:gigaflusion = {
+			set_planet_flag = flusion_katzen_nuked
+			change_pc = pc_katzenland
+			clear_blockers = yes
+			clear_deposits = yes
+			add_planet_devastation = -100
+			add_deposit = d_bomb_crater
+			add_deposit = d_bomb_crater
+			add_deposit = d_bomb_crater
+			add_deposit = d_bomb_crater
+			add_deposit = d_bomb_crater
+			add_deposit = d_bomb_crater
+			add_deposit = d_bomb_crater
+			add_deposit = d_radioactive_wasteland
+			add_deposit = d_radioactive_wasteland
+			add_deposit = d_radioactive_wasteland
+			add_deposit = d_radioactive_wasteland
+			add_deposit = d_radioactive_wasteland
+			add_deposit = d_searing_desert
+			add_deposit = d_searing_desert
+			add_deposit = d_tempestous_mountain
+			add_deposit = d_geothermal_vent
+			add_deposit = d_ore_rich_caverns
+			add_deposit = d_rich_mountain
+			add_deposit = d_dust_desert
+			add_deposit = d_bubbling_swamp
+			add_modifier = {
+				modifier = "katzenland_planet" 
+				days = -1
+			}
+			set_planet_entity = {
+				entity = flusion_planet_deserted_entity
+			}
+			while = {
+				count = 3
+				remove_district = district_generator
+			}
+			while = {
+				count = 3
+				remove_district = district_mining
+			}
+			while = {
+				count = 3
+				remove_district = district_city
+			}
+			while = {
+				count = 3
+				remove_district = district_farming
+			}
+			while = {
+				count = 28
+				random_pop = { kill_pop = yes }
+			}
+		}
+	}
+
+	option = {
+		name = "giga_flusion.004.a"
+		trigger = {
+			NOT = { has_country_flag = found_katzenland_katzens }
+		}
+		hidden_effect = {
+			set_country_flag = flusion_katzens_nuked
+		}
+	}
+
+	option = {
+		name = "giga_flusion.004.b"
+		trigger = {
+			has_country_flag = found_katzenland_katzens
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					OR = {
+						has_ethic = ethic_militarist
+						has_ethic = ethic_fanatic_militarist
+						has_ethic = ethic_fanatic_xenophobe
+						has_valid_civic = civic_fanatic_purifiers
+						has_valid_civic = civic_hive_devouring_swarm
+						has_valid_civic = civic_machine_terminator
+					}
+				}
+				country_event = { id = giga_flusion.005 days = 60 random = 10 } #Reverse-engineer Katzen nuking
+			}
+		}
+	}
+}
+
+#Reverse-Engineer Katzen Nukes
+country_event = {
+	id = giga_flusion.005
+	title = "giga_flusion.005.name"
+	desc = "giga_flusion.005.desc"
+
+	picture = GFX_evt_relic_world_street
+	show_sound = event_radio_chatter
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_flusion.005.a"
+		add_research_option = tech_katzen_atomic_munitions
+		add_tech_progress = {
+			tech = tech_katzen_atomic_munitions
+			progress = 0.25
+		}
+	}
+
+	option = {
+		name = "giga_flusion.005.b"
+	}
+}
+
+#Flusion Textures
+event = {
+	id = giga_flusion.100
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		any_planet = {
+			AND = {
+				has_planet_flag = gigaflusion
+				owner = {
+					NOT = {
+						is_country_type = primitive #Not owned by primitives anymore
+					}
+				}
+				NOT = {
+					has_planet_flag = flusion_nuked #Didn't already apply it
+				}
+			}
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = { #Flusion got nuked
+				any_planet = {
+					has_planet_flag = gigaflusion
+					is_planet_class = pc_nuked
+				}
+			}
+			every_planet = {
+				limit = {
+					has_planet_flag = gigaflusion
+					is_planet_class = pc_nuked
+				}
+				set_planet_entity = {
+					entity = flusion_planet_nuked_entity
+				}
+				set_planet_flag = flusion_nuked
+			}
+		}
+		else_if = { #Flusion got invaded and Katzens nuked it
+			limit = {
+				any_planet = {
+					has_planet_flag = gigaflusion
+					is_planet_class = pc_katzenland
+				}
+			}
+			remove_modifier = culture_shock_machine_age
+			remove_modifier = culture_shock_atomic_age
+			remove_modifier = culture_shock_early_space_age
+			set_planet_flag = flusion_nuked
+		}
+	}
+}
+
+#Apply Katzen Engineering to a planet
+planet_event = {
+	id = giga_flusion.200
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_orbital_bombardment_stance = katzen
+		habitable_planet = yes
+	}
+
+	immediate = {
+		owner = {
+			add_static_war_exhaustion = {
+				attacker = from
+				location = root
+				value_for_planet_destruction = 0.5
+			}
+			set_country_flag = planet_got_katzenland
+			add_opinion_modifier = { who = from modifier = opinion_katzenland_my_planet }
+			save_event_target_as = empire_got_katzenland
+		}
+		every_country = { #Apply opinion modifiers
+			limit = {
+				NOT = { is_in_federation_with = from }
+				NOT = { is_subject = yes }
+				NOT = { has_ethic = ethic_fanatic_xenophobe } #Xenophobes don't care
+				OR = {
+					is_country_type = default
+					is_country_type = awakened_fallen_empire
+				}
+				NOT = { has_country_flag = planet_got_katzenland }
+				NOR = { #Genocidal empires don't care
+					has_valid_civic = civic_fanatic_purifiers
+					has_valid_civic = civic_hive_devouring_swarm
+					has_valid_civic = civic_machine_terminator
+					event_target:empire_got_katzenland = { has_valid_civic = civic_fanatic_purifiers }
+					event_target:empire_got_katzenland = { has_valid_civic = civic_hive_devouring_swarm }
+					event_target:empire_got_katzenland = { has_valid_civic = civic_machine_terminator }
+				}
+				OR = { #Only care if its a "normal" empire
+					event_target:empire_got_katzenland = { is_country_type = default }
+					event_target:empire_got_katzenland = { is_country_type = fallen_empire }
+					event_target:empire_got_katzenland = { is_country_type = awakened_fallen_empire }
+					event_target:empire_got_katzenland = { is_country_type = primitive }
+				}
+			}
+			add_opinion_modifier = { who = from modifier = opinion_katzenland_a_planet }
+		}
+		event_target:empire_got_katzenland = {
+			remove_country_flag = planet_got_katzenland
+		}
+		if = {
+			limit = {
+				habitable_structure = no
+			}
+			from = { country_event = { id = giga_flusion.201 } }
+			remove_all_buildings = yes
+			katzenland_clear_districts = yes
+			clear_blockers = yes
+			clear_deposits = yes
+			add_modifier = {
+				modifier = "irradiated_desert_planet" 
+				days = -1
+			}
+			while = {
+				count = 12
+				create_katzenland_deposits = yes
+			}
+			while = {
+				count = 28
+				random_pop = { kill_pop = yes }
+			}
+			remove_modifier = "natural_beauty"
+			remove_modifier = "atmospheric_aphrodisiac"
+			remove_modifier = "atmospheric_hallucinogen"
+			remove_modifier = "lush_planet"
+			remove_modifier = "dangerous_wildlife"
+			change_pc = pc_barren
+			change_pc = pc_katzenland
+		}
+		else_if = {
+			limit = {
+				OR = {
+					is_planet_class = pc_gigaorbital_ring
+					is_planet_class = pc_habitat
+				}
+			}
+			remove_planet = yes
+		}
+		else_if = {
+			limit = {
+				habitable_structure = yes
+				NOT = { is_planet_class = pc_habitat }
+			}
+			while = {
+				count = 28
+				random_pop = { kill_pop = yes }
+			}
+			remove_all_buildings = yes
+			katzenland_clear_districts = yes
+		}
+		set_planet_flag = katzen_nuked
+	}
+}
+
+country_event = {
+	id = giga_flusion.201
+	title = "giga_flusion.201.name"
+	desc = "giga_flusion.201.desc"
+	picture = GFX_evt_relic_world_street
+	show_sound = event_ghost_town
+	location = from
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_flusion.201.a"
+		add_monthly_resource_mult = {
+			resource = unity
+			value = @tier3unityreward
+			min = @tier3unitymin
+			max = @tier3unitymax
 		}
 	}
 }
