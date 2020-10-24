@@ -1,4 +1,4 @@
-name="Gigastructural Engineering & More (2.7)"
+name="Gigastructural Engineering & More (DEBUG)"
 version="2.7.*"
 tags={
 	"Gameplay"
