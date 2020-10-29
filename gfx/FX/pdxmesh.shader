@@ -2495,6 +2495,22 @@ Effect PdxMeshAlphaAdditiveAnimateUVErosion
 	Defines = { "ANIMATE_UV" "DISSOLVE" "DISSOLVE_USE_EROSION" }
 }
 
+Effect PdxMeshAlphaAdditiveAnimateUVErosionSkinned
+{
+	VertexShader = "VertexPdxMeshStandardSkinned"
+	PixelShader = "PixelPdxMeshAdditive"
+	BlendState = "BlendStateAdditiveBlend"
+	DepthStencilState = "DepthStencilNoZWrite"
+	Defines = { "ANIMATE_UV" "DISSOLVE" "DISSOLVE_USE_EROSION" }
+}
+
+Effect PdxMeshAlphaAdditiveAnimateUVErosionSkinnedShadow
+{
+VertexShader = "VertexPdxMeshStandardSkinnedShadow"
+	PixelShader = "PixelPdxMeshNoShadow"
+	Defines = { "IS_SHADOW" }
+}
+
 Effect PdxMeshColorAlphaAdditiveAnimateUV
 {
     VertexShader = "VertexPdxMeshStandard"
