@@ -63,94 +63,224 @@ country_event = {
 				add_deposit = d_segment_rubble_2
 			}
 
-			if = {	# farming districts : Behemoth ringworlds
-				limit = {
-					NOR = {
-						is_planet_class = pc_interstellar_ringworld_habitable
-						is_planet_class = pc_giga_penrose_habitable
-					}
-					root = {
-						OR = {
-							is_machine_empire = no
-							has_valid_civic = civic_machine_assimilator
-							has_valid_civic = civic_machine_servitor
-						}
-					}
-				}
-				add_district = district_rw_farming
-			}
-			else_if = {
-				limit = {
-					NOR = {
-						is_planet_class = pc_interstellar_ringworld_habitable
-						is_planet_class = pc_giga_penrose_habitable
-					}
-					root = { is_machine_empire = yes }
-				}
-				add_district = district_rw_generator
-			}
-			else_if = {	# farming districts : Penrose ringworlds
-				limit = {
-					is_planet_class = pc_giga_penrose_habitable
-					root = {
-						OR = {
-							is_machine_empire = no
-							has_valid_civic = civic_machine_assimilator
-							has_valid_civic = civic_machine_servitor
-						}
-					}
-				}
-				add_district = district_penrose_farming
-			}
-			else_if = {
-				limit = {
-					is_planet_class = pc_giga_penrose_habitable
-					root = { is_machine_empire = yes }
-				}
-				add_district = district_penrose_generator
-			}
-			else_if = {	# districts for interstellar ringworld
-				limit = {
-					is_planet_class = pc_interstellar_ringworld_habitable
-					root = { is_gestalt = no }
-				}
-				add_deposit = d_interstellar_ringworld_commerce_blocker
-				add_district = district_interstellar_commercial
-			}
-			else_if = {
-				limit = {
-					is_planet_class = pc_interstellar_ringworld_habitable
-					root = { is_gestalt = yes }
-				}
-				add_district = district_interstellar_generator
-			}
-
-			# hydroponic farm complex : Interstellar ringworld
+			### Behemoth ringworld
 			if = {
-				limit = {
-					is_planet_class = pc_interstellar_ringworld_habitable
-					root = {
-						OR = {
-							is_machine_empire = no
-							has_valid_civic = civic_machine_assimilator
-							has_valid_civic = civic_machine_servitor
+				limit = { is_planet_class = pc_ringworld_habitable }
+
+				# normal empires
+				if = {
+					limit = {
+						ROOT = { is_gestalt = no }
+					}
+					# is biological
+					if = {
+						limit = { ROOT = { is_lithoid_empire = no } }
+						add_district = district_rw_farming
+					}
+					# is lithoid
+					else = {
+						add_deposit = d_interstellar_ringworld_commerce_blocker
+						add_district = district_rw_commercial
+						add_deposit = d_great_ring_excavated_mountain
+					}
+				}
+				# hiveminds
+				if = {
+					limit = {
+						ROOT = { is_hive_empire = yes }
+					}
+					# is biological
+					if = {
+						limit = { ROOT = { is_lithoid_empire = no } }
+						add_district = district_rw_farming
+					}
+					# is lithoid
+					else = {
+						add_district = district_rw_generator
+						add_deposit = d_great_ring_excavated_mountain
+					}
+				}
+				# machine empires
+				else_if = {
+					limit = { is_machine_empire = yes }
+					# is normal machine empire
+					if = {
+						limit = {
+							ROOT = {
+								NOR = {
+									has_valid_civic = civic_machine_assimilator
+									has_valid_civic = civic_machine_servitor
+								}
+							}
+						}
+						add_district = district_rw_generator
+					}
+					else = {
+						# rogue servitor / determined assimilator with biological pops
+						if = {
+							limit = {
+								ROOT = { NOT = { any_owned_pop = { has_trait = trait_lithoid } } }
+							}
+							add_district = district_rw_nexus
+							add_building = building_giga_interstellar_hydroponic_farm
+							remove_deposit = d_segment_rubble_1
+							remove_deposit = d_segment_rubble_1
+							remove_deposit = d_segment_rubble_2
+							remove_deposit = d_segment_rubble_2
+						}
+						# rogue servitor / determined assimilator with lithoid pops
+						else = {
+							add_district = district_rw_nexus
+							add_deposit = d_great_ring_excavated_mountain
+							remove_deposit = d_segment_rubble_2
+							remove_deposit = d_segment_rubble_2
 						}
 					}
 				}
-				# guarantee an empty building slot - add 1 pop
-				create_pop = { species = owner }
-				add_building = building_giga_interstellar_hydroponic_farm
-				root = {
+			}
+			### Interstellar ringworld
+			else_if = {
+				limit = { is_planet_class = pc_interstellar_ringworld_habitable }
+
+				# normal empires
+				if = {
+					limit = { ROOT = { is_gestalt = no } }
+					# is biological
 					if = {
-						limit = { country_uses_food = yes }
-						give_technology = { tech = tech_hydroponics message = no }
+						limit = { ROOT = { is_lithoid_empire = no } }
+						add_deposit = d_interstellar_ringworld_commerce_blocker
+						add_district = district_interstellar_commercial
+						add_building = building_giga_interstellar_hydroponic_farm
+					}
+					# is lithoid
+					else = {
+						add_deposit = d_interstellar_ringworld_commerce_blocker
+						add_district = district_interstellar_commercial
+						add_deposit = d_great_ring_excavated_mountain
 					}
 				}
-				# remove deposits that reduce farming jobs for RS/DA since there are less than 10 such jobs as is
+				# hiveminds
+				else_if = {
+					limit = { ROOT = { is_hive_empire = yes } }
+					# is biological
+					if = {
+						limit = { ROOT = { is_lithoid_empire = no } }
+						add_district = district_interstellar_generator
+						add_building = building_giga_interstellar_hydroponic_farm
+					}
+					# is lithoid
+					else = {
+						add_district = district_interstellar_generator
+						add_deposit = d_great_ring_excavated_mountain
+					}
+				}
+				# machine empires
+				else_if = {
+					limit = { ROOT = { is_machine_empire = yes } }
+					# is normal machine empire
+					if = {
+						limit = {
+							ROOT = {
+								NOR = {
+									has_valid_civic = civic_machine_assimilator
+									has_valid_civic = civic_machine_servitor
+								}
+							}
+						}
+						add_district = district_interstellar_generator
+					}
+					else = {
+						# rogue servitor / determined assimilator with biological pops
+						if = {
+							limit = {
+								ROOT = { NOT = { any_owned_pop = { has_trait = trait_lithoid } } }
+							}
+							add_district = district_interstellar_generator
+							add_building = building_giga_interstellar_hydroponic_farm
+							remove_deposit = d_segment_rubble_1
+							remove_deposit = d_segment_rubble_1
+						}
+						# rogue servitor / determined assimilator with lithoid pops
+						else = {
+							add_district = district_interstellar_generator
+							add_deposit = d_great_ring_excavated_mountain
+						}
+					}
+				}
+			}
+			### Penrose ringworld
+			else_if = {
+				limit = { is_planet_class = pc_giga_penrose_habitable }
+
+				# normal empires
 				if = {
-					limit = { has_deposit = d_segment_rubble_1 }
-					remove_deposit = d_segment_rubble_1
-					remove_deposit = d_segment_rubble_1
+					limit = {
+						ROOT = { is_gestalt = no }
+					}
+					# is biological
+					if = {
+						limit = { ROOT = { is_lithoid_empire = no } }
+						add_district = district_penrose_farming
+					}
+					# is lithoid
+					else = {
+						add_deposit = d_interstellar_ringworld_commerce_blocker
+						add_district = district_penrose_commercial
+						add_deposit = d_great_ring_excavated_mountain
+					}
+				}
+				# hivemind empires
+				if = {
+					limit = {
+						ROOT = { is_hive_empire = yes }
+					}
+					# is biological
+					if = {
+						limit = { ROOT = { is_lithoid_empire = no } }
+						add_district = district_penrose_farming
+					}
+					# is lithoid
+					else = {
+						add_district = district_penrose_generator
+						add_deposit = d_great_ring_excavated_mountain
+					}
+				}
+				# machine empires
+				else_if = {
+					limit = { ROOT = { is_machine_empire = yes } }
+					# is normal machine empire
+					if = {
+						limit = {
+							ROOT = {
+								NOR = {
+									has_valid_civic = civic_machine_assimilator
+									has_valid_civic = civic_machine_servitor
+								}
+							}
+						}
+						add_district = district_penrose_generator
+					}
+					else = {
+						# rogue servitor / determined assimilator with biological pops
+						if = {
+							limit = {
+								ROOT = { NOT = { any_owned_pop = { has_trait = trait_lithoid } } }
+							}
+							add_district = district_penrose_nexus
+							add_building = building_giga_interstellar_hydroponic_farm
+							remove_deposit = d_segment_rubble_1
+							remove_deposit = d_segment_rubble_1
+							remove_deposit = d_segment_rubble_2
+							remove_deposit = d_segment_rubble_2
+						}
+						# rogue servitor / determined assimilator with lithoid pops
+						else = {
+							add_district = district_penrose_nexus
+							add_deposit = d_great_ring_excavated_mountain
+							remove_deposit = d_segment_rubble_2
+							remove_deposit = d_segment_rubble_2
+						}
+					}
 				}
 			}
 
