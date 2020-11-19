@@ -1,0 +1,278 @@
+namespace = giga_katzenai
+
+
+country_event = { #Fetch a transport fleet and throw it at an enemy planet in a system with NO enemy ships.
+	id = giga_katzenai.010
+	
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		any_country = {
+			is_country_type = katzenartig_imperium
+		}
+	}
+
+	immediate = {
+		country_event = { id = giga_katzenai.010 days = 60 }
+		random_planet = { #Locate a planet
+			limit = {
+				is_colony = yes
+				NOR = {
+					has_planet_flag = katzen_invasion_target
+					has_planet_flag = paluushia #duh
+				}
+				owner = {
+					OR = {
+						is_at_war_with = event_target:flusion_primitives_country
+						is_hostile = event_target:flusion_primitives_country
+						is_country_type = primitive
+					}
+					NOR = { 
+						is_country_type = katzenartig_imperium
+					}
+				}
+				solar_system = {
+					any_neighbor_system = {
+						owner = { is_country_type = katzenartig_imperium }
+					}
+					NOT = {
+						any_fleet_in_system = { #no hostiles
+							owner = {
+								OR = {
+									is_at_war_with = event_target:flusion_primitives_country
+									is_hostile = event_target:flusion_primitives_country
+								}
+							}
+						}
+					}
+				}
+			}
+			set_planet_flag = katzen_invasion_target
+			save_global_event_target_as = katzen_invasion_target
+		}
+		every_planet = {
+			limit = {
+				has_planet_flag = katzen_invasion_target
+				owner = { is_country_type = katzenartig_imperium }
+			}
+			remove_planet_flag = katzen_invasion_target
+		}
+		if = {
+			limit = {
+				any_planet = { has_planet_flag = katzen_invasion_target }
+			}
+			event_target:katzen_invasion_target = {
+				if = {
+					limit = { #anger primitives
+						owner = {
+							is_country_type = primitive
+						}
+					}
+					owner = {
+						set_faction_hostility = { 
+							target = event_target:flusion_primitives_country
+							set_hostile = yes
+						}					
+					}
+				}
+				solar_system = {
+					closest_system = { #fetch a fleet to invade it
+						limit = {
+							any_fleet_in_system = {
+								owner = { is_country_type = katzenartig_imperium }
+								has_fleet_flag = katzen_troop_fleet						
+								NOT = { has_fleet_flag = katzen_moving_to_invade }
+							}
+						}
+						min_steps = 1
+						max_steps = 15
+						random_fleet_in_system = {
+							limit = {
+								has_fleet_flag = katzen_troop_fleet
+							}
+							set_timed_fleet_flag = {
+								flag = katzen_moving_to_invade
+								days = 360
+							}
+							queue_actions = {
+								move_to = event_target:katzen_invasion_target
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+#KAISER MOON RECALL#
+planet_event = {
+	id = giga_katzenai.011
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_planet_flag = gigaflusion #planet flag
+		NOT = {
+			has_planet_flag = kaiser_moon_recall_cooldown #no cooldown
+		}
+		any_country = {
+			is_country_type = katzenartig_imperium #katzens still exist
+		}
+		any_ship = {
+			is_ship_size = giga_kaiser_moon_flusion #kaiser moon is still around
+		}
+	}
+	
+	immediate = {
+		from = {
+			country_event = { id = giga_katzenai.013 days = 20 }
+		}
+		set_timed_planet_flag = {
+			flag = kaiser_moon_recall_cooldown
+			days = 360 #can only recall once a year
+		}
+		event_target:flusion_primitives_country = {
+			random_owned_fleet = {
+				limit = { has_fleet_flag = kaiser_moon_fleet }
+				fleet_event = { id = giga_katzenai.012 days = 20 }
+			}
+		}
+	}
+}
+
+fleet_event = {
+	id = giga_katzenai.012
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		any_country = {
+			is_country_type = katzenartig_imperium #katzens still exist
+		}
+		any_ship = {
+			is_ship_size = giga_kaiser_moon_flusion #kaiser moon is still around
+		}		
+	}
+
+	immediate = {
+		set_location = {
+			target = event_target:jublio
+			distance = 350
+			angle = random
+		}
+	}
+}
+
+country_event = {
+	id = giga_katzenai.013
+	title = "giga_katzenai.013.name"
+	desc = "giga_katzenai.013.desc"
+	is_triggered_only = yes
+	picture = GFX_evt_machine_space_battle
+	show_sound = event_red_alert
+
+	location = from
+
+	option = {
+		name = giga_katzenai.013.a
+	}
+}
+
+
+#RESERVE FLEETS: Fleets that can be used for a variety of purposes.
+#Will be stationed in systems with (decreasing order) planets, warforges, empty.
+#Base value is 10k.
+
+#ASSAULT FLEETS: Fleets that are used to attack.
+#Will always be accompagnied by 15 katzen army transports.
+#Can pull from reserve fleets if needed.
+
+# event = { #MANAGE PASSIVE DEFENCES
+# 	id = giga_katzenai.001
+	
+# 	is_triggered_only = yes
+# 	hide_window = yes
+
+# 	trigger = {
+# 		any_country = { is_country_type = katzenartig_imperium }
+# 	}
+
+# 	immediate = {
+# 		event_target:flusion_primitives_country = {
+# 			every_system_within_border = { #SPREAD RESERVE FLEETS ACROSS THE EMPIRE
+# 				limit = {
+# 					any_system_planet = { #Must have a colony
+# 						owner = { is_country_type = katzenartig_imperium }
+# 						is_colony = yes
+# 					}
+# 					NOT = {
+# 						any_fleet_in_system = { has_fleet_flag = reserve_fleet } 
+# 					}
+# 				}
+# 				set_star_flag = katzen_system_requires_reinforcements
+# 			}
+# 			every_owned_fleet = { #ALL SYSTEMS WITH PLANETS MUST HAVE AT LEAST TWO RESERVE FLEETS, ALL SYSTEMS WITH WARFORGES NEED ONE
+# 				limit = { 
+# 					has_fleet_flag = katzen_reserve_fleet
+# 					NOT = { has_fleet_flag = katzen_fleet_moving }
+# 					solar_system = {
+# 						NOT = {
+# 							any_system_planet = { #Must not have a colony
+# 								owner = { is_country_type = katzenartig_imperium }
+# 								is_colony = yes
+# 							}
+# 						}
+# 					}
+# 				}
+# 				fleet_event = { id = giga_katzenai.002 }
+# 			}
+# 		}
+# 	}
+# }
+
+# fleet_event = { #Move fleets to planet
+# 	id = giga_katzenai.002
+# 	is_triggered_only = yes
+# 	hide_window = yes
+
+# 	immediate = {
+# 		queue_actions = {
+# 			find_closest_system = {
+# 				trigger = {
+# 					id = "katzenai.002.t1"
+# 					has_star_flag = katzen_system_requires_reinforcements
+# 				}
+# 				found_system = {
+# 					move_to = THIS
+# 					effect = {
+# 						id = "katzenai.002.e1"
+# 						root = {
+# 							set_fleet_flag = katzen_fleet_moving
+# 						}
+# 					}
+# 				}
+# 			}
+# 			find_closest_planet = {
+# 				trigger = {
+# 					id = "katzenai.002.t2"
+# 					is_colony = yes
+# 					owner = { is_country_type = katzenartig_imperium }
+# 				}
+# 				found_planet = {
+# 					orbit_planet = THIS
+# 					effect = {
+# 						id = "katzenai.002.e2"
+# 						root = {
+# 							remove_fleet_flag = katzen_fleet_moving
+# 						}
+# 						solar_system = {
+# 							remove_star_flag = katzen_system_requires_reinforcements
+# 						}
+# 					}
+# 				}
+# 			}
+# 		}
+# 	}
+# }
