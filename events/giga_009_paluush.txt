@@ -817,6 +817,7 @@ namespace = giga_flusion
 #######################################################
 ### Flusion ###########################################
 #######################################################
+#Found both Katzenland and Flusion
 ship_event = {
 	id = giga_flusion.001
 	title = "giga_flusion.001.name"
@@ -1315,6 +1316,71 @@ country_event = {
 	}
 }
 
+planet_event = { #trigger the mondgewehr immediately if guaranteed
+	id = giga_flusion.299
+
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		owner = {
+			is_country_type = primitive
+			has_country_flag = fusion_age
+		}
+		NOT = { has_planet_flag = muno_project_event }
+		NOT = { has_global_flag = flusion_muno_event_happened }
+		event_target:gigamuno = {
+			AND = {
+				exists = THIS
+				NOR = {
+					has_planet_flag = has_megastructure
+					is_colony = yes
+				}
+			}
+		}
+	}
+	
+	immediate = {
+		set_global_flag = flusion_muno_event_happened
+		solar_system = {
+			spawn_megastructure = {
+				type = "flusion_attack_moon_0"
+				location = event_target:gigamuno
+				owner = event_target:flusion_primitives_country
+			}
+		}
+		event_target:gigamuno = {
+			set_planet_flag = has_megastructure
+		}
+		event_target:flusion_primitives_country = {
+			random_owned_megastructure = {
+				limit = {
+					is_megastructure_type = flusion_attack_moon_0
+				}
+				upgrade_megastructure_to = flusion_attack_moon_1
+				add_modifier = {
+					modifier = "katzen_mega_build_speed_instant"
+				}
+			}
+		}
+		set_planet_flag = muno_project_event
+		if = { #Make non-hostile
+			limit = {
+				any_country = {
+					is_hostile_to = event_target:flusion_primitives_country
+				}
+			}
+			every_country = {
+				set_faction_hostility = { 
+					target = event_target:flusion_primitives_country
+					set_hostile = no 
+				}
+			}
+		}
+	}
+}
+
 #Flusion Observation Post
 #Something is going on on Muno
 planet_event = {
@@ -1444,9 +1510,14 @@ country_event = { #Flusion mobilizes!
 	is_triggered_only = yes
 
 	trigger = {
-		NOT = {
-			event_target:gigaflusion = {
-				has_country_flag = kaiser_dead
+		event_target:gigaflusion = {
+			AND = {
+				NOT = {
+					has_country_flag = kaiser_dead
+				}
+				owner = {
+					is_country_type = primitive
+				}
 			}
 		}
 	}
