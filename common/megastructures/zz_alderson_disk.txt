@@ -145,9 +145,11 @@ alderson_disk_2_specialize = {
 	}
 }
 
-alderson_disk_2_construction_gaia = {	entity = "" portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_2_specialize } }
-alderson_disk_2_construction_pc = {		entity = "" portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_2_specialize } }
-alderson_disk_2_construction_ecu = {	entity = "" portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_2_specialize } }
+alderson_disk_2_construction_gaia = {		entity = "" portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_2_specialize } }
+alderson_disk_2_construction_pc = {			entity = "" portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_2_specialize } }
+alderson_disk_2_construction_ecu = {		entity = "" portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_2_specialize } }
+alderson_disk_2_construction_hive = {		entity = "" portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_2_specialize } }
+alderson_disk_2_construction_machine = {	entity = "" portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_2_specialize } }
 
 # Gaia
 alderson_disk_2_gaia = {
@@ -363,6 +365,146 @@ alderson_disk_2_ecu = {
 	}
 }
 
+# hive
+alderson_disk_2_hive = {
+	entity = "giga_alderson_hive_01_entity"
+	construction_entity = "giga_alderson_ruined_center_01_entity"
+	place_entity_on_planet_plane = yes
+	portrait = "GFX_megastructure_alderson"
+	upgrade_from = { alderson_disk_2_construction_hive }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 120000 }
+	}
+
+	potential = { NOT = { has_global_flag = alderson_disabled } }
+	possible = {
+		from = {
+			has_technology = giga_tech_alderson_disk
+			has_ascension_perk = ap_slice_of_life
+		}
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		solar_system.owner = { country_event = { id = giga_dialog.25061 } }	# Notification
+
+		change_variable = { which = alderson_slices value = 1 }
+		if = {
+			limit = { check_variable = { which = alderson_slices value >= 8 } }
+			solar_system.owner = { country_event = { id = giga_dialog.2507 } }			# Fully completed Alderson
+			solar_system.owner = { remove_country_flag = giga_started_alderson }
+			set_variable = { which = alderson_slices value = 0 }
+		}
+
+		spawn_planet = {
+			class = "pc_alderson_slice_hive"
+			location = fromfrom
+			size = 15
+			init_effect = {
+				set_name = "Alderson Slice"
+				surveyed = { set_surveyed = yes surveyor = solar_system.owner }
+				every_country = {
+					limit = { has_communications = root.owner }
+					prev = { surveyed = { set_surveyed = yes surveyor = prev } }
+				}
+				clear_blockers = yes
+				save_event_target_as = alderson_section
+				trigger_megastructure_icon = yes
+				set_planet_flag = giga_alderson_hive
+				set_planet_flag = forbid_guillis_planet_modifiers
+				set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+				set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+				set_planet_flag = colony_event			# Vanilla uses to prevent unwanted events on planets
+			}
+		}
+
+		remove_megastructure = fromfrom
+		# Name the segments
+		if = {		limit = { NOT = { has_star_flag = giga_alderson_1 } } set_star_flag = giga_alderson_1 event_target:alderson_section = { set_name = "Hypersegment A" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_alderson_2 } } set_star_flag = giga_alderson_2 event_target:alderson_section = { set_name = "Hypersegment B" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_alderson_3 } } set_star_flag = giga_alderson_3 event_target:alderson_section = { set_name = "Hypersegment C" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_alderson_4 } } set_star_flag = giga_alderson_4 event_target:alderson_section = { set_name = "Hypersegment D" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_alderson_5 } } set_star_flag = giga_alderson_5 event_target:alderson_section = { set_name = "Hypersegment E" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_alderson_6 } } set_star_flag = giga_alderson_6 event_target:alderson_section = { set_name = "Hypersegment F" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_alderson_7 } } set_star_flag = giga_alderson_7 event_target:alderson_section = { set_name = "Hypersegment G" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_alderson_8 } } set_star_flag = giga_alderson_8 event_target:alderson_section = { set_name = "Hypersegment H" } }
+	}
+}
+
+# machine
+alderson_disk_2_machine = {
+	entity = "giga_alderson_machine_01_entity"
+	construction_entity = "giga_alderson_ruined_center_01_entity"
+	place_entity_on_planet_plane = yes
+	portrait = "GFX_megastructure_alderson"
+	upgrade_from = { alderson_disk_2_construction_machine }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 120000 }
+	}
+
+	potential = { NOT = { has_global_flag = alderson_disabled } }
+	possible = {
+		from = {
+			has_technology = giga_tech_alderson_disk
+			has_ascension_perk = ap_slice_of_life
+		}
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		solar_system.owner = { country_event = { id = giga_dialog.25062 } }	# Notification
+
+		change_variable = { which = alderson_slices value = 1 }
+		if = {
+			limit = { check_variable = { which = alderson_slices value >= 8 } }
+			solar_system.owner = { country_event = { id = giga_dialog.2507 } }			# Fully completed Alderson
+			solar_system.owner = { remove_country_flag = giga_started_alderson }
+			set_variable = { which = alderson_slices value = 0 }
+		}
+
+		spawn_planet = {
+			class = "pc_alderson_slice_machine"
+			location = fromfrom
+			size = 15
+			init_effect = {
+				set_name = "Alderson Slice"
+				surveyed = { set_surveyed = yes surveyor = solar_system.owner }
+				every_country = {
+					limit = { has_communications = root.owner }
+					prev = { surveyed = { set_surveyed = yes surveyor = prev } }
+				}
+				clear_blockers = yes
+				save_event_target_as = alderson_section
+				trigger_megastructure_icon = yes
+				set_planet_flag = giga_alderson_machine
+				set_planet_flag = forbid_guillis_planet_modifiers
+				set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+				set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+				set_planet_flag = colony_event			# Vanilla uses to prevent unwanted events on planets
+			}
+		}
+
+		remove_megastructure = fromfrom
+		# Name the segments
+		if = {		limit = { NOT = { has_star_flag = giga_alderson_1 } } set_star_flag = giga_alderson_1 event_target:alderson_section = { set_name = "Hypersegment A" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_alderson_2 } } set_star_flag = giga_alderson_2 event_target:alderson_section = { set_name = "Hypersegment B" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_alderson_3 } } set_star_flag = giga_alderson_3 event_target:alderson_section = { set_name = "Hypersegment C" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_alderson_4 } } set_star_flag = giga_alderson_4 event_target:alderson_section = { set_name = "Hypersegment D" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_alderson_5 } } set_star_flag = giga_alderson_5 event_target:alderson_section = { set_name = "Hypersegment E" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_alderson_6 } } set_star_flag = giga_alderson_6 event_target:alderson_section = { set_name = "Hypersegment F" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_alderson_7 } } set_star_flag = giga_alderson_7 event_target:alderson_section = { set_name = "Hypersegment G" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_alderson_8 } } set_star_flag = giga_alderson_8 event_target:alderson_section = { set_name = "Hypersegment H" } }
+	}
+}
+
 alderson_disk_ruined_left = {	entity = "giga_alderson_ruined_left_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } }
 alderson_disk_ruined_center = {	entity = "giga_alderson_ruined_center_01_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } }
 alderson_disk_ruined_right = {	entity = "giga_alderson_ruined_right_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } }
@@ -419,15 +561,21 @@ alderson_disk_restored_right = {
 }
 
 
-alderson_disk_2_construction_gaia_restored_left = {		entity = "giga_alderson_ruined_left_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_left } }
-alderson_disk_2_construction_gaia_restored_center = {	entity = "giga_alderson_ruined_center_01_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_center } }
-alderson_disk_2_construction_gaia_restored_right = {	entity = "giga_alderson_ruined_right_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_right } }
-alderson_disk_2_construction_pc_restored_left = {		entity = "giga_alderson_ruined_left_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_left } }
-alderson_disk_2_construction_pc_restored_center = {		entity = "giga_alderson_ruined_center_01_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_center } }
-alderson_disk_2_construction_pc_restored_right = {		entity = "giga_alderson_ruined_right_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_right } }
-alderson_disk_2_construction_ecu_restored_left = {		entity = "giga_alderson_ruined_left_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_left } }
-alderson_disk_2_construction_ecu_restored_center = {	entity = "giga_alderson_ruined_center_01_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_center } }
-alderson_disk_2_construction_ecu_restored_right = {		entity = "giga_alderson_ruined_right_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_right } }
+alderson_disk_2_construction_gaia_restored_left = {			entity = "giga_alderson_ruined_left_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_left } }
+alderson_disk_2_construction_gaia_restored_center = {		entity = "giga_alderson_ruined_center_01_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_center } }
+alderson_disk_2_construction_gaia_restored_right = {		entity = "giga_alderson_ruined_right_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_right } }
+alderson_disk_2_construction_pc_restored_left = {			entity = "giga_alderson_ruined_left_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_left } }
+alderson_disk_2_construction_pc_restored_center = {			entity = "giga_alderson_ruined_center_01_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_center } }
+alderson_disk_2_construction_pc_restored_right = {			entity = "giga_alderson_ruined_right_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_right } }
+alderson_disk_2_construction_ecu_restored_left = {			entity = "giga_alderson_ruined_left_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_left } }
+alderson_disk_2_construction_ecu_restored_center = {		entity = "giga_alderson_ruined_center_01_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_center } }
+alderson_disk_2_construction_ecu_restored_right = {			entity = "giga_alderson_ruined_right_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_right } }
+alderson_disk_2_construction_hive_restored_left = {			entity = "giga_alderson_ruined_left_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_left } }
+alderson_disk_2_construction_hive_restored_center = {		entity = "giga_alderson_ruined_center_01_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_center } }
+alderson_disk_2_construction_hive_restored_right = {		entity = "giga_alderson_ruined_right_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_right } }
+alderson_disk_2_construction_machine_restored_left = {		entity = "giga_alderson_ruined_left_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_left } }
+alderson_disk_2_construction_machine_restored_center = {	entity = "giga_alderson_ruined_center_01_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_center } }
+alderson_disk_2_construction_machine_restored_right = {		entity = "giga_alderson_ruined_right_01_entity"		portrait = "GFX_megastructure_construction_background" potential = { always = no } upgrade_from = { alderson_disk_restored_right } }
 
 
 alderson_disk_2_construction_gaia_restored_left_complete = {
@@ -613,6 +761,132 @@ alderson_disk_2_construction_ecu_restored_right_complete = {
 			location = fromfrom
 			init_effect = {
 				prev = { spawn_megastructure = { type = alderson_disk_2_ecu location = prev } }
+				remove_planet = yes
+			}
+		}
+	}
+}
+
+alderson_disk_2_construction_hive_restored_left_complete = {
+	entity = "giga_alderson_ruined_left_01_entity"
+	construction_entity = "giga_alderson_hive_01_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { alderson_disk_2_construction_hive_restored_left }
+	build_time = 3600
+	resources = { category = megastructures cost = { alloys = 75000 } }
+	on_build_complete = {
+		giga_remove_system_debris = yes
+		remove_megastructure = fromfrom
+		spawn_planet = {
+			class = pc_giga_empty_space
+			location = fromfrom
+			init_effect = {
+				prev = { spawn_megastructure = { type = alderson_disk_2_hive location = prev } }
+				remove_planet = yes
+			}
+		}
+	}
+}
+
+alderson_disk_2_construction_hive_restored_center_complete = {
+	entity = "giga_alderson_ruined_center_01_entity"
+	construction_entity = "giga_alderson_hive_01_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { alderson_disk_2_construction_hive_restored_center }
+	build_time = 3600
+	resources = { category = megastructures cost = { alloys = 75000 } }
+	on_build_complete = {
+		giga_remove_system_debris = yes
+		remove_megastructure = fromfrom
+		spawn_planet = {
+			class = pc_giga_empty_space
+			location = fromfrom
+			init_effect = {
+				prev = { spawn_megastructure = { type = alderson_disk_2_hive location = prev } }
+				remove_planet = yes
+			}
+		}
+	}
+}
+
+alderson_disk_2_construction_hive_restored_right_complete = {
+	entity = "giga_alderson_ruined_right_01_entity"
+	construction_entity = "giga_alderson_hive_01_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { alderson_disk_2_construction_hive_restored_right }
+	build_time = 3600
+	resources = { category = megastructures cost = { alloys = 75000 } }
+	on_build_complete = {
+		giga_remove_system_debris = yes
+		remove_megastructure = fromfrom
+		spawn_planet = {
+			class = pc_giga_empty_space
+			location = fromfrom
+			init_effect = {
+				prev = { spawn_megastructure = { type = alderson_disk_2_hive location = prev } }
+				remove_planet = yes
+			}
+		}
+	}
+}
+
+alderson_disk_2_construction_machine_restored_left_complete = {
+	entity = "giga_alderson_ruined_left_01_entity"
+	construction_entity = "giga_alderson_machine_01_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { alderson_disk_2_construction_machine_restored_left }
+	build_time = 3600
+	resources = { category = megastructures cost = { alloys = 75000 } }
+	on_build_complete = {
+		giga_remove_system_debris = yes
+		remove_megastructure = fromfrom
+		spawn_planet = {
+			class = pc_giga_empty_space
+			location = fromfrom
+			init_effect = {
+				prev = { spawn_megastructure = { type = alderson_disk_2_machine location = prev } }
+				remove_planet = yes
+			}
+		}
+	}
+}
+
+alderson_disk_2_construction_machine_restored_center_complete = {
+	entity = "giga_alderson_ruined_center_01_entity"
+	construction_entity = "giga_alderson_machine_01_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { alderson_disk_2_construction_machine_restored_center }
+	build_time = 3600
+	resources = { category = megastructures cost = { alloys = 75000 } }
+	on_build_complete = {
+		giga_remove_system_debris = yes
+		remove_megastructure = fromfrom
+		spawn_planet = {
+			class = pc_giga_empty_space
+			location = fromfrom
+			init_effect = {
+				prev = { spawn_megastructure = { type = alderson_disk_2_machine location = prev } }
+				remove_planet = yes
+			}
+		}
+	}
+}
+
+alderson_disk_2_construction_machine_restored_right_complete = {
+	entity = "giga_alderson_ruined_right_01_entity"
+	construction_entity = "giga_alderson_machine_01_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { alderson_disk_2_construction_machine_restored_right }
+	build_time = 3600
+	resources = { category = megastructures cost = { alloys = 75000 } }
+	on_build_complete = {
+		giga_remove_system_debris = yes
+		remove_megastructure = fromfrom
+		spawn_planet = {
+			class = pc_giga_empty_space
+			location = fromfrom
+			init_effect = {
+				prev = { spawn_megastructure = { type = alderson_disk_2_machine location = prev } }
 				remove_planet = yes
 			}
 		}

@@ -81,7 +81,7 @@ event = {
 
 		# Squareworld System
 		random = {
-			chance = 25
+			chance = 100
 			if = {
 				limit = { NOT = { any_system = { has_star_flag = ruined_square_ring_system } } }
 				random_system = { spawn_system = { initializer = "square_world_init_01" } }
@@ -112,7 +112,6 @@ country_event = {
 
 	immediate = {
 		set_global_flag = giga_added_modifiers
-		country_event = { id = giga_mega.1004 days = 3 } #add PD modifiers
 
 		every_country = {
 			limit = { is_ai = yes }
@@ -121,9 +120,9 @@ country_event = {
 
 		every_planet = {
 			if = {
-				limit = { 
+				limit = {
 					is_planet_class = pc_gas_giant
-					planet_size >= 35 
+					planet_size >= 35
 				}
 				add_modifier = { modifier = "helioforming_candidate" days = -1 }
 			}
@@ -133,6 +132,18 @@ country_event = {
 					limit = { is_planet_class = pc_barren_cold }
 					set_planet_flag = giga_luna
 				}
+			}
+			if = {
+				limit = { is_planet_class = pc_diamond }
+				add_modifier = { modifier = "giga_pd_diamond_planet" days = -1 }
+			}
+			if = {
+				limit = { is_planet_class = pc_chthonian }
+				add_modifier = { modifier = "giga_pd_chthonian_planet" days = -1 }
+			}
+			if = {
+				limit = { is_planet_class = pc_ethane_ocean }
+				add_modifier = { modifier = "giga_pd_ethane_planet" days = -1 }
 			}
 		}
 	}
@@ -189,30 +200,6 @@ country_event = {
 		}
 	}
 }
-
-country_event = {
-	id = giga_mega.1004
-	hide_window = yes
-	is_triggered_only = yes
-
-	immediate = {
-		every_planet = {
-			if = {
-				limit = { is_planet_class = pc_diamond }
-				add_modifier = { modifier = "giga_pd_diamond_planet" days = -1 }
-			}
-			if = {
-				limit = { is_planet_class = pc_chthonian }
-				add_modifier = { modifier = "giga_pd_chthonian_planet" days = -1 }
-			}
-			if = {
-				limit = { is_planet_class = pc_ethane_ocean }
-				add_modifier = { modifier = "giga_pd_ethane_planet" days = -1 }
-			}
-		}
-	}
-}
-
 
 ####################################
 ### Shipyard Uplink ################
@@ -672,15 +659,13 @@ country_event = {
 planet_event = { id = giga_mega.501 hide_window = yes is_triggered_only = yes immediate = { solar_system = { spawn_megastructure = { type = penrose_sphere_a41 location = star } } } }
 planet_event = { id = giga_mega.502 hide_window = yes is_triggered_only = yes immediate = { solar_system = { spawn_megastructure = { type = penrose_sphere_a42 location = star } } } }
 
-country_event = {
+planet_event = {
 	id = giga_mega.503
 	hide_window = yes
 	is_triggered_only = yes
 
 	immediate = {
-
-		random_system_within_border = {
-			limit = { has_star_flag = penrose_detonate_system }
+		solar_system = {
 			remove_star_flag = penrose_detonate_system
 
 			# Breaching Galactic Law
@@ -697,7 +682,7 @@ country_event = {
 						is_active_resolution = "resolution_rulesofwar_demobilization_initiative"
 					}
 				}
-				root = { set_timed_country_flag = { flag = resolution_breached_fired_cracker days = 3600 } }
+				event_target:penrose_detonator = { set_timed_country_flag = { flag = resolution_breached_fired_cracker days = 3600 } }
 			}
 
 			# Wipe out system
@@ -760,20 +745,16 @@ country_event = {
 							NOT = { has_planet_flag = paluushia }
 						}
 						owner = {
-							add_opinion_modifier = { who = root modifier = "opinion_broke_our_planet" }
+							add_opinion_modifier = { who = event_target:penrose_detonator modifier = "opinion_broke_our_planet" }
 							every_country = {
 								limit = {
 									NOR = {
 										is_country_type = primitive
 										is_same_value = prev
 									}
-									OR = {
-										is_country_type = default
-										is_country_type = fallen_empire
-										is_country_type = awakened_fallen_empire
-									}
+									ehof_default_country = yes
 								}
-								add_opinion_modifier = { who = "root" modifier = "opinion_broke_planet" }
+								add_opinion_modifier = { who = event_target:penrose_detonator modifier = "opinion_broke_planet" }
 							}
 						}
 					}
@@ -835,20 +816,16 @@ country_event = {
 								NOT = { has_planet_flag = paluushia }
 							}
 							owner = {
-								add_opinion_modifier = { who = root modifier = "opinion_irradiated_our_planet" }
+								add_opinion_modifier = { who = event_target:penrose_detonator modifier = "opinion_irradiated_our_planet" }
 								every_country = {
 									limit = {
 										NOR = {
 											is_country_type = primitive
 											is_same_value = prev
 										}
-										OR = {
-											is_country_type = default
-											is_country_type = fallen_empire
-											is_country_type = awakened_fallen_empire
-										}
+										ehof_default_country = yes
 									}
-									add_opinion_modifier = { who = "root" modifier = "opinion_irradiated_planet" }
+									add_opinion_modifier = { who = event_target:penrose_detonator modifier = "opinion_irradiated_planet" }
 								}
 							}
 						}
@@ -883,7 +860,7 @@ country_event = {
 				limit = { has_star_flag = has_no_hyperlane }
 				while = {
 					limit = {
-						root = {
+						event_target:penrose_detonator = {
 							any_owned_fleet = {
 								exists = solar_system
 								solar_system = { NOT = { has_star_flag = has_no_hyperlane } }
@@ -1002,11 +979,7 @@ country_event = {
 
 		every_country = {
 			limit = {
-				OR = {
-					is_country_type = default
-					is_country_type = fallen_empire
-					is_country_type = awakened_fallen_empire
-				}
+				ehof_default_country = yes
 				has_technology = giga_tech_war_moon_2
 			}
 			set_country_flag = repairing_giga_moon_@event_target:destroyed_war_moon
@@ -1088,11 +1061,7 @@ country_event = {
 
 		every_country = {
 			limit = {
-				OR = {
-					is_country_type = default
-					is_country_type = fallen_empire
-					is_country_type = awakened_fallen_empire
-				}
+				ehof_default_country = yes
 				has_technology = giga_tech_war_planet
 			}
 			set_country_flag = repairing_giga_planet_@event_target:destroyed_war_planet
@@ -1296,11 +1265,7 @@ country_event = {
 		event_target:extradimensionals = { random_owned_ship = { ship_event = { id = crisis.1280 } } }	# make portal invincible
 		every_country = {
 			limit = {
-				OR = {
-					is_country_type = default
-					is_country_type = fallen_empire
-					is_country_type = awakened_fallen_empire
-				}
+				ehof_default_country = yes
 				intel_level = {
 					level = high
 					system = event_target:extradimensional_system
