@@ -2520,6 +2520,22 @@ Effect PdxMeshColorAlphaAdditiveAnimateUV
     Defines = { "ADD_COLOR" "ANIMATE_UV" "DISSOLVE" }
 }
 
+Effect PdxMeshColorAlphaAdditiveAnimateUVSkinned
+{
+    VertexShader = "VertexPdxMeshStandardSkinned"
+    PixelShader = "PixelPdxMeshAdditive"
+    BlendState = "BlendStateAdditiveBlend"
+    DepthStencilState = "DepthStencilNoZWrite"
+    Defines = { "ADD_COLOR" "ANIMATE_UV" "DISSOLVE" }
+}
+
+Effect PdxMeshColorAlphaAdditiveAnimateUVSkinnedShadow
+{
+    VertexShader = "VertexPdxMeshStandardSkinnedShadow"
+    PixelShader = "PixelPdxMeshNoShadow"
+	Defines = { "IS_SHADOW" }
+}
+
 Effect PdxMeshAlphaAdditiveAnimateUVAlphaOverride
 {
 	VertexShader = "VertexPdxMeshStandard"
@@ -3412,7 +3428,7 @@ Effect PdxMeshAtmosphereSkinnedShadow
 	VertexShader = "VertexPdxMeshStandardSkinnedShadow"
 	PixelShader = "PixelPdxMeshStandardShadow"
 	RasterizerState = "RasterizerStateBack"
-	Defines = { "IS_SHADOW" "IS_PLANET" "" }
+	Defines = { "IS_SHADOW" "IS_PLANET" }
 }
 
 Effect PdxMeshAtmosphereStarShadow
