@@ -5297,7 +5297,49 @@ country_event = { #IF MOON IS GONE
 }
 
 ###MONTHLY EVENT CHECKING FOR FLUSION'S STATUS###
-event = { #Flusion is GONE
+country_event = { #Flusion is INVADED
+	id = giga_katzen.0932
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		any_country = { is_country_type = katzenartig_imperium }
+		has_global_flag = katzenartig_imperium_happened
+		NOT = { has_global_flag = katzenartig_imperium_defeated }
+		from = { is_country_type = katzenartig_imperium }
+		fromfrom = { has_planet_flag = gigaflusion }
+	}
+
+	immediate = {
+		event_target:gigaflusion = {
+			solar_system = {
+				space_owner = {
+					save_global_event_target_as = flusion_conqueror
+					set_country_flag = defeated_katzens
+				}
+			}
+			set_owner = event_target:flusion_conqueror
+		}
+		every_planet = { #transfer all of flusion to the controller
+			limit = {
+				solar_system = {
+					has_star_flag = flusion_system
+				}
+				is_colony = yes
+			}
+			set_owner = event_target:flusion_conqueror
+		}
+		set_global_flag = katzenartig_imperium_defeated
+		every_country = {
+			country_event = { id = giga_katzen.094 }
+		}
+		event_target:flusion_primitives_country = {
+			country_event = { id = giga_katzen.096 days = 30 } #collapse of katzenartig
+		}
+	}
+}
+
+event = { #Flusion is GONE (destroyed, checks monthly)
 	id = giga_katzen.093
 	is_triggered_only = yes
 	hide_window = yes
@@ -5307,19 +5349,13 @@ event = { #Flusion is GONE
 			OR = {
 				event_target:gigaflusion = {
 					OR = {
-						owner = {
-							NOT = { is_country_type = katzenartig_imperium }
-						}
 						is_colony = no #Flusion is not a colony aka destroyed
 						is_planet_class = pc_shattered
+						is_planet_class = pc_shielded
 						count_pops = {
 							count = 0
 						}
 						habitable_planet = no
-						is_occupied_flag = yes
-						controller = {
-							NOT = { is_country_type = katzenartig_imperium }
-						}
 					}
 				}
 				event_target:giga_jublio_system = { #Flusion has been completely obliterated
@@ -5334,62 +5370,12 @@ event = { #Flusion is GONE
 	}
 
 	immediate = {
-		random_war = { #Status quo
-			limit = {
-				any_war_participant = {
-					is_country_type = katzenartig_imperium
-				}
-				any_war_participant = {
-					is_country = ROOT
-				}
-			}
-			end_war_effect = yes
+		set_global_flag = katzenartig_imperium_defeated
+		every_country = {
+			country_event = { id = giga_katzen.095 }
 		}
-		if = {
-			limit = {
-				event_target:gigaflusion = {
-					is_colony = yes #Flusion has been captured
-				}
-			}
-			event_target:gigaflusion = {
-				owner = {
-					save_global_event_target_as = flusion_conqueror
-					set_country_flag = defeated_katzens
-				}
-			}
-			set_global_flag = katzenartig_imperium_defeated
-			every_country = {
-				country_event = { id = giga_katzen.094 }
-			}
-			event_target:flusion_primitives_country = {
-				country_event = { id = giga_katzen.096 days = 30 } #collapse of katzenartig
-			}
-		}
-		if = {
-			limit = {
-				OR = {
-					event_target:gigaflusion = {
-						OR = {
-							is_colony = no #Flusion is not a colony aka destroyed
-							is_planet_class = pc_shattered
-							count_pops = {
-								count = 0
-							}
-							habitable_planet = no
-						}
-					}
-					event_target:giga_jublio_system = { #Flusion has been completely obliterated
-						NOT = { any_planet = { has_planet_flag = gigaflusion } }
-					}
-				}
-			}
-			set_global_flag = katzenartig_imperium_defeated
-			every_country = {
-				country_event = { id = giga_katzen.095 }
-			}
-			event_target:flusion_primitives_country = {
-				country_event = { id = giga_katzen.096 days = 30 } #collapse of katzenartig
-			}
+		event_target:flusion_primitives_country = {
+			country_event = { id = giga_katzen.096 days = 30 } #collapse of katzenartig
 		}
 	}
 }
@@ -5468,6 +5454,17 @@ country_event = { #Collapse of Katzenartig
 	is_triggered_only = yes
 
 	immediate = {
+		random_war = { #Status quo
+			limit = {
+				any_war_participant = {
+					is_country_type = katzenartig_imperium
+				}
+				any_war_participant = {
+					is_country = ROOT
+				}
+			}
+			end_war_effect = yes
+		}
 		every_country = {
 			country_event = { id = giga_katzen.097 }
 		}
@@ -5501,17 +5498,6 @@ country_event = { #Collapse of Katzenartig
 				limit = { has_fleet_flag = katzen_planet_platform }
 				destroy_fleet = THIS
 			}
-		}
-		every_planet = { #transfer all of flusion to the controller
-			limit = {
-				solar_system = {
-					has_star_flag = flusion_system
-				}
-				owner = {
-					is_country_type = katzenartig_imperium
-				}
-			}
-			set_owner = solar_system.space_owner
 		}
 		every_planet = { #transfers planets in occupied land to controller
 			limit = {
@@ -6807,6 +6793,45 @@ fleet_event = { #KAISER IS HERE
 }
 
 ###DEBUG###
+planet_event = { #spawn debug grandbunny army
+	id = giga_katzen.994
+
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		random_country = {
+			limit = {
+				is_ai = no
+			}
+			save_global_event_target_as = grandbunny_command_summoner
+		}
+		create_fleet = { #Spawn some armies
+			name = "Grandbunny's Will"
+			settings = {
+				spawn_debris = no
+				can_upgrade = no
+				uses_naval_capacity = no
+			}
+			effect = {
+				set_owner = event_target:grandbunny_command_summoner
+				while = {
+					count = 1
+					create_army_transport = {
+						army_type = the_grandbunny_debug
+						species = event_target:paluush_portrait
+					}
+				}
+				set_location = {
+					target = ROOT
+					distance = 10
+					angle = random
+				}
+			}
+		}
+	}
+}
+
 country_event = { #add hyper buffs
 	id = giga_katzen.995
 
