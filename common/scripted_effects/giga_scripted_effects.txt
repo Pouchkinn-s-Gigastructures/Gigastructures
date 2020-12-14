@@ -233,28 +233,419 @@ giga_remove_system_debris = {
 }
 
 giga_psychic_dominate = {
-	every_owned_pop = {
-		if = {
-			limit = {
-				is_gestalt = no
-				is_robot_pop = yes
+	save_event_target_as = giga_planet_illuminated
+	if = {
+		limit = {
+			NOR = {
+				any_system_planet = {
+					has_planet_flag = gigaflusion
+					NOT = { has_planet_flag = nonkatzen_unification }
+					owner = { 
+						OR = {
+							is_country_type = katzenartig_imperium
+							is_country_type = primitive
+						}
+					}
+				}
+				any_system_planet = {
+					has_planet_flag = paluushia
+					owner = { is_country_type = primitive }
+				}
 			}
-			kill_pop = yes
 		}
-		else = {
-			modify_species = { species = this add_trait = trait_psionic add_traits_at_start_of_list = yes }
-			modify_species = { species = this add_trait = trait_enthralled }
+		root = { country_event = { id = giga_psychic_beacon.004 days = 2 } }
+		every_system_planet = {
+			limit = {  is_colony = yes }
+			set_owner = ROOT
+			every_owned_pop = {
+				if = {
+					limit = {
+						is_gestalt = no
+						is_robot_pop = yes
+					}
+					kill_pop = yes
+				}
+				else = {
+					modify_species = { species = this add_trait = trait_psionic add_traits_at_start_of_list = yes }
+					modify_species = { species = this add_trait = trait_enthralled }
+				}
+			}	
+		}
+		starbase = {
+			set_owner = ROOT
 		}
 	}
-	save_event_target_as = giga_planet_illuminated
-	root = { country_event = { id = giga_psychic_beacon.004 } }
+	else_if = {
+		limit = {
+			any_system_planet = {
+				has_planet_flag = gigaflusion
+				NOT = { has_planet_flag = nonkatzen_unification }
+				OR = {
+					owner = { is_country_type = primitive }
+					owner = { is_country_type = katzenartig_imperium }
+				}
+			}
+		}
+		root = { country_event = { id = giga_psychic_beacon.0041 days = 2 } } #tried dominating flusion
+	}
+	else_if = {
+		limit = {
+			any_system_planet = {
+				has_planet_flag = paluushia
+				owner = { is_country_type = primitive }
+			}
+		}
+		every_system_planet = {
+			limit = {
+				is_colony = yes
+				NOR = {
+					has_planet_flag = paluushia
+					owner = { is_country_type = primitive }
+				}
+			}
+			set_owner = ROOT
+			every_owned_pop = {
+				if = {
+					limit = {
+						is_gestalt = no
+						is_robot_pop = yes
+					}
+					kill_pop = yes
+				}
+				else = {
+					modify_species = { species = this add_trait = trait_psionic add_traits_at_start_of_list = yes }
+					modify_species = { species = this add_trait = trait_enthralled }
+				}
+			}	
+		}
+		starbase = {
+			set_owner = ROOT
+		}
+		event_target:paluushia = {
+			owner = {
+				add_modifier = {
+					modifier = paluush_psionic_beacon_buff
+					days = -1
+				}
+			}			
+		}
+		root = { country_event = { id = giga_psychic_beacon.0042 days = 2 } } #tried dominating paluush
+	}
 }
 
 giga_psychic_imprison = {
-	every_owned_pop = { kill_pop = yes }
-	change_pc = pc_shrouded
-	clear_planet_modifiers = yes
-	clear_deposits = yes
 	save_event_target_as = giga_planet_illuminated
-	root = { country_event = { id = giga_psychic_beacon.006 } }
+	if = {
+		limit = {
+			has_planet_flag = gigaflusion
+			NOT = { has_planet_flag = nonkatzen_unification }
+			OR = {
+				owner = { is_country_type = primitive }
+				owner = { is_country_type = katzenartig_imperium }
+			}
+		}
+		root = { country_event = { id = giga_psychic_beacon.0061 days = 2 } } #tried shrouding flusion
+		if = {
+			limit = {
+				NOT = { has_planet_flag = ezics_mutated }
+			}
+			root = { country_event = { id = giga_psychic_beacon.00611 days = 30 } } #ezics mutate to infused
+			set_planet_flag = ezics_mutated
+		}
+	}
+	else_if = {
+		limit = {
+			has_planet_flag = paluushia
+			owner = { is_country_type = primitive }
+		}
+		owner = {
+			add_modifier = {
+				modifier = paluush_psionic_beacon_buff
+				days = -1
+			}
+		}
+		root = { country_event = { id = giga_psychic_beacon.0062 days = 2 } } #tried shrouding paluush
+	}
+	else_if = {
+		limit = {
+			habitable_structure = yes
+		}
+		if = {
+			limit = { is_planet_class = pc_habitat }
+			every_owned_pop = { kill_pop = yes }
+			remove_planet = yes
+			root = { country_event = { id = giga_psychic_beacon.006 days = 2 } }	
+		}
+		else_if = {
+			limit = { 
+				OR = {
+					is_planet_class = pc_ringworld_habitable
+					is_planet_class = pc_ringworld_city
+					is_planet_class = pc_ringworld_machine
+					is_planet_class = pc_ringworld_hive
+				}
+			}
+			every_owned_pop = { kill_pop = yes }
+			change_pc = pc_ringworld_habitable_damaged
+			save_event_target_as = giga_planet_illuminated
+			root = { country_event = { id = giga_psychic_beacon.006 days = 2 } }	
+		}
+		else = {
+			add_modifier = {
+				modifier = beacon_shrouded_habitable_structure
+				days = 5400
+			}
+			every_owned_pop = { kill_pop = yes }
+			save_event_target_as = giga_planet_illuminated
+			root = { country_event = { id = giga_psychic_beacon.006 days = 2 } }			
+		}
+	}
+	else = {
+		every_owned_pop = { kill_pop = yes }
+		change_pc = pc_shrouded
+		clear_planet_modifiers = yes
+		clear_deposits = yes
+		save_event_target_as = giga_planet_illuminated
+		root = { country_event = { id = giga_psychic_beacon.006 days = 2 } }
+	}
+}
+
+giga_psychic_conjure = {
+	save_event_target_as = giga_planet_illuminated
+	if = { #Kaiser captures them
+		limit = {
+			has_planet_flag = gigaflusion
+			NOT = { has_planet_flag = nonkatzen_unification }
+			OR = {
+				owner = { is_country_type = primitive }
+				owner = { is_country_type = katzenartig_imperium }
+			}
+		}
+		while = { 
+			count = 4
+			create_army = { 
+				name = "Katzen Psionic Avatars"			
+				owner = event_target:flusion_primitives_country
+				type = "beacon_shroud_army_defensive" 
+			} 
+		}
+		root = { country_event = { id = giga_psychic_beacon.012 days = 2 } }
+	}
+	else_if = { #Paluushia flings em back
+		limit = {
+			has_planet_flag = paluushia
+			owner = { is_country_type = primitive }
+		}
+		root.capital_scope = {
+			add_modifier = {
+				modifier = paluushia_curses_beacon
+				days = 360
+			}
+		}
+		root = { country_event = { id = giga_psychic_beacon.013 days = 2 } }
+	}
+	else = {
+		set_planet_flag = beacon_armies_conjured
+		while = { 
+			count = 4
+			create_army = { 
+				name = "Psionic Avatars"			
+				owner = root 
+				type = "beacon_shroud_army_defensive"
+			} 
+		}
+		root = { country_event = { id = giga_psychic_beacon.011 days = 2 } }
+	}
+}
+
+giga_psychic_imprint = {
+	save_global_event_target_as = giga_leader_imprinted
+	if = {
+		limit = {
+			has_skill = 1
+		}
+		random_list = {
+			63 = {
+				owner = { country_event = { id = giga_psychic_beacon.0151 days = 5 } }
+			}
+			37 = {
+				owner = { country_event = { id = giga_psychic_beacon.0152 days = 5 } }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			has_skill = 2
+		}
+		random_list = {
+			56 = {
+				owner = { country_event = { id = giga_psychic_beacon.0151 days = 5 } }
+			}
+			44 = {
+				owner = { country_event = { id = giga_psychic_beacon.0152 days = 5 } }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			has_skill = 3
+		}
+		random_list = {
+			49 = {
+				owner = { country_event = { id = giga_psychic_beacon.0151 days = 5 } }
+			}
+			51 = {
+				owner = { country_event = { id = giga_psychic_beacon.0152 days = 5 } }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			has_skill = 4
+		}
+		random_list = {
+			42 = {
+				owner = { country_event = { id = giga_psychic_beacon.0151 days = 5 } }
+			}
+			58 = {
+				owner = { country_event = { id = giga_psychic_beacon.0152 days = 5 } }
+			}
+		}
+	}
+	else_if = {
+		limit = { has_skill = 5 }
+		random_list = {
+			35 = {
+				owner = { country_event = { id = giga_psychic_beacon.0151 days = 5 } }
+			}
+			65 = {
+				owner = { country_event = { id = giga_psychic_beacon.0152 days = 5 } }
+			}
+		}
+	}
+	else_if = {
+		limit = { has_skill = 6 }
+		random_list = {
+			28 = {
+				owner = { country_event = { id = giga_psychic_beacon.0151 days = 5 } }
+			}
+			72 = {
+				owner = { country_event = { id = giga_psychic_beacon.0152 days = 5 } }
+			}
+		}
+	}
+	else_if = {
+		limit = { has_skill = 7 }
+		random_list = {
+			21 = {
+				owner = { country_event = { id = giga_psychic_beacon.0151 days = 5 } }
+			}
+			79 = {
+				owner = { country_event = { id = giga_psychic_beacon.0152 days = 5 } }
+			}
+		}
+	}
+	else_if = {
+		limit = { has_skill = 8 }
+		random_list = {
+			14 = {
+				owner = { country_event = { id = giga_psychic_beacon.0151 days = 5 } }
+			}
+			86 = {
+				owner = { country_event = { id = giga_psychic_beacon.0152 days = 5 } }
+			}
+		}
+	}
+	else_if = {
+		limit = { has_skill = 9 }
+		random_list = {
+			7 = {
+				owner = { country_event = { id = giga_psychic_beacon.0151 days = 5 } }
+			}
+			93 = {
+				owner = { country_event = { id = giga_psychic_beacon.0152 days = 5 } }
+			}
+		}
+	}
+	else = {
+		owner = { country_event = { id = giga_psychic_beacon.0152 days = 5 } }
+	}
+}
+
+refund_residue = {
+	if = {
+		limit = {
+			event_target:giga_planet_illuminated = {
+				has_skill = 1
+			}
+		}
+		add_resource = { sr_psionic_sublimate = 55 }
+	}
+	else_if = {
+		limit = {
+			event_target:giga_planet_illuminated = {
+				has_skill = 2
+			}
+		}
+		add_resource = { sr_psionic_sublimate = 60 }
+	}
+	else_if = {
+		limit = {
+			event_target:giga_planet_illuminated = {
+				has_skill = 3
+			}
+		}
+		add_resource = { sr_psionic_sublimate = 65 }
+	}
+	else_if = {
+		limit = {
+			event_target:giga_planet_illuminated = {
+				has_skill = 4
+			}
+		}
+		add_resource = { sr_psionic_sublimate = 70 }
+	}
+	else_if = {
+		limit = {
+			event_target:giga_planet_illuminated = {
+				has_skill = 5
+			}
+		}
+		add_resource = { sr_psionic_sublimate = 75 }
+	}
+	else_if = {
+		limit = {
+			event_target:giga_planet_illuminated = {
+				has_skill = 6
+			}
+		}
+		add_resource = { sr_psionic_sublimate = 80 }
+	}
+	else_if = {
+		limit = {
+			event_target:giga_planet_illuminated = {
+				has_skill = 7
+			}
+		}
+		add_resource = { sr_psionic_sublimate = 85 }
+	}
+	else_if = {
+		limit = {
+			event_target:giga_planet_illuminated = {
+				has_skill = 8
+			}
+		}
+		add_resource = { sr_psionic_sublimate = 90 }
+	}
+	else_if = {
+		limit = {
+			event_target:giga_planet_illuminated = {
+				has_skill = 9
+			}
+		}
+		add_resource = { sr_psionic_sublimate = 95 }
+	}
+	else = {
+		add_resource = { sr_psionic_sublimate = 100 }
+	}
 }
