@@ -372,94 +372,142 @@ create_compound_system_stations = {
 }
 
 compound_evaluate_systems = {
-	event_target:compound_country = {
-		every_system = {
-			# Reset systems
-			if = {
-				limit = {
-					OR = {
-						has_star_flag = compound_expansion_threat
-						has_star_flag = compound_intruder
-						has_star_flag = compound_potential_intruder
-					}
-				}
-				set_variable = { which = compound_fleets_required value = 0 }
-				remove_star_flag = compound_expansion_threat
-				remove_star_flag = compound_intruder
-				remove_star_flag = compound_potential_intruder
-			}
-
-			# Every system within 6 jumps from invasion entry point that's not owned by the compound
-			if = {
-				limit = {
-					OR = {
-						AND = { galaxy_size = tiny		distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 2 } }
-						AND = { galaxy_size = small		distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 3 } }
-						AND = { galaxy_size = medium	distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 4 } }
-						AND = { galaxy_size = large		distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 5 } }
-						AND = { galaxy_size = huge		distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 6 } }
-					}
-					any_fleet_in_system = {
-						exists = owner
-						owner = {
-							NOT = { is_country_type = compound_empire }
-							is_hostile = event_target:compound_country
-						}
-					}
-					NOT = { has_star_flag = compound_expansion_threat }
-				}
-				set_timed_star_flag = { flag = compound_expansion_threat days = 360 }
-				set_star_flag = compound_expand
-			}
-		}
-
-		# Mark next target systems
+	every_system = {
+		# Reset systems
 		if = {
 			limit = {
 				OR = {
-					AND = {
-						NOT = { has_country_flag = compound_empire_berserk }
-						count_system = {
-							limit = { has_star_flag = compound_next_target }
-							count <= 1
-						}
-						count_system_within_border = {
-							limit = { has_star_flag = reshaper_target_system }
-							count < 5
-						}
-					}
-					AND = {
-						has_country_flag = compound_empire_berserk
-						count_system = {
-							limit = { has_star_flag = compound_next_target }
-							count <= 10
-						}
+					has_star_flag = compound_expansion_threat
+					has_star_flag = compound_intruder
+					has_star_flag = compound_potential_intruder
+				}
+			}
+			set_variable = { which = compound_fleets_required value = 0 }
+			remove_star_flag = compound_expansion_threat
+			remove_star_flag = compound_intruder
+			remove_star_flag = compound_potential_intruder
+		}
+
+		# Every system within 6 jumps from invasion entry point that's not owned by the compound
+		if = {
+			limit = {
+				NOT = { has_star_flag = compound_expansion_threat }
+				OR = {
+					AND = { galaxy_size = tiny		distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 2 } }
+					AND = { galaxy_size = small		distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 3 } }
+					AND = { galaxy_size = medium	distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 4 } }
+					AND = { galaxy_size = large		distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 5 } }
+					AND = { galaxy_size = huge		distance = { source = event_target:compound_invasion_entry use_bypasses = no min_jumps = 1 max_jumps = 6 } }
+				}
+				any_fleet_in_system = {
+					exists = owner
+					owner = {
+						NOT = { is_country_type = compound_empire }
+						is_hostile = event_target:compound_country
 					}
 				}
 			}
-			event_target:compound_invasion_entry = {
-				while = {
-					count = 5
-					closest_system = {
-						limit = {
-							is_neighbor_of = event_target:compound_country
-							NOR = {
-								has_star_flag = ehof_compound_system
-								has_star_flag = compound_next_target
-							}
-						}
-						set_star_flag = compound_next_target
+			set_timed_star_flag = { flag = compound_expansion_threat days = 360 }
+			set_star_flag = compound_expand
+		}
+	}
+
+	# Mark next target systems
+	if = {
+		limit = {
+			OR = {
+				AND = {
+					NOT = { has_country_flag = compound_empire_berserk }
+					count_system = {
+						limit = { has_star_flag = compound_next_target }
+						count <= 1
+					}
+					count_system_within_border = {
+						limit = { has_star_flag = reshaper_target_system }
+						count < 5
+					}
+				}
+				AND = {
+					has_country_flag = compound_empire_berserk
+					count_system = {
+						limit = { has_star_flag = compound_next_target }
+						count <= 10
 					}
 				}
 			}
 		}
+		event_target:compound_invasion_entry = {
+			while = {
+				count = 5
+				closest_system = {
+					limit = {
+						is_neighbor_of = event_target:compound_country
+						NOR = {
+							has_star_flag = ehof_compound_system
+							has_star_flag = compound_next_target
+						}
+					}
+					set_star_flag = compound_next_target
+				}
+			}
+		}
+	}
 
-		# Check reshaping targets
-		every_system_within_border = { ehof_mark_for_reshaping = yes }
+	# Check reshaping targets
+	every_system_within_border = { ehof_mark_for_reshaping = yes }
 
-		# Hostile fleets within compound border
-		every_system_within_border = {
+	# Hostile fleets within compound border
+	every_system_within_border = {
+		limit = {
+			any_fleet_in_system = {
+				is_ship_class = shipclass_military
+				exists = owner
+				owner = {
+					NOT = { is_country_type = compound_empire }
+					is_hostile = event_target:compound_country
+				}
+			}
+		}
+		set_timed_star_flag = { flag = compound_intruder days = 360 }
+
+		# If not default/FE country, send 1 fleet
+		if = {
 			limit = {
+				any_fleet_in_system = {
+					exists = owner
+					owner = { ehof_default_country = no }
+				}
+			}
+			change_variable = { which = compound_fleets_required value = 1 }
+		}
+
+		every_fleet_in_system = {
+			limit = {
+				is_ship_class = shipclass_military
+				exists = owner
+				owner = {
+					ehof_default_country = yes
+					NOT = { is_country_type = compound_empire }
+					is_hostile = event_target:compound_country
+				}
+			}
+			if = {		limit = { is_ship_size = annihilator }						prev = { change_variable = { which = compound_fleets_required value = 5 } } }
+			else_if = {	limit = { fleet_power <= 5000000 }							prev = { change_variable = { which = compound_fleets_required value = 1 } } }
+			else_if = {	limit = { fleet_power >  5000000  fleet_power <= 10000000 }	prev = { change_variable = { which = compound_fleets_required value = 2 } } }
+			else_if = {	limit = { fleet_power >  10000000 fleet_power <= 15000000 }	prev = { change_variable = { which = compound_fleets_required value = 3 } } }
+			else_if = {	limit = { fleet_power >  15000000 fleet_power <= 20000000 }	prev = { change_variable = { which = compound_fleets_required value = 4 } } }
+			else_if = {	limit = { fleet_power >  20000000 }							prev = { change_variable = { which = compound_fleets_required value = 5 } } }
+		}
+	}
+
+	# Hostile fleets neighboring compound border
+	every_system_within_border = {
+		limit = {
+			any_neighbor_system = {
+				OR = {
+					NOT = { exists = owner }
+					owner = { NOT = { is_country_type = compound_empire } }
+				}
 				any_fleet_in_system = {
 					is_ship_class = shipclass_military
 					exists = owner
@@ -469,7 +517,23 @@ compound_evaluate_systems = {
 					}
 				}
 			}
-			set_timed_star_flag = { flag = compound_intruder days = 360 }
+		}
+		every_neighbor_system = {
+			limit = {
+				OR = {
+					NOT = { exists = owner }
+					owner = { NOT = { is_country_type = compound_empire } }
+				}
+				any_fleet_in_system = {
+					is_ship_class = shipclass_military
+					exists = owner
+					owner = {
+						NOT = { is_country_type = compound_empire }
+						is_hostile = event_target:compound_country
+					}
+				}
+			}
+			set_timed_star_flag = { flag = compound_potential_intruder days = 360 }
 
 			# If not default/FE country, send 1 fleet
 			if = {
@@ -498,72 +562,6 @@ compound_evaluate_systems = {
 				else_if = {	limit = { fleet_power >  10000000 fleet_power <= 15000000 }	prev = { change_variable = { which = compound_fleets_required value = 3 } } }
 				else_if = {	limit = { fleet_power >  15000000 fleet_power <= 20000000 }	prev = { change_variable = { which = compound_fleets_required value = 4 } } }
 				else_if = {	limit = { fleet_power >  20000000 }							prev = { change_variable = { which = compound_fleets_required value = 5 } } }
-			}
-		}
-
-		# Hostile fleets neighboring compound border
-		every_system_within_border = {
-			limit = {
-				any_neighbor_system = {
-					OR = {
-						NOT = { exists = owner }
-						owner = { NOT = { is_country_type = compound_empire } }
-					}
-					any_fleet_in_system = {
-						is_ship_class = shipclass_military
-						exists = owner
-						owner = {
-							NOT = { is_country_type = compound_empire }
-							is_hostile = event_target:compound_country
-						}
-					}
-				}
-			}
-			every_neighbor_system = {
-				limit = {
-					OR = {
-						NOT = { exists = owner }
-						owner = { NOT = { is_country_type = compound_empire } }
-					}
-					any_fleet_in_system = {
-						is_ship_class = shipclass_military
-						exists = owner
-						owner = {
-							NOT = { is_country_type = compound_empire }
-							is_hostile = event_target:compound_country
-						}
-					}
-				}
-				set_timed_star_flag = { flag = compound_potential_intruder days = 360 }
-
-				# If not default/FE country, send 1 fleet
-				if = {
-					limit = {
-						any_fleet_in_system = {
-							exists = owner
-							owner = { ehof_default_country = no }
-						}
-					}
-					change_variable = { which = compound_fleets_required value = 1 }
-				}
-
-				every_fleet_in_system = {
-					limit = {
-						is_ship_class = shipclass_military
-						exists = owner
-						owner = {
-							ehof_default_country = yes
-							NOT = { is_country_type = compound_empire }
-							is_hostile = event_target:compound_country
-						}
-					}
-					if = {		limit = { is_ship_size = annihilator }						prev = { change_variable = { which = compound_fleets_required value = 5 } } }
-					else_if = {	limit = { fleet_power <= 5000000 }							prev = { change_variable = { which = compound_fleets_required value = 1 } } }
-					else_if = {	limit = { fleet_power >  5000000  fleet_power <= 10000000 }	prev = { change_variable = { which = compound_fleets_required value = 2 } } }
-					else_if = {	limit = { fleet_power >  10000000 fleet_power <= 15000000 }	prev = { change_variable = { which = compound_fleets_required value = 3 } } }
-					else_if = {	limit = { fleet_power >  15000000 fleet_power <= 20000000 }	prev = { change_variable = { which = compound_fleets_required value = 4 } } }
-					else_if = {	limit = { fleet_power >  20000000 }							prev = { change_variable = { which = compound_fleets_required value = 5 } } }
-				}
 			}
 		}
 	}
@@ -934,34 +932,6 @@ annihilator_defend = {
 			target = event_target:sa_defend_discoverer
 			clear_auto_move_on_arrival = no
 			arrival_effect = annihilator_defend
-		}
-	}
-}
-
-giga_spawn_crisis = {
-	random_list = {
-		### Prethoryn Scourge (Swarm)
-		1 = {
-			modifier = { factor = 0 has_global_flag = prethoryn_invasion_happened }
-			modifier = { factor = 0 has_global_flag = giga_spawned_scourge }
-			country_event = { id = crisis.10 days = 100 random = 400 }
-			set_global_flag = giga_spawned_scourge
-		}
-
-		### Unbidden (Extradimensionals)
-		1 = {
-			modifier = { factor = 0 has_global_flag = extradimensional_invasion_happened }
-			modifier = { factor = 0 has_global_flag = giga_spawned_unbidden }
-			country_event = { id = crisis.1000 days = 100 random = 400 }
-			set_global_flag = giga_spawned_unbidden
-		}
-
-		### Contingency (AI)
-		1 = {
-			modifier = { factor = 0 has_global_flag = ai_invasion_happened }
-			modifier = { factor = 0 has_global_flag = giga_spawned_contingency }
-			country_event = { id = crisis.2005 days = 100 random = 400 }
-			set_global_flag = giga_spawned_contingency
 		}
 	}
 }

@@ -147,11 +147,56 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		set_global_flag = galactic_crisis_happened
-		set_global_flag = extradimensional_invasion_happened
-		set_global_flag = extradimensional_invasion_defeated
 		set_global_flag = ehof_cheating
-		country_event = { id = compound_spawn.000 }
+		random_country = {
+			limit = { is_country_type = global_event }
+			set_global_flag = compound_invasion_happened
+			country_event = { id = compound_spawn.001 days = 2 }			# Spawn systems
+
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = compound_capped_1					# Spawn after vanilla crisis (Dealt with in trigger)
+						has_global_flag = compound_capped_2					# Spawn with vanilla crisis  (Dealt with in trigger)
+					}
+				}
+				if = {		limit = { has_global_flag = compound_capped_4 } set_variable = { which = giga_spawn_crisis_compound value = 2 } }	# 2 additional crisis
+				else_if = {	limit = { has_global_flag = compound_capped_3 } set_variable = { which = giga_spawn_crisis_compound value = 1 } }	# 1 additional crisis
+				else_if = {
+					limit = { has_global_flag = compound_capped_s }
+					random_list = {
+						1 = { set_variable = { which = giga_spawn_crisis_compound value = 0 } }
+						1 = { set_variable = { which = giga_spawn_crisis_compound value = 1 } }
+						1 = { set_variable = { which = giga_spawn_crisis_compound value = 2 } }
+					}
+				}
+
+				while = {
+					limit = { check_variable = { which = giga_spawn_crisis_compound value > 0 } }
+					subtract_variable = { which = giga_spawn_crisis_compound value = 1 }
+					random_list = {
+						1 = {	### Prethoryn Scourge (Swarm)
+							modifier = { factor = 0 has_global_flag = prethoryn_invasion_happened }
+							modifier = { factor = 0 has_global_flag = giga_spawned_scourge }
+							country_event = { id = crisis.10 days = 100 random = 400 }
+							set_global_flag = giga_spawned_scourge
+						}
+						1 = {	### Unbidden (Extradimensionals)
+							modifier = { factor = 0 has_global_flag = extradimensional_invasion_happened }
+							modifier = { factor = 0 has_global_flag = giga_spawned_unbidden }
+							country_event = { id = crisis.1000 days = 100 random = 400 }
+							set_global_flag = giga_spawned_unbidden
+						}
+						1 = {	### Contingency (AI)
+							modifier = { factor = 0 has_global_flag = ai_invasion_happened }
+							modifier = { factor = 0 has_global_flag = giga_spawned_contingency }
+							country_event = { id = crisis.2005 days = 100 random = 400 }
+							set_global_flag = giga_spawned_contingency
+						}
+					}
+				}
+			}
+		}
 	}
 }
 
