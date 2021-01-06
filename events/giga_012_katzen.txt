@@ -4081,6 +4081,9 @@ country_event = {
 		any_country = {
 			is_country_type = katzenartig_imperium
 		}
+		event_target:flusion_primitives_country = {
+			NOT = { has_country_flag = kaiser_moon_destroyed }
+		}
 	}
 
 	immediate = {
@@ -4120,6 +4123,15 @@ country_event = {
 								has_country_flag = allied_to_kaiser
 								has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
 								has_country_flag = kaiser_demand_target #kaiser isn't currently demanding stuff
+								has_country_flag = katzen_vassal
+								AND = {
+									is_ai = yes
+									OR = {
+										has_country_flag = kaiser_happy_2
+										has_country_flag = kaiser_happy_3
+										has_country_flag = kaiser_happy_4
+									}
+								}
 							}
 						}
 					}
@@ -4170,6 +4182,7 @@ country_event = {
 								is_at_war_with = event_target:flusion_primitives_country #Not at war
 								has_country_flag = allied_to_kaiser #Not allied (kaiser isn't THAT cocky)
 								has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
+								has_country_flag = katzen_vassal
 							}
 							has_country_flag = kaiser_demand_target #Same guy as before
 							is_country = event_target:kaiser_system_demand_target
@@ -4216,6 +4229,7 @@ country_event = {
 								is_at_war_with = event_target:flusion_primitives_country #Not at war
 								is_in_federation_with = event_target:flusion_primitives_country #Not allied (kaiser isn't THAT cocky)
 								has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
+								has_country_flag = katzen_vassal
 							}
 							has_country_flag = kaiser_demand_target #Same guy as before
 							is_country = event_target:kaiser_system_demand_target
@@ -4234,6 +4248,7 @@ country_event = {
 								is_at_war_with = event_target:flusion_primitives_country #Not at war
 								is_in_federation_with = event_target:flusion_primitives_country #Not allied (kaiser isn't THAT cocky)
 								has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
+								has_country_flag = katzen_vassal
 							}
 							has_country_flag = kaiser_demand_target #Same guy as before
 							is_country = event_target:kaiser_system_demand_target
@@ -4294,6 +4309,7 @@ country_event = {
 										is_at_war_with = event_target:flusion_primitives_country #Not at war
 										is_in_federation_with = event_target:flusion_primitives_country #Not allied (kaiser isn't THAT cocky)
 										has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
+										has_country_flag = katzen_vassal
 									}
 									has_country_flag = kaiser_demand_target #Same guy as before
 									is_country = event_target:kaiser_system_demand_target
@@ -4375,6 +4391,7 @@ country_event = {
 										is_at_war_with = event_target:flusion_primitives_country #Not at war
 										is_in_federation_with = event_target:flusion_primitives_country #Not allied (kaiser isn't THAT cocky)
 										has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
+										has_country_flag = katzen_vassal
 									}
 									has_country_flag = kaiser_demand_target #Same guy as before
 									is_country = event_target:kaiser_system_demand_target
@@ -4393,6 +4410,7 @@ country_event = {
 										is_at_war_with = event_target:flusion_primitives_country #Not at war
 										is_in_federation_with = event_target:flusion_primitives_country #Not allied (kaiser isn't THAT cocky)
 										has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
+										has_country_flag = katzen_vassal
 									}
 									has_country_flag = kaiser_demand_target #Same guy as before
 									is_country = event_target:kaiser_system_demand_target
@@ -4592,7 +4610,16 @@ country_event = { #Kaiser demands land!
 		ai_chance = {
 			factor = 1
 			modifier = {
-				factor = 0.75 #If equivalent
+				factor = 0 #If genocidal
+				OR = {
+					has_valid_civic = civic_fanatic_purifiers
+					has_valid_civic = civic_hive_devouring_swarm
+					has_valid_civic = civic_machine_terminator
+					has_ethic = ethic_fanatic_xenophobe
+				}
+			}
+			modifier = {
+				factor = 0.5 #If equivalent
 				relative_power = {
 					who = event_target:flusion_primitives_country
 					category = fleet
@@ -4665,9 +4692,9 @@ country_event = { #Kaiser demands land!
 				}
 			}
 			every_system = {
-				limit = {
+				limit = { 
 					has_star_flag = kaiser_demands_system
-					owner = { is_country = event_target:kaiser_system_demand_target }
+					owner = { is_country = event_target:kaiser_system_demand_target } 
 				}
 				starbase = { #Transfer land
 					set_owner = event_target:flusion_primitives_country
@@ -4704,6 +4731,14 @@ country_event = { #Kaiser demands land!
 		custom_tooltip = "giga_katzen.042.no.tooltip"
 		ai_chance = {
 			factor = 1
+			modifier = {
+				factor = 1.5 #If equivalent
+				relative_power = {
+					who = event_target:flusion_primitives_country
+					category = fleet
+					value = equivalent
+				}
+			}
 			modifier = {
 				factor = 5 #If superior
 				relative_power = {
@@ -5114,44 +5149,49 @@ country_event = { #20 years
 	}
 
 	immediate = {
-		create_fleet = { #Flusion defenses
-			name = "Katzenplanetenverteidigung"
-			settings = {
-				spawn_debris = no
+		if = {
+			limit = {
+				event_target:giga_jublio_system = { starbase = { owner = { is_country_type = katzenartig_imperium } } }
 			}
-			effect = {
-				set_owner = event_target:flusion_primitives_country
-				create_ship = {
-					name = "Katzenplanetenverteidigung"
-					design = "Meoder"
-					upgradable = no
+			create_fleet = { #Flusion defenses
+				name = "Katzenplanetenverteidigung"
+				settings = {
+					spawn_debris = no
 				}
-				set_location = {
-					target = event_target:gigaflusion
-					distance = 10
-					angle = 90
+				effect = {
+					set_owner = event_target:flusion_primitives_country
+					create_ship = {
+						name = "Katzenplanetenverteidigung"
+						design = "Meoder"
+						upgradable = no
+					}
+					set_location = {
+						target = event_target:gigaflusion
+						distance = 10
+						angle = 90
+					}
+					set_fleet_flag = katzen_planet_platform
 				}
-				set_fleet_flag = katzen_planet_platform
 			}
-		}
-		create_fleet = {
-			name = "Katzenplanetenverteidigung"
-			settings = {
-				spawn_debris = no
-			}
-			effect = {
-				set_owner = event_target:flusion_primitives_country
-				create_ship = {
-					name = "Katzenplanetenverteidigung"
-					design = "Meoder"
-					upgradable = no
+			create_fleet = {
+				name = "Katzenplanetenverteidigung"
+				settings = {
+					spawn_debris = no
 				}
-				set_location = {
-					target = event_target:gigaflusion
-					distance = 10
-					angle = 270
+				effect = {
+					set_owner = event_target:flusion_primitives_country
+					create_ship = {
+						name = "Katzenplanetenverteidigung"
+						design = "Meoder"
+						upgradable = no
+					}
+					set_location = {
+						target = event_target:gigaflusion
+						distance = 10
+						angle = 270
+					}
+					set_fleet_flag = katzen_planet_platform
 				}
-				set_fleet_flag = katzen_planet_platform
 			}
 		}
 		event_target:gigaflusion = {
