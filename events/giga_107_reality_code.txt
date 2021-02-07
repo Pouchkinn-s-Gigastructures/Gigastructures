@@ -38,9 +38,7 @@ ship_event = {
 
 country_event = {
 	id = ehof_reality_code.0011
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "enigmatic_code_room" }
+	picture = GFX_evt_enigmatic_code
 	title = "ehof_reality_code.1.name"
 	desc = "ehof_reality_code.1.desc"
 	show_sound = event_scanner
@@ -48,7 +46,6 @@ country_event = {
 	location = event_target:ehof_code_fleet
 
 	option = {
-		custom_gui = "giga_eventui_option"
 		default_hide_option = yes
 		name = INTERESTING
 		enable_special_project = {
@@ -63,9 +60,7 @@ country_event = {
 # After special project
 country_event = {
 	id = ehof_reality_code.002
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "enigmatic_code_room" }
+	picture = GFX_evt_enigmatic_code
 	title = "ehof_reality_code.002.name"
 	desc = "ehof_reality_code.002.desc"
 	show_sound = event_scanner
@@ -73,13 +68,12 @@ country_event = {
 
 	immediate = {
 		hidden_effect = {
+			set_country_flag = ehof_spawn_reality_code
 			set_country_flag = ehof_code_toxic_world
-			country_event = { id = ehof_reality_code.006 days = 180 random = 180 }
 		}
 	}
 
 	option = {
-		custom_gui = "giga_eventui_option"
 		default_hide_option = yes
 		if = {
 			limit = { NOT = { has_event_chain = ehof_p4_chain } }
@@ -93,20 +87,46 @@ country_event = {
 	}
 }
 
+# On gaining the sm3 tech, activate your pgate
+country_event = {
+	id = ehof_reality_code.003
+	title = "ehof_reality_code.003.name"
+	desc = "ehof_reality_code.003.desc"
+	picture = GFX_evt_pgate
+	show_sound = event_radio_chatter
+	is_triggered_only = yes
+	location = event_target:pgate_active_system
+
+    immediate = {
+		hidden_effect = {
+			random_system_within_border = {
+				limit = {
+					cohesive_system = yes
+					has_megastructure = ehof_pgate_unknown
+				}
+				save_event_target_as = pgate_active_system
+			}
+			every_megastructure = {
+				limit = { is_megastructure_type = ehof_pgate_unknown }
+				upgrade_megastructure_to = "ehof_pgate_gateway"
+				finish_upgrade = yes
+			}
+		}
+    }
+	option = { name = "ehof_reality_code.003.option" }
+}
+
 # Gaining gateway activation tech
 country_event = {
 	id = ehof_reality_code.004
 	title = "ehof_reality_code.004.name"
 	desc = "ehof_reality_code.004.desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "creator-gateway_room" }
+	picture = GFX_evt_pgate
 	show_sound = event_finding_loot
 	is_triggered_only = yes
 	location = from
 
 	option = {
-		custom_gui = "giga_eventui_option"
 		default_hide_option = yes
 		name = OK
 	}
@@ -117,82 +137,29 @@ country_event = {
 	id = ehof_reality_code.005
 	title = "ehof_reality_code.005.name"
 	desc = "ehof_reality_code.005.desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "sentient_room" }
+	picture = GFX_evt_sentient
 	show_sound = event_finding_loot
 	is_triggered_only = yes
 	location = from
 
 	option = {
-		custom_gui = "giga_eventui_option"
 		default_hide_option = yes
 		name = OK
+		add_research_option = tech_ehof_sentient_tier_1
+		add_tech_progress = { tech = tech_ehof_sentient_tier_1 progress = 0.1 }
 	}
 }
 
-# Spawn next reality code
-country_event = {
-	id = ehof_reality_code.006
-	is_triggered_only = yes
-	hide_window = yes
-	trigger = { NOT = { has_country_flag = ehof_code_7_complete } }
-
-	immediate = {
-		if = {
-			limit = {
-				OR = {
-					AND = {
-						OR = {
-							has_country_flag = ehof_code_toxic_world
-							has_country_flag = ehof_code_broken_world
-						}
-						check_variable = { which = ehof_phase value >= 1 }
-					}
-					AND = {
-						OR = {
-							has_country_flag = ehof_code_frozen_world
-							has_country_flag = ehof_code_molten_world
-						}
-						check_variable = { which = ehof_phase value >= 2 }
-					}
-					AND = {
-						OR = {
-							has_country_flag = ehof_code_gas_giant_world
-							has_country_flag = ehof_code_star_world
-						}
-						check_variable = { which = ehof_phase value >= 3 }
-					}
-				}
-			}
-			set_global_flag = ehof_spawning_reality_code
-			if = { limit = { exists = event_target:current_system_creator } clear_global_event_target = current_system_creator }
-			save_global_event_target_as = current_system_creator
-			ehof_generate_system = yes
-
-			set_country_flag = ehof_new_system_poi
-			change_variable = { which = ehof_new_system_poi value = 1 }
-			set_country_flag = ehof_started_reality_code
-			if = {
-				limit = { is_ai = yes }
-				set_country_flag = ehof_ai_system_ready
-			}
-			remove_global_flag = ehof_spawning_reality_code
-		}
-		else = { country_event = { id = ehof_reality_code.006 days = 60 } } # Try again in 2 months
-	}
-}
-
-# Check they have the right sentient metal tech
+# Ensure AI keep up on tech
 country_event = {
 	id = ehof_reality_code.007
 	is_triggered_only = yes
 	hide_window = yes
 
 	trigger = {
+		is_ai = yes
 		OR = {
 			AND = {
-				is_ai = yes
 				NOR = {
 					has_tech_option = tech_ehof_sentient_tier_1
 					has_technology = tech_ehof_sentient_tier_1
@@ -205,7 +172,6 @@ country_event = {
 				}
 			}
 			AND = {
-				is_ai = yes
 				has_technology = tech_ehof_sentient_tier_1
 				NOR = {
 					has_tech_option = tech_ehof_sentient_tier_2
@@ -219,7 +185,6 @@ country_event = {
 				}
 			}
 			AND = {
-				is_ai = yes
 				has_technology = tech_ehof_sentient_tier_2
 				NOR = {
 					has_tech_option = tech_ehof_sentient_tier_3
@@ -233,7 +198,6 @@ country_event = {
 				}
 			}
 			AND = {
-				is_ai = yes
 				has_technology = tech_ehof_sentient_tier_3
 				NOR = {
 					has_tech_option = tech_ehof_sentient_tier_4
@@ -247,7 +211,6 @@ country_event = {
 				}
 			}
 			AND = {
-				is_ai = yes
 				has_technology = tech_ehof_sentient_tier_4
 				NOR = {
 					has_tech_option = tech_ehof_sentient_tier_5
@@ -264,7 +227,6 @@ country_event = {
 				}
 			}
 			AND = {
-				is_ai = yes
 				has_technology = tech_ehof_sentient_tier_5
 				NOR = {
 					has_tech_option = tech_ehof_sentient_tier_6
@@ -281,7 +243,6 @@ country_event = {
 				}
 			}
 			AND = {
-				is_ai = yes
 				has_technology = tech_ehof_sentient_tier_6
 				NOR = {
 					has_tech_option = tech_ehof_sentient_tier_7
@@ -297,68 +258,6 @@ country_event = {
 					count >= 5
 				}
 			}
-			AND = {
-				has_country_flag = ehof_code_1_complete
-				NOR = {
-					has_tech_option = tech_ehof_sentient_tier_1
-					has_technology = tech_ehof_sentient_tier_1
-				}
-			}
-			AND = {
-				has_country_flag = ehof_code_2_complete
-				has_technology = tech_ehof_sentient_tier_1
-				NOR = {
-					has_tech_option = tech_ehof_sentient_tier_2
-					has_technology = tech_ehof_sentient_tier_2
-				}
-			}
-			AND = {
-				has_country_flag = ehof_code_3_complete
-				has_technology = tech_ehof_sentient_tier_2
-				NOR = {
-					has_tech_option = tech_ehof_sentient_tier_3
-					has_technology = tech_ehof_sentient_tier_3
-				}
-			}
-			AND = {
-				has_country_flag = ehof_code_3_complete
-				NOR = {
-					has_tech_option = tech_ehof_use_gateway
-					has_technology = tech_ehof_use_gateway
-				}
-			}
-			AND = {
-				has_country_flag = ehof_code_4_complete
-				has_technology = tech_ehof_sentient_tier_3
-				NOR = {
-					has_tech_option = tech_ehof_sentient_tier_4
-					has_technology = tech_ehof_sentient_tier_4
-				}
-			}
-			AND = {
-				has_country_flag = ehof_code_5_complete
-				has_technology = tech_ehof_sentient_tier_4
-				NOR = {
-					has_tech_option = tech_ehof_sentient_tier_5
-					has_technology = tech_ehof_sentient_tier_5
-				}
-			}
-			AND = {
-				has_country_flag = ehof_code_6_complete
-				has_technology = tech_ehof_sentient_tier_5
-				NOR = {
-					has_tech_option = tech_ehof_sentient_tier_6
-					has_technology = tech_ehof_sentient_tier_6
-				}
-			}
-			AND = {
-				has_country_flag = ehof_code_7_complete
-				has_technology = tech_ehof_sentient_tier_6
-				NOR = {
-					has_tech_option = tech_ehof_sentient_tier_7
-					has_technology = tech_ehof_sentient_tier_7
-				}
-			}
 		}
 	}
 
@@ -366,7 +265,6 @@ country_event = {
 		# If someone else has tier 4 SM, give SM 1 to AI
 		if = {
 			limit = {
-				is_ai = yes
 				NOR = {
 					has_tech_option = tech_ehof_sentient_tier_1
 					has_technology = tech_ehof_sentient_tier_1
@@ -385,7 +283,6 @@ country_event = {
 		# If someone else has tier 5 SM, give SM 2 to AI
 		if = {
 			limit = {
-				is_ai = yes
 				has_technology = tech_ehof_sentient_tier_1
 				NOR = {
 					has_tech_option = tech_ehof_sentient_tier_2
@@ -405,7 +302,6 @@ country_event = {
 		# If someone else has tier 6 SM, give SM 3 to AI
 		if = {
 			limit = {
-				is_ai = yes
 				has_technology = tech_ehof_sentient_tier_2
 				NOR = {
 					has_tech_option = tech_ehof_sentient_tier_3
@@ -425,7 +321,6 @@ country_event = {
 		# If someone else has tier 7 SM, give SM 4 to AI
 		if = {
 			limit = {
-				is_ai = yes
 				has_technology = tech_ehof_sentient_tier_3
 				NOR = {
 					has_tech_option = tech_ehof_sentient_tier_4
@@ -445,7 +340,6 @@ country_event = {
 		# If 3 or more other countries have has tier 7 SM, give SM 5 to AI
 		if = {
 			limit = {
-				is_ai = yes
 				has_technology = tech_ehof_sentient_tier_4
 				NOR = {
 					has_tech_option = tech_ehof_sentient_tier_5
@@ -468,7 +362,6 @@ country_event = {
 		# If 4 or more other countries have has tier 7 SM, give SM 6 to AI
 		if = {
 			limit = {
-				is_ai = yes
 				has_technology = tech_ehof_sentient_tier_5
 				NOR = {
 					has_tech_option = tech_ehof_sentient_tier_6
@@ -491,7 +384,6 @@ country_event = {
 		# If 5 or more other countries have has tier 7 SM, give SM 7 to AI
 		if = {
 			limit = {
-				is_ai = yes
 				has_technology = tech_ehof_sentient_tier_6
 				NOR = {
 					has_tech_option = tech_ehof_sentient_tier_7
@@ -510,116 +402,6 @@ country_event = {
 			add_research_option = tech_ehof_sentient_tier_7
 			add_tech_progress = { tech = tech_ehof_sentient_tier_7 progress = 0.1 }
 		}
-
-		# If has completed RC1, make sure they have SM 1
-		if = {
-			limit = {
-				has_country_flag = ehof_code_1_complete
-				NOR = {
-					has_tech_option = tech_ehof_sentient_tier_1
-					has_technology = tech_ehof_sentient_tier_1
-				}
-			}
-			add_research_option = tech_ehof_sentient_tier_1
-			add_tech_progress = { tech = tech_ehof_sentient_tier_1 progress = 0.1 }
-		}
-
-		# If has completed RC2, make sure they have SM 2
-		if = {
-			limit = {
-				has_country_flag = ehof_code_2_complete
-				has_technology = tech_ehof_sentient_tier_1
-				NOR = {
-					has_tech_option = tech_ehof_sentient_tier_2
-					has_technology = tech_ehof_sentient_tier_2
-				}
-			}
-			add_research_option = tech_ehof_sentient_tier_2
-			add_tech_progress = { tech = tech_ehof_sentient_tier_2 progress = 0.1 }
-		}
-
-		# If has completed RC3, make sure they have SM 3
-		if = {
-			limit = {
-				has_country_flag = ehof_code_3_complete
-				has_technology = tech_ehof_sentient_tier_2
-				NOR = {
-					has_tech_option = tech_ehof_sentient_tier_3
-					has_technology = tech_ehof_sentient_tier_3
-				}
-			}
-			add_research_option = tech_ehof_sentient_tier_3
-			add_tech_progress = { tech = tech_ehof_sentient_tier_3 progress = 0.1 }
-		}
-
-		# If has completed RC4, make sure they have gateway use
-		if = {
-			limit = {
-				has_country_flag = ehof_code_3_complete
-				NOR = {
-					has_tech_option = tech_ehof_use_gateway
-					has_technology = tech_ehof_use_gateway
-				}
-			}
-			add_research_option = tech_ehof_use_gateway
-			add_tech_progress = { tech = tech_ehof_use_gateway progress = 0.1 }
-		}
-
-		# If has completed RC4, make sure they have SM 4
-		if = {
-			limit = {
-				has_country_flag = ehof_code_4_complete
-				has_technology = tech_ehof_sentient_tier_3
-				NOR = {
-					has_tech_option = tech_ehof_sentient_tier_4
-					has_technology = tech_ehof_sentient_tier_4
-				}
-			}
-			add_research_option = tech_ehof_sentient_tier_4
-			add_tech_progress = { tech = tech_ehof_sentient_tier_4 progress = 0.1 }
-		}
-
-		# If has completed RC5, make sure they have SM 5
-		if = {
-			limit = {
-				has_country_flag = ehof_code_5_complete
-				has_technology = tech_ehof_sentient_tier_4
-				NOR = {
-					has_tech_option = tech_ehof_sentient_tier_5
-					has_technology = tech_ehof_sentient_tier_5
-				}
-			}
-			add_research_option = tech_ehof_sentient_tier_5
-			add_tech_progress = { tech = tech_ehof_sentient_tier_5 progress = 0.1 }
-		}
-
-		# If has completed RC6, make sure they have SM 6
-		if = {
-			limit = {
-				has_country_flag = ehof_code_6_complete
-				has_technology = tech_ehof_sentient_tier_5
-				NOR = {
-					has_tech_option = tech_ehof_sentient_tier_6
-					has_technology = tech_ehof_sentient_tier_6
-				}
-			}
-			add_research_option = tech_ehof_sentient_tier_6
-			add_tech_progress = { tech = tech_ehof_sentient_tier_6 progress = 0.1 }
-		}
-
-		# If has completed RC7, make sure they have SM 7
-		if = {
-			limit = {
-				has_country_flag = ehof_code_7_complete
-				has_technology = tech_ehof_sentient_tier_6
-				NOR = {
-					has_tech_option = tech_ehof_sentient_tier_7
-					has_technology = tech_ehof_sentient_tier_7
-				}
-			}
-			add_research_option = tech_ehof_sentient_tier_7
-			add_tech_progress = { tech = tech_ehof_sentient_tier_7 progress = 0.1 }
-		}
 	}
 }
 
@@ -632,13 +414,11 @@ ship_event = {
 	id = ehof_reality_code.101
 	title = "ehof_reality_code.101.name"
 	desc = "ehof_reality_code.101.desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "toxic_city_room" }
+	picture = GFX_evt_toxic
 	location = from
 	is_triggered_only = yes
 	immediate = { hidden_effect = { from = { create_archaeological_site = code1_digsite } } }
-	option = { custom_gui = "giga_eventui_option" default_hide_option = yes name = ancrel.4000.a }
+	option = { default_hide_option = yes name = ancrel.4000.a }
 }
 
 # Planet Class Broken
@@ -646,13 +426,11 @@ ship_event = {
 	id = ehof_reality_code.201
 	title = "ehof_reality_code.201.name"
 	desc = "ehof_reality_code.201.desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "shattered_planet_room" }
+	picture = GFX_evt_shattered_planet
 	location = from
 	is_triggered_only = yes
 	immediate = { hidden_effect = { from = { create_archaeological_site = code2_digsite } } }
-	option = { custom_gui = "giga_eventui_option" default_hide_option = yes name = ancrel.4000.a }
+	option = { default_hide_option = yes name = ancrel.4000.a }
 }
 
 # Planet Class Frozen
@@ -660,13 +438,11 @@ ship_event = {
 	id = ehof_reality_code.301
 	title = "ehof_reality_code.301.name"
 	desc = "ehof_reality_code.301.desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "frozen_planet_room" }
+	picture = GFX_evt_frozen
 	location = from
 	is_triggered_only = yes
 	immediate = { hidden_effect = { from = { create_archaeological_site = code3_digsite } } }
-	option = { custom_gui = "giga_eventui_option" default_hide_option = yes name = ancrel.4000.a }
+	option = { default_hide_option = yes name = ancrel.4000.a }
 }
 
 # Planet Class Molten
@@ -674,13 +450,11 @@ ship_event = {
 	id = ehof_reality_code.401
 	title = "ehof_reality_code.401.name"
 	desc = "ehof_reality_code.401.desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "molten_planet_room" }
+	picture = GFX_evt_molten
 	location = from
 	is_triggered_only = yes
 	immediate = { hidden_effect = { from = { create_archaeological_site = code4_digsite } } }
-	option = { custom_gui = "giga_eventui_option" default_hide_option = yes name = ancrel.4000.a }
+	option = { default_hide_option = yes name = ancrel.4000.a }
 }
 
 # Planet Class Gas Giant
@@ -688,13 +462,11 @@ ship_event = {
 	id = ehof_reality_code.501
 	title = "ehof_reality_code.501.name"
 	desc = "ehof_reality_code.501.desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "gas_giant_room" }
+	picture = GFX_evt_gas_giant
 	location = from
 	is_triggered_only = yes
 	immediate = { hidden_effect = { from = { create_archaeological_site = code5_digsite } } }
-	option = { custom_gui = "giga_eventui_option" default_hide_option = yes name = ancrel.4000.a }
+	option = { default_hide_option = yes name = ancrel.4000.a }
 }
 
 # Star Class
@@ -702,13 +474,11 @@ ship_event = {
 	id = ehof_reality_code.601
 	title = "ehof_reality_code.601.name"
 	desc = "ehof_reality_code.601.desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "star_neutron_room" }
+	picture = GFX_evt_star_neutron
 	location = from
 	is_triggered_only = yes
 	immediate = { hidden_effect = { from = { create_archaeological_site = code6_digsite } } }
-	option = { custom_gui = "giga_eventui_option" default_hide_option = yes name = ancrel.4000.a }
+	option = { default_hide_option = yes name = ancrel.4000.a }
 }
 
 ##########################################################################
@@ -795,10 +565,9 @@ fleet_event = {
 		}
 		from = { set_site_progress_locked = yes }
 		owner = {
-			remove_country_flag = ehof_code_toxic_world
 			set_country_flag = ehof_code_1_complete
 			set_country_flag = ehof_code_broken_world
-			country_event = { id = ehof_reality_code.006 days = 180 random = 180 }
+			set_country_flag = ehof_spawn_reality_code
 			add_event_chain_counter = {
 				event_chain = ehof_p4_chain
 				counter = reality_code
@@ -894,29 +663,16 @@ fleet_event = {
 				limit = { has_planet_flag = code_world2@root.owner }
 				save_event_target_as = code_world_planet
 			}
-			set_star_flag = ehof_code_system_01_@root.owner
 		}
 		from = { set_site_progress_locked = yes }
 		owner = {
-			remove_country_flag = ehof_code_broken_world
 			set_country_flag = ehof_code_2_complete
 			set_country_flag = ehof_code_frozen_world
-			country_event = { id = ehof_reality_code.006 days = 180 random = 180 }
+			set_country_flag = ehof_spawn_reality_code
 			add_event_chain_counter = {
 				event_chain = ehof_p4_chain
 				counter = reality_code
 				amount = 1
-			}
-			if = {
-				limit = {
-					has_technology = tech_ehof_sentient_tier_1
-					NOR = {
-						has_tech_option = tech_ehof_sentient_tier_2
-						has_technology = tech_ehof_sentient_tier_2
-					}
-				}
-				add_research_option = tech_ehof_sentient_tier_2
-				add_tech_progress = { tech = tech_ehof_sentient_tier_2 progress = 0.1 }
 			}
 		}
 		event_target:code_world_planet = { if = { limit = { has_negative_mass = no } ehof_add_negative_mass_deposit = yes } }
@@ -928,17 +684,8 @@ fleet_event = {
 		name = CURIOUS
 		if = { limit = { has_ancrel = yes } large_artifact_reward = yes }
 		owner = {
-			if = {
-				limit = {
-					has_technology = tech_ehof_sentient_tier_1
-					NOR = {
-						has_tech_option = tech_ehof_sentient_tier_2
-						has_technology = tech_ehof_sentient_tier_2
-					}
-				}
-				add_research_option = tech_ehof_sentient_tier_2
-				add_tech_progress = { tech = tech_ehof_sentient_tier_2 progress = 0.1 }
-			}
+			add_research_option = tech_ehof_sentient_tier_2
+			add_tech_progress = { tech = tech_ehof_sentient_tier_2 progress = 0.1 }
 		}
 	}
 }
@@ -1023,37 +770,15 @@ fleet_event = {
 		}
 		from = { set_site_progress_locked = yes }
 		owner = {
-			remove_country_flag = ehof_code_frozen_world
 			set_country_flag = ehof_code_3_complete
 			set_country_flag = ehof_code_molten_world
-			country_event = { id = ehof_reality_code.006 days = 180 random = 180 }
+			set_country_flag = ehof_spawn_reality_code
 			add_event_chain_counter = {
 				event_chain = ehof_p4_chain
 				counter = reality_code
 				amount = 1
 			}
-			if = {
-				limit = {
-					NOR = {
-						has_tech_option = tech_ehof_use_gateway
-						has_technology = tech_ehof_use_gateway
-					}
-				}
-				country_event = { id = ehof_reality_code.004 }
-				add_research_option = tech_ehof_use_gateway
-				add_tech_progress = { tech = tech_ehof_use_gateway progress = 0.25 }
-			}
-			if = {
-				limit = {
-					has_technology = tech_ehof_sentient_tier_2
-					NOR = {
-						has_tech_option = tech_ehof_sentient_tier_3
-						has_technology = tech_ehof_sentient_tier_3
-					}
-				}
-				add_research_option = tech_ehof_sentient_tier_3
-				add_tech_progress = { tech = tech_ehof_sentient_tier_3 progress = 0.1 }
-			}
+			country_event = { id = ehof_reality_code.003 days = 7 } # Trigger PGate Activation
 		}
 		event_target:code_world_planet = { if = { limit = { has_negative_mass = no } ehof_add_negative_mass_deposit = yes } }
 	}
@@ -1064,27 +789,8 @@ fleet_event = {
 		name = CURIOUS
 		if = { limit = { has_ancrel = yes } large_artifact_reward = yes }
 		owner = {
-			if = {
-				limit = {
-					NOR = {
-						has_tech_option = tech_ehof_use_gateway
-						has_technology = tech_ehof_use_gateway
-					}
-				}
-				add_research_option = tech_ehof_use_gateway
-				add_tech_progress = { tech = tech_ehof_use_gateway progress = 0.25 }
-			}
-			if = {
-				limit = {
-					has_technology = tech_ehof_sentient_tier_2
-					NOR = {
-						has_tech_option = tech_ehof_sentient_tier_3
-						has_technology = tech_ehof_sentient_tier_3
-					}
-				}
-				add_research_option = tech_ehof_sentient_tier_3
-				add_tech_progress = { tech = tech_ehof_sentient_tier_3 progress = 0.1 }
-			}
+			add_research_option = tech_ehof_sentient_tier_3
+			add_tech_progress = { tech = tech_ehof_sentient_tier_3 progress = 0.1 }
 		}
 	}
 }
@@ -1198,25 +904,13 @@ fleet_event = {
 		}
 		from = { set_site_progress_locked = yes }
 		owner = {
-			remove_country_flag = ehof_code_molten_world
 			set_country_flag = ehof_code_4_complete
 			set_country_flag = ehof_code_gas_giant_world
-			country_event = { id = ehof_reality_code.006 days = 180 random = 180 }
+			set_country_flag = ehof_spawn_reality_code
 			add_event_chain_counter = {
 				event_chain = ehof_p4_chain
 				counter = reality_code
 				amount = 1
-			}
-			if = {
-				limit = {
-					has_technology = tech_ehof_sentient_tier_3
-					NOR = {
-						has_tech_option = tech_ehof_sentient_tier_4
-						has_technology = tech_ehof_sentient_tier_4
-					}
-				}
-				add_research_option = tech_ehof_sentient_tier_4
-				add_tech_progress = { tech = tech_ehof_sentient_tier_4 progress = 0.1 }
 			}
 		}
 		event_target:code_world_planet = { if = { limit = { has_negative_mass = no } ehof_add_negative_mass_deposit = yes } }
@@ -1228,17 +922,8 @@ fleet_event = {
 		name = CURIOUS
 		if = { limit = { has_ancrel = yes } large_artifact_reward = yes }
 		owner = {
-			if = {
-				limit = {
-					has_technology = tech_ehof_sentient_tier_3
-					NOR = {
-						has_tech_option = tech_ehof_sentient_tier_4
-						has_technology = tech_ehof_sentient_tier_4
-					}
-				}
-				add_research_option = tech_ehof_sentient_tier_4
-				add_tech_progress = { tech = tech_ehof_sentient_tier_4 progress = 0.1 }
-			}
+			add_research_option = tech_ehof_sentient_tier_4
+			add_tech_progress = { tech = tech_ehof_sentient_tier_4 progress = 0.1 }
 		}
 	}
 }
@@ -1352,25 +1037,13 @@ fleet_event = {
 		}
 		from = { set_site_progress_locked = yes }
 		owner = {
-			remove_country_flag = ehof_code_gas_giant_world
 			set_country_flag = ehof_code_5_complete
 			set_country_flag = ehof_code_star_world
-			country_event = { id = ehof_reality_code.006 days = 180 random = 180 }
+			set_country_flag = ehof_spawn_reality_code
 			add_event_chain_counter = {
 				event_chain = ehof_p4_chain
 				counter = reality_code
 				amount = 1
-			}
-			if = {
-				limit = {
-					has_technology = tech_ehof_sentient_tier_4
-					NOR = {
-						has_tech_option = tech_ehof_sentient_tier_5
-						has_technology = tech_ehof_sentient_tier_5
-					}
-				}
-				add_research_option = tech_ehof_sentient_tier_5
-				add_tech_progress = { tech = tech_ehof_sentient_tier_5 progress = 0.1 }
 			}
 		}
 		event_target:code_world_planet = { if = { limit = { has_negative_mass = no } ehof_add_negative_mass_deposit = yes } }
@@ -1382,17 +1055,8 @@ fleet_event = {
 		name = CURIOUS
 		if = { limit = { has_ancrel = yes } large_artifact_reward = yes }
 		owner = {
-			if = {
-				limit = {
-					has_technology = tech_ehof_sentient_tier_4
-					NOR = {
-						has_tech_option = tech_ehof_sentient_tier_5
-						has_technology = tech_ehof_sentient_tier_5
-					}
-				}
-				add_research_option = tech_ehof_sentient_tier_5
-				add_tech_progress = { tech = tech_ehof_sentient_tier_5 progress = 0.1 }
-			}
+			add_research_option = tech_ehof_sentient_tier_5
+			add_tech_progress = { tech = tech_ehof_sentient_tier_5 progress = 0.1 }
 		}
 	}
 }
@@ -1506,23 +1170,11 @@ fleet_event = {
 		}
 		from = { set_site_progress_locked = yes }
 		owner = {
-			remove_country_flag = ehof_code_star_world
 			set_country_flag = ehof_code_6_complete
 			add_event_chain_counter = {
 				event_chain = ehof_p4_chain
 				counter = reality_code
 				amount = 1
-			}
-			if = {
-				limit = {
-					has_technology = tech_ehof_sentient_tier_5
-					NOR = {
-						has_tech_option = tech_ehof_sentient_tier_6
-						has_technology = tech_ehof_sentient_tier_6
-					}
-				}
-				add_research_option = tech_ehof_sentient_tier_6
-				add_tech_progress = { tech = tech_ehof_sentient_tier_6 progress = 0.1 }
 			}
 			country_event = { id = ehof_reality_code.1000 }
 		}
@@ -1535,17 +1187,8 @@ fleet_event = {
 		name = CURIOUS
 		if = { limit = { has_ancrel = yes } great_artifact_reward = yes }
 		owner = {
-			if = {
-				limit = {
-					has_technology = tech_ehof_sentient_tier_5
-					NOR = {
-						has_tech_option = tech_ehof_sentient_tier_6
-						has_technology = tech_ehof_sentient_tier_6
-					}
-				}
-				add_research_option = tech_ehof_sentient_tier_6
-				add_tech_progress = { tech = tech_ehof_sentient_tier_6 progress = 0.1 }
-			}
+			add_research_option = tech_ehof_sentient_tier_6
+			add_tech_progress = { tech = tech_ehof_sentient_tier_6 progress = 0.1 }
 		}
 	}
 }
@@ -1555,9 +1198,7 @@ fleet_event = {
 # Investigate Final digsite
 country_event = {
 	id = ehof_reality_code.1000
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "enigmatic_code_room" }
+	picture = GFX_evt_enigmatic_code
 	title = "ehof_reality_code.1000.name"
 	desc = "ehof_reality_code.1000.desc"
 	is_triggered_only = yes
@@ -1580,7 +1221,7 @@ country_event = {
 			random_system_within_border = {
 				limit = {
 					cohesive_system = yes
-					has_star_flag = ehof_sector_system_@root
+					has_star_flag = ehof_system_created_by_@root
 				}
 				spawn_system = {
 					min_distance >= 5
@@ -1597,23 +1238,14 @@ country_event = {
 					has_star_flag = ehof_system_created_by_@root
 				}
 				save_event_target_as = creator_poi
-				random_system = {
+				random_neighbor_system = {
 					limit = {
 						NOT = { is_same_value = prev }
 						has_star_flag = ehof_system_created_by_@root
-						has_star_flag = ehof_sector_system_@root
-						has_star_flag = empire_has_visited@root
-						distance = {
-							type = euclidean
-							source = prev
-							min_distance >= 0
-							max_distance <= 30
-						}
+						empire_has_visited = yes
 					}
-					add_hyperlane = {
-						from = this
-						to = prev
-					}
+					ignore_hyperlanes = yes
+					add_hyperlane = { from = prev to = this }
 				}
 			}
 
@@ -1631,22 +1263,19 @@ country_event = {
 	}
 
 	option = {
-		custom_gui = "giga_eventui_option"
 		default_hide_option = yes
 		name = INTERESTING
 	}
 }
 
-# Triggers when a fleet enters a system / Reality Code
+# Triggers when a fleet enters the system / Reality Code
 fleet_event = {
 	id = ehof_reality_code.10001
 	title = "ehof_reality_code.10001.name"
 	desc = "ehof_reality_code.10001.desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "creator-eradicator_room" }
+	picture = GFX_evt_stellar_eradicator
 	show_sound = event_red_alert
-	location = event_target:creator_system
+	location = from
 
 	is_triggered_only = yes
 
@@ -1661,10 +1290,6 @@ fleet_event = {
 	}
 
 	immediate = {
-		random_system = {
-			limit = { everchanging_system = yes }
-			save_event_target_as = creator_system
-		}
 		owner = {
 			set_country_flag = encountered_cplanet
 			establish_communications_no_message = event_target:stellar_eradicator_country
@@ -1672,7 +1297,7 @@ fleet_event = {
 		}
 	}
 
-	option = { custom_gui = "giga_eventui_option" name = DISCONCERTING }
+	option = { name = DISCONCERTING }
 }
 
 # Upon destroying the eradicator
@@ -1680,9 +1305,7 @@ country_event = {
 	id = ehof_reality_code.10002
 	title = "ehof_reality_code.10002.name"
 	desc = "ehof_reality_code.10002.desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "large_explosion_room" }
+	picture = GFX_evt_large_explosion
 	show_sound = event_space_battle
 	location = fromfromfrom
 	is_triggered_only = yes
@@ -1693,7 +1316,7 @@ country_event = {
 		ehof_default_country = yes
 	}
 
-	option = { custom_gui = "giga_eventui_option" name = ehof_reality_code.10002.a }
+	option = { name = ehof_reality_code.10002.a }
 }
 
 # Stage 1
@@ -1809,22 +1432,7 @@ fleet_event = {
 
 	immediate = {
 		from = { set_site_progress_locked = yes }
-		hidden_effect = {
-			owner = {
-				set_country_flag = ehof_code_7_complete
-				if = {
-					limit = {
-						has_technology = tech_ehof_sentient_tier_6
-						NOR = {
-							has_tech_option = tech_ehof_sentient_tier_7
-							has_technology = tech_ehof_sentient_tier_7
-						}
-					}
-					add_research_option = tech_ehof_sentient_tier_7
-					add_tech_progress = { tech = tech_ehof_sentient_tier_7 progress = 0.1 }
-				}
-			}
-		}
+		owner = { set_country_flag = ehof_code_7_complete }
 	}
 
 	after = { from = { set_site_progress_locked = no } }
@@ -1849,17 +1457,8 @@ fleet_event = {
 			}
 		}
 		owner = {
-			if = {
-				limit = {
-					has_technology = tech_ehof_sentient_tier_6
-					NOR = {
-						has_tech_option = tech_ehof_sentient_tier_7
-						has_technology = tech_ehof_sentient_tier_7
-					}
-				}
-				add_research_option = tech_ehof_sentient_tier_7
-				add_tech_progress = { tech = tech_ehof_sentient_tier_7 progress = 0.1 }
-			}
+			add_research_option = tech_ehof_sentient_tier_7
+			add_tech_progress = { tech = tech_ehof_sentient_tier_7 progress = 0.1 }
 		}
 	}
 }

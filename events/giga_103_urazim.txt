@@ -29,6 +29,14 @@ country_event = {
 			name = "NAME_ehof_traders"
 			type = ehof_traders
 			species = event_target:ehof_trader_species
+			authority = auth_corporate
+			civics = { civic = civic_free_traders }
+			ethos = {
+				ethic = ethic_egalitarian
+				ethic = ethic_pacifist
+				ethic = ethic_xenophile
+			}
+			ignore_initial_colony_error = yes
 			origin = "origin_default"
 			flag = {
 				icon = {
@@ -192,12 +200,6 @@ country_event = {
 
 		every_country = {
 			limit = { ehof_default_country = yes }
-			set_country_flag = ehof_new_system_poi
-			change_variable = { which = ehof_new_system_poi value = 1 }
-			random_system = {
-				limit = { has_star_flag = urmazin_capital }
-				set_star_flag = ehof_new_system_poi@prev
-			}
 			establish_communications_no_message = event_target:urmazin_country
 		}
 
@@ -243,19 +245,6 @@ fleet_event = {
 	immediate = {
 		owner = { set_timed_country_flag = { flag = ehof_trader_already_triggered days = @ehof_short_cooldown } } # Dont trigger more than once (Multiple fleets)
 
-		# Everytime you visit traders
-		if = {
-			limit = { solar_system = { has_star_flag = ehof_new_system_poi@root.owner } }
-			solar_system = { remove_star_flag = ehof_new_system_poi@root.owner }
-			owner = {
-				subtract_variable = { which = ehof_new_system_poi value = 1 }
-				if = {
-					limit = { check_variable = { which = ehof_new_system_poi value < 1 } }
-					remove_country_flag = ehof_new_system_poi
-				}
-			}
-		}
-
 		# First time
 		if = {
 			limit = { owner = { NOT = { has_country_flag = ehof_traders_first_time } } }
@@ -273,15 +262,12 @@ fleet_event = {
 	id = ehof_mega_trader.002
 	title = "ehof_mega_trader.002.name"
 	desc = "ehof_mega_trader.002.desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "caravaneers_room" }
+	picture = GFX_evt_caravaneers
 	show_sound = event_finding_loot
 	location = from
 	is_triggered_only = yes
 
 	option = {
-		custom_gui = "giga_eventui_option"
 		default_hide_option = yes
 		name = "ehof_mega_trader.002.a"
 		hidden_effect = { fleet_event = { id = ehof_mega_trader.003 } }
@@ -393,13 +379,6 @@ country_event = {
 		hidden_effect = { country_event = { id = ehof_mega_trader.010 } }
 	}
 
-	option = {	# What is that gateway?
-		custom_gui = "enclave_ehof_trader_option"
-		name = "ehof_mega_trader.006.e"
-		is_dialog_only = yes
-		response_text = "ehof_mega_trader.006.e.response"
-	}
-
 	option = {	# Why are these so many wormholes in this system?
 		custom_gui = "enclave_ehof_trader_option"
 		name = "ehof_mega_trader.006.c"
@@ -460,13 +439,6 @@ country_event = {
 		custom_gui = "enclave_ehof_trader_option"
 		name = "ehof_mega_trader.006.b"
 		hidden_effect = { country_event = { id = ehof_mega_trader.010 } }
-	}
-
-	option = {	# What is that gateway?
-		custom_gui = "enclave_ehof_trader_option"
-		name = "ehof_mega_trader.006.e"
-		is_dialog_only = yes
-		response_text = "ehof_mega_trader.006.e.response"
 	}
 
 	option = {	# Why are these so many wormholes in this system?
@@ -638,8 +610,8 @@ country_event = {
 	location = event_target:urmazin_capital
 
 	immediate = {
-		random_system = {
-			limit = { has_star_flag = ehof_megastructure_system@root }
+		random_system_within_border = {
+			limit = { has_an_active_ehof = yes }
 			star = { save_event_target_as = ehof_trader_evict_fleet }
 		}
 		every_owned_fleet = {
@@ -715,8 +687,6 @@ country_event = {
 	desc = { trigger = { has_country_flag = ehof_just_bought_unbidden_warlock }		text = "ehof_trader_bought_unbidden_warlock" }
 	desc = { trigger = { has_country_flag = ehof_just_bought_contingency_core }		text = "ehof_trader_bought_contingency_core" }
 	desc = { trigger = { has_country_flag = ehof_just_bought_rare_system }			text = "ehof_trader_bought_rare_system" }
-	desc = { trigger = { has_country_flag = ehof_just_bought_gateway1_tech }		text = "ehof_trader_bought_gateway1_tech" }
-	desc = { trigger = { has_country_flag = ehof_just_bought_gateway2_tech }		text = "ehof_trader_bought_gateway2_tech" }
 	desc = {
 		trigger = {
 			NOR = {
@@ -741,8 +711,6 @@ country_event = {
 				has_country_flag = ehof_just_bought_unbidden_warlock
 				has_country_flag = ehof_just_bought_contingency_core
 				has_country_flag = ehof_just_bought_rare_system
-				has_country_flag = ehof_just_bought_gateway1_tech
-				has_country_flag = ehof_just_bought_gateway2_tech
 			}
 		}
 		text = "ehof_mega_trader.101.desc"
@@ -763,7 +731,6 @@ country_event = {
 			country_event = { id = ehof_mega_trader.012 days = 1801 }
 
 			# Remove flags, so they can be bought again
-			remove_country_flag = ehof_has_gateway1_tech
 			remove_country_flag = ehof_has_rare_system
 
 			# Randomize relics (Excluded owned ones)
@@ -1408,73 +1375,7 @@ country_event = {
 			remove_just_bought_flags = yes
 			set_country_flag = ehof_has_rare_system
 			set_country_flag = ehof_just_bought_rare_system
-
-			# Refresh List
-			remove_country_flag = ehof_trader_diplomacy
-			country_event = { id = ehof_mega_trader.101 }
-
-			# Spawn System
-			if = { limit = { exists = event_target:current_system_creator } clear_global_event_target = current_system_creator }
-			save_global_event_target_as = current_system_creator
-			set_global_flag = ehof_r_rare_system
-			ehof_generate_system = yes
-			remove_global_flag = ehof_r_rare_system
-		}
-	}
-
-	# gateway1_tech
-	option = {
-		custom_gui = "enclave_ehof_trader_option"
-		trigger = {
-			NOR = {
-				has_technology = tech_ehof_use_gateway
-				has_tech_option = tech_ehof_use_gateway
-				has_country_flag = ehof_has_gateway1_tech
-			}
-		}
-		allow = { resource_stockpile_compare = { resource = ehof_sr_negative_mass value >= @ehof_trader_gateway1_tech } }
-		name = "ehof_mega_trader_gateway1_tech"
-		custom_tooltip = "ehof_mega_trader_gateway1_tech_tooltip"
-		owner = {
-			add_research_option = tech_ehof_use_gateway
-			add_tech_progress = { tech = tech_ehof_use_gateway progress = 0.25 }
-			add_resource = { ehof_sr_negative_mass = @ehof_trader_gateway1_tech_deduct }
-		}
-		hidden_effect = {
-			remove_just_bought_flags = yes
-			set_country_flag = ehof_has_gateway1_tech
-			set_country_flag = ehof_just_bought_gateway1_tech
-
-			# Refresh List
-			remove_country_flag = ehof_trader_diplomacy
-			country_event = { id = ehof_mega_trader.101 }
-		}
-	}
-
-	# gateway2_tech
-	option = {
-		custom_gui = "enclave_ehof_trader_option"
-		trigger = {
-			has_technology = tech_ehof_use_gateway
-			NOR = {
-				has_country_flag = ehof_has_gateway2_tech
-				has_technology = tech_ehof_build_gateway
-				has_tech_option = tech_ehof_build_gateway
-				has_country_flag = ehof_has_gateway1_tech
-			}
-		}
-		allow = { resource_stockpile_compare = { resource = ehof_sr_negative_mass value >= @ehof_trader_gateway2_tech } }
-		name = "ehof_mega_trader_gateway2_tech"
-		custom_tooltip = "ehof_mega_trader_gateway2_tech_tooltip"
-		owner = {
-			add_research_option = tech_ehof_build_gateway
-			add_tech_progress = { tech = tech_ehof_build_gateway progress = 0.25 }
-			add_resource = { ehof_sr_negative_mass = @ehof_trader_gateway2_tech_deduct }
-		}
-		hidden_effect = {
-			remove_just_bought_flags = yes
-			set_country_flag = ehof_has_gateway2_tech
-			set_country_flag = ehof_just_bought_gateway2_tech
+			set_country_flag = ehof_next_system_rare
 
 			# Refresh List
 			remove_country_flag = ehof_trader_diplomacy
@@ -2340,7 +2241,7 @@ country_event = {
 
 	immediate = {
 		random_system_within_border = {
-			limit = { has_star_flag = ehof_megastructure_system@root }
+			limit = { has_an_active_ehof = yes }
 			remove_star_flag = ehof_trader_wormhole_active_@root.owner
 			save_event_target_as = ehof_remove_wormhole_one
 		}
@@ -2388,7 +2289,7 @@ fleet_event = {
 		}
 		owner = {
 			random_system_within_border = {
-				limit = { has_star_flag = ehof_megastructure_system@root.owner }
+				limit = { has_an_active_ehof = yes }
 				set_star_flag = ehof_trader_wormhole_active_@root.owner
 				if = {
 					limit = {
@@ -2429,9 +2330,11 @@ fleet_event = {
 			remove_auto_move_target = yes
 			clear_fleet_actions = this
 			clear_orders = yes
-			random_system = {
-				limit = { has_star_flag = ehof_megastructure_system@root.owner }
-				star = { save_event_target_as = ehof_trader_evict_fleet }
+			root.owner = {
+				random_system_within_border = {
+					limit = { has_an_active_ehof = yes }
+					star = { save_event_target_as = ehof_trader_evict_fleet }
+				}
 			}
 			auto_move_to_planet = {
 				target = event_target:ehof_trader_evict_fleet
@@ -2462,7 +2365,7 @@ country_event = {
 
 	immediate = {
 		random_system_within_border = {
-			limit = { has_star_flag = ehof_megastructure_system@root }
+			limit = { has_an_active_ehof = yes }
 			remove_star_flag = ehof_trader_wormhole_active_@root
 			every_system_megastructure = {
 				limit = {

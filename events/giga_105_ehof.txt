@@ -3,35 +3,52 @@ namespace = ehof_megastructure
 #########################################################################################################
 ############################################ EHOF On Actions ############################################
 #########################################################################################################
-# Ship is built [on_ship_built]
+# Ship is built in the EHOF system [on_ship_built]
 ship_event = {
     id = ehof_megastructure.001
 	hide_window = yes
 	is_triggered_only = yes
 
 	trigger = {
-		NOR = {
-			owner = {
-				OR = {
-					has_country_flag = ehof_is_upgrading
-					has_country_flag = ehof_can_activate
-				}
-			}
-			fleet = {
-				has_fleet_flag = recently_triggered_ehof
-				can_use_ehof = yes
-			}
-		}
 		exists = owner
 		exists = solar_system
 		owner = { is_same_value = solar_system.starbase.owner }
 		solar_system = { has_star_flag = ehof_megastructure_system@root.owner }
+		fleet = { can_use_ehof = yes }
 	}
 
 	immediate = {
-		fleet = {
-			set_timed_fleet_flag = { flag = recently_triggered_ehof days = 1 } # stop triggering ehof twice
-			owner = { country_event = { id = ehof_megastructure.009 days = 2 } } # Check EHOF state
+		if = {
+			limit = { NOT = { has_ship_flag = ehof_already_counted } }
+			if = { limit = { is_ship_size = science }						owner = { change_variable = { which = ehof_pre_flight_science value = 1 } } }
+			if = { limit = { is_ship_size = constructor }					owner = { change_variable = { which = ehof_pre_flight_constructor value = 1 } } }
+			if = { limit = { is_ship_class = shipclass_military }			owner = { change_variable = { which = ehof_pre_flight_military value = 1 } } }
+			if = { limit = { is_ship_class = shipclass_military_special }	owner = { change_variable = { which = ehof_pre_flight_colossus value = 1 } } }
+			if = { limit = { is_ship_size = juggernaut }					owner = { change_variable = { which = ehof_pre_flight_juggernaut value = 1 } } }
+			set_ship_flag = ehof_already_counted
+		}
+
+		if = {
+			limit = {
+				fleet = { NOT = { has_fleet_flag = recently_triggered_ehof } }
+				owner = {
+					NOR = {
+						has_country_flag = ehof_is_upgrading
+						has_country_flag = ehof_can_activate
+					}
+					OR = {
+						check_variable = { which = ehof_pre_flight_science value > 0 }
+						check_variable = { which = ehof_pre_flight_constructor value > 0 }
+						check_variable = { which = ehof_pre_flight_military value > 0 }
+						check_variable = { which = ehof_pre_flight_colossus value > 0 }
+						check_variable = { which = ehof_pre_flight_juggernaut value > 0 }
+					}
+				}
+			}
+			fleet = {
+				set_timed_fleet_flag = { flag = recently_triggered_ehof days = 1 } # stop triggering ehof twice
+				owner = { country_event = { id = ehof_megastructure.009 days = 2 } } # Check EHOF state
+			}
 		}
 	}
 }
@@ -43,64 +60,11 @@ fleet_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		NOR = {
-			owner = {
-				OR = {
-					has_country_flag = ehof_is_upgrading
-					has_country_flag = ehof_can_activate
-				}
-			}
-			has_fleet_flag = recently_triggered_ehof
-			can_use_ehof = yes
-		}
 		exists = owner
 		exists = solar_system
 		owner = { is_same_value = solar_system.starbase.owner }
 		solar_system = { has_star_flag = ehof_megastructure_system@root.owner }
-	}
-
-	immediate = {
-		set_timed_fleet_flag = { flag = recently_triggered_ehof days = 1 } # stop triggering ehof twice
-		owner = { country_event = { id = ehof_megastructure.009 days = 2 } } # Check EHOF state
-	}
-}
-
-# Ship is built in the EHOF system [on_ship_built]
-ship_event = {
-    id = ehof_megastructure.016
-	hide_window = yes
-	is_triggered_only = yes
-
-	trigger = {
-		NOT = { has_ship_flag = ehof_already_counted }
-		fleet = { can_use_ehof = yes }
-		exists = solar_system
-		solar_system = { has_star_flag = ehof_megastructure_system@root.owner }
-	}
-
-	immediate = {
-		if = { limit = { is_ship_size = science }						owner = { change_variable = { which = ehof_pre_flight_science value = 1 } } }
-		if = { limit = { is_ship_size = constructor }					owner = { change_variable = { which = ehof_pre_flight_constructor value = 1 } } }
-		if = { limit = { is_ship_class = shipclass_military }			owner = { change_variable = { which = ehof_pre_flight_military value = 1 } } }
-		if = { limit = { is_ship_class = shipclass_military_special }	owner = { change_variable = { which = ehof_pre_flight_colossus value = 1 } } }
-		if = { limit = { is_ship_size = juggernaut }					owner = { change_variable = { which = ehof_pre_flight_juggernaut value = 1 } } }
-		set_ship_flag = ehof_already_counted
-	}
-}
-
-# Fleet enters the EHOF system [on_entering_system_fleet]
-fleet_event = {
-    id = ehof_megastructure.014
-    hide_window = yes
-	is_triggered_only = yes
-
-	trigger = {
 		can_use_ehof = yes
-		any_owned_ship = { NOT = { has_ship_flag = ehof_already_counted } }
-		exists = owner
-		exists = solar_system
-		owner = { is_same_value = solar_system.starbase.owner }
-		solar_system = { has_star_flag = ehof_megastructure_system@root.owner }
 	}
 
 	immediate = {
@@ -113,9 +77,15 @@ fleet_event = {
 			if = { limit = { is_ship_class = shipclass_military_special }	owner = { change_variable = { which = ehof_pre_flight_colossus value = 1 } } }
 			if = { limit = { is_ship_size = juggernaut }					owner = { change_variable = { which = ehof_pre_flight_juggernaut value = 1 } } }
 		}
-		owner = {
-			if = {
-				limit = {
+
+		if = {
+			limit = {
+				NOT = { has_fleet_flag = recently_triggered_ehof }
+				owner = {
+					NOR = {
+						has_country_flag = ehof_is_upgrading
+						has_country_flag = ehof_can_activate
+					}
 					OR = {
 						check_variable = { which = ehof_pre_flight_science value > 0 }
 						check_variable = { which = ehof_pre_flight_constructor value > 0 }
@@ -124,8 +94,9 @@ fleet_event = {
 						check_variable = { which = ehof_pre_flight_juggernaut value > 0 }
 					}
 				}
-				country_event = { id = ehof_megastructure.009 days = 2 } # Check EHOF state
 			}
+			set_timed_fleet_flag = { flag = recently_triggered_ehof days = 1 } # stop triggering ehof twice
+			owner = { country_event = { id = ehof_megastructure.009 days = 2 } } # Check EHOF state
 		}
 	}
 }
@@ -165,40 +136,6 @@ fleet_event = {
 			}
 		}
 	}
-}
-
-# Reset the ehof
-country_event = {
-	id = ehof_megastructure.017
-	hide_window = yes
-	is_triggered_only = yes
-	trigger = { any_owned_megastructure = { is_an_ehof = yes } }
-	immediate = {
-		if = {
-			limit = {
-				OR = {
-					has_country_flag = ehof_hasnt_changed_state
-					NOT = {
-						any_owned_megastructure = {
-							OR = {
-								AND = {
-									is_an_ehof = yes
-									is_ehof_activating = yes
-								}
-								AND = {
-									is_an_ehof = yes
-									is_ehof_active = yes
-								}
-							}
-						}
-					}
-				}
-			}
-			ehof_reset = yes
-			remove_country_flag = ehof_hasnt_changed_state
-		}
-	}
-	after = { set_country_flag = ehof_hasnt_changed_state }
 }
 
 # Set country flags if system is lost [on_system_lost]
@@ -344,6 +281,16 @@ country_event = {
 			# If attacker doesn't have an ehof, take this one
 			if = {
 				limit = { check_variable = { which = ehof_phase value = 0 } }
+
+				# Remove any existing ehof construction sites
+				if = {
+					limit = { any_owned_megastructure = { has_megastructure_flag = ehof_phase_00 } }
+					every_owned_megastructure = {
+						limit = { has_megastructure_flag = ehof_phase_00 }
+						remove_megastructure = this
+					}
+				}
+
 				from = {
 					if = {
 						limit = { any_system_megastructure = { has_megastructure_flag = ehof_phase_01_decommissioned } }
@@ -388,6 +335,16 @@ country_event = {
 			# If attacker doesn't have an ehof, take this one
 			if = {
 				limit = { check_variable = { which = ehof_phase value = 0 } }
+
+				# Remove any existing ehof construction sites
+				if = {
+					limit = { any_owned_megastructure = { has_megastructure_flag = ehof_phase_00 } }
+					every_owned_megastructure = {
+						limit = { has_megastructure_flag = ehof_phase_00 }
+						remove_megastructure = this
+					}
+				}
+
 				from = {
 					if = {
 						limit = { any_system_megastructure = { has_megastructure_flag = ehof_phase_02_decommissioned } }
@@ -436,6 +393,16 @@ country_event = {
 			# If attacker doesn't have an ehof, take this one
 			if = {
 				limit = { check_variable = { which = ehof_phase value = 0 } }
+
+				# Remove any existing ehof construction sites
+				if = {
+					limit = { any_owned_megastructure = { has_megastructure_flag = ehof_phase_00 } }
+					every_owned_megastructure = {
+						limit = { has_megastructure_flag = ehof_phase_00 }
+						remove_megastructure = this
+					}
+				}
+
 				from = {
 					if = {
 						limit = { any_system_megastructure = { has_megastructure_flag = ehof_phase_03_decommissioned } }
@@ -487,6 +454,16 @@ country_event = {
 			# If attacker doesn't have an ehof, take this one
 			if = {
 				limit = { check_variable = { which = ehof_phase value = 0 } }
+
+				# Remove any existing ehof construction sites
+				if = {
+					limit = { any_owned_megastructure = { has_megastructure_flag = ehof_phase_00 } }
+					every_owned_megastructure = {
+						limit = { has_megastructure_flag = ehof_phase_00 }
+						remove_megastructure = this
+					}
+				}
+
 				from = {
 					if = {
 						limit = { any_system_megastructure = { has_megastructure_flag = ehof_phase_04_decommissioned } }
@@ -536,6 +513,16 @@ country_event = {
 			# If attacker doesn't have an ehof, take this one
 			if = {
 				limit = { check_variable = { which = ehof_phase value = 0 } }
+
+				# Remove any existing ehof construction sites
+				if = {
+					limit = { any_owned_megastructure = { has_megastructure_flag = ehof_phase_00 } }
+					every_owned_megastructure = {
+						limit = { has_megastructure_flag = ehof_phase_00 }
+						remove_megastructure = this
+					}
+				}
+
 				from = {
 					if = {
 						limit = { any_system_megastructure = { has_megastructure_flag = ehof_phase_05_decommissioned } }
@@ -594,9 +581,7 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		capital_scope.solar_system = {
-			NOT = { has_star_flag = ehof_precursor_spawned }
-		}
+		NOT = { has_country_flag = ehof_precursor_spawned }
 		OR = {
 			is_ai = no
 			any_country = {
@@ -607,7 +592,7 @@ country_event = {
 	}
 
 	immediate = {
-		save_event_target_as = ehof_precursor_owner
+		set_country_flag = ehof_precursor_spawned
 		if = {
 			limit = { is_ai = yes }
 			random_country = {
@@ -615,36 +600,90 @@ country_event = {
 				change_variable = { which = chk_precursor_cap value = 1 }
 			}
 		}
-		set_country_flag = ehof_precursor_spawned
 		capital_scope.solar_system = {
-			set_star_flag = ehof_precursor_spawned
-			random_system = {
+			if = {
 				limit = {
-					NOT = { is_same_value = prev }
-					distance = {
-						source = prev
-						use_bypasses = no
-						min_jumps = 1
-						max_jumps = 1
-					}
-					any_system_planet = {
-						is_planet_habitable = no
-						is_star = no
-						is_asteroid = no
-						has_anomaly = no
-						NOT = { exists = archaeological_site }
+					any_neighbor_system = {
+						any_system_planet = {
+							is_planet_habitable = no
+							is_star = no
+							is_asteroid = no
+							has_anomaly = no
+							NOT = { exists = archaeological_site }
+						}
 					}
 				}
-				random_system_planet = {
+				random_neighbor_system = {
 					limit = {
-						is_planet_habitable = no
-						is_star = no
-						is_asteroid = no
-						has_anomaly = no
-						NOT = { exists = archaeological_site }
+						any_system_planet = {
+							is_planet_habitable = no
+							is_star = no
+							is_asteroid = no
+							has_anomaly = no
+							NOT = { exists = archaeological_site }
+						}
 					}
-					create_archaeological_site = ehof_precursor
-					set_planet_flag = ehof_precursor@event_target:ehof_precursor_owner
+					random_system_planet = {
+						limit = {
+							is_planet_habitable = no
+							is_star = no
+							is_asteroid = no
+							has_anomaly = no
+							NOT = { exists = archaeological_site }
+						}
+						create_archaeological_site = ehof_precursor
+						set_planet_flag = ehof_precursor@root
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					any_neighbor_system = {
+						any_neighbor_system = {
+							any_system_planet = {
+								is_planet_habitable = no
+								is_star = no
+								is_asteroid = no
+								has_anomaly = no
+								NOT = { exists = archaeological_site }
+							}
+						}
+					}
+				}
+				random_neighbor_system = {
+					limit = {
+						any_neighbor_system = {
+							any_system_planet = {
+								is_planet_habitable = no
+								is_star = no
+								is_asteroid = no
+								has_anomaly = no
+								NOT = { exists = archaeological_site }
+							}
+						}
+					}
+					random_neighbor_system = {
+						limit = {
+							any_system_planet = {
+								is_planet_habitable = no
+								is_star = no
+								is_asteroid = no
+								has_anomaly = no
+								NOT = { exists = archaeological_site }
+							}
+						}
+						random_system_planet = {
+							limit = {
+								is_planet_habitable = no
+								is_star = no
+								is_asteroid = no
+								has_anomaly = no
+								NOT = { exists = archaeological_site }
+							}
+							create_archaeological_site = ehof_precursor
+							set_planet_flag = ehof_precursor@root
+						}
+					}
 				}
 			}
 		}
@@ -654,23 +693,15 @@ country_event = {
 # Stage 1
 fleet_event = {
 	id = ehof_megastructure.0051
-	title = ehof_megastructure.0051.name
-	desc = ehof_megastructure.0051.desc
+	title = "ehof_megastructure.0051.name"
+	desc = "ehof_megastructure.0051.desc"
 	picture = GFX_evt_barren_dig_site
 	show_sound = event_dig_site
 	location = from
 	archaeology = yes
 	is_triggered_only = yes
 
-	immediate = {
-		solar_system = {
-			random_system_planet = {
-				limit = { has_planet_flag = ehof_precursor@root.owner }
-				save_event_target_as = ehof_precursor
-			}
-		}
-		from = { set_site_progress_locked = yes }
-	}
+	immediate = { from = { set_site_progress_locked = yes } }
 	after = { from = { set_site_progress_locked = no } }
 
 	option = {
@@ -683,23 +714,15 @@ fleet_event = {
 # Stage 2
 fleet_event = {
 	id = ehof_megastructure.0052
-	title = ehof_megastructure.0052.name
-	desc = ehof_megastructure.0052.desc
+	title = "ehof_megastructure.0052.name"
+	desc = "ehof_megastructure.0052.desc"
 	picture = GFX_evt_landing_ship
 	show_sound = event_dig_site
 	location = from
 	archaeology = yes
 	is_triggered_only = yes
 
-	immediate = {
-		solar_system = {
-			random_system_planet = {
-				limit = { has_planet_flag = ehof_precursor@root.owner }
-				save_event_target_as = ehof_precursor
-			}
-		}
-		from = { set_site_progress_locked = yes }
-	}
+	immediate = { from = { set_site_progress_locked = yes } }
 	after = { from = { set_site_progress_locked = no } }
 
 	option = {
@@ -712,23 +735,15 @@ fleet_event = {
 # Stage 3
 fleet_event = {
 	id = ehof_megastructure.0053
-	title = ehof_megastructure.0053.name
-	desc = ehof_megastructure.0053.desc
+	title = "ehof_megastructure.0053.name"
+	desc = "ehof_megastructure.0053.desc"
 	picture = GFX_evt_atmospheric_flight
 	show_sound = event_dig_site
 	location = from
 	archaeology = yes
 	is_triggered_only = yes
 
-	immediate = {
-		solar_system = {
-			random_system_planet = {
-				limit = { has_planet_flag = ehof_precursor@root.owner }
-				save_event_target_as = ehof_precursor
-			}
-		}
-		from = { set_site_progress_locked = yes }
-	}
+	immediate = { from = { set_site_progress_locked = yes } }
 	after = { from = { set_site_progress_locked = no } }
 
 	option = {
@@ -753,36 +768,26 @@ fleet_event = {
 	immediate = {
 		from = { set_site_progress_locked = yes }
 
-		solar_system = {
-			random_system_planet = {
-				limit = { has_planet_flag = ehof_precursor@root.owner }
-				save_event_target_as = ehof_precursor
-			}
-		}
-
 		owner.capital_scope.solar_system = {
 			random_list = {
-				3 = {
+				75 = {
 					spawn_system = {
-						initializer = ehof_blackhole_init_system
+						initializer = "special_init_01"
 						min_distance = 10
 						max_distance = 40
 						max_jumps = 0
 					}
-					closest_system = {
-						limit = {
-							has_star_flag = additional_blackhole
-							NOT = { has_star_flag = ehof_blackhole_@root.owner }
+					last_created_system = {
+						# Add extra hyperlanes
+						while = {
+							count = 2
+							random_neighbor_system = {
+								limit = { NOR = { is_same_value = prev has_hyperlane_to = prev } }
+								ignore_hyperlanes = yes
+								add_hyperlane = { from = prev to = this }
+							}
 						}
-						every_neighbor_system = {
-							limit = { has_hyperlane_to = prev }
-							remove_hyperlane = { from = prev to = this }
-						}
-						random_list = {
-							3 = { while = { count = 1 ehof_generate_hyperlane = yes } }
-							2 = { while = { count = 2 ehof_generate_hyperlane = yes } }
-							1 = { while = { count = 3 ehof_generate_hyperlane = yes } }
-						}
+
 						giga_field_system_debris = yes
 						set_star_flag = ehof_blackhole_@root.owner
 						root.owner = {
@@ -794,27 +799,24 @@ fleet_event = {
 						}
 					}
 				}
-				1 = {
+				25 = {
 					spawn_system = {
-						initializer = ehof_unique_ruined
+						initializer = "ehof_unique_ruined"
 						min_distance = 10
 						max_distance = 40
 						max_jumps = 0
 					}
-					closest_system = {
-						limit = {
-							has_star_flag = ruined_ehof_system
-							NOT = { has_star_flag = ehof_blackhole_@root.owner }
+					last_created_system = {
+						# Add extra hyperlanes
+						while = {
+							count = 2
+							random_neighbor_system = {
+								limit = { NOR = { is_same_value = prev has_hyperlane_to = prev } }
+								ignore_hyperlanes = yes
+								add_hyperlane = { from = prev to = this }
+							}
 						}
-						every_neighbor_system = {
-							limit = { has_hyperlane_to = prev }
-							remove_hyperlane = { from = prev to = this }
-						}
-						random_list = {
-							3 = { while = { count = 1 ehof_generate_hyperlane = yes } }
-							2 = { while = { count = 2 ehof_generate_hyperlane = yes } }
-							1 = { while = { count = 3 ehof_generate_hyperlane = yes } }
-						}
+
 						set_star_flag = ehof_blackhole_@root.owner
 						root.owner = {
 							enable_special_project = {
@@ -840,15 +842,12 @@ country_event = {
 	id = ehof_megastructure.0054
 	title = "ehof_megastructure.0054_name"
 	desc = "ehof_megastructure.0054_desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "black_hole_room" }
+	picture = GFX_evt_black_hole
 	show_sound = event_radio_chatter_02
 	location = this
 	is_triggered_only = yes
 
 	option = {
-		custom_gui = "giga_eventui_option"
 		name = "FASCINATING"
 		if = { limit = { has_ancrel = yes } small_artifact_reward = yes }
 		add_research_option = tech_abstract_1
@@ -884,15 +883,12 @@ country_event = {
 	id = ehof_megastructure.0055
 	title = "ehof_megastructure.0055_name"
 	desc = "ehof_megastructure.0055_desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "ruined_system_room" }
+	picture = GFX_evt_ruined_system
 	show_sound = event_radio_chatter
 	location = this
 	is_triggered_only = yes
 
 	option = {
-		custom_gui = "giga_eventui_option"
 		name = "FASCINATING"
 		add_research_option = tech_abstract_1
 		add_tech_progress = { tech = tech_abstract_1 progress = 0.1 }
@@ -900,7 +896,7 @@ country_event = {
 	}
 }
 
-# Mark system as visited
+# Mark system as visited (FTL Exploration)
 ship_event = {
     id = ehof_megastructure.007
 	hide_window = yes
@@ -910,7 +906,7 @@ ship_event = {
 		owner = { ehof_default_country = yes }
 		exists = from
 		from = {
-			NAND = {
+			NOR = {
 				has_star_flag = empire_has_visited_anyone
 				has_star_flag = empire_has_visited@root.owner
 			}
@@ -947,7 +943,6 @@ country_event = {
 			has_country_flag = ehof_can_deactivate
 			has_country_flag = ehof_activating
 			has_country_flag = ehof_activated
-			has_country_flag = ehof_malfunctioning
 			has_country_flag = ehof_on_cooldown
 			has_country_flag = ehof_is_upgrading
 		}
@@ -956,18 +951,6 @@ country_event = {
 	immediate = {
 		set_country_flag = ehof_alerted_recently
 		set_country_flag = ehof_can_activate
-		every_owned_fleet = {
-			limit = {
-				OR = {
-					has_fleet_flag = ehof_is_at_wormhole
-					has_fleet_flag = ehof_is_at_destination
-					has_fleet_flag = ehof_ready_for_travel@root
-				}
-			}
-			remove_fleet_flag = ehof_is_at_wormhole
-			remove_fleet_flag = ehof_is_at_destination
-			remove_fleet_flag = ehof_ready_for_travel@root
-		}
 		if = {
 			limit = {
 				is_ai = no
@@ -1004,18 +987,6 @@ country_event = {
 	immediate = {
 		remove_country_flag = ehof_can_activate
 		remove_country_flag = ehof_alerted_recently
-		every_owned_fleet = {
-			limit = {
-				OR = {
-					has_fleet_flag = ehof_is_at_wormhole
-					has_fleet_flag = ehof_is_at_destination
-					has_fleet_flag = ehof_ready_for_travel@root
-				}
-			}
-			remove_fleet_flag = ehof_is_at_wormhole
-			remove_fleet_flag = ehof_is_at_destination
-			remove_fleet_flag = ehof_ready_for_travel@root
-		}
 	}
 }
 
@@ -1025,9 +996,7 @@ country_event = {
 country_event = {
 	id = ehof_megastructure.101
 	title = "ehof_megastructure.101_name"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "evt_ehof_room" }
+	picture = GFX_evt_ehof
 	show_sound = event_dyson_sphere_build_complete
 	location = event_target:ehof_megastructure_system
 	is_triggered_only = yes
@@ -1075,10 +1044,6 @@ country_event = {
 	}
 
 	immediate = {
-
-		# Check if reality code needs to spawn
-		country_event = { id = ehof_reality_code.006 days = 180 random = 180 }
-
 		# Set EHOF system flag
 		random_system_within_border = {
 			limit = {
@@ -1115,6 +1080,7 @@ country_event = {
 		# Phase 4
 		else_if = {
 			limit = { has_megastructure = ehof_megastructure_phase4_idle }
+			set_country_flag = has_built_or_repaired_gigastructure
 			set_country_flag = ehof_p4_first_time
 			set_variable = { which = ehof_phase value = 4 }
 			set_timed_global_flag = { flag = ehof_recently_built_phase_4 days = 2 }
@@ -1164,7 +1130,7 @@ country_event = {
 		country_event = { id = ehof_megastructure.009 days = 2 } # Check EHOF state
 	}
 
-	option = { custom_gui = "giga_eventui_option" name = GOOD }
+	option = { name = GOOD }
 }
 
 country_event = {
@@ -1175,15 +1141,110 @@ country_event = {
 	trigger = {
 		from = {
 			OR = {
-				is_ehof_idle = yes
-				is_megastructure_type = ehof_gateway
-				is_megastructure_type = ehof_gateway_restored
-				is_megastructure_type = ehof_sm_forge_phase0
-				is_megastructure_type = ehof_sm_forge_phase1
-				is_megastructure_type = ehof_sm_forge_phase2
-				is_megastructure_type = ehof_sm_forge_phase3
-				is_megastructure_type = ehof_sm_forge_phase4
+				is_megastructure_type = dyson_sphere_5_b_star
+				is_megastructure_type = dyson_sphere_5_m_giant_star
+				is_megastructure_type = dyson_sphere_5_a_star
+				is_megastructure_type = dyson_sphere_5_f_star
+				is_megastructure_type = dyson_sphere_5_g_star
+				is_megastructure_type = dyson_sphere_5_k_star
+				is_megastructure_type = dyson_sphere_5_m_star
+				is_megastructure_type = dyson_sphere_restored_b_star
+				is_megastructure_type = dyson_sphere_restored_m_giant_star
+				is_megastructure_type = dyson_sphere_restored_a_star
+				is_megastructure_type = dyson_sphere_restored_f_star
+				is_megastructure_type = dyson_sphere_restored_g_star
+				is_megastructure_type = dyson_sphere_restored_k_star
+				is_megastructure_type = dyson_sphere_restored_m_star
+				is_megastructure_type = matter_decompressor_restored
+				is_megastructure_type = strategic_coordination_center_restored
+				is_megastructure_type = mega_art_installation_restored
+				is_megastructure_type = interstellar_assembly_restored
+
+				# Gigas
+				is_megastructure_type = alderson_disk_2_ecu
+				is_megastructure_type = alderson_disk_2_gaia
+				is_megastructure_type = alderson_disk_2_pc
+				is_megastructure_type = alderson_disk_2_hive
+				is_megastructure_type = alderson_disk_2_machine
+				is_megastructure_type = asteroid_manufactory_2
+				is_megastructure_type = terraform_toxic_3
+				is_megastructure_type = automated_stripmine_2
+				is_megastructure_type = war_moon_2
+				is_megastructure_type = war_planet_3
+				is_megastructure_type = birch_world_3
+				is_megastructure_type = crystal_megabore_3
+				is_megastructure_type = terraform_barren_3
+				is_megastructure_type = terraform_barren_3_restored
+				is_megastructure_type = eq_shipyard_2
+				is_megastructure_type = ehof_megastructure_phase1_idle
+				is_megastructure_type = ehof_megastructure_phase2_idle
+				is_megastructure_type = ehof_megastructure_phase3_idle
+				is_megastructure_type = ehof_megastructure_phase4_idle
+				is_megastructure_type = ehof_megastructure_phase5_idle
+				is_megastructure_type = ehof_megastructure_restored
 				is_megastructure_type = ehof_presphere_dyson
+				is_megastructure_type = ehof_sm_forge_phase4
+				is_megastructure_type = fusion_suppressor_6
+				is_megastructure_type = terraform_molten_3
+				is_megastructure_type = nicoll_beam_4
+				is_megastructure_type = hrae_mc_4
+				is_megastructure_type = hyperstructural_ass_4
+				is_megastructure_type = interstellar_habitat_2
+				is_megastructure_type = interstellar_habitat_5
+				is_megastructure_type = kugelblitz_2
+				is_megastructure_type = kugelblitz_restored
+				is_megastructure_type = lunar_disco_ball_2
+				is_megastructure_type = macro_stabilizer_3
+				is_megastructure_type = macro_test_site_1
+				is_megastructure_type = macro_test_site_restored
+				is_megastructure_type = matrioshka_brain_5
+				is_megastructure_type = matrioshka_brain_5_b_star
+				is_megastructure_type = matrioshka_brain_5_m_giant_star
+				is_megastructure_type = matrioshka_brain_5_a_star
+				is_megastructure_type = matrioshka_brain_5_f_star
+				is_megastructure_type = matrioshka_brain_5_g_star
+				is_megastructure_type = matrioshka_brain_5_k_star
+				is_megastructure_type = matrioshka_brain_5_m_star
+				is_megastructure_type = matrioshka_brain_9
+				is_megastructure_type = matrioshka_brain_9_b_star
+				is_megastructure_type = matrioshka_brain_9_m_giant_star
+				is_megastructure_type = matrioshka_brain_9_a_star
+				is_megastructure_type = matrioshka_brain_9_f_star
+				is_megastructure_type = matrioshka_brain_9_g_star
+				is_megastructure_type = matrioshka_brain_9_k_star
+				is_megastructure_type = matrioshka_brain_9_m_star
+				is_megastructure_type = orbital_bastion_3
+				is_megastructure_type = neutronium_gigaforge_3
+				is_megastructure_type = neutronium_gigaforge_restored
+				is_megastructure_type = nidavellir_forge_4
+				is_megastructure_type = orbital_arcology_1_s
+				is_megastructure_type = orbital_arcology_1_m
+				is_megastructure_type = orbital_arcology_1_l
+				is_megastructure_type = orbital_artificial_eco_1
+				is_megastructure_type = orbital_artificial_eco_restored
+				is_megastructure_type = orbital_elysium_0
+				is_megastructure_type = penrose_sphere_a3
+				is_megastructure_type = penrose_sphere_b4
+				is_megastructure_type = planetary_computer_2
+				is_megastructure_type = psychic_beacon_4
+				is_megastructure_type = psychic_hypersiphon_3
+				is_megastructure_type = quasi_stellar_obliterator_5
+				is_megastructure_type = star_lifter_5
+				is_megastructure_type = star_lifter_5_b_star
+				is_megastructure_type = star_lifter_5_m_giant_star
+				is_megastructure_type = star_lifter_5_a_star
+				is_megastructure_type = star_lifter_5_f_star
+				is_megastructure_type = star_lifter_5_g_star
+				is_megastructure_type = star_lifter_5_k_star
+				is_megastructure_type = star_lifter_5_m_star
+				is_megastructure_type = particle_accelerator_1
+				is_megastructure_type = particle_accelerator_restored
+				is_megastructure_type = war_system_5
+				is_megastructure_type = substellar_compressor_2
+				is_megastructure_type = succ_2
+				is_megastructure_type = yggdrasil_orchid_3
+				is_megastructure_type = yggdrasil_orchid_restored
+				is_megastructure_type = r_square_world_restored
 			}
 		}
 	}
@@ -1264,23 +1325,8 @@ country_event = {
 			if = { limit = { has_country_flag = ehof_activating }			remove_country_flag = ehof_activating }
 			set_country_flag = ehof_activated
 			ehof_set_to_activated = yes
-			country_event = { id = ehof_megastructure.204 days = 30 }
 		}
 	}
-}
-
-# If still activated in 1 month, reset it
-country_event = {
-	id = ehof_megastructure.204
-	hide_window = yes
-	is_triggered_only = yes
-
-	trigger = {
-		NOT = { has_country_flag = ehof_permanent }
-		has_country_flag = ehof_activated
-	}
-
-	immediate = { country_event = { id = ehof_megastructure.307 } }
 }
 
 # Set to Cooldown
@@ -1295,7 +1341,6 @@ country_event = {
 			set_country_flag = ehof_on_cooldown
 			random_system_within_border = {
 				limit = { has_star_flag = ehof_megastructure_system@root }
-				remove_star_flag = ehof_malfunctioning
 				set_star_flag = ehof_on_cooldown
 			}
 			ehof_reset = yes
@@ -1308,830 +1353,6 @@ country_event = {
 	}
 }
 
-# Set to Malfunctioning
-country_event = {
-	id = ehof_megastructure.206
-	hide_window = yes
-	is_triggered_only = yes
-
-	immediate = {
-		set_country_flag = ehof_malfunctioning
-		random_system_within_border = {
-			limit = { has_star_flag = ehof_megastructure_system@root }
-			set_star_flag = ehof_malfunctioning
-		}
-		ehof_reset = yes
-		if = {		limit = { check_variable = { which = ehof_phase value = 1 } } country_event = { id = ehof_megastructure.205 days = @ehof_p1_malfunction_time } }
-		else_if = {	limit = { check_variable = { which = ehof_phase value = 2 } } country_event = { id = ehof_megastructure.205 days = @ehof_p2_malfunction_time } }
-		else_if = {	limit = { check_variable = { which = ehof_phase value = 3 } } country_event = { id = ehof_megastructure.205 days = @ehof_p3_malfunction_time } }
-		else_if = {	limit = { check_variable = { which = ehof_phase value = 4 } } country_event = { id = ehof_megastructure.205 days = @ehof_p4_malfunction_time } }
-		else_if = {	limit = { check_variable = { which = ehof_phase value = 5 } } country_event = { id = ehof_megastructure.205 days = @ehof_p3_malfunction_time } }
-	}
-}
-
-########################################################################################################
-############################################## EHOF Travel #############################################
-########################################################################################################
-country_event = {
-	id = ehof_megastructure.301
-	title = "ehof_ehof"
-	is_triggered_only = yes
-	diplomatic = yes
-	custom_gui = "ehof_mainui_window"
-	picture_event_data = {
-		portrait = root
-		graphical_culture = root
-		room = "ehof_room"
-	}
-	location = event_target:ehof_megastructure_system
-	desc = { trigger = { check_variable = { which = ehof_phase value = 1 } } text = "ehof_megastructure.301_01_desc" }
-	desc = { trigger = { check_variable = { which = ehof_phase value = 2 } } text = "ehof_megastructure.301_02_desc" }
-	desc = { trigger = { check_variable = { which = ehof_phase value = 3 } } text = "ehof_megastructure.301_03_desc" }
-	desc = { trigger = { check_variable = { which = ehof_phase value = 4 } } text = "ehof_megastructure.301_04_desc" }
-	desc = { trigger = { check_variable = { which = ehof_phase value = 5 } } text = "ehof_megastructure.301_05_desc" }
-
-	trigger = { NOT = { has_country_flag = ehof_travel_diplomacy } }
-	immediate = {
-		ehof_mega_system = yes
-		set_country_flag = ehof_travel_diplomacy
-		remove_country_flag = ehof_alerted_recently
-		if = {
-			limit = {
-				OR = {
-					has_country_flag = ehof_activating
-					has_country_flag = ehof_can_activate
-				}
-				NOT = { has_country_flag = ehof_destination_picked }
-			}
-			ehof_pre_flight = yes
-		}
-	}
-
-	###############################################################################################################
-	# DESTINATIONS ################################################################################################
-	###############################################################################################################
-	option = {
-		custom_gui = "enclave_ehof_ehof_header"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-		}
-		name = "ehof_header_01"
-		hidden_effect = { remove_country_flag = ehof_travel_diplomacy country_event = { id = ehof_megastructure.301 } }
-	}
-
-	# Random
-	option = {
-		custom_tooltip = "ehof_standard_cat_00"
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			check_variable = { which = ehof_phase value <= 4 }
-		}
-		allow = {
-			if = { limit = { check_variable = { which = ehof_phase value = 4 } } a4_c00 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 3 } } a3_c00 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 2 } } a2_c00 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 1 } } a1_c00 = yes }
-		}
-		if = { limit = { check_variable = { which = ehof_phase value = 4 } } c4_c00 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 3 } } c3_c00 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 2 } } c2_c00 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 1 } } c1_c00 = yes }
-		name = "ehof_category_00"
-		hidden_effect = { ehof_dest_cat00 = yes }
-	}
-
-	# Point of Interest
-	option = {
-		custom_tooltip = "ehof_standard_cat_01"
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			NOT = { has_country_flag = ehof_new_system_poi }
-			check_variable = { which = ehof_phase value > 0 }
-			NOT = { check_variable = { which = ehof_phase value = 4 } }
-			OR = {
-				has_global_flag = annihilator_system_spawned
-				has_global_flag = ehof_traders_spawned
-				has_country_flag = ehof_started_reality_code
-			}
-		}
-		allow = {
-			if = { limit = { check_variable = { which = ehof_phase value = 4 } } a4_c01 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 3 } } a3_c01 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 2 } } a2_c01 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 1 } } a1_c01 = yes }
-		}
-		if = { limit = { check_variable = { which = ehof_phase value = 4 } } c4_c01 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 3 } } c3_c01 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 2 } } c2_c01 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 1 } } c1_c01 = yes }
-		name = "ehof_standard_cattitle_01"
-		hidden_effect = { ehof_dest_cat01 = yes }
-	}
-
-	# Point of Interest
-	option = {
-		custom_tooltip = "ehof_standard_cat_01"
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			has_country_flag = ehof_new_system_poi
-			check_variable = { which = ehof_phase value > 0 }
-			NOT = { check_variable = { which = ehof_phase value = 4 } }
-			OR = {
-				has_global_flag = annihilator_system_spawned
-				has_global_flag = ehof_traders_spawned
-				has_country_flag = ehof_started_reality_code
-			}
-		}
-		allow = {
-			if = { limit = { check_variable = { which = ehof_phase value = 4 } } a4_c01 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 3 } } a3_c01 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 2 } } a2_c01 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 1 } } a1_c01 = yes }
-		}
-		if = { limit = { check_variable = { which = ehof_phase value = 4 } } c4_c01 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 3 } } c3_c01 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 2 } } c2_c01 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 1 } } c1_c01 = yes }
-		name = "ehof_standard_cattitle_01_new"
-		hidden_effect = { ehof_dest_cat01 = yes }
-	}
-
-	# Bountiful Stars
-	option = {
-		custom_tooltip = "ehof_standard_cat_02"
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			NOT = { has_country_flag = ehof_new_system_rare }
-			OR = {
-				check_variable = { which = ehof_phase value = 3 }
-				check_variable = { which = ehof_phase value = 5 }
-			}
-			any_system = {
-				rare_system = yes
-				has_star_flag = ehof_system_created_by_@root
-			}
-		}
-		allow = {
-			if = { limit = { check_variable = { which = ehof_phase value = 4 } } a4_c02 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 3 } } a3_c02 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 2 } } a2_c02 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 1 } } a1_c02 = yes }
-		}
-		if = { limit = { check_variable = { which = ehof_phase value = 4 } } c4_c02 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 3 } } c3_c02 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 2 } } c2_c02 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 1 } } c1_c02 = yes }
-		name = "ehof_standard_cattitle_02"
-		hidden_effect = { ehof_dest_cat02 = yes }
-	}
-
-	# Bountiful Stars
-	option = {
-		custom_tooltip = "ehof_standard_cat_02"
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			has_country_flag = ehof_new_system_rare
-			OR = {
-				check_variable = { which = ehof_phase value = 3 }
-				check_variable = { which = ehof_phase value = 5 }
-			}
-			any_system = {
-				rare_system = yes
-				has_star_flag = ehof_system_created_by_@root
-			}
-		}
-		allow = {
-			if = { limit = { check_variable = { which = ehof_phase value = 4 } } a4_c02 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 3 } } a3_c02 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 2 } } a2_c02 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 1 } } a1_c02 = yes }
-		}
-		if = { limit = { check_variable = { which = ehof_phase value = 4 } } c4_c02 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 3 } } c3_c02 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 2 } } c2_c02 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 1 } } c1_c02 = yes }
-		name = "ehof_standard_cattitle_02_new"
-		hidden_effect = { ehof_dest_cat02 = yes }
-	}
-
-	# Wormhole Cohesive
-	option = {
-		custom_tooltip = "ehof_standard_cat_03"
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			NOT = { has_country_flag = ehof_new_system_normal }
-			OR = {
-				check_variable = { which = ehof_phase value = 5 }
-				check_variable = { which = ehof_phase value = 3 }
-				check_variable = { which = ehof_phase value = 2 }
-				check_variable = { which = ehof_phase value = 1 }
-			}
-		}
-		allow = {
-			if = { limit = { check_variable = { which = ehof_phase value = 4 } } a4_c03 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 3 } } a3_c03 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 2 } } a2_c03 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 1 } } a1_c03 = yes }
-		}
-		if = { limit = { check_variable = { which = ehof_phase value = 4 } } c4_c03 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 3 } } c3_c03 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 2 } } c2_c03 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 1 } } c1_c03 = yes }
-		name = "ehof_standard_cattitle_03"
-		hidden_effect = { ehof_dest_cat03 = yes }
-	}
-
-	# Wormhole Cohesive
-	option = {
-		custom_tooltip = "ehof_standard_cat_03"
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			has_country_flag = ehof_new_system_normal
-			OR = {
-				check_variable = { which = ehof_phase value = 5 }
-				check_variable = { which = ehof_phase value = 3 }
-				check_variable = { which = ehof_phase value = 2 }
-				check_variable = { which = ehof_phase value = 1 }
-			}
-		}
-		allow = {
-			if = { limit = { check_variable = { which = ehof_phase value = 4 } } a4_c03 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 3 } } a3_c03 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 2 } } a2_c03 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 1 } } a1_c03 = yes }
-		}
-		if = { limit = { check_variable = { which = ehof_phase value = 4 } } c4_c03 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 3 } } c3_c03 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 2 } } c2_c03 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 1 } } c1_c03 = yes }
-		name = "ehof_standard_cattitle_03_new"
-		hidden_effect = { ehof_dest_cat03 = yes }
-	}
-
-	# Stellar Remnants
-	option = {
-		if = { limit = { has_global_flag = has_real_space_mod } custom_tooltip = "ehof_realspace_cat_05" } else = { custom_tooltip = "ehof_standard_cat_05" }
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			check_variable = { which = ehof_phase value = 3 }
-		}
-		allow = {
-			if = { limit = { check_variable = { which = ehof_phase value = 4 } } a4_c05 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 3 } } a3_c05 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 2 } } a2_c05 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 1 } } a1_c05 = yes }
-		}
-		if = { limit = { check_variable = { which = ehof_phase value = 4 } } c4_c05 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 3 } } c3_c05 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 2 } } c2_c05 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 1 } } c1_c05 = yes }
-		name = "ehof_standard_cattitle_05"
-		hidden_effect = { ehof_dest_cat05 = yes }
-	}
-
-	# Binary Stars
-	option = {
-		custom_tooltip = "ehof_standard_cat_06"
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			OR = {
-				check_variable = { which = ehof_phase value = 3 }
-				check_variable = { which = ehof_phase value = 2 }
-			}
-		}
-		allow = {
-			if = { limit = { check_variable = { which = ehof_phase value = 4 } } a4_c06 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 3 } } a3_c06 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 2 } } a2_c06 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 1 } } a1_c06 = yes }
-		}
-		if = { limit = { check_variable = { which = ehof_phase value = 4 } } c4_c06 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 3 } } c3_c06 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 2 } } c2_c06 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 1 } } c1_c06 = yes }
-		name = "ehof_standard_cattitle_06"
-		hidden_effect = { ehof_dest_cat06 = yes }
-	}
-
-	# Trinary Stars
-	option = {
-		custom_tooltip = "ehof_standard_cat_07"
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			check_variable = { which = ehof_phase value = 3 }
-		}
-		allow = {
-			if = { limit = { check_variable = { which = ehof_phase value = 4 } } a4_c07 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 3 } } a3_c07 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 2 } } a2_c07 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 1 } } a1_c07 = yes }
-		}
-		if = { limit = { check_variable = { which = ehof_phase value = 4 } } c4_c07 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 3 } } c3_c07 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 2 } } c2_c07 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 1 } } c1_c07 = yes }
-		name = "ehof_standard_cattitle_07"
-		hidden_effect = { ehof_dest_cat07 = yes }
-	}
-
-	# Giant Stars
-	option = {
-		if = { limit = { has_global_flag = has_real_space_mod } custom_tooltip = "ehof_realspace_cat_08" } else = { custom_tooltip = "ehof_standard_cat_08" }
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			OR = {
-				check_variable = { which = ehof_phase value = 3 }
-				check_variable = { which = ehof_phase value = 2 }
-			}
-		}
-		allow = {
-			if = { limit = { check_variable = { which = ehof_phase value = 4 } } a4_c08 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 3 } } a3_c08 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 2 } } a2_c08 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 1 } } a1_c08 = yes }
-		}
-		if = { limit = { check_variable = { which = ehof_phase value = 4 } } c4_c08 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 3 } } c3_c08 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 2 } } c2_c08 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 1 } } c1_c08 = yes }
-		name = "ehof_standard_cattitle_08"
-		hidden_effect = { ehof_dest_cat08 = yes }
-	}
-
-	# Fledgling Stars
-	option = {
-		if = { limit = { has_global_flag = has_real_space_mod } custom_tooltip = "ehof_realspace_cat_09" } else = { custom_tooltip = "ehof_standard_cat_09" }
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			OR = {
-				check_variable = { which = ehof_phase value = 3 }
-				check_variable = { which = ehof_phase value = 2 }
-				check_variable = { which = ehof_phase value = 1 }
-			}
-		}
-		allow = {
-			if = { limit = { check_variable = { which = ehof_phase value = 4 } } a4_c09 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 3 } } a3_c09 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 2 } } a2_c09 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 1 } } a1_c09 = yes }
-		}
-		if = { limit = { check_variable = { which = ehof_phase value = 4 } } c4_c09 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 3 } } c3_c09 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 2 } } c2_c09 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 1 } } c1_c09 = yes }
-		name = "ehof_standard_cattitle_09"
-		hidden_effect = { ehof_dest_cat09 = yes }
-	}
-
-	# Dwarf Stars
-	option = {
-		if = { limit = { has_global_flag = has_real_space_mod } custom_tooltip = "ehof_realspace_cat_10" } else = { custom_tooltip = "ehof_standard_cat_10" }
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			OR = {
-				check_variable = { which = ehof_phase value = 3 }
-				check_variable = { which = ehof_phase value = 2 }
-				check_variable = { which = ehof_phase value = 1 }
-			}
-		}
-		allow = {
-			if = { limit = { check_variable = { which = ehof_phase value = 4 } } a4_c10 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 3 } } a3_c10 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 2 } } a2_c10 = yes }
-			if = { limit = { check_variable = { which = ehof_phase value = 1 } } a1_c10 = yes }
-		}
-		if = { limit = { check_variable = { which = ehof_phase value = 4 } } c4_c10 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 3 } } c3_c10 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 2 } } c2_c10 = yes }
-		if = { limit = { check_variable = { which = ehof_phase value = 1 } } c1_c10 = yes }
-		name = "ehof_standard_cattitle_10"
-		hidden_effect = { ehof_dest_cat10 = yes }
-	}
-
-	################################## Phase 4 Travel ##################################
-
-	option = {
-		custom_tooltip = "ehof_standard_cat_01"
-		custom_gui = "ehof_mainui_option"
-		name = "ehof_category_01"
-		allow = { a4_c01 = yes }
-		c4_c01 = yes
-		hidden_effect = { country_event = { id = ehof_category.01 } }
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			NOT = { has_country_flag = ehof_new_system_poi }
-			check_variable = { which = ehof_phase value = 4 }
-			OR = {
-				has_global_flag = annihilator_system_spawned
-				has_global_flag = ehof_traders_spawned
-				has_country_flag = ehof_started_reality_code
-			}
-		}
-	}
-
-	option = {
-		custom_tooltip = "ehof_standard_cat_01"
-		custom_gui = "ehof_mainui_option"
-		name = "ehof_category_01_new"
-		allow = { a4_c01 = yes }
-		c4_c01 = yes
-		hidden_effect = { country_event = { id = ehof_category.01 } }
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			has_country_flag = ehof_new_system_poi
-			check_variable = { which = ehof_phase value = 4 }
-			OR = {
-				has_global_flag = annihilator_system_spawned
-				has_global_flag = ehof_traders_spawned
-				has_country_flag = ehof_started_reality_code
-			}
-		}
-	}
-
-	option = {
-		custom_tooltip = "ehof_standard_cat_02"
-		custom_gui = "ehof_mainui_option"
-		name = "ehof_category_02"
-		allow = { a4_c02 = yes }
-		c4_c02 = yes
-		hidden_effect = { country_event = { id = ehof_category.02 } }
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			NOT = { has_country_flag = ehof_new_system_rare }
-			check_variable = { which = ehof_phase value = 4 }
-			any_system = {
-				rare_system = yes
-				has_star_flag = ehof_system_created_by_@root
-			}
-		}
-	}
-
-	option = {
-		custom_tooltip = "ehof_standard_cat_02"
-		custom_gui = "ehof_mainui_option"
-		name = "ehof_category_02_new"
-		allow = { a4_c02 = yes }
-		c4_c02 = yes
-		hidden_effect = { country_event = { id = ehof_category.02 } }
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			has_country_flag = ehof_new_system_rare
-			check_variable = { which = ehof_phase value = 4 }
-			any_system = {
-				rare_system = yes
-				has_star_flag = ehof_system_created_by_@root
-			}
-		}
-	}
-
-	option = {
-		custom_tooltip = "ehof_standard_cat_03"
-		custom_gui = "ehof_mainui_option"
-		name = "ehof_category_03"
-		allow = { a4_c03 = yes }
-		c4_c03 = yes
-		hidden_effect = { country_event = { id = ehof_category.03 } }
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			NOT = { has_country_flag = ehof_new_system_normal }
-			check_variable = { which = ehof_phase value = 4 }
-		}
-	}
-
-	option = {
-		custom_tooltip = "ehof_standard_cat_03"
-		custom_gui = "ehof_mainui_option"
-		name = "ehof_category_03_new"
-		allow = { a4_c03 = yes }
-		c4_c03 = yes
-		hidden_effect = { country_event = { id = ehof_category.03 } }
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-			has_country_flag = ehof_new_system_normal
-			check_variable = { which = ehof_phase value = 4 }
-		}
-	}
-
-	option = { if = { limit = { has_global_flag = has_real_space_mod } custom_tooltip = "ehof_realspace_cat_05" } else = { custom_tooltip = "ehof_standard_cat_05" } custom_gui = "ehof_mainui_option" name = "ehof_category_05" allow = { a4_c05 = yes } c4_c05 = yes hidden_effect = { country_event = { id = ehof_category.05 } } trigger = { OR = { has_country_flag = ehof_activating has_country_flag = ehof_can_activate } check_variable = { which = ehof_phase value = 4 } } }
-	option = { custom_tooltip = "ehof_standard_cat_06" custom_gui = "ehof_mainui_option" name = "ehof_category_06" allow = { a4_c06 = yes } c4_c06 = yes hidden_effect = { country_event = { id = ehof_category.06 } } trigger = { OR = { has_country_flag = ehof_activating has_country_flag = ehof_can_activate } check_variable = { which = ehof_phase value = 4 } } }
-	option = { custom_tooltip = "ehof_standard_cat_07" custom_gui = "ehof_mainui_option" name = "ehof_category_07" allow = { a4_c07 = yes } c4_c07 = yes hidden_effect = { country_event = { id = ehof_category.07 } } trigger = { OR = { has_country_flag = ehof_activating has_country_flag = ehof_can_activate } check_variable = { which = ehof_phase value = 4 } } }
-	option = { if = { limit = { has_global_flag = has_real_space_mod } custom_tooltip = "ehof_realspace_cat_08" } else = { custom_tooltip = "ehof_standard_cat_08" } custom_gui = "ehof_mainui_option" name = "ehof_category_08" allow = { a4_c08 = yes } c4_c08 = yes hidden_effect = { country_event = { id = ehof_category.08 } } trigger = { OR = { has_country_flag = ehof_activating has_country_flag = ehof_can_activate } check_variable = { which = ehof_phase value = 4 } } }
-	option = { if = { limit = { has_global_flag = has_real_space_mod } custom_tooltip = "ehof_realspace_cat_09" } else = { custom_tooltip = "ehof_standard_cat_09" } custom_gui = "ehof_mainui_option" name = "ehof_category_09" allow = { a4_c09 = yes } c4_c09 = yes hidden_effect = { country_event = { id = ehof_category.09 } } trigger = { OR = { has_country_flag = ehof_activating has_country_flag = ehof_can_activate } check_variable = { which = ehof_phase value = 4 } } }
-	option = { if = { limit = { has_global_flag = has_real_space_mod } custom_tooltip = "ehof_realspace_cat_10" } else = { custom_tooltip = "ehof_standard_cat_10" } custom_gui = "ehof_mainui_option" name = "ehof_category_10" allow = { a4_c10 = yes } c4_c10 = yes hidden_effect = { country_event = { id = ehof_category.10 } } trigger = { OR = { has_country_flag = ehof_activating has_country_flag = ehof_can_activate } check_variable = { which = ehof_phase value = 4 } } }
-	option = {
-		custom_gui = "enclave_ehof_ehof_header"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_activating
-				has_country_flag = ehof_can_activate
-			}
-		}
-		name = "ehof_header_blank"
-		hidden_effect = { remove_country_flag = ehof_travel_diplomacy country_event = { id = ehof_megastructure.301 } }
-	}
-
-	###############################################################################################################
-	# INFORMATION #################################################################################################
-	###############################################################################################################
-	option = {
-		custom_gui = "enclave_ehof_ehof_header"
-		name = "ehof_header_02"
-		hidden_effect = { remove_country_flag = ehof_travel_diplomacy country_event = { id = ehof_megastructure.301 } }
-	}
-
-	# Main Menu
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 5 } } name = "ehof_mega_phase.10041_option_5" response_text = "ehof_megastructure.301_05_desc" is_dialog_only = yes }
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 4 } } name = "ehof_mega_phase.10041_option_5" response_text = "ehof_megastructure.301_04_desc" is_dialog_only = yes }
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 3 } } name = "ehof_mega_phase.10041_option_5" response_text = "ehof_megastructure.301_03_desc" is_dialog_only = yes }
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 2 } } name = "ehof_mega_phase.10041_option_5" response_text = "ehof_megastructure.301_02_desc" is_dialog_only = yes }
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 1 } } name = "ehof_mega_phase.10041_option_5" response_text = "ehof_megastructure.301_01_desc" is_dialog_only = yes }
-
-	# How it works
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 5 } } name = "ehof_mega_phase.10041_option_2" response_text = "ehof_mega_phase.10041_response_2_p5" is_dialog_only = yes }
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 4 } } name = "ehof_mega_phase.10041_option_2" response_text = "ehof_mega_phase.10041_response_2_p4" is_dialog_only = yes }
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 3 } } name = "ehof_mega_phase.10041_option_2" response_text = "ehof_mega_phase.10041_response_2_p3" is_dialog_only = yes }
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 2 } } name = "ehof_mega_phase.10041_option_2" response_text = "ehof_mega_phase.10041_response_2_p2" is_dialog_only = yes }
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 1 } } name = "ehof_mega_phase.10041_option_2" response_text = "ehof_mega_phase.10041_response_2_p1" is_dialog_only = yes }
-
-	# The Dangers
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 5 } } name = "ehof_mega_phase.10041_option_3" response_text = "ehof_mega_phase.10041_response_3_p5" is_dialog_only = yes }
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 4 } } name = "ehof_mega_phase.10041_option_3" response_text = "ehof_mega_phase.10041_response_3_p4" is_dialog_only = yes }
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 3 } } name = "ehof_mega_phase.10041_option_3" response_text = "ehof_mega_phase.10041_response_3_p3" is_dialog_only = yes }
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 2 } } name = "ehof_mega_phase.10041_option_3" response_text = "ehof_mega_phase.10041_response_3_p2" is_dialog_only = yes }
-	option = { custom_gui = "ehof_mainui_option" trigger = { check_variable = { which = ehof_phase value = 1 } } name = "ehof_mega_phase.10041_option_3" response_text = "ehof_mega_phase.10041_response_3_p1" is_dialog_only = yes }
-
-	# Strategic Resource
-	option = {
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_sr_negative_mass_found
-				resource_stockpile_compare = { resource = ehof_sr_negative_mass value > 0 }
-			}
-		}
-		name = ehof_mega_phase.10041_option_4
-		response_text = ehof_mega_phase.10041_response_4
-		is_dialog_only = yes
-	}
-	option = {
-		custom_gui = "ehof_mainui_option"
-		trigger = {
-			OR = {
-				has_country_flag = ehof_sr_sentient_metal_found
-				resource_stockpile_compare = { resource = ehof_sr_sentient_metal value > 0 }
-			}
-		}
-		name = ehof_mega_phase.10041_option_8
-		response_text = ehof_mega_phase.10041_response_8
-		is_dialog_only = yes
-	}
-
-	option = {
-		custom_gui = "enclave_ehof_ehof_header"
-		name = "ehof_header_blank"
-		hidden_effect = { remove_country_flag = ehof_travel_diplomacy country_event = { id = ehof_megastructure.301 } }
-	}
-
-	###############################################################################################################
-	# ACTIONS #####################################################################################################
-	###############################################################################################################
-	option = {
-		custom_gui = "enclave_ehof_ehof_header"
-		name = "ehof_header_03"
-		hidden_effect = { remove_country_flag = ehof_travel_diplomacy country_event = { id = ehof_megastructure.301 } }
-	}
-
-	# I wish to dismantle my EHOF
-	option = {
-		custom_gui = "ehof_mainui_option"
-		name = ehof_mega_phase.10041_option_7
-		hidden_effect = { country_event = { id = ehof_megastructure.410 } }
-	}
-
-	option = { custom_gui = "ehof_mainui_option" name = "ehof_leavestation" ehof_leave_station = yes default_hide_option = yes }
-}
-
-#########################################################################################################
-######################################### Accuracy + Generation #########################################
-#########################################################################################################
-country_event = {
-	id = ehof_megastructure.303
-	hide_window = yes
-	is_triggered_only = yes
-
-	immediate = {
-		set_country_flag = ehof_destination_picked
-
-		# Factor phase
-		if = {		limit = { check_variable = { which = ehof_phase value >= 3 } }	set_variable = { which = ehof_accuracy value = 29 } }
-		else_if = { limit = { check_variable = { which = ehof_phase value = 2 } }	set_variable = { which = ehof_accuracy value = 24 } }
-		else_if = { limit = { check_variable = { which = ehof_phase value = 1 } }	set_variable = { which = ehof_accuracy value = 19 } }
-
-		# Factor target
-		if = {		limit = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_01 } } multiply_variable = { which = ehof_accuracy value = 1.5 } }	# phase 3,4
-		else_if = {	limit = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_02 } } multiply_variable = { which = ehof_accuracy value = 1.4 } }	# phase 3,4
-		else_if = {	limit = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_03 } } multiply_variable = { which = ehof_accuracy value = 1.2 } }	# phase 1,2,3,4,5
-		else_if = {	limit = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_05 } } multiply_variable = { which = ehof_accuracy value = 0.7 } }	# phase 3,4
-		else_if = {	limit = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_06 } } multiply_variable = { which = ehof_accuracy value = 0.9 } }	# phase 2,3,4
-		else_if = {	limit = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_07 } } multiply_variable = { which = ehof_accuracy value = 0.8 } }	# phase 3,4
-		else_if = {	limit = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_08 } } multiply_variable = { which = ehof_accuracy value = 1.0 } }	# phase 2,3,4
-		else_if = {	limit = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_09 } } multiply_variable = { which = ehof_accuracy value = 1.2 } }	# phase 1,2,3,4
-		else_if = {	limit = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_10 } } multiply_variable = { which = ehof_accuracy value = 1.3 } }	# phase 1,2,3,4
-
-		# Factor random
-		set_variable = { which = ehof_final_accuracy value = 0 }
-		while = {
-			limit = { check_variable = { which = ehof_accuracy value > 1 } }
-			subtract_variable = { which = ehof_accuracy value = 1 }
-			random_list = {
-				1 = { change_variable = { which = ehof_final_accuracy value = 1 } }
-				1 = { change_variable = { which = ehof_final_accuracy value = 2 } }
-				1 = { change_variable = { which = ehof_final_accuracy value = 3 } }
-				1 = { change_variable = { which = ehof_final_accuracy value = 4 } }
-				1 = { change_variable = { which = ehof_final_accuracy value = 5 } }
-			}
-		}
-		random_list = {
-			80 = {}
-			20 = {
-				modifier = { factor = 0 has_country_flag = ehof_failed_accuracy }
-				modifier = { factor = 0 has_country_flag = ehof_failed_last_time }
-				modifier = { factor = 0.8 check_variable = { which = ehof_phase value = 2 } }
-				modifier = { factor = 0.6 check_variable = { which = ehof_phase value = 3 } }
-				modifier = { factor = 0.4 check_variable = { which = ehof_phase value = 5 } }
-				random_list = {
-					1 = { subtract_variable = {	which = ehof_final_accuracy value = 15 } }
-					1 = { subtract_variable = {	which = ehof_final_accuracy value = 10 } }
-					1 = { subtract_variable = {	which = ehof_final_accuracy value = 5 } }
-					1 = { change_variable = {	which = ehof_final_accuracy value = 5 } }
-					1 = { change_variable = {	which = ehof_final_accuracy value = 10 } }
-					1 = { change_variable = {	which = ehof_final_accuracy value = 15 } }
-					1 = { divide_variable = {	which = ehof_final_accuracy value = 1.3 } }
-					1 = { divide_variable = {	which = ehof_final_accuracy value = 1.2 } }
-					1 = { divide_variable = {	which = ehof_final_accuracy value = 1.1 } }
-					1 = { multiply_variable = {	which = ehof_final_accuracy value = 1.1 } }
-					1 = { multiply_variable = {	which = ehof_final_accuracy value = 1.2 } }
-					1 = { multiply_variable = {	which = ehof_final_accuracy value = 1.3 } }
-				}
-			}
-		}
-
-		if = { limit = { has_country_flag = ehof_failed_accuracy }						change_variable = { which = ehof_bonus_accuracy value = 5 }	remove_country_flag = ehof_failed_accuracy }
-		if = { limit = { check_variable = { which = ehof_bonus_accuracy value > 0 } }	change_variable = { which = ehof_final_accuracy value = ehof_bonus_accuracy } }
-		if = { limit = { has_country_flag = ehof_failed_last_time }						multiply_variable = { which = ehof_final_accuracy value = 2 } remove_country_flag = ehof_failed_last_time }
-		if = { limit = { has_country_flag = ehof_first_time_immune }					set_variable = { which = ehof_final_accuracy value = 100 } }
-
-		# Generation
-		if = {
-			limit = {
-				OR = {
-					check_variable = { which = ehof_final_accuracy value >= 45 }
-					any_system_within_border = {
-						has_star_flag = ehof_megastructure_system@root
-						has_star_flag = ehof_target_category_00
-					}
-					has_country_flag = ehof_skip_accuracy
-					check_variable = { which = ehof_phase value = 4 }
-				}
-			}
-
-			# Not Accurate
-			if = {
-				limit = {
-					NOR = {
-						check_variable = { which = ehof_final_accuracy value >= 70 }
-						any_system_within_border = {
-							has_star_flag = ehof_megastructure_system@root
-							has_star_flag = ehof_target_category_00
-						}
-						has_country_flag = ehof_skip_accuracy
-						check_variable = { which = ehof_phase value = 4 }
-					}
-				}
-				set_country_flag = ehof_failed_accuracy
-				every_system = { limit = { has_star_flag = ehof_destination_system@root } remove_star_flag = ehof_destination_system@root }
-				random_system = { limit = { ehof_travel_conditions = yes } set_star_flag = ehof_destination_system@root }
-
-				random_planet_within_border = {
-					limit = {
-						planet_size > 0
-						planet_size < 15
-						is_star = no
-						is_asteroid = no
-						is_colony = no
-						has_mining_station = no
-						has_research_station = no
-						NOT = { is_planet_class = pc_gas_giant }
-						solar_system = { cohesive_system = no }
-					}
-					ehof_add_dark_matter_deposit = yes
-				}
-			}
-			else = { set_variable = { which = ehof_bonus_accuracy value = 0 } }
-
-			# Open the wormholes
-			country_event = { id = ehof_megastructure.304 days = @ehof_short_cooldown }
-		}
-
-		# No Generation (Set to malfunctioning, then to cooldown and notify that wormhole failed to generate)
-		else = {
-			set_country_flag = ehof_failed_last_time
-			country_event = { id = ehof_megastructure.206 } # Set to Malfunctioning
-			country_event = { id = ehof_megastructure.405 }	# Notification of failure
-
-			random_planet_within_border = {
-				limit = {
-					planet_size > 14
-					is_star = no
-					is_asteroid = no
-					is_colony = no
-					has_mining_station = no
-					has_research_station = no
-					NOT = { is_planet_class = pc_gas_giant }
-					solar_system = { cohesive_system = no }
-				}
-				ehof_add_dark_matter_deposit = yes
-			}
-		}
-
-		set_variable = { which = ehof_final_accuracy value = 0 }
-		set_variable = { which = ehof_accuracy value = 0 }
-	}
-}
-
 ########################################################################################################
 ########################################## Open the wormholes ##########################################
 ########################################################################################################
@@ -2141,61 +1362,23 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		if = {
-			limit = {
-				has_country_flag = compound_seized_ehof_country
-				NOT = { has_global_flag = compound_invasion_happened }
-			}
-			country_event = { id = compound_spawn.003 }	# Begin the invasion
-		}
-		else = {
-			random_system = {
-				limit = { has_star_flag = ehof_destination_system@root }
-				spawn_megastructure = {
-					type = "ehof_megastructure_wormhole_destination"
-					orbit_angle = @ehof_wormhole_angle
-					orbit_distance = @ehof_wormhole_distance
-					location = star
-					owner = root
-					init_effect = {
-						set_megastructure_flag = ehof_wormhole_nexus
-						set_megastructure_flag = ehof_wormhole_opened_by_@root
-					}
+		set_country_flag = ehof_destination_picked
+		random_system = {
+			limit = { has_star_flag = ehof_destination_system@root }
+			spawn_megastructure = {
+				type = "ehof_megastructure_wormhole_destination"
+				orbit_angle = @ehof_wormhole_angle
+				orbit_distance = @ehof_wormhole_distance
+				location = star
+				owner = root
+				init_effect = {
+					set_megastructure_flag = ehof_wormhole_nexus
+					set_megastructure_flag = ehof_wormhole_opened_by_@root
 				}
 			}
-			country_event = { id = ehof_megastructure.203 days = 2 } # Set to Active
-			country_event = { id = ehof_megastructure.305 days = 4 }
 		}
-
-		# Should fleet go MIA?
-		random_list = {
-			90 = { change_variable = { which = ehof_count_mia value = 1 } }
-			10 = {
-				modifier = { factor = 0.6	check_variable = { which = ehof_phase value = 2 } }
-				modifier = { factor = 0.3	check_variable = { which = ehof_phase value = 3 } }
-				modifier = { factor = 1.25	check_variable = { which = ehof_count_mia value = 2 } }
-				modifier = { factor = 1.5	check_variable = { which = ehof_count_mia value = 3 } }
-				modifier = { factor = 1.75	check_variable = { which = ehof_count_mia value = 4 } }
-				modifier = { factor = 2		check_variable = { which = ehof_count_mia value = 5 } }
-				modifier = { factor = 2.25	check_variable = { which = ehof_count_mia value = 6 } }
-				modifier = { factor = 2.5	check_variable = { which = ehof_count_mia value = 7 } }
-				modifier = { factor = 2.75	check_variable = { which = ehof_count_mia value = 8 } }
-				modifier = { factor = 3		check_variable = { which = ehof_count_mia value = 9 } }
-				modifier = { factor = 3.25	check_variable = { which = ehof_count_mia value >= 10 } }
-				modifier = { factor = 0		check_variable = { which = ehof_phase value = 4 } }
-				modifier = { factor = 0		has_country_flag = ehof_first_time_immune }
-				modifier = { factor = 0		has_country_flag = ehof_mia_cooldown }
-				modifier = { factor = 0		has_country_flag = ehof_permanent }
-				set_country_flag = ehof_doomed_fleets
-
-				# Set cooldown (Cant happen)
-				set_variable = { which = ehof_count_mia value = 0 }
-				if = {		limit = { check_variable = { which = ehof_phase value = 5 } } set_timed_country_flag = { flag = ehof_mia_cooldown days = @ehofp3_mia_cooldown } }
-				else_if = {	limit = { check_variable = { which = ehof_phase value = 3 } } set_timed_country_flag = { flag = ehof_mia_cooldown days = @ehofp3_mia_cooldown } }
-				else_if = {	limit = { check_variable = { which = ehof_phase value = 2 } } set_timed_country_flag = { flag = ehof_mia_cooldown days = @ehofp2_mia_cooldown } }
-				else_if = {	limit = { check_variable = { which = ehof_phase value = 1 } } set_timed_country_flag = { flag = ehof_mia_cooldown days = @ehofp1_mia_cooldown } }
-			}
-		}
+		country_event = { id = ehof_megastructure.203 days = 2 } # Set to Active
+		country_event = { id = ehof_megastructure.305 days = 4 } # Sent fleets through
 	}
 }
 
@@ -2208,15 +1391,10 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		while = {
-			limit = { check_variable = { which = ehof_amount_of_fleets_to_travel value > 0 } }
-			random_owned_fleet = {
-				limit = {
-					has_fleet_flag = ehof_is_at_wormhole
-					NOT = { has_fleet_flag = ehof_is_at_destination }
-					exists = solar_system
-					solar_system = { has_star_flag = ehof_megastructure_system@root }
-				}
+		random_system_within_border = {
+			limit = { has_an_active_ehof = yes }
+			every_fleet_in_system = {
+				limit = { has_fleet_flag = ehof_ready_for_travel@root }
 
 				every_owned_ship = {
 					limit = { has_ship_flag = ehof_already_counted }
@@ -2228,22 +1406,14 @@ country_event = {
 					if = { limit = { is_ship_size = juggernaut }					owner = { subtract_variable = { which = ehof_pre_flight_juggernaut value = 1 } } }
 				}
 
-				if = {
-					limit = { root = { has_country_flag = ehof_doomed_fleets } }
-					set_fleet_flag = ehof_doomed_fleet
-				}
-
-				remove_fleet_flag = ehof_is_at_wormhole
-				set_fleet_flag = ehof_is_at_destination
 				set_fleet_stance = passive
-				set_event_locked = no
 				remove_auto_move_target = yes
-				random_system = {
-					limit = { has_star_flag = ehof_destination_system@root }
-					star = { save_event_target_as = ehof_destination }
+				ehof_dest_system = yes
+				event_target:ehof_destination_system.star = {
+					save_event_target_as = ehof_move_to_destination
 				}
 				auto_move_to_planet = {
-					target = event_target:ehof_destination
+					target = event_target:ehof_move_to_destination
 					clear_auto_move_on_arrival = yes
 				}
 			}
@@ -2265,20 +1435,12 @@ fleet_event = {
 	}
 
 	immediate = {
-		remove_fleet_flag = ehof_is_at_destination
 		owner = {
-			subtract_variable = { which = ehof_amount_of_fleets_to_travel value = 1 }
 			if = {
-				limit = {
-					NOT = { has_country_flag = ehof_permanent }
-					check_variable = { which = ehof_amount_of_fleets_to_travel value = 0 }
-				}
+				limit = { NOT = { has_country_flag = ehof_permanent } }
 				country_event = { id =  ehof_megastructure.307 days = 2 }
 			}
-			else_if = {
-				limit = { has_country_flag = ehof_permanent }
-				set_country_flag = ehof_can_deactivate
-			}
+			else = { set_country_flag = ehof_can_deactivate }
 		}
 	}
 }
@@ -2295,7 +1457,7 @@ country_event = {
 				has_megastructure_flag = ehof_wormhole_nexus
 				has_megastructure_flag = ehof_wormhole_opened_by_@root
 			}
-			delete_megastructure = this
+			remove_megastructure = this
 		}
 	}
 }
@@ -2309,48 +1471,42 @@ fleet_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		owner = { is_ai = no }
 		has_fleet_flag = ehof_ready_for_travel@root.owner
-		NOR = {
-			any_system = {
-				has_star_flag = ehof_destination_system@root.owner
-				OR = {
-					compound_cluster = yes
-					urmazin_capital = yes
-					annihilator_system = yes
-					everchanging_system = yes
-				}
+		exists = owner
+		owner = {
+			NOR = {
+				has_country_flag = ehof_already_shown_success
+				is_ai = yes
 			}
-			owner = { has_country_flag = ehof_already_shown_success }
 		}
 	}
 
 	immediate = {
+		log = "Travel report triggered for [from.GetName]"
+		remove_fleet_flag = ehof_ready_for_travel@root.owner
+
 		if = {
 			limit = {
-				exists = solar_system
-				solar_system = {
+				exists = from
+				from = {
 					has_star_flag = ehof_destination_system@root.owner
-					NOT = { has_star_flag = ehof_already_reported@root.owner }
-				}
-			}
-			solar_system = {
-				if = {
-					limit = {
-						root.owner = {
-							check_variable = { which = ehof_phase value = 4 }
-							has_country_flag = ehof_permanent
-						}
-					}
-					set_star_flag = ehof_already_reported@root.owner
+					NOT = { has_star_flag = ehof_permanent_connection@root.owner }
 				}
 			}
 			owner = {
-				set_timed_country_flag = { flag = ehof_already_shown_success days = @ehof_short_cooldown }
-				country_event = { id = ehof_megastructure.309 days = 2 }
+				set_timed_country_flag = { flag = ehof_already_shown_success days = @ehof_short_cooldown }	# Stop double reporting.
+				log = "Travel report pass to ui"
+				country_event = { id = ehof_megastructure.309 days = 2 }									# Travel report
+				if = {
+					limit = {
+						check_variable = { which = ehof_phase value = 4 }
+						has_country_flag = ehof_permanent
+					}
+					root.from = { set_star_flag = ehof_permanent_connection@root.owner }
+				}
 			}
 		}
-		else = { fleet_event = { id = ehof_megastructure.308 days = 2 } }
+		else = { fleet_event = { id = ehof_megastructure.308 days = 2 } }	# Try again
 	}
 }
 
@@ -2360,538 +1516,323 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		# First 5 uses of EHOF come without risk
-		if = { limit = { NOT = { has_country_flag = ehof_immunity_over } } change_variable = { which = ehof_first_time_immune value = 1 } }
-		if = {
-			limit = { check_variable = { which = ehof_first_time_immune value >= 3 } }
-			set_country_flag = ehof_immunity_over
-			set_variable = { which = ehof_first_time_immune value = 0 }
-			remove_country_flag = ehof_first_time_immune
-		}
-
-		#####################################################################################################
-		########################################### CHECK ACCURACY ##########################################
-		#####################################################################################################
-
-		# Localization
+		log = "Travel report fired"
 		ehof_mega_system = yes
 		ehof_dest_system = yes
-		remove_country_flag = ehof_chk_accurate_yes
-		remove_country_flag = ehof_chk_accurate_no
-		remove_country_flag = ehof_chk_owner_us
-		remove_country_flag = ehof_chk_owner_other
-		remove_country_flag = ehof_chk_owner_no
-		remove_country_flag = ehof_chk_explored_no
-		remove_country_flag = ehof_chk_explored_yes
 
-		random_system = {
-			limit = { has_star_flag = ehof_destination_system@root }
-			upgrade_system_unknown_pylon = yes
-			if = { limit = { has_star_flag = ehof_new_system_poi@root }		remove_star_flag = ehof_new_system_poi@root }
-			if = { limit = { has_star_flag = ehof_new_system_rare@root }	remove_star_flag = ehof_new_system_rare@root }
-			if = { limit = { has_star_flag = ehof_new_system_normal@root }	remove_star_flag = ehof_new_system_normal@root }
+		# Save system details for situation log
+		event_target:ehof_destination_system = {
+			if = {
+				limit = {
+					cohesive_system = yes
+					empire_has_visited = no
+				}
+
+				# Create Point of Interest
+				root = {
+					if = {
+						limit = { NOT = { has_event_chain = ehof_system_list } }
+						begin_event_chain = {
+							event_chain = ehof_system_list
+							target = root
+						}
+					}
+					if = {		limit = { NOT = { has_point_of_interest = { poi = ehof_sys_001 } } } create_point_of_interest = { id = ehof_sys_001 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_002 } } } create_point_of_interest = { id = ehof_sys_002 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_003 } } } create_point_of_interest = { id = ehof_sys_003 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_004 } } } create_point_of_interest = { id = ehof_sys_004 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_005 } } } create_point_of_interest = { id = ehof_sys_005 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_006 } } } create_point_of_interest = { id = ehof_sys_006 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_007 } } } create_point_of_interest = { id = ehof_sys_007 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_008 } } } create_point_of_interest = { id = ehof_sys_008 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_009 } } } create_point_of_interest = { id = ehof_sys_009 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_010 } } } create_point_of_interest = { id = ehof_sys_010 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_011 } } } create_point_of_interest = { id = ehof_sys_011 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_012 } } } create_point_of_interest = { id = ehof_sys_012 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_013 } } } create_point_of_interest = { id = ehof_sys_013 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_014 } } } create_point_of_interest = { id = ehof_sys_014 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_015 } } } create_point_of_interest = { id = ehof_sys_015 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_016 } } } create_point_of_interest = { id = ehof_sys_016 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_017 } } } create_point_of_interest = { id = ehof_sys_017 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_018 } } } create_point_of_interest = { id = ehof_sys_018 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_019 } } } create_point_of_interest = { id = ehof_sys_019 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_020 } } } create_point_of_interest = { id = ehof_sys_020 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_021 } } } create_point_of_interest = { id = ehof_sys_021 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_022 } } } create_point_of_interest = { id = ehof_sys_022 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_023 } } } create_point_of_interest = { id = ehof_sys_023 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_024 } } } create_point_of_interest = { id = ehof_sys_024 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_025 } } } create_point_of_interest = { id = ehof_sys_025 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_026 } } } create_point_of_interest = { id = ehof_sys_026 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_027 } } } create_point_of_interest = { id = ehof_sys_027 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_028 } } } create_point_of_interest = { id = ehof_sys_028 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_029 } } } create_point_of_interest = { id = ehof_sys_029 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_030 } } } create_point_of_interest = { id = ehof_sys_030 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_031 } } } create_point_of_interest = { id = ehof_sys_031 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_032 } } } create_point_of_interest = { id = ehof_sys_032 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_033 } } } create_point_of_interest = { id = ehof_sys_033 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_034 } } } create_point_of_interest = { id = ehof_sys_034 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_035 } } } create_point_of_interest = { id = ehof_sys_035 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_036 } } } create_point_of_interest = { id = ehof_sys_036 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_037 } } } create_point_of_interest = { id = ehof_sys_037 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_038 } } } create_point_of_interest = { id = ehof_sys_038 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_039 } } } create_point_of_interest = { id = ehof_sys_039 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_040 } } } create_point_of_interest = { id = ehof_sys_040 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_041 } } } create_point_of_interest = { id = ehof_sys_041 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_042 } } } create_point_of_interest = { id = ehof_sys_042 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_043 } } } create_point_of_interest = { id = ehof_sys_043 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_044 } } } create_point_of_interest = { id = ehof_sys_044 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_045 } } } create_point_of_interest = { id = ehof_sys_045 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_046 } } } create_point_of_interest = { id = ehof_sys_046 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_047 } } } create_point_of_interest = { id = ehof_sys_047 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_048 } } } create_point_of_interest = { id = ehof_sys_048 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_049 } } } create_point_of_interest = { id = ehof_sys_049 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_050 } } } create_point_of_interest = { id = ehof_sys_050 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_051 } } } create_point_of_interest = { id = ehof_sys_051 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_052 } } } create_point_of_interest = { id = ehof_sys_052 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_053 } } } create_point_of_interest = { id = ehof_sys_053 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_054 } } } create_point_of_interest = { id = ehof_sys_054 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_055 } } } create_point_of_interest = { id = ehof_sys_055 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_056 } } } create_point_of_interest = { id = ehof_sys_056 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_057 } } } create_point_of_interest = { id = ehof_sys_057 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_058 } } } create_point_of_interest = { id = ehof_sys_058 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_059 } } } create_point_of_interest = { id = ehof_sys_059 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_060 } } } create_point_of_interest = { id = ehof_sys_060 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_061 } } } create_point_of_interest = { id = ehof_sys_061 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_062 } } } create_point_of_interest = { id = ehof_sys_062 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_063 } } } create_point_of_interest = { id = ehof_sys_063 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_064 } } } create_point_of_interest = { id = ehof_sys_064 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_065 } } } create_point_of_interest = { id = ehof_sys_065 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_066 } } } create_point_of_interest = { id = ehof_sys_066 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_067 } } } create_point_of_interest = { id = ehof_sys_067 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_068 } } } create_point_of_interest = { id = ehof_sys_068 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_069 } } } create_point_of_interest = { id = ehof_sys_069 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_070 } } } create_point_of_interest = { id = ehof_sys_070 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_071 } } } create_point_of_interest = { id = ehof_sys_071 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_072 } } } create_point_of_interest = { id = ehof_sys_072 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_073 } } } create_point_of_interest = { id = ehof_sys_073 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_074 } } } create_point_of_interest = { id = ehof_sys_074 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_075 } } } create_point_of_interest = { id = ehof_sys_075 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_076 } } } create_point_of_interest = { id = ehof_sys_076 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_077 } } } create_point_of_interest = { id = ehof_sys_077 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_078 } } } create_point_of_interest = { id = ehof_sys_078 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_079 } } } create_point_of_interest = { id = ehof_sys_079 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_080 } } } create_point_of_interest = { id = ehof_sys_080 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_081 } } } create_point_of_interest = { id = ehof_sys_081 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_082 } } } create_point_of_interest = { id = ehof_sys_082 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_083 } } } create_point_of_interest = { id = ehof_sys_083 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_084 } } } create_point_of_interest = { id = ehof_sys_084 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_085 } } } create_point_of_interest = { id = ehof_sys_085 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_086 } } } create_point_of_interest = { id = ehof_sys_086 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_087 } } } create_point_of_interest = { id = ehof_sys_087 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_088 } } } create_point_of_interest = { id = ehof_sys_088 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_089 } } } create_point_of_interest = { id = ehof_sys_089 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_090 } } } create_point_of_interest = { id = ehof_sys_090 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_091 } } } create_point_of_interest = { id = ehof_sys_091 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_092 } } } create_point_of_interest = { id = ehof_sys_092 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_093 } } } create_point_of_interest = { id = ehof_sys_093 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_094 } } } create_point_of_interest = { id = ehof_sys_094 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_095 } } } create_point_of_interest = { id = ehof_sys_095 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_096 } } } create_point_of_interest = { id = ehof_sys_096 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_097 } } } create_point_of_interest = { id = ehof_sys_097 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_098 } } } create_point_of_interest = { id = ehof_sys_098 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_099 } } } create_point_of_interest = { id = ehof_sys_099 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_100 } } } create_point_of_interest = { id = ehof_sys_100 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
+					add_event_chain_counter = { event_chain = ehof_system_list counter = total_systems amount = 1 }
+				}
+			}
+
+			# Count planetary bodies/deposits
+			every_system_planet = {
+				if = { limit = { is_moon = yes }				prev = { change_variable = { which = ehof_sys_moons value = 1 } } }
+				if = { limit = { is_star = yes }				prev = { change_variable = { which = ehof_sys_stars value = 1 } } }
+				if = { limit = { is_asteroid = yes }			prev = { change_variable = { which = ehof_sys_asteroids value = 1 } } }
+				if = {
+					limit = { is_planet_habitable = yes }
+					if = {
+						limit = {
+							root = {
+								OR = {
+									is_machine_empire = yes
+									any_owned_pop = {
+										is_organic_species = yes
+										prevprev = { habitability = { who = prev value >= 0.7 } }
+									}
+								}
+							}
+						}
+						prev = { change_variable = { which = ehof_sys_green_habitable value = 1 } }
+					}
+					else_if = {
+						limit = {
+							root = {
+								any_owned_pop = {
+									is_organic_species = yes
+									prevprev = {
+										habitability = { who = prev value >= 0.4 }
+										habitability = { who = prev value < 0.7 }
+									}
+								}
+							}
+						}
+						prev = { change_variable = { which = ehof_sys_yellow_habitable value = 1 } }
+					}
+					else = { prev = { change_variable = { which = ehof_sys_red_habitable value = 1 } } }
+				}
+				if = {
+					limit = {
+						is_moon = no
+						is_asteroid = no
+						is_star = no
+						is_planet_habitable = no
+					}
+					prev = { change_variable = { which = ehof_sys_planets value = 1 } }
+				}
+				if = { limit = { has_deposit = d_minerals_1 }				prev = { change_variable = { which = ehof_minerals value = 1 } } }
+				if = { limit = { has_deposit = d_minerals_2 }				prev = { change_variable = { which = ehof_minerals value = 2 } } }
+				if = { limit = { has_deposit = d_minerals_3 }				prev = { change_variable = { which = ehof_minerals value = 3 } } }
+				if = { limit = { has_deposit = d_minerals_4 }				prev = { change_variable = { which = ehof_minerals value = 4 } } }
+				if = { limit = { has_deposit = d_minerals_5 }				prev = { change_variable = { which = ehof_minerals value = 5 } } }
+				if = { limit = { has_deposit = d_minerals_6 }				prev = { change_variable = { which = ehof_minerals value = 6 } } }
+				if = { limit = { has_deposit = d_minerals_7 }				prev = { change_variable = { which = ehof_minerals value = 7 } } }
+				if = { limit = { has_deposit = d_minerals_8 }				prev = { change_variable = { which = ehof_minerals value = 8 } } }
+				if = { limit = { has_deposit = d_minerals_9 }				prev = { change_variable = { which = ehof_minerals value = 9 } } }
+				if = { limit = { has_deposit = d_minerals_10 }				prev = { change_variable = { which = ehof_minerals value = 10 } } }
+
+				if = { limit = { has_deposit = d_energy_1 }					prev = { change_variable = { which = ehof_energy value = 1 } } }
+				if = { limit = { has_deposit = d_energy_2 }					prev = { change_variable = { which = ehof_energy value = 2 } } }
+				if = { limit = { has_deposit = d_energy_3 }					prev = { change_variable = { which = ehof_energy value = 3 } } }
+				if = { limit = { has_deposit = d_energy_4 }					prev = { change_variable = { which = ehof_energy value = 4 } } }
+				if = { limit = { has_deposit = d_energy_5 }					prev = { change_variable = { which = ehof_energy value = 5 } } }
+				if = { limit = { has_deposit = d_energy_6 }					prev = { change_variable = { which = ehof_energy value = 6 } } }
+				if = { limit = { has_deposit = d_energy_7 }					prev = { change_variable = { which = ehof_energy value = 7 } } }
+				if = { limit = { has_deposit = d_energy_8 }					prev = { change_variable = { which = ehof_energy value = 8 } } }
+				if = { limit = { has_deposit = d_energy_9 }					prev = { change_variable = { which = ehof_energy value = 9 } } }
+				if = { limit = { has_deposit = d_energy_10 }				prev = { change_variable = { which = ehof_energy value = 10 } } }
+
+				if = { limit = { has_deposit = d_physics_1 }				prev = { change_variable = { which = ehof_physics value = 1 } } }
+				if = { limit = { has_deposit = d_physics_2 }				prev = { change_variable = { which = ehof_physics value = 2 } } }
+				if = { limit = { has_deposit = d_physics_3 }				prev = { change_variable = { which = ehof_physics value = 3 } } }
+				if = { limit = { has_deposit = d_physics_4 }				prev = { change_variable = { which = ehof_physics value = 4 } } }
+				if = { limit = { has_deposit = d_physics_5 }				prev = { change_variable = { which = ehof_physics value = 5 } } }
+				if = { limit = { has_deposit = d_physics_6 }				prev = { change_variable = { which = ehof_physics value = 6 } } }
+				if = { limit = { has_deposit = d_physics_7 }				prev = { change_variable = { which = ehof_physics value = 7 } } }
+				if = { limit = { has_deposit = d_physics_8 }				prev = { change_variable = { which = ehof_physics value = 8 } } }
+				if = { limit = { has_deposit = d_physics_9 }				prev = { change_variable = { which = ehof_physics value = 9 } } }
+				if = { limit = { has_deposit = d_physics_10 }				prev = { change_variable = { which = ehof_physics value = 10 } } }
+
+				if = { limit = { has_deposit = d_society_1 }				prev = { change_variable = { which = ehof_society value = 1 } } }
+				if = { limit = { has_deposit = d_society_2 }				prev = { change_variable = { which = ehof_society value = 2 } } }
+				if = { limit = { has_deposit = d_society_3 }				prev = { change_variable = { which = ehof_society value = 3 } } }
+				if = { limit = { has_deposit = d_society_4 }				prev = { change_variable = { which = ehof_society value = 4 } } }
+				if = { limit = { has_deposit = d_society_5 }				prev = { change_variable = { which = ehof_society value = 5 } } }
+				if = { limit = { has_deposit = d_society_6 }				prev = { change_variable = { which = ehof_society value = 6 } } }
+				if = { limit = { has_deposit = d_society_7 }				prev = { change_variable = { which = ehof_society value = 7 } } }
+				if = { limit = { has_deposit = d_society_8 }				prev = { change_variable = { which = ehof_society value = 8 } } }
+				if = { limit = { has_deposit = d_society_9 }				prev = { change_variable = { which = ehof_society value = 9 } } }
+				if = { limit = { has_deposit = d_society_10 }				prev = { change_variable = { which = ehof_society value = 10 } } }
+
+				if = { limit = { has_deposit = d_engineering_1 }			prev = { change_variable = { which = ehof_engineering value = 1 } } }
+				if = { limit = { has_deposit = d_engineering_2 }			prev = { change_variable = { which = ehof_engineering value = 2 } } }
+				if = { limit = { has_deposit = d_engineering_3 }			prev = { change_variable = { which = ehof_engineering value = 3 } } }
+				if = { limit = { has_deposit = d_engineering_4 }			prev = { change_variable = { which = ehof_engineering value = 4 } } }
+				if = { limit = { has_deposit = d_engineering_5 }			prev = { change_variable = { which = ehof_engineering value = 5 } } }
+				if = { limit = { has_deposit = d_engineering_6 }			prev = { change_variable = { which = ehof_engineering value = 6 } } }
+				if = { limit = { has_deposit = d_engineering_7 }			prev = { change_variable = { which = ehof_engineering value = 7 } } }
+				if = { limit = { has_deposit = d_engineering_8 }			prev = { change_variable = { which = ehof_engineering value = 8 } } }
+				if = { limit = { has_deposit = d_engineering_9 }			prev = { change_variable = { which = ehof_engineering value = 9 } } }
+				if = { limit = { has_deposit = d_engineering_10 }			prev = { change_variable = { which = ehof_engineering value = 10 } } }
+
+				if = { limit = { has_deposit = d_alloys_1 }					prev = { change_variable = { which = ehof_alloys value = 1 } } }
+				if = { limit = { has_deposit = d_alloys_2 }					prev = { change_variable = { which = ehof_alloys value = 2 } } }
+				if = { limit = { has_deposit = d_alloys_3 }					prev = { change_variable = { which = ehof_alloys value = 3 } } }
+				if = { limit = { has_deposit = d_alloys_4 }					prev = { change_variable = { which = ehof_alloys value = 4 } } }
+				if = { limit = { has_deposit = d_alloys_5 }					prev = { change_variable = { which = ehof_alloys value = 5 } } }
+
+				if = { limit = { has_deposit = d_exotic_gases_1 }			prev = { change_variable = { which = ehof_exotic_gases value = 1 } } }
+				if = { limit = { has_deposit = d_exotic_gases_2 }			prev = { change_variable = { which = ehof_exotic_gases value = 2 } } }
+				if = { limit = { has_deposit = d_exotic_gases_3 }			prev = { change_variable = { which = ehof_exotic_gases value = 3 } } }
+				if = { limit = { has_deposit = d_exotic_gases_4 }			prev = { change_variable = { which = ehof_exotic_gases value = 4 } } }
+				if = { limit = { has_deposit = d_exotic_gases_5 }			prev = { change_variable = { which = ehof_exotic_gases value = 5 } } }
+
+				if = { limit = { has_deposit = d_volatile_motes_1 }			prev = { change_variable = { which = ehof_volatile_motes value = 1 } } }
+				if = { limit = { has_deposit = d_volatile_motes_2 }			prev = { change_variable = { which = ehof_volatile_motes value = 2 } } }
+				if = { limit = { has_deposit = d_volatile_motes_3 }			prev = { change_variable = { which = ehof_volatile_motes value = 3 } } }
+				if = { limit = { has_deposit = d_volatile_motes_4 }			prev = { change_variable = { which = ehof_volatile_motes value = 4 } } }
+				if = { limit = { has_deposit = d_volatile_motes_5 }			prev = { change_variable = { which = ehof_volatile_motes value = 5 } } }
+
+				if = { limit = { has_deposit = d_rare_crystals_1 }			prev = { change_variable = { which = ehof_rare_crystals value = 1 } } }
+				if = { limit = { has_deposit = d_rare_crystals_2 }			prev = { change_variable = { which = ehof_rare_crystals value = 2 } } }
+				if = { limit = { has_deposit = d_rare_crystals_3 }			prev = { change_variable = { which = ehof_rare_crystals value = 3 } } }
+				if = { limit = { has_deposit = d_rare_crystals_4 }			prev = { change_variable = { which = ehof_rare_crystals value = 4 } } }
+				if = { limit = { has_deposit = d_rare_crystals_5 }			prev = { change_variable = { which = ehof_rare_crystals value = 5 } } }
+
+				if = { limit = { has_deposit = d_dark_matter_deposit_1 }	prev = { change_variable = { which = ehof_dark_matter value = 1 } } }
+				if = { limit = { has_deposit = d_dark_matter_deposit_2 }	prev = { change_variable = { which = ehof_dark_matter value = 2 } } }
+				if = { limit = { has_deposit = d_dark_matter_deposit_3 }	prev = { change_variable = { which = ehof_dark_matter value = 3 } } }
+				if = { limit = { has_deposit = d_dark_matter_deposit_4 }	prev = { change_variable = { which = ehof_dark_matter value = 4 } } }
+				if = { limit = { has_deposit = d_dark_matter_deposit_5 }	prev = { change_variable = { which = ehof_dark_matter value = 5 } } }
+
+				if = { limit = { has_deposit = d_negative_mass_deposit_1 }	prev = { change_variable = { which = ehof_negative_mass value = 1 } } }
+				if = { limit = { has_deposit = d_negative_mass_deposit_2 }	prev = { change_variable = { which = ehof_negative_mass value = 2 } } }
+				if = { limit = { has_deposit = d_negative_mass_deposit_3 }	prev = { change_variable = { which = ehof_negative_mass value = 3 } } }
+				if = { limit = { has_deposit = d_negative_mass_deposit_4 }	prev = { change_variable = { which = ehof_negative_mass value = 4 } } }
+				if = { limit = { has_deposit = d_negative_mass_deposit_5 }	prev = { change_variable = { which = ehof_negative_mass value = 5 } } }
+
+				if = { limit = { has_deposit = d_zro_deposit_1 }			prev = { change_variable = { which = ehof_zro value = 1 } } }
+				if = { limit = { has_deposit = d_zro_deposit_2 }			prev = { change_variable = { which = ehof_zro value = 2 } } }
+				if = { limit = { has_deposit = d_zro_deposit_3 }			prev = { change_variable = { which = ehof_zro value = 3 } } }
+				if = { limit = { has_deposit = d_zro_deposit_4 }			prev = { change_variable = { which = ehof_zro value = 4 } } }
+				if = { limit = { has_deposit = d_zro_deposit_5 }			prev = { change_variable = { which = ehof_zro value = 5 } } }
+
+				if = { limit = { has_deposit = d_living_metal_deposit }		prev = { change_variable = { which = ehof_living_metal value = 1 } } }
+				if = { limit = { has_deposit = d_living_metal_deposit_2 }	prev = { change_variable = { which = ehof_living_metal value = 2 } } }
+			}
+
+			# Count Megastructures
+			every_system_megastructure = {
+				limit = {
+					NOR = {
+						is_megastructure_type = ehof_pgate_unknown
+						is_megastructure_type = ehof_pgate_gateway
+					}
+				}
+				prev = { change_variable = { which = ehof_sys_megastructures value = 1 } }
+			}
+
+			# Notify outcome
 			if = {
 				limit = {
 					OR = {
-						has_star_flag = ehof_intended_destination@root
-						root = { check_variable = { which = ehof_phase value = 4 } }
-						root = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_00 } }
-						AND = {
-							root = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_01 } }
-							ehof_category_01 = yes
-						}
-						AND = {
-							root = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_02 } }
-							ehof_category_02 = yes
-						}
-						AND = {
-							root = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_03 } }
-							ehof_category_03 = yes
-						}
-						AND = {
-							root = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_05 } }
-							ehof_category_05 = yes
-						}
-						AND = {
-							root = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_06 } }
-							ehof_category_06 = yes
-						}
-						AND = {
-							root = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_07 } }
-							ehof_category_07 = yes
-						}
-						AND = {
-							root = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_08 } }
-							ehof_category_08 = yes
-						}
-						AND = {
-							root = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_09 } }
-							ehof_category_09 = yes
-						}
-						AND = {
-							root = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root has_star_flag = ehof_target_category_10 } }
-							ehof_category_10 = yes
-						}
+						everchanging_system = yes
+						annihilator_system = yes
+						urmazin_system = yes
+						quest_system = yes
 					}
 				}
-				root = {
-					if = {
-						limit = {
-							any_system_within_border = {
-								has_star_flag = ehof_megastructure_system@root
-								has_star_flag = ehof_target_category_01
-							}
-						}
-						subtract_variable = { which = ehof_new_system_poi value = 1 }
-						if = {
-							limit = { check_variable = { which = ehof_new_system_poi value < 1 } }
-							remove_country_flag = ehof_new_system_poi
-						}
-					}
-					if = {
-						limit = {
-							any_system_within_border = {
-								has_star_flag = ehof_megastructure_system@root
-								has_star_flag = ehof_target_category_02
-							}
-						}
-						subtract_variable = { which = ehof_new_system_rare value = 1 }
-						if = {
-							limit = { check_variable = { which = ehof_new_system_rare value < 1 } }
-							remove_country_flag = ehof_new_system_rare
-						}
-					}
-					if = {
-						limit = {
-							any_system_within_border = {
-								has_star_flag = ehof_megastructure_system@root
-								has_star_flag = ehof_target_category_03
-							}
-						}
-						subtract_variable = { which = ehof_new_system_normal value = 1 }
-						if = {
-							limit = { check_variable = { which = ehof_new_system_normal value < 1 } }
-							remove_country_flag = ehof_new_system_normal
-						}
-					}
-
-					random_system = {
-						limit = {
-							has_star_flag = ehof_destination_system@root
-							has_star_flag = ehof_system_created_by_@root
-							OR = {
-								cohesive_system = yes
-								rare_system = yes
-								quest_system = yes
-							}
-							NOR = {
-								has_star_flag = empire_has_visited_anyone
-								has_star_flag = empire_has_visited@root
-								has_star_flag = urmazin_system
-								has_star_flag = ehof_compound_system
-							}
-						}
-
-						# Count planetary bodies
-						every_system_planet = {
-							if = { limit = { is_moon = yes }			prev = { change_variable = { which = ehof_sys_moons value = 1 } } }
-							if = { limit = { is_star = yes }			prev = { change_variable = { which = ehof_sys_stars value = 1 } } }
-							if = { limit = { is_asteroid = yes }		prev = { change_variable = { which = ehof_sys_asteroids value = 1 } } }
-							if = { limit = { is_planet_habitable = yes }	prev = { change_variable = { which = ehof_sys_habitable value = 1 } } }
-							if = {
-								limit = {
-									is_moon = no
-									is_asteroid = no
-									is_star = no
-								}
-								prev = { change_variable = { which = ehof_sys_planets value = 1 } }
-							}
-						}
-
-						# Create a starbase in first system
-						if = {
-							limit = {
-								cohesive_system = yes
-								has_star_flag = ehof_sector_system_@root
-								root = { NOT = { has_country_flag = ehof_foothold_established } }
-							}
-							root = { set_country_flag = ehof_foothold_established }
-							create_starbase = { size = starbase_outpost owner = root }
-						}
-
-						# Create Hyperlane
-						root = { change_variable = { which = country_ehof_systems value = 1 } }
-						if = {
-							limit = {
-								has_star_flag = ehof_sector_system_@root										# Must be a sector system
-								root = { check_variable = { which = country_ehof_systems value > 1 } }			# Make sure the first system doesn't connect
-							}
-							random_list = {
-								90 = { ehof_generate_hyperlane = yes }
-								10 = { while = { count = 2 ehof_generate_hyperlane = yes } }
-							}
-						}
-
-						# Count Megastructures
-						every_system_megastructure = {
-							limit = {
-								NOR = {
-									is_megastructure_type = ehof_gateway
-									is_megastructure_type = ehof_gateway_disabled
-									is_megastructure_type = ehof_gateway_restored
-									is_megastructure_type = ehof_gateway_unknown
-									is_megastructure_type = ehof_gateway_consite
-									is_megastructure_type = ehof_pgate_unknown
-									is_megastructure_type = ehof_pgate_gateway
-								}
-							}
-							prev = { change_variable = { which = ehof_sys_megastructures value = 1 } }
-						}
-
-						# Create Point of Interest
-						save_event_target_as = ehof_new_system_poi
-						root = {
-							if = {
-								limit = { NOT = { has_event_chain = ehof_system_list } }
-								begin_event_chain = {
-									event_chain = ehof_system_list
-									target = root
-								}
-							}
-							if = {		limit = { NOT = { has_point_of_interest = { poi = ehof_sys_001 } } } create_point_of_interest = { id = ehof_sys_001 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_002 } } } create_point_of_interest = { id = ehof_sys_002 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_003 } } } create_point_of_interest = { id = ehof_sys_003 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_004 } } } create_point_of_interest = { id = ehof_sys_004 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_005 } } } create_point_of_interest = { id = ehof_sys_005 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_006 } } } create_point_of_interest = { id = ehof_sys_006 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_007 } } } create_point_of_interest = { id = ehof_sys_007 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_008 } } } create_point_of_interest = { id = ehof_sys_008 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_009 } } } create_point_of_interest = { id = ehof_sys_009 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_010 } } } create_point_of_interest = { id = ehof_sys_010 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_011 } } } create_point_of_interest = { id = ehof_sys_011 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_012 } } } create_point_of_interest = { id = ehof_sys_012 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_013 } } } create_point_of_interest = { id = ehof_sys_013 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_014 } } } create_point_of_interest = { id = ehof_sys_014 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_015 } } } create_point_of_interest = { id = ehof_sys_015 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_016 } } } create_point_of_interest = { id = ehof_sys_016 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_017 } } } create_point_of_interest = { id = ehof_sys_017 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_018 } } } create_point_of_interest = { id = ehof_sys_018 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_019 } } } create_point_of_interest = { id = ehof_sys_019 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_020 } } } create_point_of_interest = { id = ehof_sys_020 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_021 } } } create_point_of_interest = { id = ehof_sys_021 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_022 } } } create_point_of_interest = { id = ehof_sys_022 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_023 } } } create_point_of_interest = { id = ehof_sys_023 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_024 } } } create_point_of_interest = { id = ehof_sys_024 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_025 } } } create_point_of_interest = { id = ehof_sys_025 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_026 } } } create_point_of_interest = { id = ehof_sys_026 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_027 } } } create_point_of_interest = { id = ehof_sys_027 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_028 } } } create_point_of_interest = { id = ehof_sys_028 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_029 } } } create_point_of_interest = { id = ehof_sys_029 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_030 } } } create_point_of_interest = { id = ehof_sys_030 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_031 } } } create_point_of_interest = { id = ehof_sys_031 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_032 } } } create_point_of_interest = { id = ehof_sys_032 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_033 } } } create_point_of_interest = { id = ehof_sys_033 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_034 } } } create_point_of_interest = { id = ehof_sys_034 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_035 } } } create_point_of_interest = { id = ehof_sys_035 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_036 } } } create_point_of_interest = { id = ehof_sys_036 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_037 } } } create_point_of_interest = { id = ehof_sys_037 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_038 } } } create_point_of_interest = { id = ehof_sys_038 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_039 } } } create_point_of_interest = { id = ehof_sys_039 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_040 } } } create_point_of_interest = { id = ehof_sys_040 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_041 } } } create_point_of_interest = { id = ehof_sys_041 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_042 } } } create_point_of_interest = { id = ehof_sys_042 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_043 } } } create_point_of_interest = { id = ehof_sys_043 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_044 } } } create_point_of_interest = { id = ehof_sys_044 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_045 } } } create_point_of_interest = { id = ehof_sys_045 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_046 } } } create_point_of_interest = { id = ehof_sys_046 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_047 } } } create_point_of_interest = { id = ehof_sys_047 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_048 } } } create_point_of_interest = { id = ehof_sys_048 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_049 } } } create_point_of_interest = { id = ehof_sys_049 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_050 } } } create_point_of_interest = { id = ehof_sys_050 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_051 } } } create_point_of_interest = { id = ehof_sys_051 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_052 } } } create_point_of_interest = { id = ehof_sys_052 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_053 } } } create_point_of_interest = { id = ehof_sys_053 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_054 } } } create_point_of_interest = { id = ehof_sys_054 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_055 } } } create_point_of_interest = { id = ehof_sys_055 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_056 } } } create_point_of_interest = { id = ehof_sys_056 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_057 } } } create_point_of_interest = { id = ehof_sys_057 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_058 } } } create_point_of_interest = { id = ehof_sys_058 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_059 } } } create_point_of_interest = { id = ehof_sys_059 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_060 } } } create_point_of_interest = { id = ehof_sys_060 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_061 } } } create_point_of_interest = { id = ehof_sys_061 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_062 } } } create_point_of_interest = { id = ehof_sys_062 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_063 } } } create_point_of_interest = { id = ehof_sys_063 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_064 } } } create_point_of_interest = { id = ehof_sys_064 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_065 } } } create_point_of_interest = { id = ehof_sys_065 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_066 } } } create_point_of_interest = { id = ehof_sys_066 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_067 } } } create_point_of_interest = { id = ehof_sys_067 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_068 } } } create_point_of_interest = { id = ehof_sys_068 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_069 } } } create_point_of_interest = { id = ehof_sys_069 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_070 } } } create_point_of_interest = { id = ehof_sys_070 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_071 } } } create_point_of_interest = { id = ehof_sys_071 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_072 } } } create_point_of_interest = { id = ehof_sys_072 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_073 } } } create_point_of_interest = { id = ehof_sys_073 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_074 } } } create_point_of_interest = { id = ehof_sys_074 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_075 } } } create_point_of_interest = { id = ehof_sys_075 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_076 } } } create_point_of_interest = { id = ehof_sys_076 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_077 } } } create_point_of_interest = { id = ehof_sys_077 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_078 } } } create_point_of_interest = { id = ehof_sys_078 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_079 } } } create_point_of_interest = { id = ehof_sys_079 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_080 } } } create_point_of_interest = { id = ehof_sys_080 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_081 } } } create_point_of_interest = { id = ehof_sys_081 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_082 } } } create_point_of_interest = { id = ehof_sys_082 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_083 } } } create_point_of_interest = { id = ehof_sys_083 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_084 } } } create_point_of_interest = { id = ehof_sys_084 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_085 } } } create_point_of_interest = { id = ehof_sys_085 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_086 } } } create_point_of_interest = { id = ehof_sys_086 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_087 } } } create_point_of_interest = { id = ehof_sys_087 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_088 } } } create_point_of_interest = { id = ehof_sys_088 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_089 } } } create_point_of_interest = { id = ehof_sys_089 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_090 } } } create_point_of_interest = { id = ehof_sys_090 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_091 } } } create_point_of_interest = { id = ehof_sys_091 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_092 } } } create_point_of_interest = { id = ehof_sys_092 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_093 } } } create_point_of_interest = { id = ehof_sys_093 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_094 } } } create_point_of_interest = { id = ehof_sys_094 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_095 } } } create_point_of_interest = { id = ehof_sys_095 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_096 } } } create_point_of_interest = { id = ehof_sys_096 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_097 } } } create_point_of_interest = { id = ehof_sys_097 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_098 } } } create_point_of_interest = { id = ehof_sys_098 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_099 } } } create_point_of_interest = { id = ehof_sys_099 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-							else_if = {	limit = { NOT = { has_point_of_interest = { poi = ehof_sys_100 } } } create_point_of_interest = { id = ehof_sys_100 name = "ehof_sys" desc = "ehof_sys_desc" event_chain = ehof_system_list location = prev } }
-
-							add_event_chain_counter = { event_chain = ehof_system_list counter = total_systems amount = 1 }
-						}
-
-						if = {
-							limit = { NOR = { has_star_flag = quest_system		has_star_flag = rare_system } }
-							root = { add_event_chain_counter = { event_chain = ehof_system_list counter = cohesive_systems_total amount = 1 } }
-						}
-						else_if = {
-							limit = { has_star_flag = quest_system }
-							root = { add_event_chain_counter = { event_chain = ehof_system_list counter = poi_systems_total amount = 1 } }
-						}
-						else_if = {
-							limit = { has_star_flag = rare_system }
-							root = { add_event_chain_counter = { event_chain = ehof_system_list counter = bountiful_systems_total amount = 1 } }
-						}
-					}
-
-					set_country_flag = ehof_chk_accurate_yes
-					change_variable = { which = ehof_acc_true value = 1 } # +1 wormhole accurate
-				}
+				root.owner = { set_country_flag = ehof_report_quest }
 			}
-			else = {
-				root = {
-					set_country_flag = ehof_chk_accurate_no
-					change_variable = { which = ehof_acc_false value = 1 } # +1 wormhole non-accurate
-				}
+			else_if = {
+				limit = { cohesive_system = no }
+				root.owner = { set_country_flag = ehof_report_standard }
 			}
-
-			#####################################################################################################
-			########################################## CHECK EXPLORED ###########################################
-			#####################################################################################################
-
-			if = {
-				limit = { has_star_flag = empire_has_visited@root }
-				root = { set_country_flag = ehof_chk_explored_yes }
-			}
-			else = { root = { set_country_flag = ehof_chk_explored_no } }
-
-			#####################################################################################################
-			############################################ CHECK OWNER ############################################
-			#####################################################################################################
-
-			# Do we own the system?
-			if = {
-				limit = {
-					exists = owner
-					owner = { is_same_value = root }
-				}
-				root = { set_country_flag = ehof_chk_owner_us }
-			}
-
-			# Dos someone else own the system?
 			else_if = {
 				limit = {
-					exists = owner
-					owner = { NOT = { is_same_value = root } }
+					cohesive_system = yes
+					rare_system = no
 				}
-				owner = { save_event_target_as = ehof_system_already_taken_by } # Save the owner
-				root = { set_country_flag = ehof_chk_owner_other }
+				root.owner = { set_country_flag = ehof_report_cohesive }
 			}
-
-			# It's not owned
-			else = { root = { set_country_flag = ehof_chk_owner_no } }
-		}
-
-		#####################################################################################################
-		########################################### CHECK OUTCOME ###########################################
-		#####################################################################################################
-
-		############################################## ACCURATE #############################################
-		################################ Is Not Owned
-		if = {
-			limit = { # Good
-				has_country_flag = ehof_chk_accurate_yes
-				has_country_flag = ehof_chk_explored_no
-				has_country_flag = ehof_chk_owner_no
-			}
-			set_country_flag = ehof_travel_01
-		}
-
-		else_if = { # Med
-			limit = {
-				has_country_flag = ehof_chk_accurate_yes
-				has_country_flag = ehof_chk_explored_yes
-				has_country_flag = ehof_chk_owner_no
-			}
-			set_country_flag = ehof_travel_02
-		}
-
-		################################ Owned by Us
-		else_if = { # Med
-			limit = {
-				has_country_flag = ehof_chk_accurate_yes
-				has_country_flag = ehof_chk_explored_yes
-				has_country_flag = ehof_chk_owner_us
-			}
-			set_country_flag = ehof_travel_03
-		}
-
-		################################ Is owned by someone else
-		else_if = { # Bad
-			limit = {
-				has_country_flag = ehof_chk_accurate_yes
-				has_country_flag = ehof_chk_explored_no
-				has_country_flag = ehof_chk_owner_other
-			}
-			set_country_flag = ehof_travel_04
-		}
-
-		else_if = { # Bad
-			limit = {
-				has_country_flag = ehof_chk_accurate_yes
-				has_country_flag = ehof_chk_explored_yes
-				has_country_flag = ehof_chk_owner_other
-			}
-			set_country_flag = ehof_travel_05
-		}
-
-		############################################# INACCURATE ############################################
-		################################ Is Not Owned
-		else_if = {
-			limit = { # Med
-				has_country_flag = ehof_chk_accurate_no
-				has_country_flag = ehof_chk_explored_no
-				has_country_flag = ehof_chk_owner_no
-			}
-			set_country_flag = ehof_travel_06
-		}
-
-		else_if = { # Med
-			limit = {
-				has_country_flag = ehof_chk_accurate_no
-				has_country_flag = ehof_chk_explored_yes
-				has_country_flag = ehof_chk_owner_no
-			}
-			set_country_flag = ehof_travel_07
-		}
-
-		################################ Owned by Us
-		else_if = { # Bad
-			limit = {
-				has_country_flag = ehof_chk_accurate_no
-				has_country_flag = ehof_chk_explored_yes
-				has_country_flag = ehof_chk_owner_us
-			}
-			set_country_flag = ehof_travel_08
-		}
-
-		################################ Is owned by someone else
-		else_if = { # Bad
-			limit = {
-				has_country_flag = ehof_chk_accurate_no
-				has_country_flag = ehof_chk_explored_no
-				has_country_flag = ehof_chk_owner_other
-			}
-			set_country_flag = ehof_travel_09
-		}
-
-		else_if = { # Bad
-			limit = {
-				has_country_flag = ehof_chk_accurate_no
-				has_country_flag = ehof_chk_explored_yes
-				has_country_flag = ehof_chk_owner_other
-			}
-			set_country_flag = ehof_travel_10
-		}
-
-		###############################################################################################
-		########################################### OUTCOME ###########################################
-		###############################################################################################
-
-		# Rare
-		if = {
-			limit = {
-				any_system = {
-					has_star_flag = ehof_destination_system@root
+			else_if = {
+				limit = {
+					cohesive_system = yes
 					rare_system = yes
 				}
-				has_country_flag = ehof_travel_01
+				root.owner = { set_country_flag = ehof_report_bountiful }
 			}
-			country_event = { id = ehof_megastructure.401 }
-		}
 
-		# Good
-		else_if = {
-			limit = { has_country_flag = ehof_travel_01 }
-			country_event = { id = ehof_megastructure.4022 }
-		}
-
-		# Med
-		else_if = {
-			limit = {
-				OR = {
-					has_country_flag = ehof_travel_02
-					has_country_flag = ehof_travel_03
-					has_country_flag = ehof_travel_06
-					has_country_flag = ehof_travel_07
-				}
-			}
-			country_event = { id = ehof_megastructure.4032 }
-		}
-
-		# Bad
-		else_if = {
-			limit = {
-				OR = {
-					has_country_flag = ehof_travel_04
-					has_country_flag = ehof_travel_05
-					has_country_flag = ehof_travel_08
-					has_country_flag = ehof_travel_09
-					has_country_flag = ehof_travel_10
-				}
-			}
-			country_event = { id = ehof_megastructure.4042 }
-		}
-
-		#####################################################################################################
-		########################################## MARK AS VISITED ##########################################
-		#####################################################################################################
-
-		random_system = {
-			limit = { has_star_flag = ehof_destination_system@root }
-			random_system = { limit = { has_star_flag = last_visited_system_05@root } remove_star_flag = last_visited_system_05@root }
-			random_system = { limit = { has_star_flag = last_visited_system_04@root } remove_star_flag = last_visited_system_04@root set_star_flag = last_visited_system_05@root }
-			random_system = { limit = { has_star_flag = last_visited_system_03@root } remove_star_flag = last_visited_system_03@root set_star_flag = last_visited_system_04@root }
-			random_system = { limit = { has_star_flag = last_visited_system_02@root } remove_star_flag = last_visited_system_02@root set_star_flag = last_visited_system_03@root }
-			random_system = { limit = { has_star_flag = last_visited_system_01@root } remove_star_flag = last_visited_system_01@root set_star_flag = last_visited_system_02@root }
-			set_star_flag = last_visited_system_01@root
-			if = {
-				limit = { any_fleet_in_system = { exists = owner owner = { is_same_value = root } } }
-				set_star_flag = empire_has_visited_anyone
-				set_star_flag = empire_has_visited@root
-			}
+			# Visited via ehof
+			set_star_flag = empire_has_visited_anyone
+			set_star_flag = empire_has_visited@root
 		}
 	}
 }
@@ -2899,205 +1840,140 @@ country_event = {
 #########################################################################################################
 ################################################ Dialog #################################################
 #########################################################################################################
-# Rare
+# Standard
 country_event = {
 	id = ehof_megastructure.401
 	diplomatic = yes
-	custom_gui = "ehof_rare_ui_window"
-	title = "ehof_mega_check_title"
-	show_sound = "event_finding_loot"
-	location = event_target:ehof_destination_system
-	is_triggered_only = yes
-	desc = { trigger = { has_country_flag = ehof_travel_01 } text = "ehof_mega_check_01_desc" }
-
-	immediate = {
-		random_list = {
-			1 = { set_variable = { which = ehof_travel_dialog value = 1 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 2 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 3 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 4 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 5 } }
-		}
-	}
-
-	after = {
-		hidden_effect = {
-			remove_country_flag = ehof_travel_01
-			set_variable = { which = ehof_travel_dialog value = 0 }
-		}
-	}
-
-	# Standard responces
-	option = { default_hide_option = yes custom_gui = "ehof_rare_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 1 } } name = "ehof_good_response_01" }
-	option = { default_hide_option = yes custom_gui = "ehof_rare_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 2 } } name = "ehof_good_response_02" }
-	option = { default_hide_option = yes custom_gui = "ehof_rare_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 3 } } name = "ehof_good_response_03" }
-	option = { default_hide_option = yes custom_gui = "ehof_rare_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 4 } } name = "ehof_good_response_04" }
-	option = { default_hide_option = yes custom_gui = "ehof_rare_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 5 } } name = "ehof_good_response_05" }
-}
-
-# Good
-country_event = {
-	id = ehof_megastructure.4022
-	diplomatic = yes
-	custom_gui = "giga_good_ui_window"
-	title = "ehof_mega_check_title"
+	custom_gui = "giga_standard_window"
+	title = "ehof_report_standard_header"
 	show_sound = "event_lootbox_galatron"
 	location = event_target:ehof_destination_system
 	is_triggered_only = yes
-	desc = { trigger = { has_country_flag = ehof_travel_01 } text = "ehof_mega_check_01_desc" }
-
+	desc = "ehof_report_desc"
 	immediate = {
-		random_list = {
-			1 = { set_variable = { which = ehof_travel_dialog value = 1 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 2 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 3 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 4 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 5 } }
-		}
+		ehof_dest_system = yes
+		remove_country_flag = ehof_report_standard
 	}
-
-	after = {
-		hidden_effect = {
-			remove_country_flag = ehof_travel_01
-			set_variable = { which = ehof_travel_dialog value = 0 }
-		}
-	}
-
-	# Standard responces
-	option = { default_hide_option = yes custom_gui = "giga_good_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 1 } } name = "ehof_good_response_01" }
-	option = { default_hide_option = yes custom_gui = "giga_good_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 2 } } name = "ehof_good_response_02" }
-	option = { default_hide_option = yes custom_gui = "giga_good_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 3 } } name = "ehof_good_response_03" }
-	option = { default_hide_option = yes custom_gui = "giga_good_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 4 } } name = "ehof_good_response_04" }
-	option = { default_hide_option = yes custom_gui = "giga_good_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 5 } } name = "ehof_good_response_05" }
+	option = { name = OK default_hide_option = yes }
 }
 
-# Medium
+# Cohesive
 country_event = {
-	id = ehof_megastructure.4032
+	id = ehof_megastructure.402
 	diplomatic = yes
-	custom_gui = "giga_med_ui_window"
-	title = "ehof_mega_check_title"
-	show_sound = "event_lootbox_good"
+	custom_gui = "giga_cohesive_window"
+	title = "ehof_report_cohesive_header"
+	show_sound = "event_lootbox_galatron"
 	location = event_target:ehof_destination_system
 	is_triggered_only = yes
-	desc = { trigger = { has_country_flag = ehof_travel_02 } text = "ehof_mega_check_02_desc" }
-	desc = { trigger = { has_country_flag = ehof_travel_03 } text = "ehof_mega_check_03_desc" }
-	desc = { trigger = { has_country_flag = ehof_travel_06 } text = "ehof_mega_check_06_desc" }
-	desc = { trigger = { has_country_flag = ehof_travel_07 } text = "ehof_mega_check_07_desc" }
-
+	desc = "ehof_report_desc"
 	immediate = {
-		random_list = {
-			1 = { set_variable = { which = ehof_travel_dialog value = 1 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 2 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 3 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 4 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 5 } }
-		}
+		ehof_dest_system = yes
+		remove_country_flag = ehof_report_cohesive
 	}
-
-	after = {
-		hidden_effect = {
-			remove_country_flag = ehof_travel_02
-			remove_country_flag = ehof_travel_03
-			remove_country_flag = ehof_travel_06
-			remove_country_flag = ehof_travel_07
-			set_variable = { which = ehof_travel_dialog value = 0 }
-		}
-	}
-
-	# Standard responces
-	option = { default_hide_option = yes custom_gui = "giga_med_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 1 } } name = "ehof_med_response_01" }
-	option = { default_hide_option = yes custom_gui = "giga_med_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 2 } } name = "ehof_med_response_02" }
-	option = { default_hide_option = yes custom_gui = "giga_med_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 3 } } name = "ehof_med_response_03" }
-	option = { default_hide_option = yes custom_gui = "giga_med_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 4 } } name = "ehof_med_response_04" }
-	option = { default_hide_option = yes custom_gui = "giga_med_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 5 } } name = "ehof_med_response_05" }
+	option = { name = OK default_hide_option = yes }
 }
 
-# Bad
+# Bountiful
 country_event = {
-	id = ehof_megastructure.4042
+	id = ehof_megastructure.403
 	diplomatic = yes
-	custom_gui = "giga_bad_ui_window"
-	title = "ehof_mega_check_title"
-	show_sound = "event_lootbox_bad"
+	custom_gui = "giga_bountiful_window"
+	title = "ehof_report_bountiful_header"
+	show_sound = "event_finding_loot"
 	location = event_target:ehof_destination_system
 	is_triggered_only = yes
-	desc = { trigger = { has_country_flag = ehof_travel_04 } text = "ehof_mega_check_04_desc" }
-	desc = { trigger = { has_country_flag = ehof_travel_05 } text = "ehof_mega_check_05_desc" }
-	desc = { trigger = { has_country_flag = ehof_travel_08 } text = "ehof_mega_check_08_desc" }
-	desc = { trigger = { has_country_flag = ehof_travel_09 } text = "ehof_mega_check_09_desc" }
-	desc = { trigger = { has_country_flag = ehof_travel_10 } text = "ehof_mega_check_10_desc" }
-
+	desc = "ehof_report_desc"
 	immediate = {
-		random_list = {
-			1 = { set_variable = { which = ehof_travel_dialog value = 1 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 2 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 3 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 4 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 5 } }
-		}
+		ehof_dest_system = yes
+		remove_country_flag = ehof_report_bountiful
 	}
-
-	after = {
-		hidden_effect = {
-			remove_country_flag = ehof_travel_04
-			remove_country_flag = ehof_travel_05
-			remove_country_flag = ehof_travel_08
-			remove_country_flag = ehof_travel_09
-			remove_country_flag = ehof_travel_10
-			set_variable = { which = ehof_travel_dialog value = 0 }
-		}
-	}
-
-	# Standard responces
-	option = { default_hide_option = yes custom_gui = "giga_bad_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 1 } } name = "ehof_bad_response_01" }
-	option = { default_hide_option = yes custom_gui = "giga_bad_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 2 } } name = "ehof_bad_response_02" }
-	option = { default_hide_option = yes custom_gui = "giga_bad_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 3 } } name = "ehof_bad_response_03" }
-	option = { default_hide_option = yes custom_gui = "giga_bad_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 4 } } name = "ehof_bad_response_04" }
-	option = { default_hide_option = yes custom_gui = "giga_bad_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 5 } } name = "ehof_bad_response_05" }
+	option = { name = OK default_hide_option = yes }
 }
 
-# Failed to Generate Wormhole
+# Quest
 country_event = {
-	id = ehof_megastructure.405
+	id = ehof_megastructure.404
 	diplomatic = yes
-	custom_gui = "giga_small_bad_ui_window"
-	title = "ehof_megastructure.405_name"
-	desc = "ehof_megastructure.405_desc"
-	show_sound = "event_power_down"
-	location = event_target:ehof_megastructure_system
+	custom_gui = "giga_quest_window"
+	title = "ehof_report_quest_header"
+	show_sound = "event_finding_loot"
+	location = event_target:ehof_destination_system
 	is_triggered_only = yes
-
-	after = { hidden_effect = { set_variable = { which = ehof_travel_dialog value = 0 } } }
-
+	desc = "ehof_report_desc"
 	immediate = {
-		random_list = {
-			1 = { set_variable = { which = ehof_travel_dialog value = 1 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 2 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 3 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 4 } }
-			1 = { set_variable = { which = ehof_travel_dialog value = 5 } }
-		}
-		ehof_mega_system = yes
-
-		# Cooldown time + Malfunctioning time
-		if = { limit = { check_variable = { which = ehof_phase value = 5 } } change_variable = { which = ehof_cooldown_days value = @ehof_p3_malfunction_time } }
-		if = { limit = { check_variable = { which = ehof_phase value = 4 } } change_variable = { which = ehof_cooldown_days value = @ehof_p4_malfunction_time } }
-		if = { limit = { check_variable = { which = ehof_phase value = 3 } } change_variable = { which = ehof_cooldown_days value = @ehof_p3_malfunction_time } }
-		if = { limit = { check_variable = { which = ehof_phase value = 2 } } change_variable = { which = ehof_cooldown_days value = @ehof_p2_malfunction_time } }
-		if = { limit = { check_variable = { which = ehof_phase value = 1 } } change_variable = { which = ehof_cooldown_days value = @ehof_p1_malfunction_time } }
-		change_variable = { which = ehof_nogo value = 1 } # +1 wormhole non-generate
-		random_system = {
-			limit = { has_star_flag = ehof_destination_system@root }
-			save_event_target_as = ehof_destination_system
-		}
+		ehof_dest_system = yes
+		remove_country_flag = ehof_report_quest
 	}
+	option = { name = OK default_hide_option = yes }
+}
 
-	option = { default_hide_option = yes custom_gui = "giga_small_bad_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 1 } } name = "ehof_bad_response_01" }
-	option = { default_hide_option = yes custom_gui = "giga_small_bad_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 2 } } name = "ehof_bad_response_02" }
-	option = { default_hide_option = yes custom_gui = "giga_small_bad_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 3 } } name = "ehof_bad_response_03" }
-	option = { default_hide_option = yes custom_gui = "giga_small_bad_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 4 } } name = "ehof_bad_response_04" }
-	option = { default_hide_option = yes custom_gui = "giga_small_bad_ui_option" trigger = { check_variable = { which = ehof_travel_dialog value = 5 } } name = "ehof_bad_response_05" }
+# SA Standard
+country_event = {
+	id = ehof_megastructure.4011
+	diplomatic = yes
+	custom_gui = "giga_sa_standard_window"
+	title = "ehof_report_standard_header"
+	show_sound = "event_lootbox_galatron"
+	location = event_target:ehof_destination_system
+	is_triggered_only = yes
+	desc = "ehof_report_desc"
+	immediate = {
+		ehof_dest_system = yes
+		remove_country_flag = ehof_report_standard
+	}
+	option = { name = OK default_hide_option = yes }
+}
+
+# SA Cohesive
+country_event = {
+	id = ehof_megastructure.4021
+	diplomatic = yes
+	custom_gui = "giga_sa_cohesive_window"
+	title = "ehof_report_cohesive_header"
+	show_sound = "event_lootbox_galatron"
+	location = event_target:ehof_destination_system
+	is_triggered_only = yes
+	desc = "ehof_report_desc"
+	immediate = {
+		ehof_dest_system = yes
+		remove_country_flag = ehof_report_cohesive
+	}
+	option = { name = OK default_hide_option = yes }
+}
+
+# SA Bountiful
+country_event = {
+	id = ehof_megastructure.4031
+	diplomatic = yes
+	custom_gui = "giga_sa_bountiful_window"
+	title = "ehof_report_bountiful_header"
+	show_sound = "event_finding_loot"
+	location = event_target:ehof_destination_system
+	is_triggered_only = yes
+	desc = "ehof_report_desc"
+	immediate = {
+		ehof_dest_system = yes
+		remove_country_flag = ehof_report_bountiful
+	}
+	option = { name = OK default_hide_option = yes }
+}
+
+# SA Quest
+country_event = {
+	id = ehof_megastructure.4041
+	diplomatic = yes
+	custom_gui = "giga_sa_quest_window"
+	title = "ehof_report_quest_header"
+	show_sound = "event_finding_loot"
+	location = event_target:ehof_destination_system
+	is_triggered_only = yes
+	desc = "ehof_report_desc"
+	immediate = {
+		ehof_dest_system = yes
+		remove_country_flag = ehof_report_quest
+	}
+	option = { name = OK default_hide_option = yes }
 }
 
 # Dismantle Dialog
@@ -3109,36 +1985,34 @@ country_event = {
 	custom_gui = "ehof_mainui_window"
 	picture_event_data = {
 		portrait = root
-		room = root.ruler
-		planet_background = root
 		graphical_culture = root
-		city_level = root
+		room = "ehof_room"
 	}
 	location = event_target:ehof_megastructure_system
 	desc = "ehof_megastructure.410.desc"
 
 	option = {
-		custom_gui = "ehof_mainui_option"
+		custom_gui = "ehof_mainui_option_big"
 		name = "ehof_megastructure.410.a"
 		hidden_effect = {
+			if = { limit = { has_country_flag = ehof_travel_diplomacy }		remove_country_flag = ehof_travel_diplomacy }
+			if = { limit = { has_country_flag = ehof_can_activate }			remove_country_flag = ehof_can_activate }
+			if = { limit = { has_country_flag = ehof_can_deactivate }		remove_country_flag = ehof_can_deactivate }
+			if = { limit = { has_country_flag = ehof_activating }			remove_country_flag = ehof_activating }
+			if = { limit = { has_country_flag = ehof_activated }			remove_country_flag = ehof_activated }
+			if = { limit = { has_country_flag = ehof_is_upgrading }			remove_country_flag = ehof_is_upgrading }
+			if = { limit = { has_country_flag = ehof_on_cooldown }			remove_country_flag = ehof_on_cooldown }
+			if = { limit = { has_country_flag = ehof_p0_first_time }		remove_country_flag = ehof_p0_first_time }
+			if = { limit = { has_country_flag = ehof_p1_first_time }		remove_country_flag = ehof_p1_first_time }
+			if = { limit = { has_country_flag = ehof_p2_first_time }		remove_country_flag = ehof_p2_first_time }
+			if = { limit = { has_country_flag = ehof_p3_first_time }		remove_country_flag = ehof_p3_first_time }
+			if = { limit = { has_country_flag = ehof_p4_first_time }		remove_country_flag = ehof_p4_first_time }
+			if = { limit = { has_country_flag = ehof_p5_first_time }		remove_country_flag = ehof_p5_first_time }
+			if = { limit = { has_country_flag = ehof_restored_first_time }	remove_country_flag = ehof_restored_first_time }
 			random_system_within_border = {
-				limit = { has_star_flag = ehof_megastructure_system@root }
-				every_system_megastructure = { limit = { is_an_ehof = yes } delete_megastructure = this }
-				every_fleet_in_system = {
-					limit = {
-						OR = {
-							has_fleet_flag = ehof_is_at_wormhole
-							has_fleet_flag = ehof_is_at_destination
-							has_fleet_flag = ehof_ready_for_travel@root
-						}
-					}
-					remove_auto_move_target = yes
-					set_event_locked = no
-					remove_fleet_flag = ehof_is_at_wormhole
-					remove_fleet_flag = ehof_is_at_destination
-					remove_fleet_flag = ehof_ready_for_travel@root
-				}
-				remove_star_flag = ehof_malfunctioning
+				limit = { has_an_active_ehof = yes }
+				remove_star_flag = ehof_megastructure_system@root
+				every_system_megastructure = { limit = { is_an_ehof = yes } remove_megastructure = this }
 				remove_star_flag = ehof_on_cooldown
 				every_system_planet = {
 					remove_planet_flag = cant_target_this_planet
@@ -3150,321 +2024,10 @@ country_event = {
 					limit = { NOT = { check_variable = { which = ehof_phase value = 5 } } }
 					star = { change_pc = pc_black_hole }
 				}
-				root = { ehof_remove_mega_flags = yes }
 			}
 		}
 	}
 
-	option = { custom_gui = "ehof_mainui_option" name = "ehof_goback" ehof_go_back = yes }
-	option = { custom_gui = "ehof_mainui_option" name = "ehof_leavestation" ehof_leave_station = yes default_hide_option = yes }
-}
-
-# Fleet arrives as debris
-country_event = {
-	id = ehof_megastructure.411
-	title = "ehof_megastructure.411_name"
-	desc = "ehof_megastructure.411_desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "exploding_ship_room" }
-	show_sound = advisor_notification_fleet_destroyed
-	location = event_target:ehof_destination_system
-	is_triggered_only = yes
-	immediate = { ehof_dest_system = yes }
-	option = { custom_gui = "giga_eventui_option" name = "ehof_megastructure.411_a" default_hide_option = yes }
-}
-
-# Detonates upon entering wormhole
-country_event = {
-	id = ehof_megastructure.412
-	title = "ehof_megastructure.412_name"
-	desc = "ehof_megastructure.412_desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "space_funeral_room" }
-	show_sound = advisor_notification_fleet_destroyed
-	location = event_target:ehof_megastructure_system
-	is_triggered_only = yes
-	immediate = {
-		ehof_dest_system = yes
-		ehof_mega_system = yes
-	}
-	option = { custom_gui = "giga_eventui_option" name = "ehof_megastructure.412_a" default_hide_option = yes }
-}
-
-# Damaged
-country_event = {
-	id = ehof_megastructure.413
-	title = "ehof_megastructure.413_name"
-	desc = "ehof_megastructure.413_desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "small_space_battle_room" }
-	show_sound = event_space_battle
-	location = event_target:ehof_destination_system
-	is_triggered_only = yes
-	immediate = { ehof_dest_system = yes }
-	option = { custom_gui = "giga_eventui_option" name = "ehof_megastructure.413_a" default_hide_option = yes }
-}
-
-#########################################################################################################
-###################################### Fleets go Missing In Action ######################################
-#########################################################################################################
-fleet_event = {
-	id = ehof_megastructure.501
-	hide_window = yes
-	is_triggered_only = yes
-
-	trigger = {
-		owner = {
-			is_ai = no
-			has_country_flag = ehof_doomed_fleets
-		}
-	}
-
-	immediate = {
-		remove_fleet_flag = ehof_ready_for_travel@owner
-		remove_fleet_flag = ehof_is_at_destination
-
-		owner = {
-			remove_country_flag = ehof_doomed_fleets
-			random_list = {
-				### Incase everything is on cooldown
-				0 = {
-					modifier = {
-						add = 100
-						has_country_flag = ehof_fleet_recently_damaged
-						has_country_flag = ehof_fleet_recently_debris
-						has_country_flag = ehof_fleet_recently_detonated
-					}
-					change_variable = { which = count_damage value = 1 }		# +1
-					change_variable = { which = count_debris value = 1 }		# +1
-					change_variable = { which = count_detonate value = 1 }		# +1
-				}
-
-				#### DAMAGED
-				1 = {
-					modifier = { factor = 0		has_country_flag = ehof_fleet_recently_damaged }
-					modifier = { factor = 1.25	check_variable = { which = count_damage value = 2 } }
-					modifier = { factor = 1.5	check_variable = { which = count_damage value = 3 } }
-					modifier = { factor = 1.75	check_variable = { which = count_damage value = 4 } }
-					modifier = { factor = 2		check_variable = { which = count_damage value = 5 } }
-					modifier = { factor = 2.25	check_variable = { which = count_damage value = 6 } }
-					modifier = { factor = 2.5	check_variable = { which = count_damage value = 7 } }
-					modifier = { factor = 2.75	check_variable = { which = count_damage value >= 8 } }
-					modifier = {
-						factor = 0
-						NOT = {
-							any_owned_fleet = {
-								has_fleet_flag = ehof_doomed_fleet
-								is_ship_class = shipclass_military
-							}
-						}
-					}
-
-					set_country_flag = ehof_fleet_damaged
-					set_variable = {	which = count_damage value = 0 }		# Reset counter
-					change_variable = {	which = count_debris value = 1 }		# +1
-					change_variable = {	which = count_detonate value = 1 }		# +1
-
-					# How often can fleet be Damaged?
-					if = { limit = { check_variable = { which = ehof_phase value = 5 } } set_timed_country_flag = { flag = ehof_fleet_recently_damaged days = @ehofp3_mia_effect_cooldown } }
-					if = { limit = { check_variable = { which = ehof_phase value = 3 } } set_timed_country_flag = { flag = ehof_fleet_recently_damaged days = @ehofp3_mia_effect_cooldown } }
-					if = { limit = { check_variable = { which = ehof_phase value = 2 } } set_timed_country_flag = { flag = ehof_fleet_recently_damaged days = @ehofp2_mia_effect_cooldown } }
-					if = { limit = { check_variable = { which = ehof_phase value = 1 } } set_timed_country_flag = { flag = ehof_fleet_recently_damaged days = @ehofp1_mia_effect_cooldown } }
-				}
-
-				#### ARRIVES AS DEBRIS
-				1 = {
-					modifier = { factor = 0		has_country_flag = ehof_fleet_recently_debris }
-					modifier = { factor = 1.25	check_variable = { which = count_debris value = 2 } }
-					modifier = { factor = 1.5	check_variable = { which = count_debris value = 3 } }
-					modifier = { factor = 1.75	check_variable = { which = count_debris value = 4 } }
-					modifier = { factor = 2		check_variable = { which = count_debris value = 5 } }
-					modifier = { factor = 2.25	check_variable = { which = count_debris value = 6 } }
-					modifier = { factor = 2.5	check_variable = { which = count_debris value = 7 } }
-					modifier = { factor = 2.75	check_variable = { which = count_debris value >= 8 } }
-
-					set_country_flag = ehof_fleet_debris
-					change_variable = { which = ehof_stats_debris value = 1 }	# Set variables for localization
-					set_variable = {	which = count_debris value = 0 }		# Reset counter
-					change_variable = {	which = count_damage value = 1 }		# +1
-					change_variable = {	which = count_detonate value = 1 }		# +1
-
-					# How often can fleet be KIA?
-					if = { limit = { check_variable = { which = ehof_phase value = 5 } } set_timed_country_flag = { flag = ehof_fleet_recently_debris days = @ehofp3_mia_effect_cooldown } }
-					if = { limit = { check_variable = { which = ehof_phase value = 3 } } set_timed_country_flag = { flag = ehof_fleet_recently_debris days = @ehofp3_mia_effect_cooldown } }
-					if = { limit = { check_variable = { which = ehof_phase value = 2 } } set_timed_country_flag = { flag = ehof_fleet_recently_debris days = @ehofp2_mia_effect_cooldown } }
-					if = { limit = { check_variable = { which = ehof_phase value = 1 } } set_timed_country_flag = { flag = ehof_fleet_recently_debris days = @ehofp1_mia_effect_cooldown } }
-				}
-
-				#### DETONATES UPON ENTERING THE WORMHOLE
-				1 = {
-					modifier = { factor = 0		has_country_flag = ehof_fleet_recently_detonated }
-					modifier = { factor = 1.25	check_variable = { which = count_detonate value = 2 } }
-					modifier = { factor = 1.5	check_variable = { which = count_detonate value = 3 } }
-					modifier = { factor = 1.75	check_variable = { which = count_detonate value = 4 } }
-					modifier = { factor = 2		check_variable = { which = count_detonate value = 5 } }
-					modifier = { factor = 2.25	check_variable = { which = count_detonate value = 6 } }
-					modifier = { factor = 2.5	check_variable = { which = count_detonate value = 7 } }
-					modifier = { factor = 2.75	check_variable = { which = count_detonate value >= 8 } }
-
-					set_country_flag = ehof_fleet_detonate
-					change_variable = { which = ehof_stats_detonated value = 1 }	# Set variables for localization
-					set_variable = {	which = count_detonate value = 0 }			# Reset counter
-					change_variable = { which = count_damage value = 1 }			# +1
-					change_variable = { which = count_debris value = 1 }			# +1
-
-					# How often can fleet be KIA?
-					if = { limit = { check_variable = { which = ehof_phase value = 5 } } set_timed_country_flag = { flag = ehof_fleet_recently_detonated days = @ehofp3_mia_effect_cooldown } }
-					if = { limit = { check_variable = { which = ehof_phase value = 3 } } set_timed_country_flag = { flag = ehof_fleet_recently_detonated days = @ehofp3_mia_effect_cooldown } }
-					if = { limit = { check_variable = { which = ehof_phase value = 2 } } set_timed_country_flag = { flag = ehof_fleet_recently_detonated days = @ehofp2_mia_effect_cooldown } }
-					if = { limit = { check_variable = { which = ehof_phase value = 1 } } set_timed_country_flag = { flag = ehof_fleet_recently_detonated days = @ehofp1_mia_effect_cooldown } }
-				}
-			}
-
-			#### HOW MUCH DAMAGE
-			if = {
-				limit = { has_country_flag = ehof_fleet_damaged }
-				remove_country_flag = ehof_fleet_damaged
-				country_event = { id = ehof_megastructure.413 days = 6 }
-
-				random_list = {
-					10 = {			# (Lose 20% of fleet, upto a maximum of 40)
-						modifier = { factor = 4 check_variable = { which = ehof_phase value = 2 } }
-						modifier = { factor = 6 check_variable = { which = ehof_phase value = 3 } }
-						modifier = { factor = 8 check_variable = { which = ehof_phase value >= 4 } }
-						set_country_flag = ehof_fleet_damaged_20
-					}
-					10 = {			# (Lose 40% of fleet, upto a maximum of 80)
-						modifier = { factor = 2 check_variable = { which = ehof_phase value = 2 } }
-						modifier = { factor = 4 check_variable = { which = ehof_phase value = 3 } }
-						modifier = { factor = 6 check_variable = { which = ehof_phase value >= 4 } }
-						set_country_flag = ehof_fleet_damaged_40
-						}
-					10 = {			# (Lose 60% of fleet, upto a maximum of 120)
-						modifier = { factor = 0.8 check_variable = { which = ehof_phase value = 2 } }
-						modifier = { factor = 0.6 check_variable = { which = ehof_phase value = 3 } }
-						modifier = { factor = 0.4 check_variable = { which = ehof_phase value >= 4 } }
-						set_country_flag = ehof_fleet_damaged_60
-					}
-				}
-			}
-
-			##### CAUSE DAMAGE
-			if = {
-				limit = { has_country_flag = ehof_fleet_damaged_20 }
-				remove_country_flag = ehof_fleet_damaged_20
-				every_owned_fleet = { limit = { is_ship_class = shipclass_military has_fleet_flag = ehof_doomed_fleet }
-					if = {		limit = { count_owned_ship = { count >= 2   } count_owned_ship = { count < 20  } } while = { count = 1  random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 20  } count_owned_ship = { count < 40  } } while = { count = 4  random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 40  } count_owned_ship = { count < 60  } } while = { count = 8  random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 60  } count_owned_ship = { count < 80  } } while = { count = 12 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 80  } count_owned_ship = { count < 100 } } while = { count = 16 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 100 } count_owned_ship = { count < 120 } } while = { count = 20 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 120 } count_owned_ship = { count < 140 } } while = { count = 24 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 140 } count_owned_ship = { count < 160 } } while = { count = 28 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 160 } count_owned_ship = { count < 180 } } while = { count = 32 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 180 } count_owned_ship = { count < 200 } } while = { count = 36 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 200 } }									   while = { count = 40 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-				}
-			}
-			else_if = {
-				limit = { has_country_flag = ehof_fleet_damaged_40 }
-				remove_country_flag = ehof_fleet_damaged_40
-				every_owned_fleet = { limit = { is_ship_class = shipclass_military has_fleet_flag = ehof_doomed_fleet }
-					if = { 		limit = { count_owned_ship = { count >= 3   } count_owned_ship = { count < 20  } } while = { count = 2  random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 20  } count_owned_ship = { count < 40  } } while = { count = 8  random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 40  } count_owned_ship = { count < 60  } } while = { count = 16 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 60  } count_owned_ship = { count < 80  } } while = { count = 24 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 80  } count_owned_ship = { count < 100 } } while = { count = 32 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 100 } count_owned_ship = { count < 120 } } while = { count = 40 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 120 } count_owned_ship = { count < 140 } } while = { count = 48 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 140 } count_owned_ship = { count < 160 } } while = { count = 56 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 160 } count_owned_ship = { count < 180 } } while = { count = 64 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 180 } count_owned_ship = { count < 200 } } while = { count = 72 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 200 } }									   while = { count = 80 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-				}
-			}
-			else_if = {
-				limit = { has_country_flag = ehof_fleet_damaged_60 }
-				remove_country_flag = ehof_fleet_damaged_60
-				every_owned_fleet = { limit = { is_ship_class = shipclass_military has_fleet_flag = ehof_doomed_fleet }
-					if = { 		limit = { count_owned_ship = { count >= 4   } count_owned_ship = { count < 20  } } while = { count = 3   random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 20  } count_owned_ship = { count < 40  } } while = { count = 12  random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 40  } count_owned_ship = { count < 60  } } while = { count = 24  random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 60  } count_owned_ship = { count < 80  } } while = { count = 36  random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 80  } count_owned_ship = { count < 100 } } while = { count = 48  random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 100 } count_owned_ship = { count < 120 } } while = { count = 60  random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 120 } count_owned_ship = { count < 140 } } while = { count = 72  random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 140 } count_owned_ship = { count < 160 } } while = { count = 84  random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 160 } count_owned_ship = { count < 180 } } while = { count = 96  random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 180 } count_owned_ship = { count < 200 } } while = { count = 108 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-					else_if = { limit = { count_owned_ship = { count >= 200 } }									   while = { count = 120 random_owned_ship = { delete_ship = this } root.owner = { change_variable = { which = ehof_stats_damaged value = 1 } } } }
-				}
-			}
-
-			##### ARRIVES AS DEBRIS
-			else_if = {
-				limit = { has_country_flag = ehof_fleet_debris }
-				remove_country_flag = ehof_fleet_debris
-				country_event = { id = ehof_megastructure.411 days = 6 }
-
-				random_system = {
-					limit = { has_star_flag = ehof_destination_system@root.owner }
-					if = {
-						limit = { NOT = { has_star_flag = fleet_arrived_as_debris } }
-						set_star_flag = fleet_arrived_as_debris
-						create_ambient_object = { type = "small_debris_object" location = this }
-						last_created_ambient_object = {
-							set_location = {
-								target = star
-								distance = @ehof_wormhole_distance
-								angle = @ehof_wormhole_angle
-							}
-							save_event_target_as = ehof_arrive_as_debris_wormhole
-						}
-						while = {
-							count = 10
-							giga_singular_debris = yes
-							last_created_ambient_object = { set_location = event_target:ehof_arrive_as_debris_wormhole }
-						}
-					}
-				}
-				every_owned_fleet = {
-					limit = { has_fleet_flag = ehof_doomed_fleet }
-					delete_fleet = this
-				}
-			}
-
-			##### DETONATES UPON ENTERING WORMHOLE
-			else_if = {
-				limit = { has_country_flag = ehof_fleet_detonate }
-				remove_country_flag = ehof_fleet_detonate
-				country_event = { id = ehof_megastructure.412 days = 6 }
-
-				random_system = {
-					limit = { has_star_flag = ehof_megastructure_system@root.owner }
-					create_ambient_object = { type = "small_debris_object" location = this }
-					last_created_ambient_object = {
-						set_location = {
-							target = star
-							distance = 50
-							angle = @ehof_wormhole_angle
-						}
-						save_event_target_as = ehof_detonate_debris
-					}
-					while = {
-						count = 5
-						giga_singular_debris = yes
-						last_created_ambient_object = { set_location = event_target:ehof_detonate_debris }
-					}
-				}
-				every_owned_fleet = {
-					limit = { has_fleet_flag = ehof_doomed_fleet }
-					delete_fleet = this
-				}
-			}
-		}
-	}
+	option = { custom_gui = "ehof_mainui_option_big" name = "ehof_goback"		ehof_go_back = yes }
+	option = { custom_gui = "ehof_mainui_option_big" name = "ehof_leavestation" ehof_leave_station = yes default_hide_option = yes }
 }

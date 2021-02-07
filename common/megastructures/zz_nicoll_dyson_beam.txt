@@ -100,6 +100,16 @@ nicoll_beam_1 = {
 		from = { country_event = { id = giga_dialog.3202 } }	# Notification
 		giga_remove_system_planets = yes
 		set_asteroid_belt = { radius = 0 }
+		every_country = {
+			limit = {
+				NOR = {
+					is_country_type = primitive
+					is_same_value = root.from
+				}
+				ehof_default_country = yes
+			}
+			add_opinion_modifier = { who = root.from modifier = opinion_building_nicoll_beam }
+		}
 	}
 }
 
@@ -154,13 +164,9 @@ nicoll_beam_3 = {
 
 	on_build_complete = {
 		save_event_target_as = giga_system
-		fromfrom.planet = { save_event_target_as = giga_planet }
+		star = { save_event_target_as = giga_planet }
 		from = { country_event = { id = giga_dialog.3204 } }	# Notification
-		spawn_megastructure = {
-			type = "nicoll_beam_side_gate"
-			location = fromfrom.planet
-			owner = owner
-		}
+		giga_ndb_close_gate = yes
 	}
 }
 
@@ -174,14 +180,11 @@ nicoll_beam_4 = {
 	resources = {
 		category = megastructures
 		cost = { alloys = 27000 }
-		upkeep = {
-			alloys = 350
-		}
+		upkeep = { alloys = 350 }
 		upkeep = {
 			trigger = { NOT = { has_global_flag = giga_disable_influence_upkeep } }
 			influence = 1
 		}
-		produces = { sr_solar_energy = 200 }
 	}
 
 	potential = { NOT = { has_global_flag = ndb_disabled } }
@@ -193,216 +196,184 @@ nicoll_beam_4 = {
 	}
 
 	on_build_complete = {
+		set_star_flag = giga_ndb_system@from
 		save_event_target_as = giga_system
-		fromfrom.planet = { save_event_target_as = giga_planet }
+		star = { save_event_target_as = giga_planet }
 		from = {
+			country_event = { id = giga_ndb.001 days = 1 }
+
+			# Only happens the first time
 			if = {
 				limit = { NOT = { has_country_flag = giga_ndb_completed } }
-				country_event = { id = giga_dialog.3205 }	# Notification
-				country_event = { id = giga_dialog.3206 }	# Notification
 				set_country_flag = giga_ndb_completed
-			}
-			if = {
-				limit = {
-					NOR = {
-						has_global_flag = giga_achievements_disabled
-						has_country_flag = giga_achievement_86
+
+				# Notification
+				country_event = { id = giga_dialog.3205 }
+
+				# Opinions
+				every_country = {
+					limit = {
+						NOR = {
+							is_country_type = primitive
+							is_same_value = root.from
+						}
+						ehof_default_country = yes
 					}
+					remove_opinion_modifier = { who = root.from modifier = opinion_building_nicoll_beam }
+					add_opinion_modifier = { who = root.from modifier = opinion_nicoll_fear }
 				}
-				set_country_flag = giga_achievement_86
-				set_timed_country_flag = { flag = giga_achievement_86_notification days = 30 }
-				giga_achievement_sound = yes
+
+				# Achievement
+				if = {
+					limit = {
+						NOR = {
+							has_global_flag = giga_achievements_disabled
+							has_country_flag = giga_achievement_86
+						}
+					}
+					set_country_flag = giga_achievement_86
+					set_timed_country_flag = { flag = giga_achievement_86_notification days = 30 }
+					giga_achievement_sound = yes
+				}
 			}
 		}
-		set_star_flag = giga_ndb_system@from
 	}
 }
 
-# Fire
-nicoll_beam_5 = {
-	entity = "giga_ndb_phase4_entity"
-	portrait = "GFX_megastructure_nicoll"
-	upgrade_from = { nicoll_beam_4 }
-
-	build_time = 10
-
-	potential = { NOT = { has_global_flag = ndb_disabled } }
-	possible = {
-		from = {
-			has_ascension_perk = ap_gigastructural_constructs
-			has_technology = giga_tech_ndb_4
-		}
-		custom_tooltip = {
-			fail_text = "cant_fire_without_target"
-			from = { has_country_flag = giga_ndb_target_acquired@root.from }
-		}
-	}
-}
-
-# Firing
-nicoll_beam_6 = {
+# Recharging after system shot
+nicoll_beam_recharge_after_system = {
 	entity = "giga_ndb_phase4_entity"
 	portrait = "GFX_megastructure_construction_background"
-	upgrade_desc = hide
-	upgrade_from = { nicoll_beam_5 }
+	potential = { always = no }
+	upgrade_from = { nicoll_beam_cooldown }
+	build_time = 3500
+	resources = {
+		category = megastructures
+		upkeep = { alloys = 350 }
+		upkeep = {
+			trigger = { NOT = { has_global_flag = giga_disable_influence_upkeep } }
+			influence = 1
+		}
+	}
+	on_build_complete = { from = { country_event = { id = giga_ndb.001 days = 1 } } }
+}
+
+# Recharging after planet shot
+nicoll_beam_recharge_after_crack = {
+	entity = "giga_ndb_phase4_entity"
+	portrait = "GFX_megastructure_construction_background"
+	potential = { always = no }
+	upgrade_from = { nicoll_beam_cooldown }
+	build_time = 2500
+	resources = {
+		category = megastructures
+		upkeep = { alloys = 350 }
+		upkeep = {
+			trigger = { NOT = { has_global_flag = giga_disable_influence_upkeep } }
+			influence = 1
+		}
+	}
+	on_build_complete = { from = { country_event = { id = giga_ndb.001 days = 1 } } }
+}
+
+# Recharging after planet shot
+nicoll_beam_recharge_after_melt = {
+	entity = "giga_ndb_phase4_entity"
+	portrait = "GFX_megastructure_construction_background"
+	potential = { always = no }
+	upgrade_from = { nicoll_beam_cooldown }
+	build_time = 2000
+	resources = {
+		category = megastructures
+		upkeep = { alloys = 350 }
+		upkeep = {
+			trigger = { NOT = { has_global_flag = giga_disable_influence_upkeep } }
+			influence = 1
+		}
+	}
+	on_build_complete = { from = { country_event = { id = giga_ndb.001 days = 1 } } }
+}
+
+# Recharging after planet shot
+nicoll_beam_recharge_after_barren = {
+	entity = "giga_ndb_phase4_entity"
+	portrait = "GFX_megastructure_construction_background"
+	potential = { always = no }
+	upgrade_from = { nicoll_beam_cooldown }
+	build_time = 1500
+	resources = {
+		category = megastructures
+		upkeep = { alloys = 350 }
+		upkeep = {
+			trigger = { NOT = { has_global_flag = giga_disable_influence_upkeep } }
+			influence = 1
+		}
+	}
+	on_build_complete = { from = { country_event = { id = giga_ndb.001 days = 1 } } }
+}
+
+# Recharging after planet shot
+nicoll_beam_recharge_after_damage = {
+	entity = "giga_ndb_phase4_entity"
+	portrait = "GFX_megastructure_construction_background"
+	potential = { always = no }
+	upgrade_from = { nicoll_beam_cooldown }
+	build_time = 1000
+	resources = {
+		category = megastructures
+		upkeep = { alloys = 350 }
+		upkeep = {
+			trigger = { NOT = { has_global_flag = giga_disable_influence_upkeep } }
+			influence = 1
+		}
+	}
+	on_build_complete = { from = { country_event = { id = giga_ndb.001 days = 1 } } }
+}
+
+# Cooldown
+nicoll_beam_cooldown = {
+	entity = "giga_ndb_phase4_entity"
+	portrait = "GFX_megastructure_nicoll"
+	upgrade_from = { nicoll_beam_firing }
+	potential = { always = no }
+	on_build_complete = { from = { country_event = { id = giga_ndb.001 days = 1 } } }
+}
+
+# Ready
+nicoll_beam_ready = {
+	entity = "giga_ndb_phase4_entity"
+	portrait = "GFX_megastructure_nicoll"
+	upgrade_from = { nicoll_beam_menu }
 	potential = { always = no }
 }
 
-################################
-### Beams ######################
-################################
-nicoll_beam_f1 = {	entity = "giga_ndb_firing_1_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } }
-nicoll_beam_f2 = {	entity = "giga_ndb_firing_2_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } }
-nicoll_beam_f3 = {	entity = "giga_ndb_firing_3_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } }
-nicoll_beam_f4 = {	entity = "giga_ndb_firing_4_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } }
-nicoll_beam_f5 = {	entity = "giga_ndb_firing_5_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } }
-nicoll_beam_f6 = {	entity = "giga_ndb_firing_6_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } }
-nicoll_beam_f7 = {	entity = "giga_ndb_firing_7_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } }
-nicoll_beam_f8 = {	entity = "giga_ndb_firing_8_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } }
-nicoll_beam_f9 = {	entity = "giga_ndb_firing_9_entity"	portrait = "GFX_megastructure_construction_background" potential = { always = no } }
-
-################################
-### Gates ######################
-################################
-# Owner
-nicoll_beam_side_gate = { entity = "giga_ndb_owner_gate_closed_entity"	portrait = "GFX_megastructure_construction_background" entity_offset = { x = 220 y = 0 } upgrade_desc = hide potential = { always = no } }
-nicoll_beam_side_gate_1 = { entity = "giga_ndb_owner_gate_open_entity"	portrait = "GFX_megastructure_construction_background" entity_offset = { x = 220 y = 0 } upgrade_from = { nicoll_beam_side_gate } upgrade_desc = hide potential = { always = no } }
-
-# Enemy
-nicoll_beam_gate = {
-	entity = "giga_ndb_enemy_gate_closed_entity"
-	construction_entity = "giga_ndb_enemy_gate_closed_entity"
-	portrait = "GFX_megastructure_construction_background"
-	entity_offset = { x = 0 y = 60 }
-	ai_weight = { factor = 0 }
-
-	build_time = 360
-	resources = {
-		category = megastructures
-		cost = {
-			alloys = 1000
-			sr_solar_energy = 10000
-		}
-		upkeep = { energy = 10 }
-	}
-
-	potential = {
-		NOT = { has_global_flag = ndb_disabled }
-		has_country_flag = giga_ndb_completed
-	}
-
-	possible = {
-		from = {
-			has_ascension_perk = ap_gigastructural_constructs
-			has_technology = giga_tech_ndb_4
-		}
-		custom_tooltip = { fail_text = "requires_ndb_mega"					from = { any_owned_megastructure = { is_megastructure_type = nicoll_beam_4 } } }
-		custom_tooltip = { fail_text = "already_have_target"				NOT = { from = { has_country_flag = giga_ndb_target_acquired@root } } }
-		custom_tooltip = { fail_text = "cant_build_here"					NOT = { any_system_planet = { is_planet_class = pc_ai } } }
-		custom_tooltip = { fail_text = "cant_build_here_ehof"				NOT = { any_system_planet = { has_planet_flag = cant_build_here } } }
-	}
-
-	placement_rules = {
-		planet_possible = {
-			custom_tooltip = { fail_text = "requires_no_contingency"		NOT = { is_planet_class = pc_ai } }
-			custom_tooltip = { fail_text = "requires_no_quberine"			NOT = { is_planet_class = pc_squareworld_habitable } }
-			custom_tooltip = { fail_text = "must_build_around_star"			is_star = yes }
-			custom_tooltip = { fail_text = "requires_standard_planet_class"	giga_is_standard_star = yes }
-		}
-	}
-
+# Select target (Name)
+nicoll_beam_targetting = {
+	entity = "giga_ndb_phase4_entity"
+	portrait = "GFX_megastructure_nicoll"
+	upgrade_from = { nicoll_beam_ready }
 	on_build_complete = {
-		save_event_target_as = giga_system
-		fromfrom.planet = { save_event_target_as = giga_planet }
-		set_star_flag = giga_ndb_system_target@root.from
-		every_system_planet = {
-			limit = { is_colony = yes }
-			add_modifier = { modifier = "nicoll_target" days = -1 }
+		fromfrom = {
+			upgrade_megastructure_to = nicoll_beam_menu
+			finish_upgrade = yes
 		}
-		from = { set_country_flag = giga_ndb_target_acquired@root.from }
-	}
-}
-nicoll_beam_gate_1 = { entity = "giga_ndb_enemy_gate_open_entity"	portrait = "GFX_megastructure_construction_background" entity_offset = { x = 0 y = 60 } upgrade_from = { nicoll_beam_gate }		upgrade_desc = hide potential = { always = no } }
-nicoll_beam_gate_2 = { entity = "giga_ndb_enemy_gate_firing_entity"	portrait = "GFX_megastructure_construction_background" entity_offset = { x = 0 y = 60 } upgrade_from = { nicoll_beam_gate_1 }	upgrade_desc = hide potential = { always = no } }
-
-################################
-### Planet Marker ##############
-################################
-nicoll_beam_target_marker_1 = {
-	entity = ""
-	portrait = "GFX_megastructure_construction_background"
-	entity_offset = { x = 0 y = 0 }
-	ai_weight = { factor = 0 }
-
-	build_time = 0
-	resources = {
-		category = megastructures
-		cost = {
-			energy = 1000
-			influence = 150
-		}
-	}
-
-	potential = {
-		NOT = { has_global_flag = ndb_disabled }
-		has_country_flag = giga_ndb_completed
-	}
-
-	possible = {
-		from = {
-			has_ascension_perk = ap_gigastructural_constructs
-			has_technology = giga_tech_ndb_4
-		}
-		custom_tooltip = { fail_text = "requires_ndb_mega"				from = { any_owned_megastructure = { is_megastructure_type = nicoll_beam_4 } } }
-		custom_tooltip = { fail_text = "already_have_target"	NOT = { from = { has_country_flag = giga_ndb_target_acquired@root } } }
-		custom_tooltip = { fail_text = "cant_build_here_ehof"	NOT = { any_system_planet = { has_planet_flag = cant_build_here } } }
-	}
-
-	placement_rules = {
-		planet_possible = {
-			custom_tooltip = { fail_text = "requires_no_contingency"	NOT = { is_planet_class = pc_ai } }
-			custom_tooltip = { fail_text = "requires_no_quberine"		NOT = { is_planet_class = pc_squareworld_habitable } }
-			custom_tooltip = { fail_text = "must_build_around_planet"	is_star = no }
-			custom_tooltip = {
-				fail_text = "requires_smaller_planet"
-				NOR = {
-					is_planet_class = pc_birch
-					is_planet_class = pc_alderson_slice_ecu
-					is_planet_class = pc_alderson_slice_hive
-					is_planet_class = pc_alderson_slice_machine
-					is_planet_class = pc_alderson_slice_gaia
-					is_planet_class = pc_alderson_slice_pc
-				}
-			}
-			custom_tooltip = {
-				fail_text = "requires_habitable"
-				OR = {
-					colonizeable_planet = yes
-					is_planet_class = pc_machine
-					is_planet_class = pc_infested
-					is_planet_class = pc_ll_temperate
-					is_planet_class = pc_ll_foggy
-					is_planet_class = pc_gigaorbital_ring
-					is_planet_class = pc_habitable_gas_giant
-				}
-			}
-		}
-	}
-
-	on_build_complete = {
-		save_event_target_as = giga_system
-		fromfrom.planet = { save_event_target_as = giga_planet }
-		set_star_flag = giga_ndb_system_target@root.from
-		from = { set_country_flag = giga_ndb_target_acquired@root.from }
-		fromfrom.planet = {
-			set_planet_flag = giga_ndb_planet_target@root.from
-			add_modifier = { modifier = "nicoll_target" days = -1 }
-		}
+		from = { country_event = { id = giga_ndb.002 } }
 	}
 }
 
-nicoll_beam_target_marker_2 = { entity = "giga_ndb_planet_open_entity"		portrait = "GFX_megastructure_construction_background" upgrade_from = { nicoll_beam_target_marker_1 }	upgrade_desc = hide potential = { always = no } }
-nicoll_beam_target_marker_3 = { entity = "giga_ndb_planet_firing_1_entity"	portrait = "GFX_megastructure_construction_background" upgrade_from = { nicoll_beam_target_marker_2 }	upgrade_desc = hide potential = { always = no } }
-nicoll_beam_target_marker_4 = { entity = "giga_ndb_planet_firing_2_entity"	portrait = "GFX_megastructure_construction_background" upgrade_from = { nicoll_beam_target_marker_3 }	upgrade_desc = hide potential = { always = no } }
-nicoll_beam_target_marker_5 = { entity = "giga_ndb_planet_firing_3_entity"	portrait = "GFX_megastructure_construction_background" upgrade_from = { nicoll_beam_target_marker_4 }	upgrade_desc = hide potential = { always = no } }
-nicoll_beam_target_marker_6 = { entity = "giga_ndb_planet_firing_4_entity"	portrait = "GFX_megastructure_construction_background" upgrade_from = {	nicoll_beam_target_marker_5 }	upgrade_desc = hide potential = { always = no } }
+# Select target
+nicoll_beam_menu = {
+	entity = "giga_ndb_phase4_entity"
+	portrait = "GFX_megastructure_nicoll"
+	upgrade_from = { nicoll_beam_targetting }
+	potential = { always = no }
+}
+
+# Firing
+nicoll_beam_firing = {
+	entity = "giga_ndb_phase4_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_desc = hide
+	upgrade_from = { nicoll_beam_menu }
+	potential = { always = no }
+}

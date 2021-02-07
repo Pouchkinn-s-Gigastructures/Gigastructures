@@ -140,126 +140,15 @@ planet_event = {
 			}
 		}
 
-		# Remove wormhole in compound system
-		event_target:ehof_compound_system_1 = {
-			every_system_megastructure = {
-				limit = { is_megastructure_type = ehof_megastructure_compound_gateway_exit }
-				delete_megastructure = this
-			}
-		}
-
-		# Replace the Micro EHOF
-		event_target:ehof_seized_country = {
-			save_event_target_as = ehof_handover
-			remove_country_flag = ehof_can_activate
-			if = {
-				limit = { any_owned_megastructure = { has_megastructure_flag = ehof_phase_05 } }
-				random_system_within_border = {
-					limit = { has_star_flag = ehof_megastructure_system@event_target:ehof_handover }
-					remove_star_flag = ehof_megastructure_system@event_target:ehof_handover
-					every_system_planet = { remove_planet_flag = cant_target_this_planet remove_planet_flag = cant_build_here }
-					random_system_planet = {
-						limit = { has_planet_flag = ehof_micro@event_target:ehof_handover }
-						save_event_target_as = ehof_micro
-					}
-					every_system_megastructure = {
-						limit = { has_megastructure_flag = ehof_phase_05 }
-						delete_megastructure = this
-					}
-					spawn_megastructure = {
-						type = "ehof_megastructure_phase5_decommissioned"
-						orbit_angle = 0
-						orbit_distance = 0
-						owner = event_target:ehof_handover
-						location = event_target:ehof_micro
-					}
+		# Remove wormholes
+		every_megastructure = {
+			limit = {
+				OR = {
+					is_megastructure_type = compound_wormhole_portal
+					is_megastructure_type = compound_wormhole_ehof
 				}
 			}
-		}
-
-		# Destroy all compound fleets in ehof system
-		event_target:compound_invasion_entry = {
-			every_fleet_in_system = {
-				limit = { exists = owner owner = { is_same_value = event_target:compound_country } }
-				destroy_fleet = this
-			}
-
-			# Return ownership of system to original owner
-			create_starbase = { size = starbase_outpost owner = event_target:ehof_handover }
-
-			# Restore previous EHOF phase
-			if = {
-				limit = { any_system_megastructure = { is_megastructure_type = ehof_compound_phase1 } }
-				random_system_megastructure = {
-					limit = { is_megastructure_type = ehof_compound_phase1 }
-					delete_megastructure = this
-				}
-				event_target:ehof_handover = { set_variable = { which = ehof_phase value = 1 } }
-				set_star_flag = ehof_megastructure_system@event_target:ehof_handover
-				every_system_planet = { set_planet_flag = cant_build_here set_planet_flag = cant_target_this_planet } # Prevents NDB & QSO
-				spawn_megastructure = {
-					type = "ehof_megastructure_phase1_idle"
-					orbit_angle = 0
-					orbit_distance = 0
-					owner = event_target:ehof_handover
-					location = star
-					init_effect = { set_megastructure_flag = ehof_phase_01 }
-				}
-			}
-			else_if = {
-				limit = { any_system_megastructure = { is_megastructure_type = ehof_compound_phase2 } }
-				random_system_megastructure = {
-					limit = { is_megastructure_type = ehof_compound_phase2 }
-					delete_megastructure = this
-				}
-				event_target:ehof_handover = { set_variable = { which = ehof_phase value = 2 } }
-				set_star_flag = ehof_megastructure_system@event_target:ehof_handover
-				every_system_planet = { set_planet_flag = cant_build_here set_planet_flag = cant_target_this_planet } # Prevents NDB & QSO
-				spawn_megastructure = {
-					type = "ehof_megastructure_phase2_idle"
-					orbit_angle = 0
-					orbit_distance = 0
-					owner = event_target:ehof_handover
-					location = star
-					init_effect = { set_megastructure_flag = ehof_phase_02 }
-				}
-			}
-			else_if = {
-				limit = { any_system_megastructure = { is_megastructure_type = ehof_compound_phase3 } }
-				random_system_megastructure = {
-					limit = { is_megastructure_type = ehof_compound_phase3 }
-					delete_megastructure = this
-				}
-				event_target:ehof_handover = { set_variable = { which = ehof_phase value = 3 } }
-				set_star_flag = ehof_megastructure_system@event_target:ehof_handover
-				every_system_planet = { set_planet_flag = cant_build_here set_planet_flag = cant_target_this_planet } # Prevents NDB & QSO
-				spawn_megastructure = {
-					type = "ehof_megastructure_phase3_idle"
-					orbit_angle = 0
-					orbit_distance = 0
-					owner = event_target:ehof_handover
-					location = star
-					init_effect = { set_megastructure_flag = ehof_phase_03 }
-				}
-			}
-			else_if = {
-				limit = { any_system_megastructure = { is_megastructure_type = ehof_compound_phase4 } }
-				random_system_megastructure = {
-					limit = { is_megastructure_type = ehof_compound_phase4 }
-					delete_megastructure = this
-				}
-				event_target:ehof_handover = { set_variable = { which = ehof_phase value = 4 } }
-				set_star_flag = ehof_megastructure_system@event_target:ehof_handover
-				every_system_planet = { set_planet_flag = cant_build_here set_planet_flag = cant_target_this_planet } # Prevents NDB & QSO
-				spawn_megastructure = {
-					type = "ehof_megastructure_phase4_idle"
-					orbit_angle = 0
-					orbit_distance = 0
-					owner = event_target:ehof_handover
-					location = star
-					init_effect = { set_megastructure_flag = ehof_phase_04 }
-				}
-			}
+			remove_megastructure = this
 		}
 
 		if = {
@@ -361,10 +250,10 @@ planet_event = {
 
 			# Spawn Primordial Pylon
 			spawn_megastructure = {
-				type = "ehof_gateway"
+				type = "ehof_pgate_gateway"
 				location = solar_system
-				orbit_distance = 30
-				orbit_angle = 45
+				orbit_angle = 110
+				orbit_distance = 35
 			}
 
 			# Spawn Ruined Preservation Sphere
@@ -393,14 +282,11 @@ country_event = {
 	id = compound_end.002
 	title = "compound_end.002.name"
 	desc = "compound_end.002.desc"
-	diplomatic = yes
-	custom_gui = "giga_eventui_window"
-	picture_event_data = { room = "shattered_planet_room" }
+	picture = GFX_evt_shattered_planet
 	show_sound = event_mystic_reveal
 	is_triggered_only = yes
 
 	option = {
-		custom_gui = "giga_eventui_option"
 		name = GOOD
 		add_relic = r_creator_shard
 	}

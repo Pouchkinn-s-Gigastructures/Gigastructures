@@ -937,7 +937,11 @@ PixelShader =
 			float3 vPos = In.vPos.xyz / In.vPos.w;
 
 			float3 vInNormal = normalize( In.vNormal );
-			float4 vProperties = tex2D( SpecularMap, In.vUV0 );
+			#ifndef ANIMATE_SPECULAR
+				float4 vProperties = tex2D( SpecularMap, In.vUV0 );
+			#else
+				float4 vProperties = tex2D( SpecularMap, In.vUV0 + vUVAnimationDir * vUVAnimationTime );
+			#endif
 
 		#ifdef IS_PLANET
 			PointLight systemPointlight = GetPointLight(SystemLightPosRadius, SystemLightColorFalloff);
@@ -959,7 +963,11 @@ PixelShader =
 		#endif
 
 		#ifndef PDX_LEGACY_BLINN_PHONG
-			float4 vNormalMap = tex2D( NormalMap, In.vUV0 );
+			#ifndef ANIMATE_NORMAL
+				float4 vNormalMap = tex2D( NormalMap, In.vUV0 );
+			#else
+				float4 vNormalMap = tex2D( NormalMap, In.vUV0 + vUVAnimationDir * vUVAnimationTime );
+			#endif
 
 			#ifdef EMISSIVE
 				float vEmissive = vNormalMap.b;
@@ -2849,6 +2857,34 @@ Effect PdxMeshTerraSkinned
 	VertexShader = "VertexPdxMeshStandardSkinned"
 	PixelShader = "PixelPdxMeshStandard"
 	Defines = { "ADD_COLOR" "EMISSIVE"  }
+}
+
+Effect PdxMeshTerraAnimateUV
+{
+	VertexShader = "VertexPdxMeshStandard"
+	PixelShader = "PixelPdxMeshStandard"
+	Defines = { "ADD_COLOR" "EMISSIVE" "ANIMATE_NORMAL" "ANIMATE_SPECULAR"  }
+}
+
+Effect PdxMeshTerraAnimateUVSkinned
+{
+	VertexShader = "VertexPdxMeshStandardSkinned"
+	PixelShader = "PixelPdxMeshStandard"
+	Defines = { "ADD_COLOR" "EMISSIVE" "ANIMATE_NORMAL" "ANIMATE_SPECULAR"  }
+}
+
+Effect PdxMeshTerraAnimateUVShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+Effect PdxMeshTerraAnimateUVSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardSkinnedShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
 }
 
 Effect PdxMeshTerraAlphaBlend

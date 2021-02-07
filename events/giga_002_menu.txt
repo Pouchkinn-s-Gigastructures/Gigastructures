@@ -26,7 +26,7 @@ country_event = {
 	id = giga_menu.101
 	title = "giga_menu.101.name"
 	desc = "giga_menu.101.desc"
-	picture = GFX_evt_gigastructures
+	picture = GFX_evt_star_lifters
 	is_triggered_only = yes
 
 	option = {
@@ -70,7 +70,6 @@ country_event = {
 
 	immediate = {
 		country_event = { id = ehof_megastructure.004 days = 30 }	# Mod compatibility check error
-		country_event = { id = ehof_map_stars.001 }					# Map the stars
 
 		if = {
 			limit = { NOT = { has_global_flag = giga_versioned } }
@@ -133,10 +132,13 @@ country_event = {
 				limit = { NOT = { has_global_flag = giga_game_started } }
 				set_global_flag = giga_game_started
 
-				# Megastructure cost discount for AI
-				every_country = {
-					limit = { is_ai = yes }
-					add_modifier = { modifier = "feeble_ai_mega_buff" days = -1 }
+				# Make LGate systems not targetable by QSO/NDB to prevent crashes
+				every_system = {
+					limit = { has_megastructure = lgate_base }
+					every_system_planet = {
+						set_planet_flag = cant_build_here
+						set_planet_flag = cant_target_this_planet
+					}
 				}
 
 				# Modifiers
@@ -284,14 +286,6 @@ country_event = {
 					}
 				}
 
-				# Mark systems as visited
-				every_country = {
-					every_system_within_border = {
-						set_star_flag = empire_has_visited_anyone
-						set_star_flag = empire_has_visited@prev
-					}
-				}
-
 				# War Moon Debris
 				if = {
 					limit = { NOT = { has_global_flag = warmoon_disabled } }
@@ -398,9 +392,79 @@ country_event = {
 					}
 				}
 
-				# Spawn Heiroglyphics Digsites
+				# If EHOF is enabled
 				if = {
 					limit = { NOT = { has_global_flag = ehof_disabled } }
+
+					# Spawn pgates
+					random_system = {
+						limit = { NOT = { has_star_flag = empire_cluster } }
+						set_star_flag = ehof_has_pgate
+						spawn_megastructure = {
+							type = "ehof_pgate_unknown"
+							location = solar_system
+							orbit_angle = 110
+							orbit_distance = 35
+						}
+					}
+
+					if = {
+						limit = { galaxy_size = tiny }
+						random_list = {
+							2 = { while = { count = 1 ehof_generate_pgate = yes } }
+							1 = { while = { count = 2 ehof_generate_pgate = yes } }
+						}
+					}
+					else_if = {
+						limit = { galaxy_size = small }
+						random_list = {
+							3 = { while = { count = 1 ehof_generate_pgate = yes } }
+							2 = { while = { count = 2 ehof_generate_pgate = yes } }
+							1 = { while = { count = 3 ehof_generate_pgate = yes } }
+						}
+					}
+					else_if = {
+						limit = { galaxy_size = medium }
+						random_list = {
+							4 = { while = { count = 1 ehof_generate_pgate = yes } }
+							3 = { while = { count = 2 ehof_generate_pgate = yes } }
+							2 = { while = { count = 3 ehof_generate_pgate = yes } }
+							1 = { while = { count = 4 ehof_generate_pgate = yes } }
+						}
+					}
+					else_if = {
+						limit = { galaxy_size = large }
+						random_list = {
+							5 = { while = { count = 1 ehof_generate_pgate = yes } }
+							4 = { while = { count = 2 ehof_generate_pgate = yes } }
+							3 = { while = { count = 3 ehof_generate_pgate = yes } }
+							2 = { while = { count = 4 ehof_generate_pgate = yes } }
+							1 = { while = { count = 5 ehof_generate_pgate = yes } }
+						}
+					}
+					else_if = {
+						limit = { galaxy_size = huge }
+						random_list = {
+							6 = { while = { count = 1 ehof_generate_pgate = yes } }
+							5 = { while = { count = 2 ehof_generate_pgate = yes } }
+							4 = { while = { count = 3 ehof_generate_pgate = yes } }
+							3 = { while = { count = 4 ehof_generate_pgate = yes } }
+							2 = { while = { count = 5 ehof_generate_pgate = yes } }
+							1 = { while = { count = 6 ehof_generate_pgate = yes } }
+						}
+					}
+					else = {
+						random_list = {
+							6 = { while = { count = 1 ehof_generate_pgate = yes } }
+							5 = { while = { count = 2 ehof_generate_pgate = yes } }
+							4 = { while = { count = 3 ehof_generate_pgate = yes } }
+							3 = { while = { count = 4 ehof_generate_pgate = yes } }
+							2 = { while = { count = 5 ehof_generate_pgate = yes } }
+							1 = { while = { count = 6 ehof_generate_pgate = yes } }
+						}
+					}
+
+					# Spawn Heiroglyphics Digsites
 					every_country = {
 						limit = {
 							OR = {
@@ -425,14 +489,6 @@ country_event = {
 					}
 				}
 
-				# Ensure AI doesn't get origins
-				every_country = {
-					limit = {
-						is_ai = yes
-						has_origin = origin_birch
-					}
-					set_origin = origin_default
-				}
 
 				# Spawn FE moon/planetcrafts
 				if = {
@@ -442,6 +498,42 @@ country_event = {
 
 				# Set Megastructure Caps
 				every_country = {
+
+					# Mark starting systems as visited
+					every_system_within_border = {
+						set_star_flag = empire_has_visited_anyone
+						set_star_flag = empire_has_visited@prev
+					}
+
+					if = {
+						limit = { is_ai = yes }
+
+						# Ensure AI doesn't get origins
+						if = {
+							limit = { has_origin = origin_birch }
+							set_origin = origin_default
+							capital_scope = {
+								random_list = {
+									1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_tropical } }	change_pc = pc_tropical }
+									1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_arid } }		change_pc = pc_arid }
+									1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_continental } }	change_pc = pc_continental }
+									1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_ocean } }		change_pc = pc_ocean }
+									1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_tundra } }		change_pc = pc_tundra }
+									1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_arctic } }		change_pc = pc_arctic }
+									1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_alpine } }		change_pc = pc_alpine }
+									1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_savannah } }	change_pc = pc_savannah }
+									1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_desert } }		change_pc = pc_desert }
+								}
+								clear_blockers = yes
+								clear_deposits = yes
+								generate_start_deposits_and_blockers = yes
+							}
+						}
+
+						# Megastructure cost discount for AI
+						add_modifier = { modifier = "feeble_ai_mega_buff" days = -1 }
+					}
+
 					if = {
 						limit = { NOT = { has_global_flag = vanilla_dyson_disabled } }
 						if = {		limit = { has_global_flag = vanilla_dyson_capped_1 } set_variable = { which = giga_vanilla_dyson_cap value = 1 } }
