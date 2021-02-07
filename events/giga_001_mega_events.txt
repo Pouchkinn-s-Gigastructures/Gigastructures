@@ -12,6 +12,28 @@ event = {
 	immediate = {
 		set_global_flag = gigastructures_enabled
 
+		# Zweilbio System
+		random = {
+			chance = 80
+			if = {
+				limit = { NOT = { any_system = { has_star_flag = tropics_system } } }
+				random_system = { spawn_system = { initializer = "giga_tropics_initializer" } }
+			}
+			random_system = {
+				limit = { has_star_flag = tropics_system }
+
+				# Add extra hyperlane
+				while = {
+					count = 2
+					random_neighbor_system = {
+						limit = { NOR = { is_same_value = prev has_hyperlane_to = prev } }
+						ignore_hyperlanes = yes
+						add_hyperlane = { from = prev to = this }
+					}
+				}
+			}
+		}
+
 		# Paluush System
 		random = {
 			chance = 80
@@ -44,7 +66,23 @@ event = {
 
 			random_system = {
 				limit = { has_star_flag = giga_system_seven }
-
+				spawn_system = { 
+					initializer = "giga_jupitwo_initializer"
+					max_distance = 4
+					min_distance = 5
+				}
+				# Add extra hyperlane
+				while = {
+					count = 2
+					random_neighbor_system = {
+						limit = { NOR = { is_same_value = prev has_hyperlane_to = prev } }
+						ignore_hyperlanes = yes
+						add_hyperlane = { from = prev to = this }
+					}
+				}
+			}
+			random_system = {
+				limit = { has_star_flag = jupitwo_system }
 				# Add extra hyperlane
 				while = {
 					count = 2
@@ -81,7 +119,7 @@ event = {
 
 		# Squareworld System
 		random = {
-			chance = 30
+			chance = 100
 			if = {
 				limit = { NOT = { any_system = { has_star_flag = ruined_square_ring_system } } }
 				random_system = { spawn_system = { initializer = "square_world_init_01" } }
@@ -100,67 +138,38 @@ event = {
 				}
 			}
 		}
+	}
+}
 
-		random_list = {
-			40 = {}
-			# titanic Ring System
-			30 = {
-				if = {
-					limit = { NOT = { any_system = { has_star_flag = ruined_titanic_ring_system } } }
-					random_system = { spawn_system = { initializer = "ring_world_titanic_init_01" } }
-				}
-				random_system = {
-					limit = { has_star_flag = ruined_titanic_ring_system }
+# On press begin
+country_event = {
+	id = giga_mega.1002
+	hide_window = yes
+	is_triggered_only = yes
+	trigger = { NOT = { has_global_flag = giga_added_modifiers } }
 
-					# Add extra hyperlane
-					while = {
-						count = 2
-						random_neighbor_system = {
-							limit = { NOR = { is_same_value = prev has_hyperlane_to = prev } }
-							ignore_hyperlanes = yes
-							add_hyperlane = { from = prev to = this }
-						}
-					}
+	immediate = {
+		set_global_flag = giga_added_modifiers
+		country_event = { id = giga_mega.1004 days = 3 } #add PD modifiers
+
+		every_country = {
+			limit = { is_ai = yes }
+			add_modifier = { modifier = "feeble_ai_mega_buff" days = -1 }
+		}
+
+		every_planet = {
+			if = {
+				limit = {
+					is_planet_class = pc_gas_giant
+					planet_size >= 35
 				}
+				add_modifier = { modifier = "helioforming_candidate" days = -1 }
 			}
-			20 = {
-				# behemoth Ring System
-				if = {
-					limit = { NOT = { any_system = { has_star_flag = ruined_behemoth_ring_system } } }
-					random_system = { spawn_system = { initializer = "ring_world_behemoth_init_01" } }
-				}
-				random_system = {
-					limit = { has_star_flag = ruined_behemoth_ring_system }
-
-					# Add extra hyperlane
-					while = {
-						count = 2
-						random_neighbor_system = {
-							limit = { NOR = { is_same_value = prev has_hyperlane_to = prev } }
-							ignore_hyperlanes = yes
-							add_hyperlane = { from = prev to = this }
-						}
-					}
-				}
-			}
-			10 = {
-				# Gargantuan Ring System
-				if = {
-					limit = { NOT = { any_system = { has_star_flag = ruined_gargantuan_ring_system } } }
-					random_system = { spawn_system = { initializer = "ring_world_gargantuan_init_01" } }
-				}
-				random_system = {
-					limit = { has_star_flag = ruined_gargantuan_ring_system }
-
-					# Add extra hyperlane
-					while = {
-						count = 2
-						random_neighbor_system = {
-							limit = { NOR = { is_same_value = prev has_hyperlane_to = prev } }
-							ignore_hyperlanes = yes
-							add_hyperlane = { from = prev to = this }
-						}
-					}
+			if = {
+				limit = { has_planet_flag = planet_earth }
+				every_moon = {
+					limit = { is_planet_class = pc_barren_cold }
+					set_planet_flag = giga_luna
 				}
 			}
 		}
@@ -215,6 +224,116 @@ country_event = {
 			generate_start_pops = yes
 			set_planet_size = 25
 			add_modifier = { modifier = "flat_world_mod" }
+		}
+	}
+}
+
+country_event = {
+	id = giga_mega.1004
+	hide_window = yes
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	immediate = {
+		if = { #spawn flusion if its guaranteed to spawn and didnt spawn
+			limit = {
+				OR = {
+					has_global_flag = katzenartig_always
+					has_global_flag = katzenartig_deathwish
+					has_global_flag = katzenartig_stellarite
+					has_global_flag = katzenartig_improbable
+				}
+				NOT = {
+					any_system = {
+						has_star_flag = flusion_system
+					}
+				}
+			}
+			random_system = { spawn_system = { initializer = "giga_flusion_initializer" } }
+			random_system = {
+				limit = { has_star_flag = giga_system_seven }
+				spawn_system = { 
+					initializer = "giga_jupitwo_initializer"
+					max_distance = 4
+					min_distance = 5
+				}
+				# Add extra hyperlane
+				while = {
+					count = 2
+					random_neighbor_system = {
+						limit = { NOR = { is_same_value = prev has_hyperlane_to = prev } }
+						ignore_hyperlanes = yes
+						add_hyperlane = { from = prev to = this }
+					}
+				}
+			}
+			random_system = {
+				limit = { has_star_flag = jupitwo_system }
+				# Add extra hyperlane
+				while = {
+					count = 2
+					random_neighbor_system = {
+						limit = { NOR = { is_same_value = prev has_hyperlane_to = prev } }
+						ignore_hyperlanes = yes
+						add_hyperlane = { from = prev to = this }
+					}
+				}
+			}
+		}
+		if = { #deathwish buff
+			limit = { has_global_flag = katzenartig_deathwish }
+			event_target:flusion_primitives_country = {
+				add_modifier = {
+					modifier = initial_flusion_buff
+					days = -1
+				}
+			}
+		}
+		if = { #stellarite buff
+			limit = { has_global_flag = katzenartig_stellarite }
+			event_target:flusion_primitives_country = {
+				add_modifier = {
+					modifier = initial_flusion_buff_stellarite
+					days = -1
+				}
+			}
+		}
+		if = { #improbability buff
+			limit = { has_global_flag = katzenartig_improbable }
+			event_target:flusion_primitives_country = {
+				add_modifier = {
+					modifier = initial_flusion_buff_improbable
+					days = -1
+				}
+			}
+		}
+		if = { #force the Mondkanone
+			limit = {
+				OR = {
+					has_global_flag = katzenartig_always
+					has_global_flag = katzenartig_deathwish
+					has_global_flag = katzenartig_stellarite
+					has_global_flag = katzenartig_improbable
+				}
+			}
+			event_target:gigaflusion = {
+				planet_event = { id = giga_flusion.299 days = 2 }
+			}
+		}
+		every_planet = {
+			if = {
+				limit = { is_planet_class = pc_diamond }
+				add_modifier = { modifier = "giga_pd_diamond_planet" days = -1 }
+			}
+			if = {
+				limit = { is_planet_class = pc_chthonian }
+				add_modifier = { modifier = "giga_pd_chthonian_planet" days = -1 }
+			}
+			if = {
+				limit = { is_planet_class = pc_ethane_ocean }
+				add_modifier = { modifier = "giga_pd_ethane_planet" days = -1 }
+			}
 		}
 	}
 }
@@ -499,7 +618,6 @@ planet_event = {
 			change_pc = pc_core_mined
 			set_planet_flag = depletedstripmine
 			remove_planet_flag = has_megastructure
-			remove_planet_flag = megastructure
 			solar_system.owner = { country_event = { id = giga_dialog.3305 days = 1 } }
 		}
 		else_if = {
@@ -922,7 +1040,10 @@ country_event = {
 	trigger = {
 		fromfrom = {
 			is_ship_size = giga_massive_planet
-			NOT = { has_ship_flag = giga_moon_fe }
+			NOR = { 
+				has_ship_flag = giga_moon_fe
+				has_ship_flag = eelooship 
+			}
 		}
 	}
 
