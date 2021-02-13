@@ -9,6 +9,7 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
+		NOT = { has_global_flag = compound_recently_spawned_fleet }
 		exists = event_target:compound_invasion_entry
 		exists = event_target:compound_home_sphere
 		is_country_type = compound_empire
@@ -58,8 +59,8 @@ country_event = {
 		change_variable = { which = compound_military value = count_sovereigns }
 
 		# Change this to increase or decrease compound ship cap (0 being none)
-																	change_variable = { which = compound_modded_multiplier value = 1.2 }
-		if = { limit = { has_global_flag = acot_activated }			change_variable = { which = compound_modded_multiplier value = 0.4 } }
+																	change_variable = { which = compound_modded_multiplier value = 1 }
+		if = { limit = { has_global_flag = acot_activated }			change_variable = { which = compound_modded_multiplier value = 0.33 } }
 
 		multiply_variable = { which = compound_dark_matter_income value = compound_modded_multiplier }
 		set_variable = { which = compound_dark_matter_balance value = compound_dark_matter_income }
@@ -74,7 +75,15 @@ country_event = {
 				check_variable = { which = compound_dark_matter_balance value > 150 }
 				check_variable = { which = compound_dark_matter_stockpile value > 20000 }
 			}
-			event_target:compound_invasion_entry.star = { planet_event = { id = compound_fleet_spawn.002 } }
+			event_target:compound_invasion_entry.star = {
+				change_variable = { which = compound_fleet_spawner value = 1 }
+				if = {
+					limit = { check_variable = { which = compound_fleet_spawner value = 2 } }
+					set_variable = { which = compound_fleet_spawner value = 0 }
+					set_timed_global_flag = { flag = compound_recently_spawned_fleet days = 30 }
+				}
+				planet_event = { id = compound_fleet_spawn.002 }
+			}
 			country_event = { id = compound_fleet_spawn.001 days = 1 }
 		}
 		set_variable = { which = count_hornets		value = 0 }

@@ -82,10 +82,6 @@ ehof_megastructure_phase0 = {
 	}
 	on_build_complete = {
 		fromfrom = {
-			remove_megastructure_flag = ehof_phase_01
-			remove_megastructure_flag = ehof_phase_02
-			remove_megastructure_flag = ehof_phase_03
-			remove_megastructure_flag = ehof_phase_04
 			set_megastructure_flag = ehof_phase_00
 			planet = {
 				set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
@@ -93,6 +89,15 @@ ehof_megastructure_phase0 = {
 				if = { limit = { has_orbital_station = yes } orbital_station = { dismantle = yes } }
 			}
 		}
+		set_star_flag = ehof_megastructure_system@from
+		save_event_target_as = ehof_megastructure_system
+
+		# Prevents NDB & QSO
+		every_system_planet = {
+			set_planet_flag = cant_build_here
+			set_planet_flag = cant_target_this_planet
+		}
+
 		from = {
 			set_variable = { which = ehof_phase value = 0 }
 			country_event = { id = ehof_megastructure.101 }
@@ -156,25 +161,24 @@ ehof_megastructure_phase1_idle = {
 	}
 
 	on_build_complete = {
-		fromfrom = {
-			remove_megastructure_flag = ehof_phase_00
-			remove_megastructure_flag = ehof_phase_02
-			remove_megastructure_flag = ehof_phase_03
-			remove_megastructure_flag = ehof_phase_04
-			set_megastructure_flag = ehof_phase_01
+		if = {
+			limit = { star = { NOT = { is_planet_class = pc_ehof_black_hole } } }
+			star = {
+				change_pc = pc_ehof_black_hole
+				set_planet_size = @blackhole_size
+			}
 		}
+
+		fromfrom = {
+			set_megastructure_flag = ehof_phase_01
+			remove_megastructure_flag = ehof_phase_01_decommissioned
+		}
+		set_star_flag = ehof_megastructure_system@from
+		save_event_target_as = ehof_megastructure_system
+
 		from = {
 			set_variable = { which = ehof_phase value = 1 }
 			country_event = { id = ehof_megastructure.101 }
-		}
-		solar_system = {
-			if = {
-				limit = { star = { NOT = { is_planet_class = pc_ehof_black_hole } } }
-				star = {
-					change_pc = pc_ehof_black_hole
-					set_planet_size = @blackhole_size
-				}
-			}
 		}
 	}
 }
@@ -239,15 +243,15 @@ ehof_megastructure_phase2_idle = {
 	on_build_cancel = {		from = { remove_country_flag = ehof_is_upgrading												} }
 	on_build_complete = {
 		fromfrom = {
-			remove_megastructure_flag = ehof_phase_01
-			remove_megastructure_flag = ehof_phase_00
-			remove_megastructure_flag = ehof_phase_03
-			remove_megastructure_flag = ehof_phase_04
 			set_megastructure_flag = ehof_phase_02
+			remove_megastructure_flag = ehof_phase_02_decommissioned
 		}
+		set_star_flag = ehof_megastructure_system@from
+		save_event_target_as = ehof_megastructure_system
+
 		from = {
-			set_variable = { which = ehof_phase value = 2 }
 			remove_country_flag = ehof_is_upgrading
+			set_variable = { which = ehof_phase value = 2 }
 			country_event = { id = ehof_megastructure.101 }
 		}
 	}
@@ -313,15 +317,15 @@ ehof_megastructure_phase3_idle = {
 	on_build_cancel = {		from = { remove_country_flag = ehof_is_upgrading												} }
 	on_build_complete = {
 		fromfrom = {
-			remove_megastructure_flag = ehof_phase_01
-			remove_megastructure_flag = ehof_phase_02
-			remove_megastructure_flag = ehof_phase_00
-			remove_megastructure_flag = ehof_phase_04
 			set_megastructure_flag = ehof_phase_03
+			remove_megastructure_flag = ehof_phase_03_decommissioned
 		}
+		set_star_flag = ehof_megastructure_system@from
+		save_event_target_as = ehof_megastructure_system
+
 		from = {
-			set_variable = { which = ehof_phase value = 3 }
 			remove_country_flag = ehof_is_upgrading
+			set_variable = { which = ehof_phase value = 3 }
 			country_event = { id = ehof_megastructure.101 }
 		}
 	}
@@ -386,15 +390,15 @@ ehof_megastructure_phase4_idle = {
 	on_build_cancel = {		from = { remove_country_flag = ehof_is_upgrading												} }
 	on_build_complete = {
 		fromfrom = {
-			remove_megastructure_flag = ehof_phase_01
-			remove_megastructure_flag = ehof_phase_02
-			remove_megastructure_flag = ehof_phase_03
-			remove_megastructure_flag = ehof_phase_00
 			set_megastructure_flag = ehof_phase_04
+			remove_megastructure_flag = ehof_phase_04_decommissioned
 		}
+		set_star_flag = ehof_megastructure_system@from
+		save_event_target_as = ehof_megastructure_system
+
 		from = {
-			set_variable = { which = ehof_phase value = 4 }
 			remove_country_flag = ehof_is_upgrading
+			set_variable = { which = ehof_phase value = 4 }
 			country_event = { id = ehof_megastructure.101 }
 		}
 	}
@@ -450,17 +454,8 @@ ehof_megastructure_restored = {
 
 	ai_weight = {
 		factor = 5
-
-		modifier = {
-			factor = 0
-			has_global_flag = ehof_disabled
-		}
-
-		modifier = {
-			factor = 0
-			has_global_flag = ehof_ai_disabled
-		}
-
+		modifier = { factor = 0 has_global_flag = ehof_disabled }
+		modifier = { factor = 0 has_global_flag = ehof_ai_disabled }
 		modifier = {
 			factor = 0
 			any_country = {
@@ -483,33 +478,26 @@ ehof_megastructure_restored = {
 		}
 	}
 	on_build_complete = {
-		star = { set_planet_flag = has_megastructure }
-		fromfrom = { delete_megastructure = this }
-		solar_system = {
-			giga_remove_system_debris = yes
-			spawn_megastructure = {
-				type = "ehof_megastructure_phase2_idle"
-				orbit_angle = 0
-				orbit_distance = 0
-				owner = root.from
-				location = star
-				init_effect = { set_megastructure_flag = ehof_phase_02 }
-			}
-			if = {
-				limit = { star = { NOT = { is_planet_class = pc_ehof_black_hole } } }
-				star = {
-					change_pc = pc_ehof_black_hole
-					set_planet_size = @blackhole_size
-				}
+		if = {
+			limit = { star = { NOT = { is_planet_class = pc_ehof_black_hole } } }
+			star = {
+				change_pc = pc_ehof_black_hole
+				set_planet_size = @blackhole_size
 			}
 		}
+		star = {
+			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+			if = { limit = { has_orbital_station = yes } orbital_station = { dismantle = yes } }
+		}
+		giga_remove_system_debris = yes
+		fromfrom = { remove_megastructure = this }
+		spawn_megastructure = { type = "ehof_megastructure_phase2_idle" owner = from location = star }
 		from = {
-			set_variable = { which = ehof_phase value = 2 }
 			set_country_flag = ehof_restored
 			if = { limit = { NOT = { has_technology = tech_abstract_2 } } give_technology = { tech = tech_abstract_2 } }
 			if = { limit = { NOT = { has_technology = tech_negative_pressure } } give_technology = { tech = tech_negative_pressure } }
 			if = { limit = { NOT = { has_technology = tech_ehof_phase_02 } } give_technology = { tech = tech_ehof_phase_02 } }
-			country_event = { id = ehof_megastructure.101 }
 		}
 	}
 }
@@ -520,6 +508,8 @@ ehof_megastructure_restored = {
 ehof_megastructure_phase1_activating = {
 	entity = "ehof_megastructure_phase1_activating_entity"
 	portrait = "GFX_megastructure_ehof"
+	upgrade_desc = hide
+	upgrade_from = { ehof_megastructure_phase1_idle }
 	show_galactic_map_icon = yes
 	place_entity_on_planet_plane = yes
 	possible = { always = no }
@@ -536,11 +526,15 @@ ehof_megastructure_phase1_activating = {
 			ehof_sr_negative_mass = @phase_1_resource_bonus
 		}
 	}
+
+	on_build_complete = { fromfrom = { set_megastructure_flag = ehof_phase_01 } }
 }
 
 ehof_megastructure_phase2_activating = {
 	entity = "ehof_megastructure_phase2_activating_entity"
 	portrait = "GFX_megastructure_ehof"
+	upgrade_desc = hide
+	upgrade_from = { ehof_megastructure_phase2_idle }
 	show_galactic_map_icon = yes
 	place_entity_on_planet_plane = yes
 	possible = { always = no }
@@ -557,11 +551,15 @@ ehof_megastructure_phase2_activating = {
 			physics_research = @phase_2_research_bonus
 		}
 	}
+
+	on_build_complete = { fromfrom = { set_megastructure_flag = ehof_phase_02 } }
 }
 
 ehof_megastructure_phase3_activating = {
 	entity = "ehof_megastructure_phase3_activating_entity"
 	portrait = "GFX_megastructure_ehof"
+	upgrade_desc = hide
+	upgrade_from = { ehof_megastructure_phase3_idle }
 	show_galactic_map_icon = yes
 	place_entity_on_planet_plane = yes
 	possible = { always = no }
@@ -578,11 +576,15 @@ ehof_megastructure_phase3_activating = {
 			physics_research = @phase_3_research_bonus
 		}
 	}
+
+	on_build_complete = { fromfrom = { set_megastructure_flag = ehof_phase_03 } }
 }
 
 ehof_megastructure_phase4_activating = {
 	entity = "ehof_megastructure_phase4_activating_entity"
 	portrait = "GFX_megastructure_ehof"
+	upgrade_desc = hide
+	upgrade_from = { ehof_megastructure_phase4_idle }
 	show_galactic_map_icon = yes
 	place_entity_on_planet_plane = yes
 	possible = { always = no }
@@ -599,6 +601,8 @@ ehof_megastructure_phase4_activating = {
 			physics_research = @phase_4_research_bonus
 		}
 	}
+
+	on_build_complete = { fromfrom = { set_megastructure_flag = ehof_phase_04 } }
 }
 
 ################################################################################################
@@ -607,6 +611,8 @@ ehof_megastructure_phase4_activating = {
 ehof_megastructure_phase1_active = {
 	entity =  "ehof_megastructure_phase1_active_entity"
 	portrait = "GFX_megastructure_ehof"
+	upgrade_desc = hide
+	upgrade_from = { ehof_megastructure_phase1_activating }
 	show_galactic_map_icon = yes
 	place_entity_on_planet_plane = yes
 	bypass_type = ehof_wormhole_standard
@@ -624,11 +630,20 @@ ehof_megastructure_phase1_active = {
 			ehof_sr_negative_mass = @phase_1_resource_bonus
 		}
 	}
+
+	on_build_complete = {
+		fromfrom = {
+			set_megastructure_flag = ehof_wormhole_node
+			set_megastructure_flag = ehof_phase_01
+		}
+	}
 }
 
 ehof_megastructure_phase2_active = {
 	entity =  "ehof_megastructure_phase2_active_entity"
 	portrait = "GFX_megastructure_ehof"
+	upgrade_desc = hide
+	upgrade_from = { ehof_megastructure_phase2_activating }
 	show_galactic_map_icon = yes
 	place_entity_on_planet_plane = yes
 	bypass_type = ehof_wormhole_standard
@@ -646,11 +661,20 @@ ehof_megastructure_phase2_active = {
 			physics_research = @phase_2_research_bonus
 		}
 	}
+
+	on_build_complete = {
+		fromfrom = {
+			set_megastructure_flag = ehof_wormhole_node
+			set_megastructure_flag = ehof_phase_02
+		}
+	}
 }
 
 ehof_megastructure_phase3_active = {
 	entity = "ehof_megastructure_phase3_active_entity"
 	portrait = "GFX_megastructure_ehof"
+	upgrade_desc = hide
+	upgrade_from = { ehof_megastructure_phase3_activating }
 	show_galactic_map_icon = yes
 	place_entity_on_planet_plane = yes
 	bypass_type = ehof_wormhole_standard
@@ -668,11 +692,20 @@ ehof_megastructure_phase3_active = {
 			physics_research = @phase_3_research_bonus
 		}
 	}
+
+	on_build_complete = {
+		fromfrom = {
+			set_megastructure_flag = ehof_wormhole_node
+			set_megastructure_flag = ehof_phase_03
+		}
+	}
 }
 
 ehof_megastructure_phase4_active = {
 	entity = "ehof_megastructure_phase4_active_entity"
 	portrait = "GFX_megastructure_ehof"
+	upgrade_desc = hide
+	upgrade_from = { ehof_megastructure_phase4_activating }
 	show_galactic_map_icon = yes
 	place_entity_on_planet_plane = yes
 	bypass_type = ehof_wormhole_standard
@@ -688,6 +721,13 @@ ehof_megastructure_phase4_active = {
 		produces = {
 			ehof_sr_negative_mass = @phase_4_resource_bonus
 			physics_research = @phase_4_research_bonus
+		}
+	}
+
+	on_build_complete = {
+		fromfrom = {
+			set_megastructure_flag = ehof_wormhole_node
+			set_megastructure_flag = ehof_phase_04
 		}
 	}
 }
@@ -698,6 +738,8 @@ ehof_megastructure_phase4_active = {
 ehof_megastructure_phase1_decommissioned = {
 	entity =  "ehof_megastructure_phase1_entity"
 	portrait = "GFX_megastructure_ehof"
+	upgrade_desc = hide
+	upgrade_from = { ehof_megastructure_phase1_idle }
 	show_galactic_map_icon = yes
 	place_entity_on_planet_plane = yes
 	potential = { always = no }
@@ -714,11 +756,25 @@ ehof_megastructure_phase1_decommissioned = {
 			ehof_sr_negative_mass = @phase_1_resource_bonus
 		}
 	}
+
+	on_build_complete = {
+		from = {
+			if = { limit = { NOT = { has_technology = tech_condensed_qe } }				give_technology = { tech = tech_condensed_qe } }
+			if = { limit = { NOT = { has_technology = tech_abstract_1 } }				give_technology = { tech = tech_abstract_1 } }
+			if = { limit = { NOT = { has_technology = tech_ehof_phase_01 } }			give_technology = { tech = tech_ehof_phase_01 } }
+		}
+		fromfrom = {
+			set_megastructure_flag = ehof_phase_01_decommissioned
+			remove_megastructure_flag = ehof_phase_01
+		}
+	}
 }
 
 ehof_megastructure_phase2_decommissioned = {
 	entity =  "ehof_megastructure_phase2_entity"
 	portrait = "GFX_megastructure_ehof"
+	upgrade_desc = hide
+	upgrade_from = { ehof_megastructure_phase2_idle }
 	show_galactic_map_icon = yes
 	place_entity_on_planet_plane = yes
 	potential = { always = no }
@@ -735,11 +791,28 @@ ehof_megastructure_phase2_decommissioned = {
 			physics_research = @phase_2_research_bonus
 		}
 	}
+
+	on_build_complete = {
+		from = {
+			if = { limit = { NOT = { has_technology = tech_condensed_qe } }				give_technology = { tech = tech_condensed_qe } }
+			if = { limit = { NOT = { has_technology = tech_abstract_1 } }				give_technology = { tech = tech_abstract_1 } }
+			if = { limit = { NOT = { has_technology = tech_ehof_phase_01 } }			give_technology = { tech = tech_ehof_phase_01 } }
+			if = { limit = { NOT = { has_technology = tech_abstract_2 } }				give_technology = { tech = tech_abstract_2 } }
+			if = { limit = { NOT = { has_technology = tech_negative_pressure } }		give_technology = { tech = tech_negative_pressure } }
+			if = { limit = { NOT = { has_technology = tech_ehof_phase_02 } }			give_technology = { tech = tech_ehof_phase_02 } }
+		}
+		fromfrom = {
+			set_megastructure_flag = ehof_phase_02_decommissioned
+			remove_megastructure_flag = ehof_phase_02
+		}
+	}
 }
 
 ehof_megastructure_phase3_decommissioned = {
 	entity = "ehof_megastructure_phase3_entity"
 	portrait = "GFX_megastructure_ehof"
+	upgrade_desc = hide
+	upgrade_from = { ehof_megastructure_phase3_idle }
 	show_galactic_map_icon = yes
 	place_entity_on_planet_plane = yes
 	potential = { always = no }
@@ -756,11 +829,32 @@ ehof_megastructure_phase3_decommissioned = {
 			physics_research = @phase_3_research_bonus
 		}
 	}
+
+	on_build_complete = {
+		from = {
+			if = { limit = { NOT = { has_technology = tech_condensed_qe } }				give_technology = { tech = tech_condensed_qe } }
+			if = { limit = { NOT = { has_technology = tech_abstract_1 } }				give_technology = { tech = tech_abstract_1 } }
+			if = { limit = { NOT = { has_technology = tech_ehof_phase_01 } }			give_technology = { tech = tech_ehof_phase_01 } }
+			if = { limit = { NOT = { has_technology = tech_abstract_2 } }				give_technology = { tech = tech_abstract_2 } }
+			if = { limit = { NOT = { has_technology = tech_negative_pressure } }		give_technology = { tech = tech_negative_pressure } }
+			if = { limit = { NOT = { has_technology = tech_ehof_phase_02 } }			give_technology = { tech = tech_ehof_phase_02 } }
+			if = { limit = { NOT = { has_technology = tech_dm_injection } }				give_technology = { tech = tech_dm_injection } }
+			if = { limit = { NOT = { has_technology = tech_negative_mass_enrichment } }	give_technology = { tech = tech_negative_mass_enrichment } }
+			if = { limit = { NOT = { has_technology = tech_grav_control } }				give_technology = { tech = tech_grav_control } }
+			if = { limit = { NOT = { has_technology = tech_ehof_phase_03 } }			give_technology = { tech = tech_ehof_phase_03 } }
+		}
+		fromfrom = {
+			set_megastructure_flag = ehof_phase_03_decommissioned
+			remove_megastructure_flag = ehof_phase_03
+		}
+	}
 }
 
 ehof_megastructure_phase4_decommissioned = {
 	entity = "ehof_megastructure_phase4_entity"
 	portrait = "GFX_megastructure_ehof"
+	upgrade_desc = hide
+	upgrade_from = { ehof_megastructure_phase4_idle }
 	show_galactic_map_icon = yes
 	place_entity_on_planet_plane = yes
 	potential = { always = no }
@@ -775,6 +869,28 @@ ehof_megastructure_phase4_decommissioned = {
 		produces = {
 			ehof_sr_negative_mass = @phase_4_resource_bonus
 			physics_research = @phase_4_research_bonus
+		}
+	}
+
+	on_build_complete = {
+		from = {
+			if = { limit = { NOT = { has_technology = tech_condensed_qe } }				give_technology = { tech = tech_condensed_qe } }
+			if = { limit = { NOT = { has_technology = tech_abstract_1 } }				give_technology = { tech = tech_abstract_1 } }
+			if = { limit = { NOT = { has_technology = tech_ehof_phase_01 } }			give_technology = { tech = tech_ehof_phase_01 } }
+			if = { limit = { NOT = { has_technology = tech_abstract_2 } }				give_technology = { tech = tech_abstract_2 } }
+			if = { limit = { NOT = { has_technology = tech_negative_pressure } }		give_technology = { tech = tech_negative_pressure } }
+			if = { limit = { NOT = { has_technology = tech_ehof_phase_02 } }			give_technology = { tech = tech_ehof_phase_02 } }
+			if = { limit = { NOT = { has_technology = tech_dm_injection } }				give_technology = { tech = tech_dm_injection } }
+			if = { limit = { NOT = { has_technology = tech_negative_mass_enrichment } }	give_technology = { tech = tech_negative_mass_enrichment } }
+			if = { limit = { NOT = { has_technology = tech_grav_control } }				give_technology = { tech = tech_grav_control } }
+			if = { limit = { NOT = { has_technology = tech_ehof_phase_03 } }			give_technology = { tech = tech_ehof_phase_03 } }
+			if = { limit = { NOT = { has_technology = tech_prob_c } }					give_technology = { tech = tech_prob_c } }
+			if = { limit = { NOT = { has_technology = tech_vedrs } }					give_technology = { tech = tech_vedrs } }
+			if = { limit = { NOT = { has_technology = tech_ehof_phase_04 } }			give_technology = { tech = tech_ehof_phase_04 } }
+		}
+		fromfrom = {
+			set_megastructure_flag = ehof_phase_04_decommissioned
+			remove_megastructure_flag = ehof_phase_04
 		}
 	}
 }
