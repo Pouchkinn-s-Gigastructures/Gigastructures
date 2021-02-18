@@ -142,11 +142,15 @@ country_event = {
 	id = ehof_megastructure.006
 	hide_window = yes
 	is_triggered_only = yes
-
-	trigger = { from = { any_system_megastructure = { is_an_ehof = yes } } }
+	trigger = { from = { any_system_megastructure = { is_any_ehof = yes } } }
 
 	immediate = {
+		from = { remove_star_flag = ehof_megastructure_system@root }
+
+		# Previous owner of system
 		country_event = { id = ehof_megastructure.003 }
+
+		# New owner of system
 		fromfrom = { country_event = { id = ehof_megastructure.003 } }
 	}
 }
@@ -162,80 +166,175 @@ country_event = {
 			has_country_flag = ehof_activated
 			has_country_flag = ehof_activating
 		}
-		count_owned_megastructure = {
-			limit = { is_an_ehof = yes }
-			count > 1
+		OR = {
+			has_any_ehof = no
+			AND = {
+				count_owned_megastructure = { limit = { is_any_ehof = yes } count = 1 }
+				has_an_active_ehof = no
+			}
+			count_owned_megastructure = { limit = { is_any_ehof = yes } count > 1 }
 		}
 	}
 
 	immediate = {
-		every_system_within_border = {
-			limit = { has_star_flag = ehof_megastructure_system@root }
-			remove_star_flag = ehof_megastructure_system@root
-		}
-		set_variable = { which = ehof_phase value = 0 }
-		remove_country_flag = ehof_destination_picked
-		remove_country_flag = ehof_travel_diplomacy
-		remove_country_flag = ehof_can_activate
-		remove_country_flag = ehof_can_deactivate
-		remove_country_flag = ehof_is_upgrading
-		remove_country_flag = ehof_on_cooldown
-		decomission_all_ehofs = yes
-
+		# We dont have any ehof
 		if = {
-			limit = { any_owned_megastructure = { has_megastructure_flag = ehof_phase_04_decommissioned } }
-			capital_scope.solar_system = {
-				closest_system = {
-					limit = { any_system_megastructure = { has_megastructure_flag = ehof_phase_04_decommissioned } }
-					random_system_megastructure = {
-						limit = { has_megastructure_flag = ehof_phase_04_decommissioned }
-						remove_megastructure = this
-					}
-					spawn_megastructure = { type = "ehof_megastructure_phase4_idle" owner = from location = star }
-				}
-			}
-		}
-		else_if = {
-			limit = { any_owned_megastructure = { has_megastructure_flag = ehof_phase_03_decommissioned } }
-			capital_scope.solar_system = {
-				closest_system = {
-					limit = { any_system_megastructure = { has_megastructure_flag = ehof_phase_03_decommissioned } }
-					random_system_megastructure = {
-						limit = { has_megastructure_flag = ehof_phase_03_decommissioned }
-						remove_megastructure = this
-					}
-					spawn_megastructure = { type = "ehof_megastructure_phase3_idle" owner = from location = star }
-				}
-			}
-		}
-		else_if = {
-			limit = { any_owned_megastructure = { has_megastructure_flag = ehof_phase_02_decommissioned } }
-			capital_scope.solar_system = {
-				closest_system = {
-					limit = { any_system_megastructure = { has_megastructure_flag = ehof_phase_02_decommissioned } }
-					random_system_megastructure = {
-						limit = { has_megastructure_flag = ehof_phase_02_decommissioned }
-						remove_megastructure = this
-					}
-					spawn_megastructure = { type = "ehof_megastructure_phase2_idle" owner = from location = star }
-				}
-			}
-		}
-		else_if = {
-			limit = { any_owned_megastructure = { has_megastructure_flag = ehof_phase_01_decommissioned } }
-			capital_scope.solar_system = {
-				closest_system = {
-					limit = { any_system_megastructure = { has_megastructure_flag = ehof_phase_01_decommissioned } }
-					random_system_megastructure = {
-						limit = { has_megastructure_flag = ehof_phase_01_decommissioned }
-						remove_megastructure = this
-					}
-					spawn_megastructure = { type = "ehof_megastructure_phase1_idle" owner = from location = star }
-				}
-			}
+			limit = { has_any_ehof = no }
+			set_variable = { which = ehof_phase value = 0 }
+			remove_country_flag = ehof_destination_picked
+			remove_country_flag = ehof_travel_diplomacy
+			remove_country_flag = ehof_can_activate
+			remove_country_flag = ehof_can_deactivate
+			remove_country_flag = ehof_is_upgrading
+			remove_country_flag = ehof_on_cooldown
 		}
 
+		# We do not have an active ehof
+		else_if = {
+			limit = {
+				count_owned_megastructure = { limit = { is_any_ehof = yes } count = 1 }
+				has_an_active_ehof = no
+			}
+			remove_country_flag = ehof_destination_picked
+			remove_country_flag = ehof_travel_diplomacy
+			remove_country_flag = ehof_can_activate
+			remove_country_flag = ehof_can_deactivate
+			remove_country_flag = ehof_is_upgrading
+			remove_country_flag = ehof_on_cooldown
+			activate_an_ehof = yes
+		}
+
+		# We have more than 1 ehofs
+		else_if = {
+			limit = { count_owned_megastructure = { limit = { is_any_ehof = yes } count > 1 } }
+
+			# There is a better ehof available to use
+			if = {
+				limit = {
+					NOT = { has_country_flag = ehof_asked_to_move }
+					OR = {
+						AND = {
+							check_variable = { which = ehof_phase value = 0 }
+							any_owned_megastructure = {
+								OR = {
+									has_megastructure_flag = ehof_phase_01
+									has_megastructure_flag = ehof_phase_01_decommissioned
+									has_megastructure_flag = ehof_phase_02
+									has_megastructure_flag = ehof_phase_02_decommissioned
+									has_megastructure_flag = ehof_phase_03
+									has_megastructure_flag = ehof_phase_03_decommissioned
+									has_megastructure_flag = ehof_phase_04
+									has_megastructure_flag = ehof_phase_04_decommissioned
+								}
+							}
+						}
+						AND = {
+							check_variable = { which = ehof_phase value = 1 }
+							any_owned_megastructure = {
+								OR = {
+									has_megastructure_flag = ehof_phase_02
+									has_megastructure_flag = ehof_phase_02_decommissioned
+									has_megastructure_flag = ehof_phase_03
+									has_megastructure_flag = ehof_phase_03_decommissioned
+									has_megastructure_flag = ehof_phase_04
+									has_megastructure_flag = ehof_phase_04_decommissioned
+								}
+							}
+						}
+						AND = {
+							check_variable = { which = ehof_phase value = 2 }
+							any_owned_megastructure = {
+								OR = {
+									has_megastructure_flag = ehof_phase_03
+									has_megastructure_flag = ehof_phase_03_decommissioned
+									has_megastructure_flag = ehof_phase_04
+									has_megastructure_flag = ehof_phase_04_decommissioned
+								}
+							}
+						}
+						AND = {
+							check_variable = { which = ehof_phase value = 3 }
+							any_owned_megastructure = {
+								OR = {
+									has_megastructure_flag = ehof_phase_04
+									has_megastructure_flag = ehof_phase_04_decommissioned
+								}
+							}
+						}
+					}
+				}
+				country_event = { id = ehof_megastructure.008 }
+			}
+			# There is not any ehof that we own that is better than our active ehof
+			else = {
+				random_owned_megastructure = {
+					limit = {
+						is_an_active_ehof = yes
+						exists = solar_system
+						solar_system = { has_star_flag = ehof_megastructure_system@root }
+					}
+					root = {
+						every_owned_megastructure = {
+							limit = {
+								is_an_active_ehof = yes
+								NOT = { is_same_value = prevprev }
+							}
+							decomission_this_ehof = yes
+						}
+					}
+				}
+			}
+		}
 		country_event = { id = ehof_megastructure.009 }		# Check EHOF State.
+	}
+}
+
+# There is a better ehof available to use
+country_event = {
+	id = ehof_megastructure.008
+	title = "ehof_ehof"
+	is_triggered_only = yes
+	diplomatic = yes
+	custom_gui = "ehof_mainui_window"
+	picture_event_data = {
+		portrait = root
+		graphical_culture = root
+		room = "ehof_room"
+	}
+	location = event_target:ehof_megastructure_system
+	desc = "ehof_megastructure.008.desc"
+
+	option = {	# Keep current EHOF, never ask again
+		custom_gui = "ehof_mainui_option_big"
+		name = "ehof_megastructure.008.a"
+		hidden_effect = {
+			set_country_flag = ehof_asked_to_move
+			random_owned_megastructure = {
+				limit = {
+					is_an_active_ehof = yes
+					exists = solar_system
+					solar_system = { has_star_flag = ehof_megastructure_system@root }
+				}
+				root = {
+					every_owned_megastructure = {
+						limit = {
+							is_an_active_ehof = yes
+							NOT = { is_same_value = prevprev }
+						}
+						decomission_this_ehof = yes
+					}
+				}
+			}
+		}
+	}
+
+	option = {	# Swap to better ehof
+		custom_gui = "ehof_mainui_option_big"
+		name = "ehof_megastructure.008.b"
+		hidden_effect = {
+			decomission_all_ehofs = yes
+			activate_an_ehof = yes
+		}
 	}
 }
 
@@ -740,20 +839,6 @@ country_event = {
 	}
 
 	immediate = {
-		# Set EHOF system flag
-		random_system_within_border = {
-			limit = {
-				OR = {
-					has_megastructure = ehof_megastructure_phase0
-					has_megastructure = ehof_megastructure_restored
-					has_an_active_ehof = yes
-				}
-			}
-			set_star_flag = ehof_megastructure_system@root
-			every_system_planet = { set_planet_flag = cant_build_here set_planet_flag = cant_target_this_planet } # Prevents NDB & QSO
-			save_event_target_as = ehof_megastructure_system
-		}
-
 		# Restored
 		if = {
 			limit = { has_country_flag = ehof_restored }
@@ -1541,7 +1626,7 @@ country_event = {
 			random_system_within_border = {
 				limit = { has_an_active_ehof = yes }
 				remove_star_flag = ehof_megastructure_system@root
-				every_system_megastructure = { limit = { is_an_ehof = yes } remove_megastructure = this }
+				every_system_megastructure = { limit = { is_any_ehof = yes } remove_megastructure = this }
 				every_system_planet = {
 					remove_planet_flag = cant_target_this_planet
 					remove_planet_flag = cant_build_here
