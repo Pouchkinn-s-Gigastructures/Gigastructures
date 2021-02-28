@@ -1345,6 +1345,35 @@ country_event = { #Corrona Moon destroyed by Katzens (broadcast) :(
 	}
 }
 
+planet_event = { #bombing
+	id = giga_corrona.023
+	hide_window = yes
+	is_triggered_only = yes
+	
+	trigger = {
+		planet_devastation > 99
+		OR = {
+			habitable_structure = no
+			is_planet_class = pc_habitat
+			is_planet_class = pc_gigaorbital_ring
+		}
+		NOT = { has_planet_flag = gigaflusion }
+		from = { is_country_type = awakaned_corrona }
+	}
+
+	immediate = {
+		if = {
+			limit = { habitable_structure = yes }
+			destroy_colony = yes
+			remove_planet = yes
+		}
+		else = {
+			destroy_colony = yes
+			change_pc = pc_shrouded
+		}
+	}
+}
+
 namespace = giga_katrebels
 #Cracks in the seams: Events to contact Solakian & Ezic resistance
 country_event = {
@@ -7603,16 +7632,38 @@ planet_event = {
 			every_owned_fleet = {
 				leader = { unassign_leader = this } #Fire Douclaw
 			}
+			event_target:gigaflusion = {
+				create_species = {
+					name = "Bribblish Ezicania"
+					plural = "Bribblish Ezicanias"
+					class = REP
+					portrait = rep8
+					homeworld = event_target:gigaflusion
+					traits = {
+						trait = trait_pc_continental_preference
+						trait = trait_industrious
+						trait = trait_agrarian
+						trait = trait_quarrelsome
+					}
+					effect = {
+						save_global_event_target_as = bribblish_ezics
+					}
+				}
+			}
 			create_leader = {
 				class = admiral
-				species = event_target:flusionians
+				species = event_target:bribblish_ezics
 				name = "Aaron N. Bleu"
 				skill = 5
 				gender = male
 				set_age = 32
 				traits = {
+					trait = katzen_trait_elite
 					trait = leader_trait_resilient
 					trait = leader_trait_trickster
+				}
+				effect = {
+					save_global_event_target_as = laurn_aaron
 				}
 			}
 			random_owned_fleet = {
@@ -7672,6 +7723,10 @@ country_event = { #UFS gets FTL
 		}
 		event_target:flusion_tech_dump = {
 			destroy_country = yes
+		}
+		random = {
+			chance = 50
+			country_event = { id = giga_flusionunion.010 days = 1800 random = 1800 } #laurn coup
 		}
 		remove_country_flag = fusion_age
 		set_country_flag = space_flusion_country
@@ -7782,11 +7837,13 @@ country_event = { #UFS gets FTL
 			skill = 3
 			gender = male
 			traits = {
+				trait = katzen_trait_elite
 				trait = leader_trait_cautious
 				trait = leader_trait_trickster
 			}
 			effect = {
 				save_event_target_as = katzen_admiral
+				save_global_event_target_as = laurn_cuddles
 			}
 		}
 		create_fleet = {
@@ -7894,11 +7951,13 @@ country_event = { #UFS gets FTL
 			skill = 4
 			gender = male
 			traits = {
+				trait = katzen_trait_elite
 				trait = leader_trait_adaptable
 				trait = leader_trait_unyielding
 			}
 			effect = {
 				save_event_target_as = katzen_admiral
+				save_global_event_target_as = laurn_bling
 			}
 		}
 		create_fleet = {
@@ -8219,6 +8278,151 @@ country_event = {
 
 	option = {
 		name = "giga_flusionunion.007.a"
+	}
+}
+
+###THE LAURNAISE COUP###
+country_event = {
+	id = giga_flusionunion.010
+	hide_window = yes
+	is_triggered_only = yes
+	
+	trigger = {
+		any_country = { is_country = event_target:flusion_primitives_country }
+	}
+
+	immediate = {
+		every_country = { country_event = { id = giga_flusionunion.011 } }
+		event_target:flusion_primitives_country = {
+			country_event = { id = giga_flusionunion.012 days = 90 } #remove laurnsys if no flusion
+			set_name = "Laurnaise Empire"
+			force_remove_civic = civic_beacon_of_liberty
+			force_remove_civic = civic_efficient_bureaucracy
+			country_remove_ethic = ethic_egalitarian
+			country_remove_ethic = ethic_materialist
+			country_remove_ethic = ethic_xenophile
+			country_add_ethic = ethic_fanatic_authoritarian
+			country_add_ethic = ethic_militarist
+			set_leader = event_target:laurn_aaron
+			event_target:laurn_aaron = {
+				add_trait = katzen_trait_elite
+			}
+			change_country_flag = {
+				icon={
+					category="flusionian"
+					file="laurn_flag.dds"
+				}
+				background={
+					category="backgrounds"
+					file="triangle_split.dds"
+				}
+				colors={
+					"purple"
+					"burgundy"
+					"null"
+					"null"
+				}
+			}
+			change_government = {
+				authority = auth_dictatorial
+			}
+			give_technology = { tech = giga_tech_war_moon_1 }
+			give_technology = { tech = giga_tech_war_moon_2 }
+			force_add_civic = civic_laurandar_aaron
+			force_add_civic = civic_distinguished_admiralty
+			force_add_civic = civic_nationalistic_zeal
+			if = {
+				limit = { any_owned_ship = { is_ship_size = giga_war_moon_flusion } }
+				random_owned_ship = {
+					limit = { is_ship_size = giga_war_moon_flusion }
+					fleet = { assign_leader = event_target:laurn_cuddles }
+				}
+			}
+			every_owned_pop = {
+				random = {
+					chance = 75
+					pop_change_ethic = ethic_authoritarian
+				}
+				random = {
+					chance = 55
+					pop_change_ethic = ethic_fanatic_authoritarian
+				}
+			}
+			capital_scope = {
+				every_planet_army = {
+					limit = { army_type = flusion_army }
+					remove_army = yes
+				}
+				while = { count = 12	create_army = { name = "Gruntite Forces"	owner = event_target:flusion_primitives_country species = event_target:flusionians type = "flusion_army" } }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = giga_flusionunion.011
+	title = "giga_flusionunion.011.name"
+	desc = "giga_flusionunion.011.desc"
+	picture = GFX_evt_aaron
+	show_sound = event_ground_battle
+	location = from
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_flusionunion.011.a"
+	}
+}
+
+country_event = {
+	id = giga_flusionunion.012
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = event_target:flusion_primitives_country
+		event_target:flusion_primitives_country = {
+			has_valid_civic = civic_laurandar_aaron
+		}
+	}
+
+	immediate = {
+		event_target:flusion_primitives_country = {
+			if = {
+				limit = {
+					OR = {
+						NOT = {
+							any_owned_planet = { 
+								is_colony = yes
+								has_planet_flag = gigaflusion
+							}
+						}
+						NOR = {
+							has_ethic = ethic_fanatic_authoritarian
+							has_ethic = ethic_authoritarian
+						}
+					}
+				}
+				force_remove_civic = civic_laurandar_aaron
+				set_name = "Laurandar"
+				change_country_flag = {
+					icon={
+						category="flusionian"
+						file="laurn_flag.dds"
+					}
+					background={
+						category="backgrounds"
+						file="triangle_split.dds"
+					}
+					colors={
+						"pink"
+						"yellow"
+						"null"
+						"null"
+					}
+				}
+			}
+		}
+		country_event = { id = giga_flusionunion.012 days = 90 }
 	}
 }
 

@@ -21,7 +21,6 @@ planet_event = {
 	fire_only_once = yes
 
 	trigger = {
-		NOT = { has_global_flag = katzenartig_disabled }
 		owner = {
 			has_country_flag = flusion_primitives #Flusion still exists
 		}
@@ -79,9 +78,23 @@ planet_event = {
 				}
 			}
 		}
+		else_if = { # Disabled, UFS always wins
+			limit = {
+				has_global_flag = katzenartig_disabled
+			}
+			planet_event = { id = giga_flusionunion.001 days = 1800 random = 360 }
+			set_planet_flag = kaiser_going_on_wc
+			if = {
+				limit = { solar_system = { exists = owner } }
+				solar_system = {
+					owner = { country_event = { id = giga_katzen.002 days = 1 } }
+				}
+			}
+		}
 		else_if = {
 			limit = {
 				NOR = {
+					has_global_flag = katzenartig_disabled
 					has_global_flag = katzenartig_always
 					has_global_flag = katzenartig_deathwish
 					has_global_flag = katzenartig_stellarite
@@ -454,6 +467,10 @@ country_event = {
 
 	immediate = {
 		set_global_flag = katzenartig_imperium_happened
+		add_modifier = {
+			modifier = aeternum_kaiser_buff
+			days = -1
+		}
 		if = {
 			limit = {
 				NOT = {
@@ -462,7 +479,7 @@ country_event = {
 			}
 			create_leader = {
 				class = admiral
-				species = event_target:flusion_katzens
+				species = event_target:douclaw_portrait
 				name = "Douclaw MacCathur"
 				skill = 4
 				gender = male
@@ -2043,6 +2060,26 @@ country_event = { #hello
 				}
 				end_war_effect = yes
 			}
+		}
+	}
+
+	option = { #aeternum
+		name = "giga_katzen.020.aeternum"
+		allow = {
+			custom_tooltip = {
+				fail_text = cant_kaiser_opinion_too_low_talk
+				NOR = {
+					has_country_flag = kaiser_angry_2
+					has_country_flag = kaiser_angry_3
+				}
+			}
+		}
+		trigger = { 
+			NOT = { has_country_flag = kaiser_gave_aeternum_intel }
+			any_country = { is_country_type = dormant_aeternum } 
+		}
+		hidden_effect = {
+			country_event = { id = giga_aeternum.4120 }
 		}
 	}
 
@@ -4495,6 +4532,47 @@ event = { #Manage war forges
 	}
 
 	immediate = {
+		if = {
+			limit = {
+				event_target:gigaflusion = {
+					free_housing >= 10
+				}
+			}
+			event_target:flusion_primitives_country = {
+				every_owned_planet = {
+					limit = { 
+						is_colony = yes
+						count_pops = {
+							count > 28
+						}
+						NOR = { 
+							has_planet_flag = gigaflusion
+							has_planet_flag = resettled_to_flusion 
+						}
+						owner = { is_country_type = katzenartig_imperium } 
+					}
+					set_planet_flag = resettled_to_flusion
+					every_owned_pop = {
+						random = {
+							chance = 10
+							resettle_pop = {
+								pop = THIS
+								planet = event_target:gigaflusion
+							}
+						}
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				event_target:gigaflusion = {
+					free_housing < 50
+					free_district_slots >= 1
+				}
+			}
+			event_target:gigaflusion = { add_district = district_city }
+		}
 		event_target:flusion_primitives_country = {
 			set_variable = {
 				which = "kaiser_ehof_count"
@@ -6759,6 +6837,7 @@ country_event = { #30 years
 
 	immediate = {
 		event_target:gigaflusion = {
+			change_pc = pc_gaia
 			while = {
 				count = 15
 				create_pop = { species = event_target:flusion_katzens }
@@ -7209,26 +7288,30 @@ country_event = { #Collapse of Katzenartig
 
 	immediate = {
 		if = {
-			limit = { any_country = { has_modifier = katzen_attache } }
-			every_country = {
-				limit = {
-					has_modifier = katzen_attache
-				}
-				remove_country_flag = katzen_attache
-				remove_modifier = katzen_attache
+			limit = {
+				exists = event_target:target_kaiser_moon_fleet
 			}
+			event_target:target_kaiser_moon_fleet = {
+				unassign_leader = this
+			}
+		}
+		every_system_within_border = {
+			set_star_flag = former_katzen_system
+		}
+		every_owned_planet = {
+			set_planet_flag = former_katzen_planet
 		}
 		event_target:global_event_country = {
 			random_list = {
 				50 = {
-					country_event = { id = giga_hke.001 days = 3600 } #HKE
+					country_event = { id = giga_hke.001 days = 2520 } #HKE
 				}
 				50 = {}
 			}
 		}
-		if = {
+		if = { 
 			limit = { NOT = { has_global_flag = katzenartig_imperium_defeated } }
-			set_global_flag = katzenartig_imperium_defeated
+			set_global_flag = katzenartig_imperium_defeated 
 		}
 		every_war = { #Status quo
 			limit = {
@@ -7245,7 +7328,7 @@ country_event = { #Collapse of Katzenartig
 		clear_global_event_target = katzen_wormhole_target
 		every_megastructure = {
 			limit = {
-				is_megastructure_type = katzen_ehof_wormhole
+				is_megastructure_type = katzen_ehof_wormhole 
 			}
 			delete_megastructure = THIS
 		}
@@ -7260,8 +7343,8 @@ country_event = { #Collapse of Katzenartig
 			limit = {
 				OR = {
 					is_megastructure_type = kaiser_ehof_0
-					is_megastructure_type = kaiser_ehof_1
-				}
+					is_megastructure_type = kaiser_ehof_1 
+				} 
 			}
 			solar_system = {
 				star = {
@@ -7282,269 +7365,636 @@ country_event = { #Collapse of Katzenartig
 			which = "katzen_total_planet_count"
 			value = 0
 		}
-		count_katzen_planets_and_systems = yes #ATTEMPT TO SPAWN SOLAKIA
-		if = {
-			limit = {
-				check_variable = { #More than 10 systems left, solakia can spawn
-					which = "katzen_total_system_count"
-					value > 9
-				}
-				check_variable = { #More than 2 planets left, solakia can spawn
-					which = "katzen_total_planet_count"
-					value > 1
-				}
-			}
-			random_planet_within_border = { #designate one planet as solakia
-				limit = {
-					owner = { is_country_type = katzenartig_imperium }
-					solar_system = {
-						NOT = { has_star_flag = flusion_system }
+		count_katzen_planets_and_systems = yes
+		random_list = {
+			50 = { #Collapse into Solakia, Kronk and Laurn
+				count_katzen_planets_and_systems = yes #ATTEMPT TO SPAWN SOLAKIA
+				if = {
+					limit = {
+						check_variable = { #More than 10 systems left, solakia can spawn
+							which = "katzen_total_system_count"
+							value > 9
+						}
+						check_variable = { #More than 2 planets left, solakia can spawn
+							which = "katzen_total_planet_count"
+							value > 1
+						}
 					}
-					is_colony = yes
-				}
-				save_global_event_target_as = solakian_capital
-				solar_system = { set_star_flag = solakian_system }
-				#solakia gets 20% of the katzen empire
-				count_katzen_planets_and_systems = yes
-				event_target:flusion_primitives_country = {
-					set_variable = {
-						which = "solakia_system_count"
-						value = 0
-					}
-					set_variable = {
-						which = "solakia_system_count"
-						value = "katzen_total_system_count"
-					}
-					divide_variable = {
-						which = "solakia_system_count"
-						value = 5.5
-					}
-					set_variable = {
-						which = "solakia_current_system_count"
-						value = 0
-					}
-				}
-				while = {
-					limit = { #stop when current solak systems surpass 20% of katzen systems
+					random_planet_within_border = { #designate one planet as solakia
+						limit = {
+							owner = { is_country_type = katzenartig_imperium }
+							solar_system = {
+								NOT = { has_star_flag = flusion_system }
+							}
+							is_colony = yes
+						}
+						save_global_event_target_as = solakian_capital
+						solar_system = { set_star_flag = solakian_system }
+						#solakia gets 20% of the katzen empire
+						count_katzen_planets_and_systems = yes
 						event_target:flusion_primitives_country = {
-							check_variable = {
+							set_variable = {
+								which = "solakia_system_count"
+								value = 0
+							}
+							set_variable = {
+								which = "solakia_system_count"
+								value = "katzen_total_system_count"
+							}
+							divide_variable = {
+								which = "solakia_system_count"
+								value = 5.5
+							}
+							set_variable = {
 								which = "solakia_current_system_count"
-								value < solakia_system_count
+								value = 0
 							}
 						}
-					}
-					every_system = { #claim all neighbor systems
-						limit = { has_star_flag = solakian_system }
-						every_neighbor_system = {
-							limit = {
-								owner = { is_country_type = katzenartig_imperium }
-								NOR = {
-									has_star_flag = flusion_system
-									has_star_flag = solakian_system
+						while = {
+							limit = { #stop when current solak systems surpass 20% of katzen systems
+								event_target:flusion_primitives_country = {
+									check_variable = {
+										which = "solakia_current_system_count"
+										value < solakia_system_count
+									}
 								}
 							}
-							set_star_flag = solakian_system
-						}
-					}
-					event_target:flusion_primitives_country = {
-						set_variable = {
-							which = "solakia_current_system_count"
-							value = 0
-						}
-					}
-					every_system = { #count current solak systems
-						limit = { has_star_flag = solakian_system }
-						event_target:flusion_primitives_country = {
-							change_variable = {
-								which = "solakia_current_system_count"
-								value = 1
+							every_system = { #claim all neighbor systems
+								limit = { has_star_flag = solakian_system }
+								every_neighbor_system = {
+									limit = {
+										owner = { is_country_type = katzenartig_imperium }
+										NOR = { 
+											has_star_flag = flusion_system
+											has_star_flag = solakian_system 
+										}
+									}
+									set_star_flag = solakian_system
+								}
+							}
+							event_target:flusion_primitives_country = {
+								set_variable = {
+									which = "solakia_current_system_count"
+									value = 0
+								}
+							}
+							every_system = { #count current solak systems
+								limit = { has_star_flag = solakian_system }
+								event_target:flusion_primitives_country = {
+									change_variable = {
+										which = "solakia_current_system_count"
+										value = 1
+									}
+								}
 							}
 						}
+						create_solakia = yes
 					}
 				}
-				create_solakia = yes
-			}
-		}
-		count_katzen_planets_and_systems = yes #ATTEMPT TO SPAWN LAURANDAR
-		if = {
-			limit = {
-				check_variable = { #More than 10 systems left, laurn can spawn
-					which = "katzen_total_system_count"
-					value > 9
-				}
-				check_variable = { #More than 2 planets left, laurn can spawn
-					which = "katzen_total_planet_count"
-					value > 1
-				}
-			}
-			random_planet_within_border = { #designate one planet as laurn
-				limit = {
-					owner = { is_country_type = katzenartig_imperium }
-					solar_system = {
-						NOT = { has_star_flag = flusion_system }
+				count_katzen_planets_and_systems = yes #ATTEMPT TO SPAWN LAURANDAR
+				if = {
+					limit = {
+						check_variable = { #More than 10 systems left, laurn can spawn
+							which = "katzen_total_system_count"
+							value > 9
+						}
+						check_variable = { #More than 2 planets left, laurn can spawn
+							which = "katzen_total_planet_count"
+							value > 1
+						}
 					}
-					is_colony = yes
-				}
-				save_global_event_target_as = laurandar_capital
-				solar_system = { set_star_flag = laurandar_system }
-				#laurn gets 15% of the katzen empire
-				count_katzen_planets_and_systems = yes
-				event_target:flusion_primitives_country = {
-					set_variable = {
-						which = "laurandar_system_count"
-						value = 0
-					}
-					set_variable = {
-						which = "laurandar_system_count"
-						value = "katzen_total_system_count"
-					}
-					divide_variable = {
-						which = "laurandar_system_count"
-						value = 7
-					}
-					set_variable = {
-						which = "laurandar_current_system_count"
-						value = 0
-					}
-				}
-				while = {
-					limit = { #stop when current laurn systems surpass 20% of katzen systems
+					random_planet_within_border = { #designate one planet as laurn
+						limit = {
+							owner = { is_country_type = katzenartig_imperium }
+							solar_system = {
+								NOT = { has_star_flag = flusion_system }
+							}
+							is_colony = yes
+						}
+						save_global_event_target_as = laurandar_capital
+						solar_system = { set_star_flag = laurandar_system }
+						#laurn gets 15% of the katzen empire
+						count_katzen_planets_and_systems = yes
 						event_target:flusion_primitives_country = {
-							check_variable = {
+							set_variable = {
+								which = "laurandar_system_count"
+								value = 0
+							}
+							set_variable = {
+								which = "laurandar_system_count"
+								value = "katzen_total_system_count"
+							}
+							divide_variable = {
+								which = "laurandar_system_count"
+								value = 7
+							}
+							set_variable = {
 								which = "laurandar_current_system_count"
-								value < laurandar_system_count
+								value = 0
 							}
 						}
-					}
-					every_system = { #claim all neighbor systems
-						limit = { has_star_flag = laurandar_system }
-						every_neighbor_system = {
-							limit = {
-								owner = { is_country_type = katzenartig_imperium }
-								NOR = {
-									has_star_flag = flusion_system
-									has_star_flag = laurandar_system
+						while = {
+							limit = { #stop when current laurn systems surpass 20% of katzen systems
+								event_target:flusion_primitives_country = {
+									check_variable = {
+										which = "laurandar_current_system_count"
+										value < laurandar_system_count
+									}
 								}
 							}
-							set_star_flag = laurandar_system
-						}
-					}
-					event_target:flusion_primitives_country = {
-						set_variable = {
-							which = "laurandar_current_system_count"
-							value = 0
-						}
-					}
-					every_system = { #count current laurn systems
-						limit = { has_star_flag = laurandar_system }
-						event_target:flusion_primitives_country = {
-							change_variable = {
-								which = "laurandar_current_system_count"
-								value = 1
+							every_system = { #claim all neighbor systems
+								limit = { has_star_flag = laurandar_system }
+								every_neighbor_system = {
+									limit = {
+										owner = { is_country_type = katzenartig_imperium }
+										NOR = { 
+											has_star_flag = flusion_system
+											has_star_flag = laurandar_system 
+										}
+									}
+									set_star_flag = laurandar_system
+								}
+							}
+							event_target:flusion_primitives_country = {
+								set_variable = {
+									which = "laurandar_current_system_count"
+									value = 0
+								}
+							}
+							every_system = { #count current laurn systems
+								limit = { has_star_flag = laurandar_system }
+								event_target:flusion_primitives_country = {
+									change_variable = {
+										which = "laurandar_current_system_count"
+										value = 1
+									}
+								}
 							}
 						}
+						create_laurandar = yes
 					}
 				}
-				create_laurandar = yes
+				count_katzen_planets_and_systems = yes #ATTEMPT TO SPAWN KRONK
+				if = {
+					limit = {
+						check_variable = { #More than 10 systems left, kronk can spawn
+							which = "katzen_total_system_count"
+							value > 9
+						}
+						check_variable = { #More than 2 planets left, kronk can spawn
+							which = "katzen_total_planet_count"
+							value > 1
+						}
+					}
+					random_planet_within_border = { #designate one planet as kronk
+						limit = {
+							owner = { is_country_type = katzenartig_imperium }
+							solar_system = {
+								NOT = { has_star_flag = flusion_system }
+							}
+							is_colony = yes
+						}
+						save_global_event_target_as = kronk_capital
+						solar_system = { set_star_flag = kronk_system }
+						#kronk gets 15% of the katzen empire
+						count_katzen_planets_and_systems = yes
+						event_target:flusion_primitives_country = {
+							set_variable = {
+								which = "kronk_system_count"
+								value = 0
+							}
+							set_variable = {
+								which = "kronk_system_count"
+								value = "katzen_total_system_count"
+							}
+							divide_variable = {
+								which = "kronk_system_count"
+								value = 8
+							}
+							set_variable = {
+								which = "kronk_current_system_count"
+								value = 0
+							}
+						}
+						while = {
+							limit = { #stop when current kronk systems surpass 20% of katzen systems
+								event_target:flusion_primitives_country = {
+									check_variable = {
+										which = "kronk_current_system_count"
+										value < kronk_system_count
+									}
+								}
+							}
+							every_system = { #claim all neighbor systems
+								limit = { has_star_flag = kronk_system }
+								every_neighbor_system = {
+									limit = {
+										owner = { is_country_type = katzenartig_imperium }
+										NOR = { 
+											has_star_flag = flusion_system
+											has_star_flag = kronk_system 
+										}
+									}
+									set_star_flag = kronk_system
+								}
+							}
+							event_target:flusion_primitives_country = {
+								set_variable = {
+									which = "kronk_current_system_count"
+									value = 0
+								}
+							}
+							every_system = { #count current kronk systems
+								limit = { has_star_flag = kronk_system }
+								event_target:flusion_primitives_country = {
+									change_variable = {
+										which = "kronk_current_system_count"
+										value = 1
+									}
+								}
+							}
+						}
+						create_kronk = yes
+					}
+				}
+			}
+			50 = { #Civil war between Katlinin, Kibbles, Sergeant TT and Elwin
+				modifier = { #does not occur if there are less than 5 katzen planets left
+					factor = 0
+					event_target:flusion_primitives_country = {
+						check_variable = {
+							which = katzen_total_planet_count
+							value < 5
+						}
+						check_variable = {
+							which = katzen_total_system_count
+							value < 10
+						}
+					}
+				}
+				event_target:global_event_country = {
+					country_event = { id = giga_katcivilwar.1000 days = 180 }
+				}
+				count_katzen_planets_and_systems = yes #ATTEMPT TO SPAWN SKS
+				if = {
+					limit = {
+						check_variable = { #More than 10 systems left, SKS can spawn
+							which = "katzen_total_system_count"
+							value > 9
+						}
+						check_variable = { #More than 2 planets left, SKS can spawn
+							which = "katzen_total_planet_count"
+							value > 1
+						}
+					}
+					random_planet_within_border = { #designate one planet as the capital
+						limit = {
+							owner = { is_country_type = katzenartig_imperium }
+							solar_system = {
+								NOT = { has_star_flag = flusion_system }
+							}
+							is_colony = yes
+						}
+						save_global_event_target_as = katzen_socialist_capital
+						solar_system = { set_star_flag = katzen_socialist_system }
+						#solakia gets 20% of the katzen empire
+						count_katzen_planets_and_systems = yes
+						event_target:flusion_primitives_country = {
+							set_variable = {
+								which = "katzen_socialist_system_count"
+								value = 0
+							}
+							set_variable = {
+								which = "katzen_socialist_system_count"
+								value = "katzen_total_system_count"
+							}
+							divide_variable = {
+								which = "katzen_socialist_system_count"
+								value = 4
+							}
+							set_variable = {
+								which = "katzen_socialist_current_system_count"
+								value = 0
+							}
+						}
+						while = {
+							limit = { #stop when current socialist systems surpass 25% of katzen systems
+								event_target:flusion_primitives_country = {
+									check_variable = {
+										which = "katzen_socialist_current_system_count"
+										value < katzen_socialist_system_count
+									}
+								}
+							}
+							every_system = { #claim all neighbor systems
+								limit = { has_star_flag = katzen_socialist_system }
+								every_neighbor_system = {
+									limit = {
+										owner = { is_country_type = katzenartig_imperium }
+										NOR = { 
+											has_star_flag = flusion_system
+											has_star_flag = katzen_socialist_system 
+										}
+									}
+									set_star_flag = katzen_socialist_system
+								}
+							}
+							event_target:flusion_primitives_country = {
+								set_variable = {
+									which = "katzen_socialist_current_system_count"
+									value = 0
+								}
+							}
+							every_system = { #count current solak systems
+								limit = { has_star_flag = katzen_socialist_system }
+								event_target:flusion_primitives_country = {
+									change_variable = {
+										which = "katzen_socialist_current_system_count"
+										value = 1
+									}
+								}
+							}
+						}
+						create_katzen_socialist = yes
+					}
+				}
+				count_katzen_planets_and_systems = yes #ATTEMPT TO SPAWN junta
+				if = {
+					limit = {
+						check_variable = { #More than 10 systems left, junta can spawn
+							which = "katzen_total_system_count"
+							value > 9
+						}
+						check_variable = { #More than 2 planets left, junta can spawn
+							which = "katzen_total_planet_count"
+							value > 1
+						}
+					}
+					random_planet_within_border = { #designate one planet as the capital
+						limit = {
+							owner = { is_country_type = katzenartig_imperium }
+							solar_system = {
+								NOT = { has_star_flag = flusion_system }
+							}
+							is_colony = yes
+						}
+						save_global_event_target_as = katzen_junta_capital
+						solar_system = { set_star_flag = katzen_junta_system }
+						#junta gets 20% of the katzen empire
+						count_katzen_planets_and_systems = yes
+						event_target:flusion_primitives_country = {
+							set_variable = {
+								which = "katzen_junta_system_count"
+								value = 0
+							}
+							set_variable = {
+								which = "katzen_junta_system_count"
+								value = "katzen_total_system_count"
+							}
+							divide_variable = {
+								which = "katzen_junta_system_count"
+								value = 4
+							}
+							set_variable = {
+								which = "katzen_junta_current_system_count"
+								value = 0
+							}
+						}
+						while = {
+							limit = { #stop when current junta systems surpass 25% of katzen systems
+								event_target:flusion_primitives_country = {
+									check_variable = {
+										which = "katzen_junta_current_system_count"
+										value < katzen_junta_system_count
+									}
+								}
+							}
+							every_system = { #claim all neighbor systems
+								limit = { has_star_flag = katzen_junta_system }
+								every_neighbor_system = {
+									limit = {
+										owner = { is_country_type = katzenartig_imperium }
+										NOR = { 
+											has_star_flag = flusion_system
+											has_star_flag = katzen_junta_system 
+										}
+									}
+									set_star_flag = katzen_junta_system
+								}
+							}
+							event_target:flusion_primitives_country = {
+								set_variable = {
+									which = "katzen_junta_current_system_count"
+									value = 0
+								}
+							}
+							every_system = { #count current junta systems
+								limit = { has_star_flag = katzen_junta_system }
+								event_target:flusion_primitives_country = {
+									change_variable = {
+										which = "katzen_junta_current_system_count"
+										value = 1
+									}
+								}
+							}
+						}
+						create_katzen_junta = yes
+					}
+				}
+				count_katzen_planets_and_systems = yes #ATTEMPT TO SPAWN republic
+				if = {
+					limit = {
+						check_variable = { #More than 10 systems left, republic can spawn
+							which = "katzen_total_system_count"
+							value > 9
+						}
+						check_variable = { #More than 2 planets left, republic can spawn
+							which = "katzen_total_planet_count"
+							value > 1
+						}
+					}
+					random_planet_within_border = { #designate one planet as the capital
+						limit = {
+							owner = { is_country_type = katzenartig_imperium }
+							solar_system = {
+								NOT = { has_star_flag = flusion_system }
+							}
+							is_colony = yes
+						}
+						save_global_event_target_as = katzen_republic_capital
+						solar_system = { set_star_flag = katzen_republic_system }
+						#solakia gets 20% of the katzen empire
+						count_katzen_planets_and_systems = yes
+						event_target:flusion_primitives_country = {
+							set_variable = {
+								which = "katzen_republic_system_count"
+								value = 0
+							}
+							set_variable = {
+								which = "katzen_republic_system_count"
+								value = "katzen_total_system_count"
+							}
+							divide_variable = {
+								which = "katzen_republic_system_count"
+								value = 4
+							}
+							set_variable = {
+								which = "katzen_republic_current_system_count"
+								value = 0
+							}
+						}
+						while = {
+							limit = { #stop when current socialist systems surpass 25% of katzen systems
+								event_target:flusion_primitives_country = {
+									check_variable = {
+										which = "katzen_republic_current_system_count"
+										value < katzen_republic_system_count
+									}
+								}
+							}
+							every_system = { #claim all neighbor systems
+								limit = { has_star_flag = katzen_republic_system }
+								every_neighbor_system = {
+									limit = {
+										owner = { is_country_type = katzenartig_imperium }
+										NOR = { 
+											has_star_flag = flusion_system
+											has_star_flag = katzen_republic_system 
+										}
+									}
+									set_star_flag = katzen_republic_system
+								}
+							}
+							event_target:flusion_primitives_country = {
+								set_variable = {
+									which = "katzen_republic_current_system_count"
+									value = 0
+								}
+							}
+							every_system = { #count current solak systems
+								limit = { has_star_flag = katzen_republic_system }
+								event_target:flusion_primitives_country = {
+									change_variable = {
+										which = "katzen_republic_current_system_count"
+										value = 1
+									}
+								}
+							}
+						}
+						create_katzen_republic = yes
+					}
+				}
+				count_katzen_planets_and_systems = yes #ATTEMPT TO SPAWN realm
+				if = {
+					limit = {
+						check_variable = { #More than 10 systems left, realm can spawn
+							which = "katzen_total_system_count"
+							value > 9
+						}
+						check_variable = { #More than 2 planets left, realm can spawn
+							which = "katzen_total_planet_count"
+							value > 1
+						}
+					}
+					random_planet_within_border = { #designate one planet as the capital
+						limit = {
+							owner = { is_country_type = katzenartig_imperium }
+							solar_system = {
+								NOT = { has_star_flag = flusion_system }
+							}
+							is_colony = yes
+						}
+						save_global_event_target_as = katzen_realm_capital
+						solar_system = { set_star_flag = katzen_realm_system }
+						#realm gets 20% of the katzen empire
+						count_katzen_planets_and_systems = yes
+						event_target:flusion_primitives_country = {
+							set_variable = {
+								which = "katzen_realm_system_count"
+								value = 0
+							}
+							set_variable = {
+								which = "katzen_realm_system_count"
+								value = "katzen_total_system_count"
+							}
+							divide_variable = {
+								which = "katzen_realm_system_count"
+								value = 4
+							}
+							set_variable = {
+								which = "katzen_realm_current_system_count"
+								value = 0
+							}
+						}
+						while = {
+							limit = { #stop when current realm systems surpass 25% of katzen systems
+								event_target:flusion_primitives_country = {
+									check_variable = {
+										which = "katzen_realm_current_system_count"
+										value < katzen_realm_system_count
+									}
+								}
+							}
+							every_system = { #claim all neighbor systems
+								limit = { has_star_flag = katzen_realm_system }
+								every_neighbor_system = {
+									limit = {
+										owner = { is_country_type = katzenartig_imperium }
+										NOR = { 
+											has_star_flag = flusion_system
+											has_star_flag = katzen_realm_system 
+										}
+									}
+									set_star_flag = katzen_realm_system
+								}
+							}
+							event_target:flusion_primitives_country = {
+								set_variable = {
+									which = "katzen_realm_current_system_count"
+									value = 0
+								}
+							}
+							every_system = { #count current solak systems
+								limit = { has_star_flag = katzen_realm_system }
+								event_target:flusion_primitives_country = {
+									change_variable = {
+										which = "katzen_realm_current_system_count"
+										value = 1
+									}
+								}
+							}
+						}
+						create_katzen_realm = yes
+					}
+				}
 			}
 		}
-		count_katzen_planets_and_systems = yes #ATTEMPT TO SPAWN KRONK
-		if = {
-			limit = {
-				check_variable = { #More than 10 systems left, kronk can spawn
-					which = "katzen_total_system_count"
-					value > 9
-				}
-				check_variable = { #More than 2 planets left, kronk can spawn
-					which = "katzen_total_planet_count"
-					value > 1
-				}
-			}
-			random_planet_within_border = { #designate one planet as kronk
+		event_target:flusion_primitives_country = {
+			every_system_within_border = {
 				limit = {
-					owner = { is_country_type = katzenartig_imperium }
-					solar_system = {
-						NOT = { has_star_flag = flusion_system }
+					any_system_planet = {
+						is_colony = yes
+						owner = { is_country_type = katzenartig_imperium }
 					}
-					is_colony = yes
-				}
-				save_global_event_target_as = kronk_capital
-				solar_system = { set_star_flag = kronk_system }
-				#kronk gets 15% of the katzen empire
-				count_katzen_planets_and_systems = yes
-				event_target:flusion_primitives_country = {
-					set_variable = {
-						which = "kronk_system_count"
-						value = 0
-					}
-					set_variable = {
-						which = "kronk_system_count"
-						value = "katzen_total_system_count"
-					}
-					divide_variable = {
-						which = "kronk_system_count"
-						value = 8
-					}
-					set_variable = {
-						which = "kronk_current_system_count"
-						value = 0
-					}
-				}
-				while = {
-					limit = { #stop when current kronk systems surpass 20% of katzen systems
-						event_target:flusion_primitives_country = {
-							check_variable = {
-								which = "kronk_current_system_count"
-								value < kronk_system_count
-							}
-						}
-					}
-					every_system = { #claim all neighbor systems
-						limit = { has_star_flag = kronk_system }
-						every_neighbor_system = {
-							limit = {
-								owner = { is_country_type = katzenartig_imperium }
-								NOR = {
-									has_star_flag = flusion_system
-									has_star_flag = kronk_system
-								}
-							}
-							set_star_flag = kronk_system
-						}
-					}
-					event_target:flusion_primitives_country = {
-						set_variable = {
-							which = "kronk_current_system_count"
-							value = 0
-						}
-					}
-					every_system = { #count current kronk systems
-						limit = { has_star_flag = kronk_system }
-						event_target:flusion_primitives_country = {
-							change_variable = {
-								which = "kronk_current_system_count"
-								value = 1
-							}
-						}
-					}
-				}
-				create_kronk = yes
-			}
-		}
-		every_planet_within_border = {
-			limit = {
-				is_colony = yes
-				owner = { is_country_type = katzenartig_imperium }
-				solar_system = {
-					NOR = {
+					NOR = { 
 						has_star_flag = flusion_system
 						has_star_flag = solakian_system
 						has_star_flag = laurandar_system
 						has_star_flag = kronk_system
+						has_star_flag = katzen_socialist_system
+						has_star_flag = katzen_realm_system
+						has_star_flag = katzen_junta_system
+						has_star_flag = katzen_republic_system
 					}
 				}
-			}
-			create_katzen_splinter_state = yes
+				random_system_planet = {
+					limit = {
+						is_colony = yes
+						owner = { is_country_type = katzenartig_imperium }
+					}
+					create_katzen_splinter_state = yes
+				}
+			}			
 		}
 		every_megastructure = {
 			limit = {
@@ -7594,8 +8044,9 @@ country_event = { #Collapse of Katzenartig
 					is_country_type = katzenartig_imperium
 				}
 				solar_system = {
-					exists = space_owner
-					space_owner = { NOT = { is_country_type = katzenartig_imperium } }
+					space_owner = {
+						NOT = { is_country_type = katzenartig_imperium }
+					}
 				}
 			}
 			set_owner = solar_system.space_owner
@@ -7603,8 +8054,8 @@ country_event = { #Collapse of Katzenartig
 		destroy_country = yes #farewell
 		event_target:flusion_conqueror = { #Achievement
 			if = {
-				limit = {
-					NOT = {
+				limit = { 
+					NOT = { 
 						has_country_flag = giga_achievement_kaiser1
 					}
 					NOR = {
@@ -7618,8 +8069,8 @@ country_event = { #Collapse of Katzenartig
 				giga_achievement_sound = yes
 			}
 			if = {
-				limit = {
-					NOT = {
+				limit = { 
+					NOT = { 
 						has_country_flag = giga_achievement_kaiser2
 					}
 					has_global_flag = katzenartig_deathwish
@@ -7634,8 +8085,8 @@ country_event = { #Collapse of Katzenartig
 				}
 			}
 			if = {
-				limit = {
-					NOT = {
+				limit = { 
+					NOT = { 
 						has_country_flag = giga_achievement_kaiser3
 					}
 					has_global_flag = katzenartig_stellarite
@@ -7651,8 +8102,8 @@ country_event = { #Collapse of Katzenartig
 				}
 			}
 			if = {
-				limit = {
-					NOT = {
+				limit = { 
+					NOT = { 
 						has_country_flag = giga_achievement_kaiser8
 					}
 					has_global_flag = katzenartig_improbable
@@ -7671,15 +8122,15 @@ country_event = { #Collapse of Katzenartig
 		}
 		every_country = {
 			country_event = { id = giga_katzen.097 }
-			if = {
+			if = { 
 				limit = { has_modifier = solak_partisans_1 }
 				remove_modifier = solak_partisans_1
 			}
-			if = {
+			if = { 
 				limit = { has_modifier = solak_partisans_2 }
 				remove_modifier = solak_partisans_2
 			}
-			if = {
+			if = { 
 				limit = { has_modifier = solak_partisans_3 }
 				remove_modifier = solak_partisans_3
 			}
@@ -7691,8 +8142,8 @@ country_event = { #Collapse of Katzenartig
 			every_country = {
 				limit = { has_country_flag = blew_up_flusion_crisis }
 				if = {
-					limit = {
-						NOT = {
+					limit = { 
+						NOT = { 
 							has_country_flag = giga_achievement_kaiser1
 						}
 						NOR = {
@@ -7706,8 +8157,8 @@ country_event = { #Collapse of Katzenartig
 					giga_achievement_sound = yes
 				}
 				if = {
-					limit = {
-						NOT = {
+					limit = { 
+						NOT = { 
 							has_country_flag = giga_achievement_kaiser2
 						}
 						has_global_flag = katzenartig_deathwish
@@ -7722,8 +8173,8 @@ country_event = { #Collapse of Katzenartig
 					}
 				}
 				if = {
-					limit = {
-						NOT = {
+					limit = { 
+						NOT = { 
 							has_country_flag = giga_achievement_kaiser3
 						}
 						has_global_flag = katzenartig_stellarite
@@ -7739,8 +8190,8 @@ country_event = { #Collapse of Katzenartig
 					}
 				}
 				if = {
-					limit = {
-						NOT = {
+					limit = { 
+						NOT = { 
 							has_country_flag = giga_achievement_kaiser8
 						}
 						has_global_flag = katzenartig_improbable
@@ -9217,5 +9668,320 @@ country_event = { #- opinion
 
 	immediate = {
 		decrease_kaiser_opinion = yes
+	}
+}
+
+#Change Flusion's texture
+namespace = giga_flusion_terraform
+
+event = {
+	id = giga_flusion_terraform.1000
+	hide_window = yes
+	is_triggered_only = yes
+	
+	trigger = { 
+		event_target:gigaflusion = { 
+			OR = {
+				NOT = { is_planet_class = pc_continental } 
+				AND = {
+					OR = {
+						is_planet_class = pc_continental
+						AND = {
+							is_wet = yes
+							NOT = { is_planet_class = pc_ocean }
+						}
+					}
+					OR = {
+						has_planet_flag = flusion_machine_texture_applied
+						has_planet_flag = flusion_gaia_texture_applied
+						has_planet_flag = flusion_tomb_texture_applied
+						has_planet_flag = flusion_katzenland_texture_applied
+						has_planet_flag = flusion_hive_texture_applied
+						has_planet_flag = flusion_desert_texture_applied
+						has_planet_flag = flusion_arctic_texture_applied
+						has_planet_flag = flusion_ocean_texture_applied
+						has_planet_flag = flusion_shattered_texture_applied
+						has_planet_flag = flusion_torrid_texture_applied
+						has_planet_flag = flusion_lifeless_texture_applied
+						has_planet_flag = flusion_foggy_texture_applied
+						has_planet_flag = flusion_molten_texture_applied
+						has_planet_flag = flusion_city_texture_applied
+						has_planet_flag = flusion_voidsphere_texture_applied
+						has_planet_flag = flusion_shrouded_texture_applied
+					}
+				}
+				AND = {
+					is_planet_class = pc_nuked
+					NOT = { has_planet_flag = flusion_tomb_texture_applied }
+				}
+				AND = {
+					is_planet_class = pc_gaia
+					NOT = { has_planet_flag = flusion_gaia_texture_applied }
+				}
+				AND = {
+					is_planet_class = pc_katzenland
+					NOT = { has_planet_flag = flusion_katzenland_texture_applied }
+				}
+				AND = {
+					is_planet_class = pc_hive
+					NOT = { has_planet_flag = flusion_hive_texture_applied }
+				}
+				AND = {
+					is_dry = yes
+					NOT = { has_planet_flag = flusion_desert_texture_applied }
+				}
+				AND = {
+					is_cold = yes
+					NOT = { has_planet_flag = flusion_arctic_texture_applied }
+				}
+				AND = {
+					is_planet_class = pc_ocean
+					NOT = { has_planet_flag = flusion_ocean_texture_applied }
+				}
+				AND = {
+					is_planet_class = pc_machine
+					NOT = { has_planet_flag = flusion_machine_texture_applied }
+				}
+				AND = {
+					is_planet_class = pc_shattered
+					NOT = { has_planet_flag = flusion_shattered_texture_applied }
+				}
+				AND = {
+					is_planet_class = pc_ll_torrid
+					NOT = { has_planet_flag = flusion_torrid_texture_applied }
+				}
+				AND = {
+					is_planet_class = pc_ll_temperate
+					NOT = { has_planet_flag = flusion_lifeless_texture_applied }
+				}
+				AND = {
+					is_planet_class = pc_ll_foggy
+					NOT = { has_planet_flag = flusion_foggy_texture_applied }
+				}
+				AND = {
+					is_planet_class = pc_molten
+					NOT = { has_planet_flag = flusion_molten_texture_applied }
+				}
+				AND = {
+					is_planet_class = pc_city
+					NOT = { has_planet_flag = flusion_city_texture_applied }
+				}
+				AND = {
+					is_planet_class = pc_acot_enigmopolis
+					NOT = { has_planet_flag = flusion_voidsphere_texture_applied }
+				}
+				AND = {
+					is_planet_class = pc_shrouded
+					has_planet_flag = flusion_shrouded_texture_applied
+				}
+			}
+		} 
+	}
+
+	immediate = {
+		event_target:gigaflusion = {
+			if = { # Gaia
+				limit = { 
+					is_planet_class = pc_gaia
+					NOT = { has_planet_flag = flusion_gaia_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_gaia_entity }
+				if = { limit = { NOT = { has_modifier = flusion_rich_modifier } } add_modifier = { modifier = flusion_rich_modifier days = -1 }  }
+				set_planet_flag = flusion_gaia_texture_applied
+			}
+			else_if = { # Nuked
+				limit = { 
+					is_planet_class = pc_nuked
+					NOT = { has_planet_flag = flusion_tomb_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_nuked_entity }
+				remove_modifier = flusion_rich_modifier
+				set_planet_flag = flusion_tomb_texture_applied
+			}
+			else_if = { # Katzenland
+				limit = { 
+					is_planet_class = pc_katzenland
+					NOT = { has_planet_flag = flusion_katzenland_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_deserted_entity }
+				remove_modifier = flusion_rich_modifier
+				set_planet_flag = flusion_katzenland_texture_applied
+			}
+			else_if = { # Machine
+				limit = { 
+					is_planet_class = pc_machine
+					NOT = { has_planet_flag = flusion_machine_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_machine_entity }
+				set_planet_flag = flusion_machine_texture_applied
+			}
+			else_if = { # Hive
+				limit = { 
+					is_planet_class = pc_hive
+					NOT = { has_planet_flag = flusion_hive_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_hive_entity }
+				set_planet_flag = flusion_hive_texture_applied
+			}
+			else_if = { # Dry
+				limit = { 
+					OR = {
+						is_dry = yes
+					}
+					NOT = { has_planet_flag = flusion_desert_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_desert_entity }
+				set_planet_flag = flusion_desert_texture_applied
+				if = { limit = { NOT = { has_modifier = flusion_rich_modifier } } add_modifier = { modifier = flusion_rich_modifier days = -1 }  }
+			}
+			else_if = { # Cold
+				limit = { 
+					OR = {
+						is_cold = yes
+					}
+					NOT = { has_planet_flag = flusion_arctic_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_arctic_entity }
+				set_planet_flag = flusion_arctic_texture_applied
+				if = { limit = { NOT = { has_modifier = flusion_rich_modifier } } add_modifier = { modifier = flusion_rich_modifier days = -1 }  }
+			}
+			else_if = { # Ocean
+				limit = { 
+					OR = {
+						is_planet_class = pc_ocean
+					}
+					NOT = { has_planet_flag = flusion_ocean_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_ocean_entity }
+				set_planet_flag = flusion_ocean_texture_applied
+				if = { limit = { NOT = { has_modifier = flusion_rich_modifier } } add_modifier = { modifier = flusion_rich_modifier days = -1 }  }
+			}
+			else_if = { # Nuked
+				limit = { 
+					is_planet_class = pc_shattered
+					NOT = { has_planet_flag = flusion_shattered_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_nuked_entity }
+				if = { limit = { has_modifier = flusion_rich_modifier } remove_modifier = flusion_rich_modifier  }
+				set_planet_flag = flusion_shattered_texture_applied
+			}
+			else_if = { # Torrid
+				limit = { 
+					OR = {
+						is_planet_class = pc_ll_torrid
+					}
+					NOT = { has_planet_flag = flusion_torrid_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_torrid_entity }
+				set_planet_flag = flusion_torrid_texture_applied
+				if = { limit = { NOT = { has_modifier = flusion_rich_modifier } } add_modifier = { modifier = flusion_rich_modifier days = -1 }  }
+			}
+			else_if = { # Lifeless
+				limit = { 
+					OR = {
+						is_planet_class = pc_ll_temperate
+					}
+					NOT = { has_planet_flag = flusion_lifeless_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_lifeless_entity }
+				set_planet_flag = flusion_lifeless_texture_applied
+				if = { limit = { NOT = { has_modifier = flusion_rich_modifier } } add_modifier = { modifier = flusion_rich_modifier days = -1 }  }
+			}
+			else_if = { # Foggy
+				limit = { 
+					OR = {
+						is_planet_class = pc_ll_foggy
+					}
+					NOT = { has_planet_flag = flusion_foggy_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_foggy_entity }
+				set_planet_flag = flusion_foggy_texture_applied
+				if = { limit = { NOT = { has_modifier = flusion_rich_modifier } } add_modifier = { modifier = flusion_rich_modifier days = -1 }  }
+			}
+			else_if = { # Nuked
+				limit = { 
+					is_planet_class = pc_molten
+					NOT = { has_planet_flag = flusion_molten_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_molten_entity }
+				if = { limit = { has_modifier = flusion_rich_modifier } remove_modifier = flusion_rich_modifier  }
+				set_planet_flag = flusion_molten_texture_applied
+			}
+			else_if = { # City
+				limit = { 
+					is_planet_class = pc_city
+					NOT = { has_planet_flag = flusion_city_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_city_entity }
+				if = { limit = { NOT = { has_modifier = flusion_rich_modifier } } add_modifier = { modifier = flusion_rich_modifier days = -1 }  }
+				set_planet_flag = flusion_city_texture_applied
+			}
+			else_if = { # Voidsphere
+				limit = { 
+					is_planet_class = pc_acot_enigmopolis
+					NOT = { has_planet_flag = flusion_voidsphere_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_acot_entity }
+				if = { limit = { NOT = { has_modifier = flusion_rich_modifier } } add_modifier = { modifier = flusion_rich_modifier days = -1 }  }
+				set_planet_flag = flusion_voidsphere_texture_applied
+			}
+			else_if = { # Shrouded
+				limit = { 
+					is_planet_class = pc_shrouded
+					NOT = { has_planet_flag = flusion_shrouded_texture_applied } 
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_shrouded_entity }
+				if = { limit = { has_modifier = flusion_rich_modifier } remove_modifier = flusion_rich_modifier  }
+				set_planet_flag = flusion_shrouded_texture_applied
+			}
+			else_if = { # Continental/Wet (Restored)
+				limit = {
+					OR = {
+						is_planet_class = pc_continental
+						AND = {
+							is_wet = yes
+							NOT = { is_planet_class = pc_ocean }
+						}
+					}
+					OR = {
+						has_planet_flag = flusion_machine_texture_applied
+						has_planet_flag = flusion_gaia_texture_applied
+						has_planet_flag = flusion_tomb_texture_applied
+						has_planet_flag = flusion_katzenland_texture_applied
+						has_planet_flag = flusion_hive_texture_applied
+						has_planet_flag = flusion_desert_texture_applied
+						has_planet_flag = flusion_arctic_texture_applied
+						has_planet_flag = flusion_ocean_texture_applied
+						has_planet_flag = flusion_shattered_texture_applied
+						has_planet_flag = flusion_torrid_texture_applied
+						has_planet_flag = flusion_lifeless_texture_applied
+						has_planet_flag = flusion_foggy_texture_applied
+						has_planet_flag = flusion_molten_texture_applied
+						has_planet_flag = flusion_city_texture_applied
+						has_planet_flag = flusion_voidsphere_texture_applied
+						has_planet_flag = flusion_shrouded_texture_applied
+					}
+				}
+				clear_flusion_texture_flags = yes
+				set_planet_entity = { entity = flusion_planet_entity }
+				if = { limit = { NOT = { has_modifier = flusion_rich_modifier } } add_modifier = { modifier = flusion_rich_modifier days = -1 }  }
+			}
+		}
 	}
 }

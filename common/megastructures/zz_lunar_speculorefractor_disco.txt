@@ -42,7 +42,6 @@ lunar_disco_ball_0 = {
 	placement_rules = {
 		planet_possible = {
 			custom_tooltip = { fail_text = "must_build_around_moon"				is_moon = yes }
-			custom_tooltip = { fail_text = "must_not_be_disco_moon"				NOT = { is_planet_class = pc_disco_moon } }
 			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
 			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
 			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } colonizeable_planet = no }
@@ -197,6 +196,46 @@ lunar_disco_ball_2 = {
 			rare_crystals = 1500
 			energy = 10000
 		}
+		upkeep = {
+			trigger = {
+				planet = { check_variable = { which = giga_disco_moon_setting value = 0 } }
+			}
+			rare_crystals = 5
+			energy = 50
+			alloys = 25
+		}
+		upkeep = {
+			trigger = {
+				planet = { check_variable = { which = giga_disco_moon_setting value = 1 } }
+			}
+			rare_crystals = 7.5
+			energy = 75
+			alloys = 38
+		}
+		upkeep = {
+			trigger = {
+				planet = { check_variable = { which = giga_disco_moon_setting value = 2 } }
+			}
+			rare_crystals = 7.5
+			energy = 75
+			alloys = 38
+		}
+		upkeep = {
+			trigger = {
+				planet = { check_variable = { which = giga_disco_moon_setting value = 3 } }
+			}
+			rare_crystals = 10
+			energy = 100
+			alloys = 50
+		}
+		upkeep = {
+			trigger = {
+				planet = { check_variable = { which = giga_disco_moon_setting value = 4 } }
+			}
+			rare_crystals = 0.5
+			energy = 5
+			alloys = 2
+		}
 	}
 
 	potential = { NOT = { has_global_flag = disco_moon_disabled } }
@@ -207,7 +246,10 @@ lunar_disco_ball_2 = {
 		save_event_target_as = giga_system
 		fromfrom.planet = { save_event_target_as = giga_planet }
 		from = {
-			country_event = { id = giga_dialog.203 }	# Notification
+			if = {
+				limit = { NOT = { has_global_flag = managing_giga_megastructure } }
+				country_event = { id = giga_dialog.203 }	# Notification
+			}
 			if = {
 				limit = {
 					NOR = {
@@ -221,21 +263,70 @@ lunar_disco_ball_2 = {
 			}
 		}
 		fromfrom.planet = {
-			change_pc = pc_disco_moon
-			remove_planet_flag = megastructure
-			remove_planet_flag = has_megastructure
-			set_planet_entity = { entity = "giga_disco_moon" graphical_culture = fromfrom }
-			solar_system = {
-				random_system_planet = {
-					limit = { any_moon = { is_same_value = prevprevprev } }
-					add_modifier = { modifier = "disco_moon_modifier" days = -1 }
-					every_moon = {
-						limit = { NOT = { is_same_value = prevprevprev } }
+			if = {
+				limit = { NOT = { has_global_flag = managing_giga_megastructure } }
+				set_variable = {
+					which = giga_failure_chance
+					value = 5
+				}
+				set_variable = {
+					which = giga_disco_moon_setting
+					value = 0
+				}
+				solar_system = {
+					random_system_planet = {
+						limit = { any_moon = { is_same_value = prevprevprev } }
 						add_modifier = { modifier = "disco_moon_modifier" days = -1 }
+						every_moon = {
+							limit = { NOT = { is_same_value = prevprevprev } }
+							add_modifier = { modifier = "disco_moon_modifier" days = -1 }
+						}
 					}
+				}
+				change_pc = pc_disco_moon
+				remove_planet_flag = megastructure
+				remove_planet_flag = has_megastructure
+				set_planet_entity = { entity = "giga_disco_moon" graphical_culture = fromfrom }
+			}
+		}
+	}
+}
+
+lunar_disco_ball_2_manage = {
+	entity = ""
+	portrait = "GFX_megastructure_disco_moon"
+	upgrade_from = { lunar_disco_ball_2 }
+
+	build_time = 0
+
+	potential = {
+		NOR = { 
+			has_global_flag = disco_moon_disabled
+			has_global_flag = managing_giga_megastructure 
+		}
+		is_ai = no
+	}
+	possible = { from = { has_technology = giga_tech_disco_moon } }
+
+	on_build_complete = {
+		from = { set_country_flag = giga_repaired_mega_no_dialog }
+		set_global_flag = managing_giga_megastructure
+		fromfrom.planet = {
+			save_global_event_target_as = giga_mega_manage_planet
+			solar_system = {
+				spawn_megastructure = {
+					type = lunar_disco_ball_2
+					location = event_target:giga_mega_manage_planet
+					owner = space_owner
 				}
 			}
 		}
+		remove_global_flag = managing_giga_megastructure
+		from = { 
+			country_event = { id = giga_disco.1000 }
+			remove_country_flag = giga_repaired_mega_no_dialog 
+		}
+		set_global_flag = managing_giga_megastructure
 		remove_megastructure = fromfrom
 	}
 }
