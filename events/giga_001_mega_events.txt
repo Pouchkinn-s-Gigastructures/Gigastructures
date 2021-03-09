@@ -734,7 +734,7 @@ country_event = {
 				spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 270	max_orientation_angle = 270	initializer = "giga_inner_4_aeternum_initializer"	hyperlane = no }
 				spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 330	max_orientation_angle = 330	initializer = "giga_inner_5_aeternum_initializer"	hyperlane = no }
 				spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 30	max_orientation_angle = 30	initializer = "giga_inner_6_aeternum_initializer"	hyperlane = no }
-				
+
 				spawn_system = { min_distance >= 55	max_distance <= 55	min_orientation_angle = 90	max_orientation_angle = 90	initializer = "giga_outer_1_initializer"	hyperlane = no }
 				spawn_system = { min_distance >= 55	max_distance <= 55	min_orientation_angle = 210	max_orientation_angle = 210	initializer = "giga_outer_2_initializer"	hyperlane = no }
 				spawn_system = { min_distance >= 55	max_distance <= 55	min_orientation_angle = 330	max_orientation_angle = 330	initializer = "giga_outer_3_initializer"	hyperlane = no }
@@ -776,7 +776,7 @@ country_event = {
 				spawn_system = { min_distance >= 80	max_distance <= 80	min_orientation_angle = 110	max_orientation_angle = 110	initializer = "giga_outer_1_initializer"	hyperlane = no }
 				spawn_system = { min_distance >= 90	max_distance <= 90	min_orientation_angle = 230	max_orientation_angle = 230	initializer = "giga_outer_2_initializer"	hyperlane = no }
 				spawn_system = { min_distance >= 80	max_distance <= 80	min_orientation_angle = 350	max_orientation_angle = 350	initializer = "giga_outer_3_initializer"	hyperlane = no }
-	
+
 				add_hyperlane = { from = event_target:giga_core_system	to = event_target:giga_inner_1 }
 				add_hyperlane = { from = event_target:giga_core_system	to = event_target:giga_inner_3 }
 				add_hyperlane = { from = event_target:giga_core_system	to = event_target:giga_inner_6 }
@@ -895,7 +895,19 @@ planet_event = {
 			every_fleet_in_system = { destroy_fleet = this }
 			every_system_planet = { limit = { is_star = no } remove_planet = yes }
 			giga_remove_system_debris = yes
-			every_system_megastructure = { limit = { exists = this } remove_megastructure = this }
+			every_system_megastructure = {
+				limit = {
+					NOR = {
+						is_megastructure_type = lgate_base
+						is_megastructure_type = gateway_final
+						is_megastructure_type = gateway_restored
+						is_megastructure_type = gateway_ruined
+						is_megastructure_type = ehof_pgate_gateway
+						is_megastructure_type = ehof_pgate_unknown
+					}
+				}
+				remove_megastructure = this
+			}
 
 			# Explosion
 			star = {
@@ -1079,8 +1091,42 @@ planet_event = {
 						remove_star_flag = has_no_hyperlane
 						set_star_flag = has_new_hyperlane
 						random_list = {
-							1 = { while = { count = 1 random_neighbor_system = { limit = { NOT = { has_star_flag = has_new_hyperlane } } ignore_hyperlanes = yes add_hyperlane = { from = this to = prev } } } }
-							1 = { while = { count = 2 random_neighbor_system = { limit = { NOT = { has_star_flag = has_new_hyperlane } } ignore_hyperlanes = yes add_hyperlane = { from = this to = prev } } } }
+							1 = {
+								while = {
+									count = 1
+									random_neighbor_system = {
+										limit = {
+											NOR = {
+												has_star_flag = has_new_hyperlane
+												cohesive_system = yes
+												compound_cluster = yes
+												annihilator_system = yes
+												urmazin_system = yes
+											}
+										}
+										ignore_hyperlanes = yes
+										add_hyperlane = { from = this to = prev }
+									}
+								}
+							}
+							1 = {
+								while = {
+									count = 2
+									random_neighbor_system = {
+										limit = {
+											NOR = {
+												has_star_flag = has_new_hyperlane
+												cohesive_system = yes
+												compound_cluster = yes
+												annihilator_system = yes
+												urmazin_system = yes
+											}
+										}
+										ignore_hyperlanes = yes
+										add_hyperlane = { from = this to = prev }
+									}
+								}
+							}
 						}
 					}
 				}
