@@ -721,6 +721,7 @@ country_event = {
 									3  = { spawn_system = { min_distance >= 25 max_distance <= 30 hyperlane = no initializer = "trinary_init_02" } }
 									2  = { spawn_system = { min_distance >= 25 max_distance <= 30 hyperlane = no initializer = "asteroid_init_01" } }
 									2  = { spawn_system = { min_distance >= 25 max_distance <= 30 hyperlane = no initializer = "special_init_01" } }
+									2  = { spawn_system = { min_distance >= 25 max_distance <= 30 hyperlane = no initializer = "special_init_02" } }	# Primitives
 									2  = { spawn_system = { min_distance >= 25 max_distance <= 30 hyperlane = no initializer = "special_init_08" } }
 
 									# Real Space
@@ -1291,6 +1292,65 @@ country_event = {
 	}
 }
 
+# on_fleet_destroyed_victim (check if leviathan has been defeated)
+# This = owner of fleet 1 (destroyed)
+# From = owner of fleet 2 (combatant)
+# FromFrom = fleet 1
+# FromFromFrom = fleet 2
+country_event = {
+	id = ehof_systems.008
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		from = {
+			OR = {
+				is_country_type = guardian_dragon
+				is_country_type = guardian_sphere
+				is_country_type = guardian_wraith
+				is_country_type = guardian_horror
+				is_country_type = guardian_fortress
+				is_country_type = guardian_stellarite
+				is_country_type = guardian_dreadnought
+			}
+		}
+	}
+
+	immediate = {
+		from = { save_event_target_as = ehof_check_leviathan_death }
+		country_event = { id = ehof_systems.009 days = 2 }
+	}
+}
+
+country_event = {
+	id = ehof_systems.009
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = event_target:ehof_check_leviathan_death
+		event_target:ehof_check_leviathan_death = { num_fleets < 1 }
+	}
+
+	immediate = {
+		event_target:ehof_check_leviathan_death = {
+			if = {
+				limit = {
+					is_country_type = guardian_dragon
+					NOT = { has_country_flag = rubricator_dragon_country }
+				}
+				set_global_flag = leviathan_slain_ether_dragon
+			}
+			else_if = { limit = { is_country_type = guardian_sphere }		set_global_flag = leviathan_slain_sphere }
+			else_if = { limit = { is_country_type = guardian_wraith }		set_global_flag = leviathan_slain_wraith }
+			else_if = { limit = { is_country_type = guardian_horror }		set_global_flag = leviathan_slain_horror }
+			else_if = { limit = { is_country_type = guardian_fortress }		set_global_flag = leviathan_slain_fortress }
+			else_if = { limit = { is_country_type = guardian_stellarite }	set_global_flag = leviathan_slain_stellarite }
+			else_if = { limit = { is_country_type = guardian_dreadnought }	set_global_flag = leviathan_slain_dreadnought }
+		}
+	}
+}
+
 # Generate Leviathans
 country_event = {
 	id = ehof_systems.003
@@ -1303,6 +1363,15 @@ country_event = {
 		has_leviathans = yes
 		is_ai = no
 		NOT = { has_country_flag = ehof_recently_spawned_guardian }
+		NAND = {
+			has_global_flag = leviathan_slain_dreadnought
+			has_global_flag = leviathan_slain_ether_dragon
+			has_global_flag = leviathan_slain_fortress
+			has_global_flag = leviathan_slain_horror
+			has_global_flag = leviathan_slain_sphere
+			has_global_flag = leviathan_slain_stellarite
+			has_global_flag = leviathan_slain_wraith
+		}
 	}
 
 	immediate = {
@@ -1316,23 +1385,44 @@ country_event = {
 						compound_cluster = no
 					}
 					# Guardians
-					if = { limit = { any_country = { is_country_type = guardian_dragon } }			remove_global_flag = ehof_can_spawn_guardian_dragon }			else = { set_global_flag = ehof_can_spawn_guardian_dragon }
-					if = { limit = { any_country = { is_country_type = guardian_sphere } }			remove_global_flag = ehof_can_spawn_guardian_sphere }			else = { set_global_flag = ehof_can_spawn_guardian_sphere }
-					if = { limit = { any_country = { is_country_type = guardian_wraith } }			remove_global_flag = ehof_can_spawn_guardian_wraith }			else = { set_global_flag = ehof_can_spawn_guardian_wraith }
-					if = { limit = { any_country = { is_country_type = guardian_horror } }			remove_global_flag = ehof_can_spawn_guardian_horror }			else = { set_global_flag = ehof_can_spawn_guardian_horror }
-					if = { limit = { any_country = { is_country_type = guardian_fortress } }		remove_global_flag = ehof_can_spawn_guardian_fortress }			else = { set_global_flag = ehof_can_spawn_guardian_fortress }
-					if = { limit = { any_country = { is_country_type = guardian_stellarite } }		remove_global_flag = ehof_can_spawn_guardian_stellarite }		else = { set_global_flag = ehof_can_spawn_guardian_stellarite }
-					if = { limit = { any_country = { is_country_type = guardian_dreadnought } }		remove_global_flag = ehof_can_spawn_guardian_dreadnought }		else = { set_global_flag = ehof_can_spawn_guardian_dreadnought }
+					if = { limit = { any_country = { is_country_type = guardian_dragon NOT = { has_country_flag = rubricator_dragon_country } } }	remove_global_flag = ehof_can_spawn_guardian_dragon }			else = { set_global_flag = ehof_can_spawn_guardian_dragon }
+					if = { limit = { any_country = { is_country_type = guardian_sphere } }															remove_global_flag = ehof_can_spawn_guardian_sphere }			else = { set_global_flag = ehof_can_spawn_guardian_sphere }
+					if = { limit = { any_country = { is_country_type = guardian_wraith } }															remove_global_flag = ehof_can_spawn_guardian_wraith }			else = { set_global_flag = ehof_can_spawn_guardian_wraith }
+					if = { limit = { any_country = { is_country_type = guardian_horror } }															remove_global_flag = ehof_can_spawn_guardian_horror }			else = { set_global_flag = ehof_can_spawn_guardian_horror }
+					if = { limit = { any_country = { is_country_type = guardian_fortress } }														remove_global_flag = ehof_can_spawn_guardian_fortress }			else = { set_global_flag = ehof_can_spawn_guardian_fortress }
+					if = { limit = { any_country = { is_country_type = guardian_stellarite } }														remove_global_flag = ehof_can_spawn_guardian_stellarite }		else = { set_global_flag = ehof_can_spawn_guardian_stellarite }
+					if = { limit = { any_country = { is_country_type = guardian_dreadnought } }														remove_global_flag = ehof_can_spawn_guardian_dreadnought }		else = { set_global_flag = ehof_can_spawn_guardian_dreadnought }
 					if = {
 						limit = {
 							OR = {
-								has_global_flag = ehof_can_spawn_guardian_dragon
-								has_global_flag = ehof_can_spawn_guardian_sphere
-								has_global_flag = ehof_can_spawn_guardian_wraith
-								has_global_flag = ehof_can_spawn_guardian_horror
-								has_global_flag = ehof_can_spawn_guardian_fortress
-								has_global_flag = ehof_can_spawn_guardian_stellarite
-								has_global_flag = ehof_can_spawn_guardian_dreadnought
+								AND = {
+									has_global_flag = ehof_can_spawn_guardian_dragon
+									NOT = { has_global_flag = leviathan_slain_ether_dragon }
+								}
+								AND = {
+									has_global_flag = ehof_can_spawn_guardian_sphere
+									NOT = { has_global_flag = leviathan_slain_sphere }
+								}
+								AND = {
+									has_global_flag = ehof_can_spawn_guardian_wraith
+									NOT = { has_global_flag = leviathan_slain_wraith }
+								}
+								AND = {
+									has_global_flag = ehof_can_spawn_guardian_horror
+									NOT = { has_global_flag = leviathan_slain_horror }
+								}
+								AND = {
+									has_global_flag = ehof_can_spawn_guardian_fortress
+									NOT = { has_global_flag = leviathan_slain_fortress }
+								}
+								AND = {
+									has_global_flag = ehof_can_spawn_guardian_stellarite
+									NOT = { has_global_flag = leviathan_slain_stellarite }
+								}
+								AND = {
+									has_global_flag = ehof_can_spawn_guardian_dreadnought
+									NOT = { has_global_flag = leviathan_slain_dreadnought }
+								}
 							}
 						}
 						random_list = {
