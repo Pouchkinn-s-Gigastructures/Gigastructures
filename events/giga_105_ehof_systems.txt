@@ -721,6 +721,7 @@ country_event = {
 									3  = { spawn_system = { min_distance >= 25 max_distance <= 30 hyperlane = no initializer = "trinary_init_02" } }
 									2  = { spawn_system = { min_distance >= 25 max_distance <= 30 hyperlane = no initializer = "asteroid_init_01" } }
 									2  = { spawn_system = { min_distance >= 25 max_distance <= 30 hyperlane = no initializer = "special_init_01" } }
+									2  = { spawn_system = { min_distance >= 25 max_distance <= 30 hyperlane = no initializer = "special_init_02" } }	# Primitives
 									2  = { spawn_system = { min_distance >= 25 max_distance <= 30 hyperlane = no initializer = "special_init_08" } }
 
 									# Real Space
@@ -914,7 +915,29 @@ country_event = {
 
 				# Reality Code
 				if = {
-					limit = { root = { has_country_flag = ehof_spawn_reality_code } }
+					limit = {
+						root = { has_country_flag = ehof_spawn_reality_code }
+						OR = {
+							root = { has_country_flag = ehof_code_star_world }
+							AND = {
+								root = {
+									OR = {
+										has_country_flag = ehof_code_toxic_world
+										has_country_flag = ehof_code_broken_world
+										has_country_flag = ehof_code_frozen_world
+										has_country_flag = ehof_code_molten_world
+										has_country_flag = ehof_code_gas_giant_world
+									}
+								}
+								any_system_planet = {
+									is_asteroid = no
+									is_star = no
+									has_anomaly = no
+									NOT = { exists = archaeological_site }
+								}
+							}
+						}
+					}
 					if = {
 						limit = { root = { has_country_flag = ehof_code_toxic_world } }
 						random_system_planet = {
@@ -1128,10 +1151,8 @@ country_event = {
 
 				# Change planet classes
 				every_system_planet = {
-					if = {
-						limit = { is_star = no }
-						change_pc = pc_ehof_planet
-					}
+					limit = { is_star = no }
+					change_pc = pc_ehof_planet
 				}
 
 				if = {		limit = { NOT = { exists = event_target:ehof_compound_system_1  } } set_star_flag = ehof_compound_system_1  save_global_event_target_as = ehof_compound_system_1 }
@@ -1271,6 +1292,65 @@ country_event = {
 	}
 }
 
+# on_fleet_destroyed_victim (check if leviathan has been defeated)
+# This = owner of fleet 1 (destroyed)
+# From = owner of fleet 2 (combatant)
+# FromFrom = fleet 1
+# FromFromFrom = fleet 2
+country_event = {
+	id = ehof_systems.008
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		from = {
+			OR = {
+				is_country_type = guardian_dragon
+				is_country_type = guardian_sphere
+				is_country_type = guardian_wraith
+				is_country_type = guardian_horror
+				is_country_type = guardian_fortress
+				is_country_type = guardian_stellarite
+				is_country_type = guardian_dreadnought
+			}
+		}
+	}
+
+	immediate = {
+		from = { save_event_target_as = ehof_check_leviathan_death }
+		country_event = { id = ehof_systems.009 days = 2 }
+	}
+}
+
+country_event = {
+	id = ehof_systems.009
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = event_target:ehof_check_leviathan_death
+		event_target:ehof_check_leviathan_death = { num_fleets < 1 }
+	}
+
+	immediate = {
+		event_target:ehof_check_leviathan_death = {
+			if = {
+				limit = {
+					is_country_type = guardian_dragon
+					NOT = { has_country_flag = rubricator_dragon_country }
+				}
+				set_global_flag = leviathan_slain_ether_dragon
+			}
+			else_if = { limit = { is_country_type = guardian_sphere }		set_global_flag = leviathan_slain_sphere }
+			else_if = { limit = { is_country_type = guardian_wraith }		set_global_flag = leviathan_slain_wraith }
+			else_if = { limit = { is_country_type = guardian_horror }		set_global_flag = leviathan_slain_horror }
+			else_if = { limit = { is_country_type = guardian_fortress }		set_global_flag = leviathan_slain_fortress }
+			else_if = { limit = { is_country_type = guardian_stellarite }	set_global_flag = leviathan_slain_stellarite }
+			else_if = { limit = { is_country_type = guardian_dreadnought }	set_global_flag = leviathan_slain_dreadnought }
+		}
+	}
+}
+
 # Generate Leviathans
 country_event = {
 	id = ehof_systems.003
@@ -1283,6 +1363,15 @@ country_event = {
 		has_leviathans = yes
 		is_ai = no
 		NOT = { has_country_flag = ehof_recently_spawned_guardian }
+		NAND = {
+			has_global_flag = leviathan_slain_dreadnought
+			has_global_flag = leviathan_slain_ether_dragon
+			has_global_flag = leviathan_slain_fortress
+			has_global_flag = leviathan_slain_horror
+			has_global_flag = leviathan_slain_sphere
+			has_global_flag = leviathan_slain_stellarite
+			has_global_flag = leviathan_slain_wraith
+		}
 	}
 
 	immediate = {
@@ -1296,23 +1385,44 @@ country_event = {
 						compound_cluster = no
 					}
 					# Guardians
-					if = { limit = { any_country = { is_country_type = guardian_dragon } }			remove_global_flag = ehof_can_spawn_guardian_dragon }			else = { set_global_flag = ehof_can_spawn_guardian_dragon }
-					if = { limit = { any_country = { is_country_type = guardian_sphere } }			remove_global_flag = ehof_can_spawn_guardian_sphere }			else = { set_global_flag = ehof_can_spawn_guardian_sphere }
-					if = { limit = { any_country = { is_country_type = guardian_wraith } }			remove_global_flag = ehof_can_spawn_guardian_wraith }			else = { set_global_flag = ehof_can_spawn_guardian_wraith }
-					if = { limit = { any_country = { is_country_type = guardian_horror } }			remove_global_flag = ehof_can_spawn_guardian_horror }			else = { set_global_flag = ehof_can_spawn_guardian_horror }
-					if = { limit = { any_country = { is_country_type = guardian_fortress } }		remove_global_flag = ehof_can_spawn_guardian_fortress }			else = { set_global_flag = ehof_can_spawn_guardian_fortress }
-					if = { limit = { any_country = { is_country_type = guardian_stellarite } }		remove_global_flag = ehof_can_spawn_guardian_stellarite }		else = { set_global_flag = ehof_can_spawn_guardian_stellarite }
-					if = { limit = { any_country = { is_country_type = guardian_dreadnought } }		remove_global_flag = ehof_can_spawn_guardian_dreadnought }		else = { set_global_flag = ehof_can_spawn_guardian_dreadnought }
+					if = { limit = { any_country = { is_country_type = guardian_dragon NOT = { has_country_flag = rubricator_dragon_country } } }	remove_global_flag = ehof_can_spawn_guardian_dragon }			else = { set_global_flag = ehof_can_spawn_guardian_dragon }
+					if = { limit = { any_country = { is_country_type = guardian_sphere } }															remove_global_flag = ehof_can_spawn_guardian_sphere }			else = { set_global_flag = ehof_can_spawn_guardian_sphere }
+					if = { limit = { any_country = { is_country_type = guardian_wraith } }															remove_global_flag = ehof_can_spawn_guardian_wraith }			else = { set_global_flag = ehof_can_spawn_guardian_wraith }
+					if = { limit = { any_country = { is_country_type = guardian_horror } }															remove_global_flag = ehof_can_spawn_guardian_horror }			else = { set_global_flag = ehof_can_spawn_guardian_horror }
+					if = { limit = { any_country = { is_country_type = guardian_fortress } }														remove_global_flag = ehof_can_spawn_guardian_fortress }			else = { set_global_flag = ehof_can_spawn_guardian_fortress }
+					if = { limit = { any_country = { is_country_type = guardian_stellarite } }														remove_global_flag = ehof_can_spawn_guardian_stellarite }		else = { set_global_flag = ehof_can_spawn_guardian_stellarite }
+					if = { limit = { any_country = { is_country_type = guardian_dreadnought } }														remove_global_flag = ehof_can_spawn_guardian_dreadnought }		else = { set_global_flag = ehof_can_spawn_guardian_dreadnought }
 					if = {
 						limit = {
 							OR = {
-								has_global_flag = ehof_can_spawn_guardian_dragon
-								has_global_flag = ehof_can_spawn_guardian_sphere
-								has_global_flag = ehof_can_spawn_guardian_wraith
-								has_global_flag = ehof_can_spawn_guardian_horror
-								has_global_flag = ehof_can_spawn_guardian_fortress
-								has_global_flag = ehof_can_spawn_guardian_stellarite
-								has_global_flag = ehof_can_spawn_guardian_dreadnought
+								AND = {
+									has_global_flag = ehof_can_spawn_guardian_dragon
+									NOT = { has_global_flag = leviathan_slain_ether_dragon }
+								}
+								AND = {
+									has_global_flag = ehof_can_spawn_guardian_sphere
+									NOT = { has_global_flag = leviathan_slain_sphere }
+								}
+								AND = {
+									has_global_flag = ehof_can_spawn_guardian_wraith
+									NOT = { has_global_flag = leviathan_slain_wraith }
+								}
+								AND = {
+									has_global_flag = ehof_can_spawn_guardian_horror
+									NOT = { has_global_flag = leviathan_slain_horror }
+								}
+								AND = {
+									has_global_flag = ehof_can_spawn_guardian_fortress
+									NOT = { has_global_flag = leviathan_slain_fortress }
+								}
+								AND = {
+									has_global_flag = ehof_can_spawn_guardian_stellarite
+									NOT = { has_global_flag = leviathan_slain_stellarite }
+								}
+								AND = {
+									has_global_flag = ehof_can_spawn_guardian_dreadnought
+									NOT = { has_global_flag = leviathan_slain_dreadnought }
+								}
 							}
 						}
 						random_list = {
@@ -2231,6 +2341,281 @@ country_event = {
 							}
 							spawn_megastructure = { type = "yggdrasil_orchid_ruined" location = event_target:spawn_giga_ruined_yggdrasil_orchid }
 						}
+						############################################## Ringworld
+						5 = {
+							modifier = {
+								factor = 0
+								OR = {
+									is_trinary = yes
+									is_binary = yes
+									is_star_class = sc_black_hole
+									is_star_class = sc_ehof_black_hole
+									is_star_class = sc_neutron_star
+									is_star_class = sc_pulsar
+								}
+							}
+							modifier = {
+								factor = 0.1
+								root = {
+									count_owned_megastructure = {
+										limit = {
+											OR = {
+												is_megastructure_type = ring_world_ruined
+												is_megastructure_type = ring_world_restored
+												is_megastructure_type = ring_world_1
+												is_megastructure_type = ring_world_2
+												is_megastructure_type = ring_world_2_intermediate
+												is_megastructure_type = ring_world_3_intermediate
+												is_megastructure_type = ring_world_titanic_ruined
+												is_megastructure_type = ring_world_titanic_restored
+												is_megastructure_type = ringworld_titanic_0
+												is_megastructure_type = ringworld_titanic_1
+												is_megastructure_type = ringworld_titanic_2
+												is_megastructure_type = ring_world_behemoth_ruined
+												is_megastructure_type = ring_world_behemoth_restored
+												is_megastructure_type = ringworld_behemoth_0
+												is_megastructure_type = ringworld_behemoth_1
+												is_megastructure_type = ringworld_behemoth_2
+												is_megastructure_type = ring_world_gargantuan_ruined
+												is_megastructure_type = ring_world_gargantuan_restored
+												is_megastructure_type = ringworld_gargantuan_0
+												is_megastructure_type = ringworld_gargantuan_1
+												is_megastructure_type = ringworld_gargantuan_2
+											}
+										}
+										count > 0
+									}
+								}
+							}
+							set_star_flag = ruined_ring_system
+							star = {
+								set_planet_size = 25
+								trigger_megastructure_icon = yes
+								set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+								set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+								giga_field_debris = yes
+								if = {
+									limit = { has_distar = yes }
+									random = {
+										chance = 50
+										add_anomaly =  { category = DISTAR_CLONE_CAT }
+									}
+								}
+							}
+							giga_remove_system_planets = yes
+							giga_field_system_debris = yes
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 0		orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 90	orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 180	orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 270	orbit_distance = 45		location = solar_system }
+						}
+						############################################## Titanic Ringworld
+						5 = {
+							modifier = {
+								factor = 0
+								OR = {
+									is_trinary = yes
+									is_binary = yes
+									is_star_class = sc_black_hole
+									is_star_class = sc_ehof_black_hole
+									is_star_class = sc_neutron_star
+									is_star_class = sc_pulsar
+								}
+							}
+							modifier = {
+								factor = 0.1
+								root = {
+									count_owned_megastructure = {
+										limit = {
+											OR = {
+												is_megastructure_type = ring_world_titanic_ruined
+												is_megastructure_type = ring_world_titanic_restored
+												is_megastructure_type = ringworld_titanic_0
+												is_megastructure_type = ringworld_titanic_1
+												is_megastructure_type = ringworld_titanic_2
+												is_megastructure_type = ring_world_behemoth_ruined
+												is_megastructure_type = ring_world_behemoth_restored
+												is_megastructure_type = ringworld_behemoth_0
+												is_megastructure_type = ringworld_behemoth_1
+												is_megastructure_type = ringworld_behemoth_2
+												is_megastructure_type = ring_world_gargantuan_ruined
+												is_megastructure_type = ring_world_gargantuan_restored
+												is_megastructure_type = ringworld_gargantuan_0
+												is_megastructure_type = ringworld_gargantuan_1
+												is_megastructure_type = ringworld_gargantuan_2
+											}
+										}
+										count > 0
+									}
+								}
+							}
+							set_star_flag = ruined_ring_system
+							set_star_flag = ruined_titanic_ring_system
+							set_star_flag = ring_world_built_one
+							star = {
+								set_planet_size = 25
+								trigger_megastructure_icon = yes
+								set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+								set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+								giga_field_debris = yes
+								if = {
+									limit = { has_distar = yes }
+									random = {
+										chance = 50
+										add_anomaly =  { category = DISTAR_CLONE_CAT }
+									}
+								}
+							}
+							giga_remove_system_planets = yes
+							giga_field_system_debris = yes
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 0		orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 90	orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 180	orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 270	orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_titanic_ruined"		orbit_angle = 0		orbit_distance = 90		location = solar_system }
+							spawn_megastructure = { type = "ring_world_titanic_ruined"		orbit_angle = 90	orbit_distance = 90		location = solar_system }
+							spawn_megastructure = { type = "ring_world_titanic_ruined"		orbit_angle = 180	orbit_distance = 90		location = solar_system }
+							spawn_megastructure = { type = "ring_world_titanic_ruined"		orbit_angle = 270	orbit_distance = 90		location = solar_system }
+							while = { count = 4 giga_field_system_debris = yes }
+						}
+						############################################## Behemoth Ringworld
+						5 = {
+							modifier = {
+								factor = 0
+								OR = {
+									is_trinary = yes
+									is_binary = yes
+									is_star_class = sc_black_hole
+									is_star_class = sc_ehof_black_hole
+									is_star_class = sc_neutron_star
+									is_star_class = sc_pulsar
+								}
+							}
+							modifier = {
+								factor = 0.1
+								root = {
+									count_owned_megastructure = {
+										limit = {
+											OR = {
+												is_megastructure_type = ring_world_behemoth_ruined
+												is_megastructure_type = ring_world_behemoth_restored
+												is_megastructure_type = ringworld_behemoth_0
+												is_megastructure_type = ringworld_behemoth_1
+												is_megastructure_type = ringworld_behemoth_2
+												is_megastructure_type = ring_world_gargantuan_ruined
+												is_megastructure_type = ring_world_gargantuan_restored
+												is_megastructure_type = ringworld_gargantuan_0
+												is_megastructure_type = ringworld_gargantuan_1
+												is_megastructure_type = ringworld_gargantuan_2
+											}
+										}
+										count > 0
+									}
+								}
+							}
+							set_star_flag = ruined_ring_system
+							set_star_flag = ruined_behemoth_ring_system
+							set_star_flag = ring_world_built_one
+							set_star_flag = ring_world_built_two
+							star = {
+								set_planet_size = 25
+								trigger_megastructure_icon = yes
+								set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+								set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+								giga_field_debris = yes
+								if = {
+									limit = { has_distar = yes }
+									random = {
+										chance = 50
+										add_anomaly =  { category = DISTAR_CLONE_CAT }
+									}
+								}
+							}
+							giga_remove_system_planets = yes
+							giga_field_system_debris = yes
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 0		orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 90	orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 180	orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 270	orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_titanic_ruined"		orbit_angle = 0		orbit_distance = 90		location = solar_system }
+							spawn_megastructure = { type = "ring_world_titanic_ruined"		orbit_angle = 90	orbit_distance = 90		location = solar_system }
+							spawn_megastructure = { type = "ring_world_titanic_ruined"		orbit_angle = 180	orbit_distance = 90		location = solar_system }
+							spawn_megastructure = { type = "ring_world_titanic_ruined"		orbit_angle = 270	orbit_distance = 90		location = solar_system }
+							spawn_megastructure = { type = "ring_world_behemoth_ruined"		orbit_angle = 0		orbit_distance = 134	location = solar_system }
+							spawn_megastructure = { type = "ring_world_behemoth_ruined"		orbit_angle = 90	orbit_distance = 134	location = solar_system }
+							spawn_megastructure = { type = "ring_world_behemoth_ruined"		orbit_angle = 180	orbit_distance = 134	location = solar_system }
+							spawn_megastructure = { type = "ring_world_behemoth_ruined"		orbit_angle = 270	orbit_distance = 134	location = solar_system }
+							while = { count = 7 giga_field_system_debris = yes }
+						}
+						############################################## Gargantuan Ringworld
+						5 = {
+							modifier = {
+								factor = 0
+								OR = {
+									is_trinary = yes
+									is_binary = yes
+									is_star_class = sc_black_hole
+									is_star_class = sc_ehof_black_hole
+									is_star_class = sc_neutron_star
+									is_star_class = sc_pulsar
+								}
+							}
+							modifier = {
+								factor = 0.1
+								root = {
+									count_owned_megastructure = {
+										limit = {
+											OR = {
+												is_megastructure_type = ring_world_gargantuan_ruined
+												is_megastructure_type = ring_world_gargantuan_restored
+												is_megastructure_type = ringworld_gargantuan_0
+												is_megastructure_type = ringworld_gargantuan_1
+												is_megastructure_type = ringworld_gargantuan_2
+											}
+										}
+										count > 0
+									}
+								}
+							}
+							set_star_flag = ruined_ring_system
+							set_star_flag = ruined_gargantuan_ring_system
+							set_star_flag = ring_world_built_one
+							set_star_flag = ring_world_built_two
+							set_star_flag = ring_world_built_three
+							star = {
+								set_planet_size = 25
+								trigger_megastructure_icon = yes
+								set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+								set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+								giga_field_debris = yes
+								if = {
+									limit = { has_distar = yes }
+									random = {
+										chance = 50
+										add_anomaly =  { category = DISTAR_CLONE_CAT }
+									}
+								}
+							}
+							giga_remove_system_planets = yes
+							giga_field_system_debris = yes
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 0		orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 90	orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 180	orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_ruined"				orbit_angle = 270	orbit_distance = 45		location = solar_system }
+							spawn_megastructure = { type = "ring_world_titanic_ruined"		orbit_angle = 0		orbit_distance = 90		location = solar_system }
+							spawn_megastructure = { type = "ring_world_titanic_ruined"		orbit_angle = 90	orbit_distance = 90		location = solar_system }
+							spawn_megastructure = { type = "ring_world_titanic_ruined"		orbit_angle = 180	orbit_distance = 90		location = solar_system }
+							spawn_megastructure = { type = "ring_world_titanic_ruined"		orbit_angle = 270	orbit_distance = 90		location = solar_system }
+							spawn_megastructure = { type = "ring_world_behemoth_ruined"		orbit_angle = 0		orbit_distance = 134	location = solar_system }
+							spawn_megastructure = { type = "ring_world_behemoth_ruined"		orbit_angle = 90	orbit_distance = 134	location = solar_system }
+							spawn_megastructure = { type = "ring_world_behemoth_ruined"		orbit_angle = 180	orbit_distance = 134	location = solar_system }
+							spawn_megastructure = { type = "ring_world_behemoth_ruined"		orbit_angle = 270	orbit_distance = 134	location = solar_system }
+							spawn_megastructure = { type = "ring_world_gargantuan_ruined"	orbit_angle = 0		orbit_distance = 179	location = solar_system }
+							spawn_megastructure = { type = "ring_world_gargantuan_ruined"	orbit_angle = 90	orbit_distance = 179	location = solar_system }
+							spawn_megastructure = { type = "ring_world_gargantuan_ruined"	orbit_angle = 180	orbit_distance = 179	location = solar_system }
+							spawn_megastructure = { type = "ring_world_gargantuan_ruined"	orbit_angle = 270	orbit_distance = 179	location = solar_system }
+							while = { count = 10 giga_field_system_debris = yes }
+						}
 						######################################################################################################################################
 						######################################################################################################################################
 						######################################################################################################################################
@@ -2409,70 +2794,6 @@ country_event = {
 							giga_field_system_debris = yes
 							star = { trigger_megastructure_icon = yes }
 							spawn_megastructure = { type = "matter_decompressor_ruined" location = star }
-						}
-						############################################## Ringworld
-						5 = {
-							modifier = {
-								factor = 0
-								OR = {
-									is_trinary = yes
-									is_binary = yes
-									is_star_class = sc_black_hole
-									is_star_class = sc_ehof_black_hole
-									is_star_class = sc_neutron_star
-									is_star_class = sc_pulsar
-								}
-							}
-							modifier = {
-								factor = 0.1
-								root = {
-									count_owned_megastructure = {
-										limit = {
-											OR = {
-												is_megastructure_type = ring_world_ruined
-												is_megastructure_type = ring_world_restored
-												is_megastructure_type = ring_world_1
-												is_megastructure_type = ring_world_2
-												is_megastructure_type = ring_world_2_intermediate
-												is_megastructure_type = ring_world_3_intermediate
-											}
-										}
-										count > 0
-									}
-								}
-							}
-							set_star_flag = ruined_ring_system
-							every_system_planet = {
-								limit = { is_star = no }
-								remove_planet = yes
-							}
-							giga_field_system_debris = yes
-							star = { trigger_megastructure_icon = yes }
-
-							spawn_megastructure = {
-								type = "ring_world_ruined"
-								orbit_angle = 0
-								orbit_distance = 45
-								location = star
-							}
-							spawn_megastructure = {
-								type = "ring_world_ruined"
-								orbit_angle = 90
-								orbit_distance = 45
-								location = star
-							}
-							spawn_megastructure = {
-								type = "ring_world_ruined"
-								orbit_angle = 180
-								orbit_distance = 45
-								location = star
-							}
-							spawn_megastructure = {
-								type = "ring_world_ruined"
-								orbit_angle = 270
-								orbit_distance = 45
-								location = star
-							}
 						}
 						############################################## Science Nexus
 						5 = {
