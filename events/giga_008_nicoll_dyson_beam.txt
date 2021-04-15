@@ -36,7 +36,6 @@ country_event = {
 				solar_system = {
 					spawn_megastructure = {
 						type = nicoll_beam_ready
-						location = star
 						owner = root
 					}
 				}
@@ -3586,6 +3585,11 @@ country_event = {
 		room = root
 	}
 
+	immediate = {
+		remove_country_flag = giga_ndb_firing_system
+		remove_country_flag = giga_ndb_firing_planet
+	}
+
 	# System
 	option = {
 		name = "giga_ndb.006.a"
@@ -4083,12 +4087,19 @@ planet_event = {
 			limit = { event_target:ndb_owner = { has_country_flag = giga_ndb_firing_system } }
 			solar_system = {
 				every_neighbor_system = { remove_hyperlane = { from = prev to = this } }
+				set_star_class = sc_neutron_star
 				every_system_planet = {
 					if = {
 						limit = { is_star = no }
 						remove_planet = yes
 					}
-					else = { change_pc = pc_neutron_star }
+					else_if = { 
+						limit = {
+							is_star = yes
+							NOT = { is_planet_class = pc_black_hole }
+						}
+						change_pc = pc_neutron_star 
+					}
 				}
 				every_system_megastructure = {
 					limit = {
@@ -4106,23 +4117,35 @@ planet_event = {
 				set_asteroid_belt = { radius = 0 }
 				every_fleet_in_system = { destroy_fleet = this }
 				giga_remove_system_debris = yes
-
-				create_ambient_object = {
-					type = "penrose_sphere_explosion_object"
-					location = star
-					duration = 20
-
-					use_3d_location = yes
-
-					entity_offset = { min = 0 max = 0 }
-					entity_offset_angle = { min = 0 max = 0 }
-					entity_offset_height = { min = 0 max = 0 }
-
-					entity_scale_to_size = no
-					scale = 1
+				every_system_planet = {
+					limit = { is_star = yes NOT = { is_planet_class = pc_black_hole } }
+					create_ambient_object = {
+						type = "star_explosion"
+						play_animation_once = yes
+						location = this
+					}
+					last_created_ambient_object = {
+						set_location = {
+							target = prev
+							distance = 0
+							angle = random
+						}
+					}
 				}
 				create_ambient_object = { type = "nebula_L8_entity" location = star }
 				create_ambient_object = { type = "nebula_L10_entity" location = star }
+				create_ambient_object = {
+					type = "destroyed_system"
+					location = star
+				}
+				last_created_ambient_object = {
+					set_ambient_object_flag = destroyed_system_effect
+					set_location = {
+						target = prev
+						distance = 0
+						angle = random
+					}
+				}
 			}
 		}
 

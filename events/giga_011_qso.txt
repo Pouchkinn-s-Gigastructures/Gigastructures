@@ -233,7 +233,7 @@ country_event = {
 	option = {
 		name = "giga_qso.500.undesirable"
 		custom_tooltip = giga_qso.500.undesirable.tooltip
-		allow = { count_owned_pops = { limit = { has_citizenship_type = { country = root type = citizenship_purge } } count > 25 } }
+		allow = { count_owned_pop = { limit = { has_citizenship_type = { country = root type = citizenship_purge } } count > 25 } }
 		add_resource = { sr_magical_neutronium = 5 }
 		while = { count = 25 random_owned_pop = { limit = { has_citizenship_type = { country = root type = citizenship_purge } } kill_pop = yes } }
 		hidden_effect = { country_event = { id = giga_qso.501 } }
@@ -691,8 +691,8 @@ country_event = {
 		random_owned_megastructure = {
 			limit = { is_megastructure_type = quasi_stellar_gateway_on }
 			solar_system = {
-				spawn_megastructure = { type = "quasi_stellar_gateway_off"		location = solar_system owner = root }
-				spawn_megastructure = { type = "quasi_stellar_obliterator_5"	location = solar_system owner = root }
+				spawn_megastructure = { type = "quasi_stellar_gateway_off"		owner = root }
+				spawn_megastructure = { type = "quasi_stellar_obliterator_5"	owner = root }
 			}
 		}
 
@@ -899,7 +899,7 @@ country_event = { #target locked
 				limit = { is_megastructure_type = quasi_stellar_obliterator_5 }
 				remove_megastructure = this
 				solar_system = {
-					spawn_megastructure = { type = "quasi_stellar_obliterator_firing_1"	location = solar_system owner = root }
+					spawn_megastructure = { type = "quasi_stellar_obliterator_firing_1"	owner = root }
 					random_system_megastructure = {
 						limit = { is_megastructure_type = quasi_stellar_gateway_off }
 						upgrade_megastructure_to = quasi_stellar_gateway_on
@@ -1383,36 +1383,45 @@ country_event = {
 			}
 
 			star = {
+				solar_system = {
+					set_name = "[PREV.GetName] Void"
+					set_star_class = sc_empty_space
+					every_system_planet = {
+						limit = { is_star = yes }
+						create_ambient_object = {
+							type = "star_explosion"
+							play_animation_once = yes
+							location = this
+						}
+						last_created_ambient_object = {
+							set_location = {
+								target = prev
+								distance = 0
+								angle = random
+							}
+						}
+					} 
+				}
 				if = {
 					limit = { NOT = { is_planet_class = pc_core_quasar } }
 					clear_deposits = yes
 					change_pc = pc_giga_empty_space
 					set_name = "Empty Space"
 				}
-				create_ambient_object = {
-					type = penrose_sphere_explosion_object
-					location = this
-					duration = 20
-					use_3d_location = yes
-					entity_offset = { min = 0 max = 0 }
-					entity_offset_angle = { min = 0 max = 0 }
-					entity_offset_height = { min = 0 max = 0 }
-					entity_scale_to_size = no
-					scale = 2
-				}
-				create_ambient_object = {
-					type = penrose_sphere_explosion_object
-					location = this
-					duration = 20
-					use_3d_location = yes
-					entity_offset = { min = 0 max = 0 }
-					entity_offset_angle = { min = 0 max = 0 }
-					entity_offset_height = { min = 0 max = 0 }
-					entity_scale_to_size = no
-					scale = 2
-				}
 				create_ambient_object = { type = "nebula_L8_entity" location = this }
 				create_ambient_object = { type = "nebula_L10_entity" location = this }
+				create_ambient_object = {
+					type = "destroyed_system"
+					location = this
+				}
+				last_created_ambient_object = {
+					set_ambient_object_flag = destroyed_system_effect
+					set_location = {
+						target = prev
+						distance = 0
+						angle = random
+					}
+				}
 			}
 
 			every_system_megastructure = {
@@ -1747,7 +1756,6 @@ country_event = {
 			solar_system = {
 				spawn_megastructure = {
 					type = quasi_stellar_obliterator_firing_1
-					location = solar_system
 					owner = owner
 				}
 				random_system_megastructure = {
@@ -1771,7 +1779,6 @@ country_event = {
 			solar_system = {
 				spawn_megastructure = {
 					type = quasi_stellar_obliterator_firing_laser_1
-					location = solar_system
 					owner = owner
 				}
 			}
@@ -1791,7 +1798,6 @@ country_event = {
 			solar_system = {
 				spawn_megastructure = {
 					type = quasi_stellar_obliterator_firing_laser_2
-					location = solar_system
 					owner = owner
 				}
 			}
@@ -1811,7 +1817,6 @@ country_event = {
 			solar_system = {
 				spawn_megastructure = {
 					type = quasi_stellar_obliterator_firing_laser_3
-					location = solar_system
 					owner = owner
 				}
 			}
@@ -1831,7 +1836,6 @@ country_event = {
 			solar_system = {
 				spawn_megastructure = {
 					type = quasi_stellar_obliterator_firing_laser_4
-					location = solar_system
 					owner = owner
 				}
 			}
@@ -1851,7 +1855,6 @@ country_event = {
 			solar_system = {
 				spawn_megastructure = {
 					type = quasi_stellar_obliterator_firing_laser_5
-					location = solar_system
 					owner = owner
 				}
 			}
@@ -1871,7 +1874,6 @@ country_event = {
 			solar_system = {
 				spawn_megastructure = {
 					type = quasi_stellar_obliterator_firing_laser_6
-					location = solar_system
 					owner = owner
 				}
 			}
@@ -1890,7 +1892,6 @@ country_event = {
 			solar_system = {
 				spawn_megastructure = {
 					type = quasi_stellar_obliterator_firing_laser_big
-					location = solar_system
 					owner = owner
 				}
 			}
@@ -2582,7 +2583,7 @@ country_event = {
 							consumer_goods = 100000
 							unity = 1000000
 						}
-						every_planet = { surveyed = { set_surveyed = yes surveyor = root } }
+						every_galaxy_planet = { set_surveyed = { surveyed = yes surveyor = root } }
 						add_modifier = { modifier = "pangalactic_federation" days = -1 }
 						save_global_event_target_as = pangalactic_federation_country
 						establish_communications_no_message = root
