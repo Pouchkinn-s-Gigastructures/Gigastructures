@@ -224,6 +224,7 @@ ehof_pre_flight = {
 				owner = { is_same_value = root }
 			}
 			set_fleet_flag = ehof_ready_for_travel@root
+			set_event_locked = yes
 			auto_move_to_planet = {
 				target = event_target:ehof_move_to_wormhole
 				clear_auto_move_on_arrival = yes
@@ -254,6 +255,20 @@ ehof_pre_flight = {
 
 ehof_dest_01 = { # Wormhole Cohesive
 	set_variable = { which = ehof_last_target value = 1 }	# Redo button
+
+	if = {
+    	limit = {
+    		OR = {
+    			has_country_flag = ehof_activating
+    			has_country_flag = ehof_can_activate
+    		}
+    		NOT = { has_country_flag = ehof_destination_picked }
+    		# there are other menu pupups so delay the preflight, it is called later
+    		check_variable = { which = ehof_phase value <= 3 }
+    	}
+    	log = pre_flight_dest_01
+    	ehof_pre_flight = yes
+    }
 
 	if = {
 		limit = { check_variable = { which = ehof_phase value = 4 } }
@@ -297,8 +312,10 @@ ehof_dest_01 = { # Wormhole Cohesive
 				}
 			}
 			50 = {
-				country_event = { id = ehof_systems.000 }
-				last_created_system = { open_wormhole = yes }
+			    log = Cohesive
+				#country_event = { id = ehof_systems.000 }
+				set_country_flag = should_spawn_covesive_@root
+				#last_created_system = { open_wormhole = yes }
 			}
 		}
 	}
@@ -1074,6 +1091,7 @@ ehof_dest_40 = {
 }
 
 ehof_redo_button = {
+
 	ehof_pre_flight = yes
 	if = {		limit = { check_variable = { which = ehof_last_target value = 1  } } ehof_dest_01 = yes }
 	else_if = {	limit = { check_variable = { which = ehof_last_target value = 2  } } ehof_dest_02 = yes }
