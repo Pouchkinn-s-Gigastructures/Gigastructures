@@ -1,4 +1,4 @@
-open_wormhole = {
+open_wormhole = { # TODO :: remove
 	set_star_flag = ehof_destination_system@root
 	root = {
 		remove_country_flag = giga_ehof_target_sc_d
@@ -49,6 +49,7 @@ ehof_generate_pgate = {
 		limit = {
 			NOR = {
 				has_star_flag = empire_cluster
+				has_star_flag = ehof_has_pgate
 				closest_system = {
 					has_megastructure = ehof_pgate_unknown
 					distance = {
@@ -178,8 +179,6 @@ ehof_leave_station = {
 					has_country_flag = ehof_on_cooldown
 				}
 			}
-			ehof_set_to_idle = yes
-			remove_country_flag = ehof_activating
 			country_event = { id = ehof_megastructure.009 days = 2 } # Check EHOF state
 		}
 	}
@@ -189,6 +188,124 @@ ehof_leave_station = {
 ######################################################################## Travel Effects #######################################################################
 ###############################################################################################################################################################
 
+ehof_move_fleet_to_ehof = {
+
+    log = "move fleet to EHOF"
+
+    # save ehof system as event target
+    ehof_mega_system = yes
+
+    event_target:ehof_megastructure_system = {
+        # Move every fleet in system to wormhole
+        every_fleet_in_system = {
+        	limit = {
+        		can_use_ehof = yes
+        		exists = owner
+        		owner = { is_same_value = root.owner }
+        	}
+        	clear_orders = yes
+        	set_fleet_flag = ehof_ready_for_travel@root.owner
+        	auto_move_to_planet = {
+        		target = star
+        		clear_auto_move_on_arrival = yes
+        	}
+        }
+    }
+}
+
+ehof_start_lifecycle = {
+    save_event_target_as = ehof_destination_system
+
+    log = ehof_start_lifecycle
+
+    # Reset flags and variables
+    every_system = {
+    	limit = { has_star_flag = ehof_destination_system@root }
+    	remove_star_flag = ehof_destination_system@root
+    }
+
+    set_star_flag = ehof_destination_system@root
+
+    root.owner = {
+        remove_country_flag = giga_ehof_target_sc_d
+        remove_country_flag = giga_ehof_target_sc_f
+        remove_country_flag = giga_ehof_target_sc_g
+        remove_country_flag = giga_ehof_target_sc_k
+        remove_country_flag = giga_ehof_target_sc_m
+        remove_country_flag = giga_ehof_target_sc_brown
+        remove_country_flag = giga_ehof_target_sc_a
+        remove_country_flag = giga_ehof_target_sc_b
+        remove_country_flag = giga_ehof_target_sc_lbv_blue
+        remove_country_flag = giga_ehof_target_sc_o
+        remove_country_flag = giga_ehof_target_sc_p_purple
+        remove_country_flag = giga_ehof_target_sc_tt_red
+        remove_country_flag = giga_ehof_target_sc_w_azure
+        remove_country_flag = giga_ehof_target_sc_o_hyper
+        remove_country_flag = giga_ehof_target_sc_m_hyper
+        remove_country_flag = giga_ehof_target_sc_o_super
+        remove_country_flag = giga_ehof_target_sc_m_super
+        remove_country_flag = giga_ehof_target_sc_k_super
+        remove_country_flag = giga_ehof_target_sc_g_super
+        remove_country_flag = giga_ehof_target_sc_f_super
+        remove_country_flag = giga_ehof_target_sc_b_super
+        remove_country_flag = giga_ehof_target_sc_a_super
+        remove_country_flag = giga_ehof_target_sc_m_giant
+        remove_country_flag = giga_ehof_target_sc_k_giant
+        remove_country_flag = giga_ehof_target_sc_g_giant
+        remove_country_flag = giga_ehof_target_sc_pulsar
+        remove_country_flag = giga_ehof_target_sc_protostar
+        remove_country_flag = giga_ehof_target_sc_magnetar
+        remove_country_flag = giga_ehof_target_sc_neutron_star
+        remove_country_flag = giga_ehof_target_sc_collapsar
+        remove_country_flag = giga_ehof_target_sc_c_giant
+        remove_country_flag = giga_ehof_target_sc_s_giant
+        remove_country_flag = giga_ehof_target_sc_ae
+        remove_country_flag = giga_ehof_target_sc_black_hole
+        remove_country_flag = giga_ehof_target_sc_nova_1
+        remove_country_flag = giga_ehof_target_sc_quasar
+        remove_country_flag = giga_ehof_target_binary
+        remove_country_flag = giga_ehof_target_trinary
+        remove_country_flag = giga_ehof_target_cohesive
+
+        country_event = { id = ehof_megastructure.500 }
+    }
+}
+
+ehof_recount_ships = {
+
+     # save ehof system as event target
+     ehof_mega_system = yes
+
+     owner = { set_variable = { which = ehof_pre_flight_science value = 0 } }
+     owner = { set_variable = { which = ehof_pre_flight_constructor value = 0 } }
+     owner = { set_variable = { which = ehof_pre_flight_military value = 0 } }
+     owner = { set_variable = { which = ehof_pre_flight_colossus value = 0 } }
+     owner = { set_variable = { which = ehof_pre_flight_juggernaut value = 0 } }
+
+     event_target:ehof_megastructure_system = {
+         # Count every fleet in system to wormhole
+
+         log = "recount ships"
+
+         every_ship_in_system = {
+         	limit = {
+         		can_use_ehof = yes
+         		exists = owner
+         		owner = { is_same_value = root.owner }
+         	}
+
+            if = { limit = { is_ship_size = science }						owner = { change_variable = { which = ehof_pre_flight_science value = 1 } } }
+            if = { limit = { is_ship_size = constructor }					owner = { change_variable = { which = ehof_pre_flight_constructor value = 1 } } }
+            if = { limit = { is_ship_class = shipclass_military }			owner = { change_variable = { which = ehof_pre_flight_military value = 1 } } }
+            if = { limit = { is_ship_class = shipclass_transport }			owner = { change_variable = { which = ehof_pre_flight_military value = 1 } } }
+            if = { limit = { is_ship_class = shipclass_military_special }	owner = { change_variable = { which = ehof_pre_flight_colossus value = 1 } } }
+            if = { limit = { is_ship_size = juggernaut }					owner = { change_variable = { which = ehof_pre_flight_juggernaut value = 1 } } }
+
+         }
+     }
+}
+
+# TODO :: remove
 ehof_pre_flight = {
 	country_event = { id = ehof_megastructure.202 } # Set to Firing
 	remove_country_flag = ehof_report_quest
@@ -257,67 +374,17 @@ ehof_dest_01 = { # Wormhole Cohesive
 	set_variable = { which = ehof_last_target value = 1 }	# Redo button
 
 	if = {
-    	limit = {
-    		OR = {
-    			has_country_flag = ehof_activating
-    			has_country_flag = ehof_can_activate
-    		}
-    		NOT = { has_country_flag = ehof_destination_picked }
-    		# there are other menu pupups so delay the preflight, it is called later
-    		check_variable = { which = ehof_phase value <= 3 }
-    	}
-    	log = pre_flight_dest_01
-    	ehof_pre_flight = yes
-    }
-
-	if = {
 		limit = { check_variable = { which = ehof_phase value = 4 } }
 		set_country_flag = giga_ehof_target_cohesive
 		country_event = { id = ehof_travel.002 }
 	}
 	else = {
-		random_list = {
-			25 = {
-				modifier = { factor = 0 NOT = { has_global_flag = annihilator_system_spawned } }
-				modifier = {
-					factor = 0.2
-					any_system = {
-						annihilator_system = yes
-						empire_has_visited = yes
-					}
-				}
-				random_system = {
-					limit = { annihilator_system = yes }
-					open_wormhole = yes
-				}
-			}
-			25 = { # Trader hub
-				modifier = {
-					factor = 0
-					OR = {
-						any_owned_fleet = {
-							exists = solar_system
-							solar_system = { urmazin_system = yes }
-						}
-						has_country_flag = ehof_recently_visited_trader
-						has_global_flag = compound_invasion_ongoing
-						check_variable = { which = ehof_phase value < 3 }
-						NOT = { has_global_flag = ehof_traders_spawned }
-					}
-				}
-				set_timed_country_flag = { flag = ehof_recently_visited_trader days = @ehof_trader_visiting_days }
-				random_system = {
-					limit = { urmazin_capital = yes }
-					open_wormhole = yes
-				}
-			}
-			50 = {
-			    log = Cohesive
-				#country_event = { id = ehof_systems.000 }
-				set_country_flag = should_spawn_covesive_@root
-				#last_created_system = { open_wormhole = yes }
-			}
-		}
+
+	    set_country_flag = ehof_wormhole_to_cohesive
+
+		log = Cohesive
+		set_country_flag = should_spawn_covesive_@root
+		country_event = { id = ehof_megastructure.500 }
 	}
 }
 
@@ -332,7 +399,7 @@ ehof_dest_02 = {
 			urmazin_system = no
 			everchanging_system = no
 		}
-		open_wormhole = yes
+		ehof_start_lifecycle = yes
 	}
 }
 
@@ -350,7 +417,7 @@ ehof_dest_03 = {
 				cohesive_system = no
 				is_binary = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -369,8 +436,8 @@ ehof_dest_04 = {
 				cohesive_system = no
 				is_trinary = yes
 			}
-			open_wormhole = yes
-		}
+			ehof_start_lifecycle = yes
+        }
 	}
 }
 
@@ -388,7 +455,7 @@ ehof_dest_05 = {
 				cohesive_system = no
 				is_star_class_sc_f = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -407,7 +474,7 @@ ehof_dest_06 = {
 				cohesive_system = no
 				is_star_class_sc_g = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -426,7 +493,7 @@ ehof_dest_07 = {
 				cohesive_system = no
 				is_star_class_sc_k = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -445,7 +512,7 @@ ehof_dest_08 = {
 				cohesive_system = no
 				is_star_class_sc_m = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -464,7 +531,7 @@ ehof_dest_09 = {
 				cohesive_system = no
 				is_star_class_sc_d = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -487,7 +554,7 @@ ehof_dest_10 = {
 					is_star_class_sc_y = yes
 				}
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -506,7 +573,7 @@ ehof_dest_11 = {
 				cohesive_system = no
 				is_star_class_sc_b = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -525,7 +592,7 @@ ehof_dest_12 = {
 				cohesive_system = no
 				is_star_class_sc_a = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -544,7 +611,7 @@ ehof_dest_13 = {
 				cohesive_system = no
 				is_star_class_sc_o = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -567,7 +634,7 @@ ehof_dest_14 = {
 					is_star_class_sc_p_green = yes
 				}
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -590,7 +657,7 @@ ehof_dest_15 = {
 					is_star_class_sc_lbv_red = yes
 				}
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -613,7 +680,7 @@ ehof_dest_16 = {
 					is_star_class_sc_tt_white = yes
 				}
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -637,7 +704,7 @@ ehof_dest_17 = {
 					is_star_class_sc_w_red = yes
 				}
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -656,7 +723,7 @@ ehof_dest_18 = {
 				cohesive_system = no
 				is_star_class_sc_m_giant = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -675,7 +742,7 @@ ehof_dest_19 = {
 				cohesive_system = no
 				is_star_class_sc_k_giant = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -694,7 +761,7 @@ ehof_dest_20 = {
 				cohesive_system = no
 				is_star_class_sc_g_giant = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -713,7 +780,7 @@ ehof_dest_21 = {
 				cohesive_system = no
 				is_star_class_sc_o_super = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -732,7 +799,7 @@ ehof_dest_22 = {
 				cohesive_system = no
 				is_star_class_sc_b_super = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -751,7 +818,7 @@ ehof_dest_23 = {
 				cohesive_system = no
 				is_star_class_sc_a_super = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -770,7 +837,7 @@ ehof_dest_24 = {
 				cohesive_system = no
 				is_star_class_sc_f_super = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -789,7 +856,7 @@ ehof_dest_25 = {
 				cohesive_system = no
 				is_star_class_sc_g_super = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -808,7 +875,7 @@ ehof_dest_26 = {
 				cohesive_system = no
 				is_star_class_sc_k_super = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -827,7 +894,7 @@ ehof_dest_27 = {
 				cohesive_system = no
 				is_star_class_sc_m_super = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -846,7 +913,7 @@ ehof_dest_28 = {
 				cohesive_system = no
 				is_star_class_sc_o_hyper = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -865,7 +932,7 @@ ehof_dest_29 = {
 				cohesive_system = no
 				is_star_class_sc_m_hyper = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -884,7 +951,7 @@ ehof_dest_30 = {
 				cohesive_system = no
 				is_star_class_sc_neutron_star = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -903,7 +970,7 @@ ehof_dest_31 = {
 				cohesive_system = no
 				is_star_class_sc_pulsar = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -926,7 +993,7 @@ ehof_dest_32 = {
 					is_star_class = sc_ehof_black_hole
 				}
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -949,7 +1016,7 @@ ehof_dest_33 = {
 					is_star_class_sc_microquasar_2 = yes
 				}
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -968,7 +1035,7 @@ ehof_dest_34 = {
 				cohesive_system = no
 				is_star_class_sc_collapsar = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -987,7 +1054,7 @@ ehof_dest_35 = {
 				cohesive_system = no
 				is_star_class_sc_magnetar = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -1006,7 +1073,7 @@ ehof_dest_36 = {
 				cohesive_system = no
 				is_star_class_sc_protostar = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -1025,7 +1092,7 @@ ehof_dest_37 = {
 				cohesive_system = no
 				is_star_class_sc_ae = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -1044,7 +1111,7 @@ ehof_dest_38 = {
 				cohesive_system = no
 				is_star_class_sc_s_giant = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -1063,7 +1130,7 @@ ehof_dest_39 = {
 				cohesive_system = no
 				is_star_class_sc_c_giant = yes
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
@@ -1085,14 +1152,15 @@ ehof_dest_40 = {
 					is_star_class_sc_nova_2 = yes
 				}
 			}
-			open_wormhole = yes
+			ehof_start_lifecycle = yes
 		}
 	}
 }
 
 ehof_redo_button = {
 
-	ehof_pre_flight = yes
+	ehof_move_fleet_to_ehof = yes
+
 	if = {		limit = { check_variable = { which = ehof_last_target value = 1  } } ehof_dest_01 = yes }
 	else_if = {	limit = { check_variable = { which = ehof_last_target value = 2  } } ehof_dest_02 = yes }
 	else_if = {	limit = { check_variable = { which = ehof_last_target value = 3  } } ehof_dest_03 = yes }
@@ -1138,6 +1206,15 @@ ehof_redo_button = {
 ###############################################################################################################################################################
 ######################################################################## Change States ########################################################################
 ###############################################################################################################################################################
+remove_state_flags = {
+    remove_country_flag = ehof_can_activate
+    remove_country_flag = ehof_can_deactivate
+    remove_country_flag = ehof_activating
+    remove_country_flag = ehof_activated
+    remove_country_flag = ehof_on_cooldown
+    remove_country_flag = ehof_is_upgrading
+}
+
 remove_ehof_flags = {
 	remove_megastructure_flag = ehof_wormhole_node
 	remove_megastructure_flag = ehof_phase_00

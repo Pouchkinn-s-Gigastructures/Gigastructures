@@ -20,8 +20,52 @@ country_event = {
 	}
 
 	immediate = {
+
 	    remove_country_flag = should_spawn_covesive_@root
-	    country_event = { id = ehof_systems.000 }
+
+	    random_list = {
+        	25 = {
+        		modifier = { factor = 0 NOT = { has_global_flag = annihilator_system_spawned } }
+        		modifier = {
+        			factor = 0.2
+        			any_system = {
+        				annihilator_system = yes
+        				empire_has_visited = yes
+        			}
+        		}
+        		random_system = {
+        			limit = { annihilator_system = yes }
+        			ehof_start_lifecycle = yes
+        		}
+        	}
+        	25 = { # Trader hub
+        		modifier = {
+        			factor = 0
+        			OR = {
+        				any_owned_fleet = {
+        					exists = solar_system
+        					solar_system = { urmazin_system = yes }
+        				}
+        				has_country_flag = ehof_recently_visited_trader
+        				has_global_flag = compound_invasion_ongoing
+        				check_variable = { which = ehof_phase value < 3 }
+        				NOT = { has_global_flag = ehof_traders_spawned }
+        			}
+        		}
+        		set_timed_country_flag = { flag = ehof_recently_visited_trader days = @ehof_trader_visiting_days }
+        		random_system = {
+        			limit = { urmazin_capital = yes }
+        			ehof_start_lifecycle = yes
+        		}
+        	}
+        	50 = {
+        	    country_event = { id = ehof_systems.000 }
+        	}
+        }
+
+	    # save ehof home system
+        ehof_mega_system = yes
+	    country_event = { id = ehof_megastructure.501 }
 	}
 }
 
@@ -1158,7 +1202,17 @@ country_event = {
 		}
 		country_event = { id = ehof_systems.005 }	# Generate System Color
 
-		last_created_system = { open_wormhole = yes }
+		last_created_system = {
+		    save_event_target_as = ehof_destination_system
+
+		    # Reset flags and variables
+            every_system = {
+            	limit = { has_star_flag = ehof_destination_system@root }
+            	remove_star_flag = ehof_destination_system@root
+            }
+
+            set_star_flag = ehof_destination_system@root
+		}
 	}
 }
 
