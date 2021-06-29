@@ -74,6 +74,7 @@ fleet_event = {
 			if = { limit = { is_ship_size = science }						owner = { change_variable = { which = ehof_pre_flight_science value = 1 } } }
 			if = { limit = { is_ship_size = constructor }					owner = { change_variable = { which = ehof_pre_flight_constructor value = 1 } } }
 			if = { limit = { is_ship_class = shipclass_military }			owner = { change_variable = { which = ehof_pre_flight_military value = 1 } } }
+			if = { limit = { is_ship_class = shipclass_transport }			owner = { change_variable = { which = ehof_pre_flight_military value = 1 } } }
 			if = { limit = { is_ship_class = shipclass_military_special }	owner = { change_variable = { which = ehof_pre_flight_colossus value = 1 } } }
 			if = { limit = { is_ship_size = juggernaut }					owner = { change_variable = { which = ehof_pre_flight_juggernaut value = 1 } } }
 		}
@@ -102,7 +103,7 @@ fleet_event = {
 }
 
 # Fleets leave EHOF system [on_entering_system_fleet]
-fleet_event = {
+fleet_event = { # TODO :: make check performant
     id = ehof_megastructure.015
     hide_window = yes
 	is_triggered_only = yes
@@ -120,6 +121,7 @@ fleet_event = {
 			if = { limit = { is_ship_size = science }						owner = { subtract_variable = { which = ehof_pre_flight_science value = 1 } } }
 			if = { limit = { is_ship_size = constructor }					owner = { subtract_variable = { which = ehof_pre_flight_constructor value = 1 } } }
 			if = { limit = { is_ship_class = shipclass_military }			owner = { subtract_variable = { which = ehof_pre_flight_military value = 1 } } }
+			if = { limit = { is_ship_class = shipclass_transport }			owner = { subtract_variable = { which = ehof_pre_flight_military value = 1 } } }
 			if = { limit = { is_ship_class = shipclass_military_special }	owner = { subtract_variable = { which = ehof_pre_flight_colossus value = 1 } } }
 			if = { limit = { is_ship_size = juggernaut }					owner = { subtract_variable = { which = ehof_pre_flight_juggernaut value = 1 } } }
 		}
@@ -138,6 +140,7 @@ fleet_event = {
 	}
 }
 
+# if player lost EHOF System
 country_event = {
 	id = ehof_megastructure.006
 	hide_window = yes
@@ -145,13 +148,44 @@ country_event = {
 	trigger = { from = { any_system_megastructure = { is_any_ehof = yes } } }
 
 	immediate = {
-		from = { remove_star_flag = ehof_megastructure_system@root }
+	    log = system_changed_owner
 
-		# Previous owner of system
-		country_event = { id = ehof_megastructure.003 }
+        # switch star flags
+		from = {
+		        remove_star_flag = ehof_megastructure_system@root
+		        set_star_flag = ehof_megastructure_system@fromfrom
+		}
 
-		# New owner of system
-		fromfrom = { country_event = { id = ehof_megastructure.003 } }
+        # New owner of system
+        fromfrom = {
+
+            # set variable for ui
+            set_variable = { which = ehof_phase value = { scope = prevprev variable = ehof_phase } }
+
+            # give new player the ehof tech
+            if = {
+                limit = { check_variable = { which = ehof_phase value = 1 } }
+                give_technology = { tech = "tech_ehof_phase_01" message = yes }
+                log = tech1
+            } else_if = {
+                limit = { check_variable = { which = ehof_phase value = 2 } }
+                give_technology = { tech = "tech_ehof_phase_02" message = yes }
+                log = tech2
+            } else_if = {
+                limit = { check_variable = { which = ehof_phase value = 3 } }
+                give_technology = { tech = "tech_ehof_phase_03" message = yes }
+                log = tech3
+            } else_if = {
+                limit = { check_variable = { which = ehof_phase value = 4 } }
+                give_technology = { tech = "tech_ehof_phase_04" message = yes }
+                log = tech4
+            }
+
+            country_event = { id = ehof_megastructure.201 days = 10}
+        }
+
+		# remove ui for Previous owner of system
+	    set_variable = { which = ehof_phase value = 0 }
 	}
 }
 
@@ -792,7 +826,7 @@ country_event = {
 	}
 
 	immediate = {
-		set_country_flag = ehof_alerted_recently
+	    ehof_recount_ships = yes
 		set_country_flag = ehof_can_activate
 		if = {
 			limit = {
@@ -829,12 +863,11 @@ country_event = {
 
 	immediate = {
 		remove_country_flag = ehof_can_activate
-		remove_country_flag = ehof_alerted_recently
 	}
 }
 
 # Is EHOF Active too long?
-country_event = {
+country_event = { # TODO :: remove
 	id = ehof_megastructure.011
 	hide_window = yes
 	is_triggered_only = yes
@@ -970,6 +1003,157 @@ country_event = {
 }
 
 ########################################################################################################
+########################################## EHOF Life Cycle #############################################
+########################################################################################################
+
+# Firing State
+country_event = {
+	id = ehof_megastructure.500
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+	    log = fire_state
+
+	    remove_country_flag = ehof_report_quest
+        remove_country_flag = ehof_report_standard
+        remove_country_flag = ehof_report_cohesive
+        remove_country_flag = ehof_report_bountiful
+        remove_country_flag = ehof_travel_diplomacy
+
+	    # reset all state flags
+	    remove_state_flags = yes
+
+        # set new state
+		set_country_flag = ehof_activating
+        ehof_set_to_activating = yes
+
+        # save megastructure system
+        ehof_mega_system = yes
+
+        if = {
+            # if user selected system to open wormhole
+            limit = {
+                not = { has_country_flag = ehof_wormhole_to_cohesive }
+            }
+
+            country_event = { id = ehof_megastructure.501 days = 5}
+
+        } else = {
+            # set flag to generate system on monthly pulse
+            set_country_flag = should_spawn_covesive_@root
+
+            # removes flag from travel event that defined the next system as cohecive
+            remove_country_flag = ehof_wormhole_to_cohesive
+
+            # remove flag from travel event that allowed player to open travel event .003
+            remove_country_flag = giga_ehof_target_cohesive
+
+            # lock fleet
+            event_target:ehof_megastructure_system = {
+                every_fleet_in_system = {
+                	limit = {
+                		has_fleet_flag = ehof_ready_for_travel@root
+                	}
+                	set_event_locked = yes
+                }
+            }
+        }
+	}
+}
+
+# Activate State
+country_event = {
+	id = ehof_megastructure.501
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+	    log = active
+
+	    # reset all state flags
+	    remove_state_flags = yes
+
+        # set new state
+		set_country_flag = ehof_activated
+        ehof_set_to_activated = yes
+
+        # open wormhole
+        event_target:ehof_destination_system = {
+            spawn_megastructure = {
+            	type = "ehof_megastructure_wormhole_destination"
+            	orbit_angle = @ehof_wormhole_angle
+            	orbit_distance = @ehof_wormhole_distance
+            	owner = root
+            	init_effect = {
+            		set_megastructure_flag = ehof_wormhole_nexus
+            		set_megastructure_flag = ehof_wormhole_opened_by_@root
+            	}
+            }
+        }
+
+        # spawn Traders
+        if = {
+        	limit = {
+        		NOR = {
+        			has_global_flag = ehof_traders_spawned
+        			has_global_flag = compound_invasion_ongoing
+        			check_variable = { which = ehof_phase value < 3 }
+        		}
+        	}
+        	random_list = {
+        		4 = { change_variable = { which = ehof_spawn_traders value = 1 } }
+        		1 = {
+        			modifier = { factor = 3 check_variable = { which = ehof_spawn_traders value >= 4 } }
+        			modifier = { factor = 4 check_variable = { which = ehof_spawn_traders value >= 8 } }
+        			modifier = { factor = 5 check_variable = { which = ehof_spawn_traders value >= 12 } }
+        			country_event = { id = ehof_mega_trader.100 }
+        		}
+        	}
+        }
+
+        #send fleets to target system
+        country_event = { id = ehof_megastructure.305 days = 4}
+
+        if = {
+            limit = { has_country_flag = ehof_permanent }
+            set_country_flag = ehof_can_deactivate
+        } else = {
+            country_event = { id = ehof_megastructure.3072 days = 30 }
+        }
+	}
+}
+
+# cooldown state
+country_event = {
+	id = ehof_megastructure.502
+	hide_window = yes
+	is_triggered_only = yes
+
+    immediate = {
+        log = cooldown
+
+        # reset all state flags
+        remove_state_flags = yes
+
+        set_country_flag = ehof_on_cooldown
+        ehof_set_to_idle = yes
+
+        # set back to can activate
+        if = {		limit = { check_variable = { which = ehof_phase value = 1 } } country_event = { id = ehof_megastructure.201 days = @ehof_phase1_cooldown_days } }
+        else_if = {	limit = { check_variable = { which = ehof_phase value = 2 } } country_event = { id = ehof_megastructure.201 days = @ehof_phase2_cooldown_days } }
+        else_if = {	limit = { check_variable = { which = ehof_phase value = 3 } } country_event = { id = ehof_megastructure.201 days = @ehof_phase3_cooldown_days } }
+        else_if = {	limit = { check_variable = { which = ehof_phase value = 4 } } country_event = { id = ehof_megastructure.201 days = @ehof_phase4_cooldown_days } }
+
+        # set cooldown variable for tooltip
+        if = {		limit = { check_variable = { which = ehof_phase value = 1 } } set_variable = { which = ehof_cooldown_days value = @ehof_phase1_cooldown_days } }
+        else_if = {	limit = { check_variable = { which = ehof_phase value = 2 } } set_variable = { which = ehof_cooldown_days value = @ehof_phase2_cooldown_days } }
+        else_if = {	limit = { check_variable = { which = ehof_phase value = 3 } } set_variable = { which = ehof_cooldown_days value = @ehof_phase3_cooldown_days } }
+        else_if = {	limit = { check_variable = { which = ehof_phase value = 4 } } set_variable = { which = ehof_cooldown_days value = @ehof_phase4_cooldown_days } }
+    }
+}
+
+########################################################################################################
 ########################################## EHOF State Changes ##########################################
 ########################################################################################################
 # Set to Idle
@@ -981,13 +1165,17 @@ country_event = {
 	trigger = { any_system_within_border = { has_star_flag = ehof_megastructure_system@root } }
 
 	immediate = {
+	    log = idle
+
+	    ehof_recount_ships = yes
+
 		remove_country_flag = ehof_on_cooldown
 		ehof_set_to_idle = yes
 		country_event = { id = ehof_megastructure.009 days = 2 } # Check EHOF state
 	}
 }
 
-# Set to Firing
+# Set to Firing # TODO :: remove
 country_event = {
 	id = ehof_megastructure.202
 	hide_window = yes
@@ -1001,7 +1189,7 @@ country_event = {
 	}
 }
 
-# Set to Active
+# Set to Active TODO :: remove
 country_event = {
 	id = ehof_megastructure.203
 	hide_window = yes
@@ -1020,7 +1208,7 @@ country_event = {
 }
 
 # Set to Cooldown
-country_event = {
+country_event = { # TODO :: remove
 	id = ehof_megastructure.205
 	hide_window = yes
 	is_triggered_only = yes
@@ -1042,6 +1230,7 @@ country_event = {
 ########################################################################################################
 ########################################## Open the wormholes ##########################################
 ########################################################################################################
+# TODO :: remove
 country_event = {
 	id = ehof_megastructure.304
 	hide_window = yes
@@ -1077,10 +1266,19 @@ country_event = {
 
 	immediate = {
 	    log = send_fleets_through_wormhole
-		random_system_within_border = {
+
+	    # count fleets to sent through wormhole
+        set_variable = { which = ehof_travel_fleet_count value = 0 }
+
+        # save megastructure system
+        ehof_mega_system = yes
+		event_target:ehof_megastructure_system = {
 			limit = { has_an_active_ehof = yes }
 			every_fleet_in_system = {
 				limit = { has_fleet_flag = ehof_ready_for_travel@root }
+
+				# add one to fleetcount to delay wormhole closing in close wormhole
+				owner = { change_variable = { which = ehof_travel_fleet_count value = 1 } }
 
 				every_owned_ship = {
 					limit = { has_ship_flag = ehof_already_counted }
@@ -1088,21 +1286,19 @@ country_event = {
 					if = { limit = { is_ship_size = science }						owner = { subtract_variable = { which = ehof_pre_flight_science value = 1 } } }
 					if = { limit = { is_ship_size = constructor }					owner = { subtract_variable = { which = ehof_pre_flight_constructor value = 1 } } }
 					if = { limit = { is_ship_class = shipclass_military }			owner = { subtract_variable = { which = ehof_pre_flight_military value = 1 } } }
+					if = { limit = { is_ship_class = shipclass_transport }			owner = { subtract_variable = { which = ehof_pre_flight_military value = 1 } } }
 					if = { limit = { is_ship_class = shipclass_military_special }	owner = { subtract_variable = { which = ehof_pre_flight_colossus value = 1 } } }
 					if = { limit = { is_ship_size = juggernaut }					owner = { subtract_variable = { which = ehof_pre_flight_juggernaut value = 1 } } }
 				}
 
 				set_fleet_stance = passive
 				remove_auto_move_target = yes
-				ehof_dest_system = yes
-				event_target:ehof_destination_system.star = {
-					save_event_target_as = ehof_move_to_destination
-				}
+
+				set_event_locked = no
 				auto_move_to_planet = {
-					target = event_target:ehof_move_to_destination
+					target = event_target:ehof_destination_system.star
 					clear_auto_move_on_arrival = yes
 				}
-				set_event_locked = no
 			}
 		}
 	}
@@ -1136,41 +1332,44 @@ fleet_event = {
 		has_fleet_flag = ehof_ready_for_travel@root.owner
 		exists = owner
 		owner = {
-			NOR = {
-				has_country_flag = ehof_already_shown_success
-				is_ai = yes
-			}
+			is_ai = no
 		}
 	}
 
 	immediate = {
-		log = "Travel report triggered for [from.GetName]"
 		remove_fleet_flag = ehof_ready_for_travel@root.owner
+
+        # count fleets that have passed through wormhole
+		owner = { subtract_variable = { which = ehof_travel_fleet_count value = 1 }}
 
 		if = {
 			limit = {
 				exists = from
-				from = {
-					has_star_flag = ehof_destination_system@root.owner
-					NOT = { has_star_flag = ehof_permanent_connection@root.owner }
-				}
 			}
 			owner = {
-				set_timed_country_flag = { flag = ehof_already_shown_success days = @ehof_short_cooldown }	# Stop double reporting.
 				log = "Travel report pass to ui"
-				country_event = { id = ehof_megastructure.309 days = 2 }									# Travel report
+				if = { limit = { not = { has_country_flag = ehof_already_shown_success }}
+				    log = "Travel report triggered for [from.GetName]"
+				    country_event = { id = ehof_megastructure.309 days = 2 }	# Travel report
+				    set_timed_country_flag = { flag = ehof_already_shown_success days = @ehof_short_cooldown }	# Stop double reporting.
+				}
+
 				if = {
+				    # if country has level 4 ehof and permanent wormhole don't close it
 					limit = {
 						check_variable = { which = ehof_phase value = 4 }
-						has_country_flag = ehof_permanent
+						root.owner = { has_country_flag = ehof_permanent }
 					}
+					# set ui deactivate button
 					set_country_flag = ehof_can_deactivate
-					root.from = { set_star_flag = ehof_permanent_connection@root.owner }
 				}
-				else = { country_event = { id =  ehof_megastructure.307 days = 2 } }
+				# else if all fleets have passed through -> close wormhole
+				else_if = {
+				    limit = { check_variable = { which = ehof_travel_fleet_count value = 0 } }
+				    country_event = { id =  ehof_megastructure.307 days = 2 }
+				}
 			}
 		}
-		else = { fleet_event = { id = ehof_megastructure.308 days = 2 } }	# Try again
 	}
 }
 
@@ -1183,7 +1382,8 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		country_event = { id = ehof_megastructure.205 } # Set to Cooldown
+	    #remove wormholes
+	    log = remove_wormholes
 		every_megastructure = {
 			limit = {
 				has_megastructure_flag = ehof_wormhole_nexus
@@ -1191,7 +1391,73 @@ country_event = {
 			}
 			remove_megastructure = this
 		}
+
+        # unlock all ships and remove autoMoveTarget
+		every_owned_fleet = {
+		    limit = { has_fleet_flag = ehof_ready_for_travel@root }
+		    remove_fleet_flag = ehof_ready_for_travel@root
+		    set_event_locked = no
+		    remove_auto_move_target = yes
+		}
+
+		# set to cooldown
+		country_event = { id = ehof_megastructure.502 }
 	}
+}
+
+# close non permanent wormhole after max 2 Month
+country_event = {
+	id = ehof_megastructure.3072
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = { not = { has_country_flag = ehof_permanent }}
+
+    immediate = {
+        log = check_to_close_wormhole
+
+        if = {
+            # if wormhole is still open set temp flag and check again in a month
+            limit = {
+                event_target:ehof_destination_system = {
+                    any_system_megastructure = {
+                       has_megastructure_flag = ehof_wormhole_nexus
+                       has_megastructure_flag = ehof_wormhole_opened_by_@root
+                    }
+                }
+                not = { has_country_flag = wormhole_should_close@root }
+            }
+
+            set_country_flag = wormhole_should_close@root
+            country_event = { id = ehof_megastructure.3072 days = 30 }
+
+        } else_if = {
+            # if wormhole is there and flag was set close wormhole manually
+            limit = {
+                event_target:ehof_destination_system = {
+                    any_system_megastructure = {
+                       has_megastructure_flag = ehof_wormhole_nexus
+                       has_megastructure_flag = ehof_wormhole_opened_by_@root
+                    }
+                }
+                has_country_flag = wormhole_should_close@root
+            }
+            remove_country_flag = wormhole_should_close@root
+            log = close_event_1
+            country_event = { id = ehof_megastructure.307 }
+
+        } else_if = {
+            # if wormhole is gone but ehof still active
+            limit = { has_country_flag = ehof_activated }
+            remove_country_flag = wormhole_should_close@root
+            log = close_event_2
+            country_event = { id = ehof_megastructure.307 }
+
+        }else = {
+            # if wormhole was closed remove flag
+            remove_country_flag = wormhole_should_close@root
+        }
+    }
 }
 
 country_event = {
@@ -1202,7 +1468,10 @@ country_event = {
 	immediate = {
 	    if = {
 	        limit = {
+	            or = {
                 has_megastructure = ehof_megastructure_wormhole_destination
+	            any_megastructure = { has_megastructure_flag = ehof_wormhole_opened_by_@root }
+	            }
                 or = {
                 has_megastructure = ehof_megastructure_phase1_idle
                 has_megastructure = ehof_megastructure_phase2_idle
