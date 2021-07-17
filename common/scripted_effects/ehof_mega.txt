@@ -1,49 +1,3 @@
-open_wormhole = { # TODO :: remove
-	set_star_flag = ehof_destination_system@root
-	root = {
-		remove_country_flag = giga_ehof_target_sc_d
-		remove_country_flag = giga_ehof_target_sc_f
-		remove_country_flag = giga_ehof_target_sc_g
-		remove_country_flag = giga_ehof_target_sc_k
-		remove_country_flag = giga_ehof_target_sc_m
-		remove_country_flag = giga_ehof_target_sc_brown
-		remove_country_flag = giga_ehof_target_sc_a
-		remove_country_flag = giga_ehof_target_sc_b
-		remove_country_flag = giga_ehof_target_sc_lbv_blue
-		remove_country_flag = giga_ehof_target_sc_o
-		remove_country_flag = giga_ehof_target_sc_p_purple
-		remove_country_flag = giga_ehof_target_sc_tt_red
-		remove_country_flag = giga_ehof_target_sc_w_azure
-		remove_country_flag = giga_ehof_target_sc_o_hyper
-		remove_country_flag = giga_ehof_target_sc_m_hyper
-		remove_country_flag = giga_ehof_target_sc_o_super
-		remove_country_flag = giga_ehof_target_sc_m_super
-		remove_country_flag = giga_ehof_target_sc_k_super
-		remove_country_flag = giga_ehof_target_sc_g_super
-		remove_country_flag = giga_ehof_target_sc_f_super
-		remove_country_flag = giga_ehof_target_sc_b_super
-		remove_country_flag = giga_ehof_target_sc_a_super
-		remove_country_flag = giga_ehof_target_sc_m_giant
-		remove_country_flag = giga_ehof_target_sc_k_giant
-		remove_country_flag = giga_ehof_target_sc_g_giant
-		remove_country_flag = giga_ehof_target_sc_pulsar
-		remove_country_flag = giga_ehof_target_sc_protostar
-		remove_country_flag = giga_ehof_target_sc_magnetar
-		remove_country_flag = giga_ehof_target_sc_neutron_star
-		remove_country_flag = giga_ehof_target_sc_collapsar
-		remove_country_flag = giga_ehof_target_sc_c_giant
-		remove_country_flag = giga_ehof_target_sc_s_giant
-		remove_country_flag = giga_ehof_target_sc_ae
-		remove_country_flag = giga_ehof_target_sc_black_hole
-		remove_country_flag = giga_ehof_target_sc_nova_1
-		remove_country_flag = giga_ehof_target_sc_quasar
-		remove_country_flag = giga_ehof_target_binary
-		remove_country_flag = giga_ehof_target_trinary
-		remove_country_flag = giga_ehof_target_cohesive
-		country_event = { id = ehof_megastructure.304 }
-	}
-}
-
 ehof_generate_pgate = {
 	random_system = {
 		limit = {
@@ -66,6 +20,26 @@ ehof_generate_pgate = {
 			orbit_distance = 35
 		}
 	}
+}
+
+ehof_create_event_pgate = {
+
+    solar_system = {
+        # create pillar
+        spawn_megastructure = {
+        	type = "ehof_pgate_gateway"
+        	orbit_angle = 110
+        	orbit_distance = 35
+        	owner = root
+        }
+
+        # delete pillar ship
+        random_ship_in_system = {
+            limit = { has_ship_flag = movable_pillar@root }
+            delete_ship = this
+        }
+    }
+    # TODO :: add message
 }
 
 ehof_mega_system = {
@@ -303,71 +277,6 @@ ehof_recount_ships = {
 
          }
      }
-}
-
-# TODO :: remove
-ehof_pre_flight = {
-	country_event = { id = ehof_megastructure.202 } # Set to Firing
-	remove_country_flag = ehof_report_quest
-	remove_country_flag = ehof_report_standard
-	remove_country_flag = ehof_report_cohesive
-	remove_country_flag = ehof_report_bountiful
-	log = "Pre-flight triggered"
-
-	# Reset flags and variables
-	every_system = {
-		limit = { has_star_flag = ehof_destination_system@root }
-		remove_star_flag = ehof_destination_system@root
-	}
-
-	# Set cooldown days
-	if = {		limit = { check_variable = { which = ehof_phase value = 1 } } set_variable = { which = ehof_cooldown_days value = @ehof_phase1_cooldown_days } }
-	else_if = {	limit = { check_variable = { which = ehof_phase value = 2 } } set_variable = { which = ehof_cooldown_days value = @ehof_phase2_cooldown_days } }
-	else_if = {	limit = { check_variable = { which = ehof_phase value = 3 } } set_variable = { which = ehof_cooldown_days value = @ehof_phase3_cooldown_days } }
-	else_if = {	limit = { check_variable = { which = ehof_phase value = 4 } } set_variable = { which = ehof_cooldown_days value = @ehof_phase4_cooldown_days } }
-
-	random_system_within_border = {
-		limit = { has_an_active_ehof = yes }
-		save_event_target_as = ehof_megastructure_system
-
-		# Set EHOF location
-		star = { save_event_target_as = ehof_move_to_wormhole }
-
-		# Move every fleet in system to wormhole
-		every_fleet_in_system = {
-			limit = {
-				can_use_ehof = yes
-				exists = owner
-				owner = { is_same_value = root }
-			}
-			set_fleet_flag = ehof_ready_for_travel@root
-			set_event_locked = yes
-			auto_move_to_planet = {
-				target = event_target:ehof_move_to_wormhole
-				clear_auto_move_on_arrival = yes
-			}
-		}
-	}
-
-	# Traders
-	if = {
-		limit = {
-			NOR = {
-				has_global_flag = ehof_traders_spawned
-				has_global_flag = compound_invasion_ongoing
-				check_variable = { which = ehof_phase value < 3 }
-			}
-		}
-		random_list = {
-			4 = { change_variable = { which = ehof_spawn_traders value = 1 } }
-			1 = {
-				modifier = { factor = 3 check_variable = { which = ehof_spawn_traders value >= 4 } }
-				modifier = { factor = 4 check_variable = { which = ehof_spawn_traders value >= 8 } }
-				modifier = { factor = 5 check_variable = { which = ehof_spawn_traders value >= 12 } }
-				country_event = { id = ehof_mega_trader.100 }
-			}
-		}
-	}
 }
 
 ehof_dest_01 = { # Wormhole Cohesive

@@ -111,10 +111,79 @@ country_event = {
 				upgrade_megastructure_to = "ehof_pgate_gateway"
 				finish_upgrade = yes
 			}
+			country_event = { id = ehof_reality_code.006 }
 		}
     }
 	option = { name = "ehof_reality_code.003.option" }
 }
+
+# Create Pillar Fleet
+country_event = {
+	id = ehof_reality_code.006
+	hide_window = yes
+    is_triggered_only = yes
+
+    immediate = {
+
+        set_country_flag = ehof_inactive_pillar_ship_spawned
+
+		create_fleet = { #Spawn an inactive Pillar
+        	name = "Inactive Primordial Pillar"
+        	settings = {
+        		spawn_debris = no
+        		can_upgrade = no
+        		uses_naval_capacity = no
+        	}
+        	effect = {
+        		set_owner = root
+
+        		create_ship = {
+        			name = random
+        			design = "Pillar"
+        			prefix = no
+        		}
+
+        		last_created_ship = {
+        		    save_event_target_as = pillar_ship
+
+        		    set_ship_flag = movable_pillar@root
+        		}
+
+        		set_location = {
+        			target = event_target:code_world_planet
+        			distance = 10
+        			angle = random
+        		}
+        	}
+        }
+
+        enable_special_project = {
+        	name = "REACTIVATE_INACTIVE_PILLAR"
+        	location = event_target:pillar_ship
+        	owner = root
+        }
+    }
+}
+
+# Remove Inactive Pillar Special Project
+country_event = {
+	id = ehof_reality_code.008
+	hide_window = yes
+    is_triggered_only = yes
+
+    trigger = {
+        has_country_flag = ehof_inactive_pillar_ship_spawned
+
+        not = { any_owned_ship = { has_ship_flag = movable_pillar@root } }
+    }
+
+	immediate = {
+        abort_special_project = { type = REACTIVATE_INACTIVE_PILLAR }
+
+        # TODO :: add message for User that ship was destroyed
+	}
+}
+
 
 # Gaining gateway activation tech
 country_event = {
