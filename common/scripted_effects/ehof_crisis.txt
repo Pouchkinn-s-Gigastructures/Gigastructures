@@ -801,6 +801,7 @@ annihilator_attack = {
 
 	# Go to target and then reset
 	event_target:ehof_annihilator = {
+	    remove_auto_move_target = yes
 		auto_move_to_planet = {
 			target = event_target:sa_attack_compound
 			clear_auto_move_on_arrival = yes
@@ -827,6 +828,7 @@ annihilator_sphere = {
 
 	# Go to target and then reset
 	event_target:ehof_annihilator = {
+	    remove_auto_move_target = yes
 		auto_move_to_planet = {
 			target = event_target:sa_attack_sphere
 			clear_auto_move_on_arrival = yes
@@ -890,9 +892,14 @@ annihilator_defend = {
 	if = { limit = { has_global_flag = sa_target_follow }	remove_global_flag = sa_target_follow }
 	set_global_flag = sa_target_defend
 
-	# Save a target
+    if = { limit = { exists = event_target:sa_defend_discoverer }
+	    clear_global_event_target = sa_defend_discoverer
+    }
+
+	# Save a target system within 10 jumps that has a compound fleet in it
 	event_target:discoverer_system = {
 		closest_system = {
+		    max_steps = 10
 			limit = {
 				any_fleet_in_system = {
 					exists = owner
@@ -907,9 +914,10 @@ annihilator_defend = {
 		}
 	}
 
+    # if anni is more than 10 systems away use shroud ftl
 	event_target:annihilator_location.solar_system = {
 		if = {
-			limit = { NOT = { distance = { source = event_target:discoverer_system max_jumps = 10 } } }
+			limit = { distance = { source = event_target:discoverer_system type = hyperlane min_jumps = 10 } }
 			event_target:creators_country = {
 				set_global_flag = annihilator_shroud
 				destroy_annihilator = yes
@@ -918,12 +926,19 @@ annihilator_defend = {
 		}
 	}
 
-	# Go to target and then reset
-	event_target:ehof_annihilator = {
-		auto_move_to_planet = {
-			target = event_target:sa_defend_discoverer
-			clear_auto_move_on_arrival = yes
-			arrival_effect = annihilator_defend
-		}
+    # if no target was found set home system as target
+	if = {
+	    limit = { not = { exists = event_target:sa_defend_discoverer }}
+	    event_target:discoverer_system.star = { save_global_event_target_as = sa_defend_discoverer }
 	}
+
+	# Go to target and then reset
+    event_target:ehof_annihilator = {
+        remove_auto_move_target = yes
+    	auto_move_to_planet = {
+    		target = event_target:sa_defend_discoverer
+    		clear_auto_move_on_arrival = yes
+    		arrival_effect = annihilator_defend
+    	}
+    }
 }
