@@ -1,0 +1,293 @@
+#This scripted effect gives every asteroid in the system a very specific ID that can be used to "connect" 
+#a ship with the corresponding ID to the planet (as in, when a ship with an ID of "1" is destroyed, we know 
+#we have to alter the planet with the ID of "1")
+assign_giga_asteroids_id = {
+	if = {
+		limit = {
+			NOT = { any_system_planet = { has_planet_flag = has_giga_asteroid_id } }
+		}
+		set_variable = {
+			which = current_giga_asteroid_id
+			value = 1
+		}
+	}
+	every_system_planet = {
+		limit = {
+			OR = {
+				is_asteroid = yes
+				is_planet_class = pc_giga_asteroid_artillery
+			}
+			NOT = { has_planet_flag = has_giga_asteroid_id }
+		}
+		set_planet_flag = doesnt_have_giga_asteroid_id
+	}
+	while = {
+		limit = {
+			any_system_planet = {
+				has_planet_flag = doesnt_have_giga_asteroid_id
+			}
+		}
+		random_system_planet = {
+			limit = {
+				OR = {
+					is_asteroid = yes
+					is_planet_class = pc_giga_asteroid_artillery
+				}
+				has_planet_flag = doesnt_have_giga_asteroid_id
+			}
+			set_variable = {
+				which = giga_asteroid_id
+				value = { scope = THIS.solar_system variable = current_giga_asteroid_id }
+			}
+			set_planet_flag = has_giga_asteroid_id
+			remove_planet_flag = doesnt_have_giga_asteroid_id
+		}
+		change_variable = {
+			which = current_giga_asteroid_id
+			value = 1
+		}
+	}
+}
+
+reapply_ast_art_modifiers = {
+	if = { #Clear modifier if its there
+		limit = { has_modifier = giga_asteroid_artillery_hp }
+		remove_modifier = giga_asteroid_artillery_hp
+	}
+	set_variable = { #Grab the multiplier from the asteroid
+		which = asteroid_artillery_hp
+		value = { scope = ROOT.fromfrom.planet variable = asteroid_artillery_hp }
+	}
+	add_modifier = { #Apply it
+		modifier = giga_asteroid_artillery_hp
+		multiplier = asteroid_artillery_hp
+	}
+	if = {
+		limit = { has_modifier = giga_asteroid_artillery_dmg }
+		remove_modifier = giga_asteroid_artillery_dmg
+	}
+	set_variable = {
+		which = asteroid_artillery_dmg
+		value = { scope = ROOT.fromfrom.planet variable = asteroid_artillery_dmg }
+	}
+	add_modifier = {
+		modifier = giga_asteroid_artillery_dmg
+		multiplier = asteroid_artillery_dmg
+	}
+	if = {
+		limit = { has_modifier = giga_asteroid_artillery_speed }
+		remove_modifier = giga_asteroid_artillery_speed
+	}
+	set_variable = {
+		which = asteroid_artillery_atkspeed
+		value = { scope = ROOT.fromfrom.planet variable = asteroid_artillery_atkspeed }
+	}
+	add_modifier = {
+		modifier = giga_asteroid_artillery_speed
+		multiplier = asteroid_artillery_atkspeed
+	}
+	if = {
+		limit = { has_modifier = giga_asteroid_artillery_tracking }
+		remove_modifier = giga_asteroid_artillery_tracking
+	}
+	set_variable = {
+		which = asteroid_artillery_tracking
+		value = { scope = ROOT.fromfrom.planet variable = asteroid_artillery_tracking }
+	}
+	add_modifier = {
+		modifier = giga_asteroid_artillery_tracking
+		multiplier = asteroid_artillery_tracking
+	}
+	if = {
+		limit = { has_modifier = giga_asteroid_artillery_range }
+		remove_modifier = giga_asteroid_artillery_range
+	}
+	set_variable = {
+		which = asteroid_artillery_range
+		value = { scope = ROOT.fromfrom.planet variable = asteroid_artillery_range }
+	}
+	add_modifier = {
+		modifier = giga_asteroid_artillery_range
+		multiplier = asteroid_artillery_range
+	}
+	if = {
+		limit = { has_modifier = giga_asteroid_artillery_pen }
+		remove_modifier = giga_asteroid_artillery_pen
+	}
+	set_variable = {
+		which = asteroid_artillery_pen
+		value = { scope = ROOT.fromfrom.planet variable = asteroid_artillery_pen }
+	}
+	add_modifier = {
+		modifier = giga_asteroid_artillery_pen
+		multiplier = asteroid_artillery_pen
+	}
+}
+
+apply_ast_art_tech_upgrades = {
+	if = {
+		limit = { ROOT.from = { has_technology = giga_tech_asteroid_artillery_damage_upgrade } }
+		add_modifier = {
+			modifier = giga_asteroid_artillery_dmg_upgrade
+			days = -1
+		}
+	}
+	if = {
+		limit = { ROOT.from = { has_technology = giga_tech_asteroid_artillery_health_upgrade } }
+		add_modifier = {
+			modifier = giga_asteroid_artillery_health_upgrade
+			days = -1
+		}
+	}
+	if = {
+		limit = { ROOT.from = { has_technology = giga_tech_asteroid_artillery_planetcraft_upgrade } }
+		add_modifier = {
+			modifier = giga_asteroid_artillery_planetcraft_upgrade
+			days = -1
+		}
+	}
+}
+
+select_good_planet_for_ai_ast_art = {
+	random_list = {
+		20 = {} #Nothing
+		30 = { #Capital
+			if = { #Try capital
+				limit = {
+					capital_scope = {
+						solar_system = {
+							NOT = {
+								any_system_megastructure = {
+									is_megastructure_type = asteroid_artillery_0
+								}
+							}
+							any_system_planet = {
+								is_asteroid = yes
+								NOR = {
+									has_planet_flag = asteroid_has_artillery
+									has_planet_flag = megastructure
+									has_planet_flag = has_megastructure
+								}
+							}
+						}
+					}
+				}
+				capital_scope = {
+					solar_system = {
+						random_system_planet = {
+							limit = {
+								is_asteroid = yes
+								NOR = {
+									has_planet_flag = asteroid_has_artillery
+									has_planet_flag = megastructure
+									has_planet_flag = has_megastructure
+								}
+							}
+							save_global_event_target_as = ai_ast_art_site
+						}
+					}
+				}
+			}
+		}
+		30 = { #System with a mega
+			if = { #try a system with a megastructure
+				limit = {
+					any_system_within_border = {
+						any_system_megastructure = {
+							exists = THIS
+							NOR = {
+								is_megastructure_type = asteroid_artillery_0
+								is_megastructure_type = asteroid_artillery_1
+							}
+						}
+						any_system_planet = {
+							is_asteroid = yes
+							NOR = {
+								has_planet_flag = asteroid_has_artillery
+								has_planet_flag = megastructure
+								has_planet_flag = has_megastructure
+							}
+						}
+					}
+				}
+				random_system_within_border = {
+					limit = {
+						any_system_megastructure = {
+							exists = THIS
+							NOR = {
+								is_megastructure_type = asteroid_artillery_0
+								is_megastructure_type = asteroid_artillery_1
+							}
+						}
+					}
+					random_system_planet = {
+						limit = {
+							is_asteroid = yes
+							NOR = {
+								has_planet_flag = asteroid_has_artillery
+								has_planet_flag = megastructure
+								has_planet_flag = has_megastructure
+							}
+						}
+						save_global_event_target_as = ai_ast_art_site
+					}
+				}
+			}
+		}
+		20 = { #System with a colony
+			if = { #try a system with a colony
+				limit = {
+					any_system_within_border = {
+						NOT = {
+							any_system_megastructure = {
+								is_megastructure_type = asteroid_artillery_0
+							}
+						}
+						any_system_planet = {
+							is_asteroid = yes
+							NOR = {
+								has_planet_flag = asteroid_has_artillery
+								has_planet_flag = megastructure
+								has_planet_flag = has_megastructure
+							}
+						}
+						any_system_planet = {
+							is_colony = yes
+						}
+					}
+				}
+				random_system_within_border = {
+					limit = {
+						NOT = {
+							any_system_megastructure = {
+								is_megastructure_type = asteroid_artillery_0
+							}
+						}
+						any_system_planet = {
+							is_asteroid = yes
+							NOR = {
+								has_planet_flag = asteroid_has_artillery
+								has_planet_flag = megastructure
+								has_planet_flag = has_megastructure
+							}
+						}
+						any_system_planet = {
+							is_colony = yes
+						}
+					}
+					random_system_planet = {
+						limit = {
+							is_asteroid = yes
+							NOR = {
+								has_planet_flag = asteroid_has_artillery
+								has_planet_flag = megastructure
+								has_planet_flag = has_megastructure
+							}
+						}
+						save_global_event_target_as = ai_ast_art_site
+					}
+				}
+			}
+		}
+	}
+}

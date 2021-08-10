@@ -2519,6 +2519,24 @@ VertexShader = "VertexPdxMeshStandardSkinnedShadow"
 	Defines = { "IS_SHADOW" }
 }
 
+Effect PdxMeshColorAlphaAdditive
+{
+    VertexShader = "VertexPdxMeshStandard"
+    PixelShader = "PixelPdxMeshAdditive"
+    BlendState = "BlendStateAdditiveBlend"
+    DepthStencilState = "DepthStencilNoZWrite"
+    Defines = { "ADD_COLOR" "DISSOLVE" }
+}
+
+Effect PdxMeshColorAlphaAdditiveSkinned
+{
+    VertexShader = "VertexPdxMeshStandardSkinned"
+    PixelShader = "PixelPdxMeshAdditive"
+    BlendState = "BlendStateAdditiveBlend"
+    DepthStencilState = "DepthStencilNoZWrite"
+    Defines = { "ADD_COLOR" "DISSOLVE" }
+}
+
 Effect PdxMeshColorAlphaAdditiveAnimateUV
 {
     VertexShader = "VertexPdxMeshStandard"
