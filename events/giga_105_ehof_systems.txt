@@ -20,8 +20,52 @@ country_event = {
 	}
 
 	immediate = {
+
 	    remove_country_flag = should_spawn_covesive_@root
-	    country_event = { id = ehof_systems.000 }
+
+	    random_list = {
+        	25 = {
+        		modifier = { factor = 0 NOT = { has_global_flag = annihilator_system_spawned } }
+        		modifier = {
+        			factor = 0.2
+        			any_system = {
+        				annihilator_system = yes
+        				empire_has_visited = yes
+        			}
+        		}
+        		random_system = {
+        			limit = { annihilator_system = yes }
+        			ehof_start_lifecycle = yes
+        		}
+        	}
+        	25 = { # Trader hub
+        		modifier = {
+        			factor = 0
+        			OR = {
+        				any_owned_fleet = {
+        					exists = solar_system
+        					solar_system = { urmazin_system = yes }
+        				}
+        				has_country_flag = ehof_recently_visited_trader
+        				has_global_flag = compound_invasion_ongoing
+        				check_variable = { which = ehof_phase value < 3 }
+        				NOT = { has_global_flag = ehof_traders_spawned }
+        			}
+        		}
+        		set_timed_country_flag = { flag = ehof_recently_visited_trader days = @ehof_trader_visiting_days }
+        		random_system = {
+        			limit = { urmazin_capital = yes }
+        			ehof_start_lifecycle = yes
+        		}
+        	}
+        	50 = {
+        	    country_event = { id = ehof_systems.000 }
+        	}
+        }
+
+	    # save ehof home system
+        ehof_mega_system = yes
+	    country_event = { id = ehof_megastructure.501 }
 	}
 }
 
@@ -1158,7 +1202,17 @@ country_event = {
 		}
 		country_event = { id = ehof_systems.005 }	# Generate System Color
 
-		last_created_system = { open_wormhole = yes }
+		last_created_system = {
+		    save_event_target_as = ehof_destination_system
+
+		    # Reset flags and variables
+            every_system = {
+            	limit = { has_star_flag = ehof_destination_system@root }
+            	remove_star_flag = ehof_destination_system@root
+            }
+
+            set_star_flag = ehof_destination_system@root
+		}
 	}
 }
 
@@ -1357,51 +1411,38 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		from = {
-			OR = {
+		OR = {
+			is_country_type = guardian_sphere
+			is_country_type = guardian_horror
+			is_country_type = guardian_fortress
+			is_country_type = guardian_dreadnought
+
+			# Also for Vat
+			is_country_type = guardian_dragon
+			is_country_type = guardian_wraith
+			is_country_type = guardian_elderly_tiyanki
+			is_country_type = guardian_stellarite
+			is_country_type = guardian_hatchling
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
 				is_country_type = guardian_dragon
-				is_country_type = guardian_sphere
-				is_country_type = guardian_wraith
-				is_country_type = guardian_horror
-				is_country_type = guardian_fortress
-				is_country_type = guardian_stellarite
-				is_country_type = guardian_dreadnought
+				NOT = { has_country_flag = rubricator_dragon_country }
 			}
+			set_global_flag = leviathan_slain_ether_dragon
+			from = { set_country_flag = giga_vat_can_clone_dragon }
 		}
-	}
-
-	immediate = {
-		from = { save_event_target_as = ehof_check_leviathan_death }
-		country_event = { id = ehof_systems.009 days = 2 }
-	}
-}
-
-country_event = {
-	id = ehof_systems.009
-	hide_window = yes
-	is_triggered_only = yes
-
-	trigger = {
-		exists = event_target:ehof_check_leviathan_death
-		event_target:ehof_check_leviathan_death = { num_fleets < 1 }
-	}
-
-	immediate = {
-		event_target:ehof_check_leviathan_death = {
-			if = {
-				limit = {
-					is_country_type = guardian_dragon
-					NOT = { has_country_flag = rubricator_dragon_country }
-				}
-				set_global_flag = leviathan_slain_ether_dragon
-			}
-			else_if = { limit = { is_country_type = guardian_sphere }		set_global_flag = leviathan_slain_sphere }
-			else_if = { limit = { is_country_type = guardian_wraith }		set_global_flag = leviathan_slain_wraith }
-			else_if = { limit = { is_country_type = guardian_horror }		set_global_flag = leviathan_slain_horror }
-			else_if = { limit = { is_country_type = guardian_fortress }		set_global_flag = leviathan_slain_fortress }
-			else_if = { limit = { is_country_type = guardian_stellarite }	set_global_flag = leviathan_slain_stellarite }
-			else_if = { limit = { is_country_type = guardian_dreadnought }	set_global_flag = leviathan_slain_dreadnought }
-		}
+		else_if = { limit = { is_country_type = guardian_wraith }			set_global_flag = leviathan_slain_wraith		from = { set_country_flag = giga_vat_can_clone_wraith } }
+		else_if = { limit = { is_country_type = guardian_stellarite }		set_global_flag = leviathan_slain_stellarite	from = { set_country_flag = giga_vat_can_clone_stellarite } }
+		else_if = { limit = { is_country_type = guardian_elderly_tiyanki }	set_global_flag = leviathan_slain_tiyanki 		from = { set_country_flag = giga_vat_can_clone_tiyanki } }
+		else_if = { limit = { is_country_type = guardian_hatchling }		set_global_flag = leviathan_slain_voidspawn		from = { set_country_flag = giga_vat_can_clone_voidspawn } }
+		else_if = { limit = { is_country_type = guardian_sphere }			set_global_flag = leviathan_slain_sphere }
+		else_if = { limit = { is_country_type = guardian_horror }			set_global_flag = leviathan_slain_horror }
+		else_if = { limit = { is_country_type = guardian_fortress }			set_global_flag = leviathan_slain_fortress }
+		else_if = { limit = { is_country_type = guardian_dreadnought }		set_global_flag = leviathan_slain_dreadnought }
 	}
 }
 
@@ -2154,7 +2195,7 @@ country_event = {
 	immediate = {
 		last_created_system = {
 			random_list = {
-			    97 = {}
+				97 = {}
 				3 = {
 					modifier = { factor = 8 rare_system = yes }
 					modifier = { factor = 0 urmazin_system = yes }
