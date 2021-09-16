@@ -94,13 +94,45 @@ orbital_arcology_0 = {
 	on_build_complete = {
 		save_event_target_as = giga_system
 		fromfrom.planet = {
+			set_variable = {
+				which = orbital_arcology_size
+				value = trigger:planet_size
+			}
+			set_variable = {
+				which = orbital_arcology_alloy_cost
+				value = orbital_arcology_size
+			}
+			multiply_variable = { #Alloy Cost
+				which = orbital_arcology_alloy_cost
+				value = 250
+			}
+			set_variable = {
+				which = orbital_arcology_modifier
+				value = orbital_arcology_size
+			}
+			divide_variable = {
+				which = orbital_arcology_modifier
+				value = 5
+			}
+			ceiling_variable = orbital_arcology_modifier
+			set_variable = {
+				which = orbital_arcology_modifier_districts
+				value = orbital_arcology_modifier
+			}
+			multiply_variable = {
+				which = orbital_arcology_modifier_districts
+				value = 2
+			}
 			save_event_target_as = giga_planet
 			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
 			set_planet_flag = orbital_arcology
 		}
-		if = {		limit = { fromfrom.planet = { planet_size < 13 } }						spawn_megastructure = { type = "orbital_arcology_0_s"	owner = from planet = fromfrom.planet } remove_megastructure = fromfrom }
-		else_if = {	limit = { fromfrom.planet = { planet_size >= 13 planet_size <= 21 } }	spawn_megastructure = { type = "orbital_arcology_0_m"	owner = from planet = fromfrom.planet } remove_megastructure = fromfrom }
-		else_if = {	limit = { fromfrom.planet = { planet_size > 21 } }						spawn_megastructure = { type = "orbital_arcology_0_l"	owner = from planet = fromfrom.planet } remove_megastructure = fromfrom }
+		spawn_megastructure = {
+			type = "orbital_arcology_0_site"	
+			owner = from
+			planet = fromfrom.planet 
+		} 
+		remove_megastructure = fromfrom
 		from = {
 			set_timed_country_flag = { flag = has_recently_built_orbital_arcology years = 20 }
 			country_event = { id = giga_dialog.901 }	# Notification
@@ -109,102 +141,77 @@ orbital_arcology_0 = {
 	}
 }
 
-orbital_arcology_0_s = {
+orbital_arcology_0_site = {
 	entity = "construction_platform_entity"
 	construction_entity = "construction_platform_entity"
 	portrait = "GFX_megastructure_construction_background"
 	place_entity_on_planet_plane = no
-	potential = { always = no }
-}
-
-orbital_arcology_0_m = {
-	entity = "construction_platform_entity"
-	construction_entity = "construction_platform_entity"
-	portrait = "GFX_megastructure_construction_background"
-	place_entity_on_planet_plane = no
-	potential = { always = no }
-}
-
-orbital_arcology_0_l = {
-	entity = "construction_platform_entity"
-	construction_entity = "construction_platform_entity"
-	portrait = "GFX_megastructure_construction_background"
-	place_entity_on_planet_plane = no
-	potential = { always = no }
-}
-
-orbital_arcology_1_s = {
-	entity = ""
-	construction_entity = "orbital_arcology_13_entity"
-	portrait = "GFX_megastructure_construction_background"
-	upgrade_from = { orbital_arcology_0_s }
+	upgrade_from = { orbital_arcology_0_upgrade }
 	upgrade_desc = hide
 
-	build_time = 900
-	resources = {
-		category = megastructures
-		cost = { alloys = 4000 }
-		upkeep = {
-			alloys = 4
-			energy = 10
-		}
-	}
-
-	potential = { NOT = { has_global_flag = orbital_arcologies_disabled } }
-	possible = { from = { has_technology = giga_tech_orbital_arcologies } }
-
-	ai_weight = { factor = 10 } # If we can build it, we will build it
-	on_build_complete = {
-		save_event_target_as = giga_system
-		fromfrom.planet = {
-			save_event_target_as = giga_planet
-			add_modifier = { modifier = "orbital_arcology_modifier_1" days = -1 }
-			create_ambient_object = { type = "giga_size_13_ring" use_3d_location = yes location = this }
-		}
-		from = {
-			country_event = { id = giga_dialog.902 }	# Notification
-			if = {
-				limit = {
-					NOR = {
-						has_global_flag = giga_achievements_disabled
-						has_country_flag = giga_achievement_67
-					}
-				}
-				set_country_flag = giga_achievement_67
-				set_timed_country_flag = { flag = giga_achievement_67_notification days = 30 }
-				giga_achievement_sound = yes
-			}
-		}
+	potential = {
+		always = no
 	}
 }
 
-orbital_arcology_1_m = {
+orbital_arcology_0_upgrade = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	upgrade_from = { orbital_arcology_0_site }
+	upgrade_desc = hide
+
+	potential = { NOT = { has_global_flag = upgrading_orbital_arcology } }
+
+	on_build_complete = {
+		set_global_flag = upgrading_orbital_arcology
+		fromfrom = { save_event_target_as = orbital_arcology_being_upgraded }
+		fromfrom.planet = { save_event_target_as = orbital_arcology_planet }
+		from = { country_event = { id = giga_mega.600 } }
+	}
+}
+
+orbital_arcology_1 = {
 	entity = ""
 	construction_entity = "orbital_arcology_21_entity"
 	portrait = "GFX_megastructure_construction_background"
-	upgrade_from = { orbital_arcology_0_m }
+	upgrade_from = { orbital_arcology_0_upgrade }
 	upgrade_desc = hide
 
 	build_time = 900
+
 	resources = {
 		category = megastructures
-		cost = { alloys = 5000 }
 		upkeep = {
 			alloys = 5
 			energy = 15
 		}
 	}
 
-	potential = { NOT = { has_global_flag = orbital_arcologies_disabled } }
-	possible = { from = { has_technology = giga_tech_orbital_arcologies } }
+	possible = { always = no }
+	potential = { always = no }
 
 	ai_weight = { factor = 10 } # If we can build it, we will build it
 	on_build_complete = {
+		fromfrom = {
+			set_name = "Orbital Arcology"
+			set_megastructure_flag = completed_mega 
+		}
 		save_event_target_as = giga_system
 		fromfrom.planet = {
 			save_event_target_as = giga_planet
-			add_modifier = { modifier = "orbital_arcology_modifier_2" days = -1 }
-			create_ambient_object = { type = "giga_size_21_ring" use_3d_location = yes location = this }
+			add_modifier = {
+				modifier = "orbital_arcology_modifier" 
+				days = -1
+				multiplier = orbital_arcology_modifier 
+			}
+			create_ambient_object = {
+				type = "giga_orbital_arcology_object" 
+				use_3d_location = yes
+				location = this
+				entity_scale_to_size = yes
+			}
 		}
 		from = {
 			country_event = { id = giga_dialog.902 }	# Notification
@@ -223,11 +230,11 @@ orbital_arcology_1_m = {
 	}
 }
 
+#For origin
 orbital_arcology_1_l = {
 	entity = ""
 	construction_entity = "orbital_arcology_25_entity"
 	portrait = "GFX_megastructure_construction_background"
-	upgrade_from = { orbital_arcology_0_l }
 	upgrade_desc = hide
 
 	build_time = 900
@@ -240,8 +247,8 @@ orbital_arcology_1_l = {
 		}
 	}
 
-	potential = { NOT = { has_global_flag = orbital_arcologies_disabled } }
-	possible = { from = { has_technology = giga_tech_orbital_arcologies } }
+	potential = { always = no }
+	possible = { always = no }
 
 	ai_weight = { factor = 10 } # If we can build it, we will build it
 	on_build_complete = {
@@ -249,7 +256,57 @@ orbital_arcology_1_l = {
 		fromfrom.planet = {
 			save_event_target_as = giga_planet
 			add_modifier = { modifier = "orbital_arcology_modifier_3" days = -1 }
-			create_ambient_object = { type = "giga_size_25_ring" use_3d_location = yes location = this }
+			create_ambient_object = { 
+				type = "giga_size_25_ring" 
+				use_3d_location = yes 
+				location = this
+				entity_scale_to_size = no
+			}
+		}
+		from = {
+			country_event = { id = giga_dialog.902 }	# Notification
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_67
+					}
+				}
+				set_country_flag = giga_achievement_67
+				set_timed_country_flag = { flag = giga_achievement_67_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+	}
+}
+
+#For PC
+orbital_arcology_1_m = {
+	entity = ""
+	construction_entity = "orbital_arcology_21_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_desc = hide
+
+	build_time = 900
+	resources = {
+		category = megastructures
+		cost = { alloys = 5000 }
+		upkeep = {
+			alloys = 5
+			energy = 15
+		}
+	}
+
+	potential = { always = no }
+	possible = { always = no }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+			add_modifier = { modifier = "orbital_arcology_modifier_2" days = -1 }
+			create_ambient_object = { type = "giga_size_21_ring" use_3d_location = yes location = this }
 		}
 		from = {
 			country_event = { id = giga_dialog.902 }	# Notification

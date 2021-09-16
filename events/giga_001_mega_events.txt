@@ -43,31 +43,28 @@ event = {
 		}
 
 		# Paluush System
-		random = {
-			chance = 80
-			if = {
-				limit = { NOT = { any_system = { has_star_flag = Paluush_system } } }
-				random_system = {
-					limit = {
-						NOR = {
-							has_star_flag = giga_inner
-							has_star_flag = giga_outer_01
-							has_star_flag = giga_outer_02
-							has_star_flag = giga_outer_03
-							has_star_flag = giga_galactic_center
-						}
-					}
-					spawn_system = { initializer = "giga_paluush_initializer" }
-				}
-			}
+		if = {
+			limit = { NOT = { any_system = { has_star_flag = Paluush_system } } }
 			random_system = {
-				limit = { has_star_flag = giga_system_six }
-
-				# Add extra hyperlane
-				random_list = {
-					1 = { while = { count = 1 giga_generate_hyperlane = yes } }
-					1 = { while = { count = 2 giga_generate_hyperlane = yes } }
+				limit = {
+					NOR = {
+						has_star_flag = giga_inner
+						has_star_flag = giga_outer_01
+						has_star_flag = giga_outer_02
+						has_star_flag = giga_outer_03
+						has_star_flag = giga_galactic_center
+					}
 				}
+				spawn_system = { initializer = "giga_paluush_initializer" }
+			}
+		}
+		random_system = {
+			limit = { has_star_flag = giga_system_six }
+
+			# Add extra hyperlane
+			random_list = {
+				1 = { while = { count = 1 giga_generate_hyperlane = yes } }
+				1 = { while = { count = 2 giga_generate_hyperlane = yes } }
 			}
 		}
 
@@ -596,13 +593,12 @@ country_event = {
 
 	option = {
 		name = "giga_mega.402.a"
+		enable_special_project = {
+			name = "INVESTIGATE_GALACTIC_CORE"
+			owner = root
+		}
 		capital_scope = {
 			set_planet_flag = giga_core_sp_here@root
-			enable_special_project = {
-				name = "INVESTIGATE_GALACTIC_CORE"
-				location = this
-				owner = root
-			}
 		}
 	}
 }
@@ -796,7 +792,10 @@ planet_event = {
 			}
 
 			# Wipe out system
-			every_fleet_in_system = { destroy_fleet = this }
+			every_fleet_in_system = {
+				limit = { owner = { NOT = { is_immune_to_giga_hyperweapon = yes } } } 
+				destroy_fleet = this 
+			}
 			every_system_planet = { limit = { is_star = no } remove_planet = yes }
 			giga_remove_system_debris = yes
 			every_system_megastructure = {
@@ -838,7 +837,12 @@ planet_event = {
 
 			# Neighboring systems
 			every_neighbor_system = {
-
+				limit = {
+					NOR = {
+						is_star_class = sc_blokkat_stripmined
+						any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
+					}
+				}
 				# Ship Damage
 				every_fleet_in_system = {
 					every_owned_ship = {
@@ -907,6 +911,8 @@ planet_event = {
 						NOR = {
 							any_neighbor_system = { is_same_value = prevprevprev }
 							is_same_value = prevprevprev
+							is_star_class = sc_blokkat_stripmined
+							any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
 						}
 					}
 
@@ -967,6 +973,10 @@ planet_event = {
 			# Remove all hyperlanes
 			every_system = {
 				limit = {
+					NOR = {
+						is_star_class = sc_blokkat_stripmined
+						any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
+					}
 					distance = {
 						source = prev
 						max_jumps = 4
@@ -979,7 +989,13 @@ planet_event = {
 
 			# Add new hyperlanes
 			every_system = {
-				limit = { has_star_flag = has_no_hyperlane }
+				limit = {
+					has_star_flag = has_no_hyperlane
+					NOR = {
+						is_star_class = sc_blokkat_stripmined
+						any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
+					}
+				}
 				while = {
 					limit = {
 						event_target:penrose_detonator = {
@@ -1017,8 +1033,8 @@ country_event = {
 	id = giga_mega.601
 	title = "giga_mega.601.name"
 	desc = "giga_mega.601.desc"
-	picture = GFX_evt_debris
-	show_sound = event_sensor_ping
+	picture = GFX_evt_exploding_planet
+	show_sound = event_structural_collapse
 	is_triggered_only = yes
 	option = { name = "giga_mega.601.a" }
 
@@ -1031,43 +1047,30 @@ country_event = {
 	}
 
 	immediate = {
+		subtract_variable = {
+			which = giga_current_warmoon
+			value = 1
+		}
 		fromfrom = {
 			solar_system = { save_event_target_as = giga_debris_system }
-			if = {
-				limit = { solar_system = { has_star_flag = giga_has_craft_debris } }
-				solar_system = {
-					random_system_planet = {
-						limit = { NOT = { has_planet_flag = giga_debris_planet } }
-						set_timed_planet_flag = { flag = giga_debris_planet days = 360 }
-						save_event_target_as = giga_temp_planet
-					}
+			solar_system = {
+				set_timed_star_flag = { flag = giga_has_craft_debris days = 360 }
+				spawn_planet = {
+					class = pc_giga_empty_space
+					location = prev
+					init_effect = { save_event_target_as = giga_temp_planet }
 				}
-				if = {		limit = { has_ship_flag = giga_moon_cold_barren }	solar_system = { spawn_megastructure = { type = "war_moon_debris_cold_barren"	coords_from = event_target:giga_temp_planet owner = owner } } }
-				else_if = {	limit = { has_ship_flag = giga_moon_frozen }		solar_system = { spawn_megastructure = { type = "war_moon_debris_frozen"		coords_from = event_target:giga_temp_planet owner = owner } } }
-				else_if = {	limit = { has_ship_flag = giga_moon_barren }		solar_system = { spawn_megastructure = { type = "war_moon_debris_barren"		coords_from = event_target:giga_temp_planet owner = owner } } }
-				else_if = {	limit = { has_ship_flag = giga_moon_molten }		solar_system = { spawn_megastructure = { type = "war_moon_debris_molten"		coords_from = event_target:giga_temp_planet owner = owner } } }
-				else_if = {	limit = { has_ship_flag = giga_moon_disco }			solar_system = { spawn_megastructure = { type = "war_moon_debris_disco"			coords_from = event_target:giga_temp_planet owner = owner } } }
-				else_if = {	limit = { has_ship_flag = giga_moon_luna }			solar_system = { spawn_megastructure = { type = "war_moon_debris_luna"			coords_from = event_target:giga_temp_planet owner = owner } } }
-				else = {														solar_system = { spawn_megastructure = { type = "war_moon_debris_cold_barren"	coords_from = event_target:giga_temp_planet owner = owner } } }
-			}
-			else = {
-				solar_system = {
-					set_timed_star_flag = { flag = giga_has_craft_debris days = 360 }
-					spawn_planet = {
-						class = pc_giga_empty_space
-						location = prev
-						init_effect = { save_event_target_as = giga_temp_planet }
-					}
+				create_ambient_object = {
+					type = attack_moon_death_explosion_effect
+					location = ROOT.fromfrom
+					duration = 30
+					use_3d_location = yes
+					entity_offset = 0
+					scale = 1
 				}
-				if = {		limit = { has_ship_flag = giga_moon_cold_barren }	solar_system = { spawn_megastructure = { type = "war_moon_debris_cold_barren"	coords_from = event_target:giga_temp_planet owner = owner } } }
-				else_if = {	limit = { has_ship_flag = giga_moon_frozen }		solar_system = { spawn_megastructure = { type = "war_moon_debris_frozen"		coords_from = event_target:giga_temp_planet owner = owner } } }
-				else_if = {	limit = { has_ship_flag = giga_moon_barren }		solar_system = { spawn_megastructure = { type = "war_moon_debris_barren"		coords_from = event_target:giga_temp_planet owner = owner } } }
-				else_if = {	limit = { has_ship_flag = giga_moon_molten }		solar_system = { spawn_megastructure = { type = "war_moon_debris_molten"		coords_from = event_target:giga_temp_planet owner = owner } } }
-				else_if = {	limit = { has_ship_flag = giga_moon_disco }			solar_system = { spawn_megastructure = { type = "war_moon_debris_disco"			coords_from = event_target:giga_temp_planet owner = owner } } }
-				else_if = {	limit = { has_ship_flag = giga_moon_luna }			solar_system = { spawn_megastructure = { type = "war_moon_debris_luna"			coords_from = event_target:giga_temp_planet owner = owner } } }
-				else = {														solar_system = { spawn_megastructure = { type = "war_moon_debris_cold_barren"	coords_from = event_target:giga_temp_planet owner = owner } } }
-				event_target:giga_temp_planet = { remove_planet = yes }
 			}
+			solar_system = { spawn_megastructure = { type = "war_moon_debris_cold_barren"	coords_from = event_target:giga_temp_planet owner = owner } }
+			event_target:giga_temp_planet = { remove_planet = yes }
 		}
 	}
 }
@@ -1078,7 +1081,7 @@ country_event = {
 	title = "giga_mega.602.name"
 	desc = "giga_mega.602.desc"
 	picture = GFX_evt_attack_moon
-	show_sound = event_sensor_ping
+	show_sound = event_ringworld_build_complete
 	is_triggered_only = yes
 	option = { name = "giga_mega.602.a" }
 }
@@ -1090,8 +1093,8 @@ country_event = {
 	id = giga_mega.701
 	title = "giga_mega.701.name"
 	desc = "giga_mega.701.desc"
-	picture = GFX_evt_debris
-	show_sound = event_sensor_ping
+	picture = GFX_evt_exploding_planet
+	show_sound = event_super_explosion
 	is_triggered_only = yes
 	option = { name = "giga_mega.701.a" }
 
@@ -1106,39 +1109,34 @@ country_event = {
 	}
 
 	immediate = {
+		subtract_variable = {
+			which = giga_current_warplanet
+			value = 1
+		}
 		fromfrom = {
 			solar_system = { save_event_target_as = giga_debris_system }
-			if = {
-				limit = { solar_system = { has_star_flag = giga_has_craft_debris } }
-				solar_system = {
-					random_system_planet = {
-						limit = { NOT = { has_planet_flag = giga_debris_planet } }
-						set_timed_planet_flag = { flag = giga_debris_planet days = 360 }
-						save_event_target_as = giga_temp_planet
-					}
-					spawn_megastructure = {
-						type = "war_planet_debris"
-						coords_from = event_target:giga_temp_planet
-						owner = owner
-					}
+			solar_system = {
+				set_timed_star_flag = { flag = giga_has_craft_debris days = 360 }
+				spawn_planet = {
+					class = pc_giga_empty_space
+					location = prev
+					init_effect = { save_event_target_as = giga_temp_planet }
+				}
+				create_ambient_object = {
+					type = planetcraft_death_explosion_effect
+					location = ROOT.fromfrom
+					duration = 30
+					use_3d_location = yes
+					entity_offset = 0
+					scale = 1
+				}
+				spawn_megastructure = {
+					type = "war_planet_debris"
+					coords_from = event_target:giga_temp_planet
+					owner = owner
 				}
 			}
-			else = {
-				solar_system = {
-					set_timed_star_flag = { flag = giga_has_craft_debris days = 360 }
-					spawn_planet = {
-						class = pc_giga_empty_space
-						location = prev
-						init_effect = { save_event_target_as = giga_temp_planet }
-					}
-					spawn_megastructure = {
-						type = "war_planet_debris"
-						coords_from = event_target:giga_temp_planet
-						owner = owner
-					}
-				}
-				event_target:giga_temp_planet = { remove_planet = yes }
-			}
+			event_target:giga_temp_planet = { remove_planet = yes }
 		}
 	}
 }
@@ -1149,10 +1147,90 @@ country_event = {
 	title = "giga_mega.702.name"
 	desc = "giga_mega.702.desc"
 	picture = GFX_evt_debris
-	show_sound = event_sensor_ping
+	show_sound = event_ringworld_build_complete
 	is_triggered_only = yes
 	option = { name = "giga_mega.702.a" }
 }
+
+####################################
+### War System Debris ##############
+####################################
+country_event = { #It splits lol
+	id = giga_mega.711
+	title = "giga_mega.711.name"
+	desc = "giga_mega.711.desc"
+	picture = GFX_evt_supernova
+	show_sound = event_super_explosion
+	is_triggered_only = yes
+	option = { name = "giga_mega.711.a" }
+
+	trigger = {
+		fromfrom = {
+			is_ship_size = giga_systemcraft
+		}
+	}
+
+	immediate = {
+		subtract_variable = {
+			which = giga_current_systemcraft
+			value = 1
+		}
+		fromfrom = {
+			solar_system = {
+				save_event_target_as = giga_debris_system
+				create_ambient_object = {
+					type = systemcraft_death_explosion_effect
+					location = ROOT.fromfrom
+					duration = 30
+					use_3d_location = yes
+					entity_offset = 0
+					scale = 1
+				}
+				create_fleet = {
+					name = "Systemcraft Remains"
+					settings = {
+						spawn_debris = no
+						can_change_composition = yes
+						is_boss = yes
+					}
+					effect = {
+						set_owner = ROOT
+						while = {
+							count = 4
+							create_ship = {
+								name = "Behemoth Planetcraft"
+								graphical_culture = ROOT
+								random_existing_design = giga_planet_behemoth
+								effect = {
+									set_ship_flag = giga_planet
+									reduce_hp = 3000000
+								}
+							}
+						}
+						while = {
+							count = 5
+							create_ship = { 
+								name = "Attack Moon" 
+								random_existing_design = giga_massive_planet
+								effect = {
+									reduce_hp = 150000
+								}
+							}
+						}
+						set_formation_scale = 12
+						set_location = {
+							target = ROOT.fromfrom
+							distance = 0
+							angle = 0
+						}
+					}
+				}
+			}
+			event_target:giga_temp_planet = { remove_planet = yes }
+		}
+	}
+}
+
 
 ####################################
 ### Psychic Hypersiphon ############
@@ -1696,6 +1774,90 @@ country_event = {
 					scope = root.fromfrom
 				}
 			}
+		}
+	}
+}
+
+#Popup about new tradition tree
+country_event = {
+	id = giga_mega.500
+	title = "giga_mega.500.name"
+	desc = "giga_mega.500.desc"
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	picture = GFX_evt_announcement
+	show_sound = event_mystic_reveal_light
+
+	trigger = {
+		last_increased_tech = giga_tech_tetradimensional_engineering
+	}
+
+	option = {
+		name = "giga_mega.500.a"
+		custom_tooltip = "giga_mega.500.a.tooltip"
+	}
+}
+
+#Orbital Arcology Price
+country_event = {
+	id = giga_mega.600
+	title = "giga_mega.600.name"
+	desc = "giga_mega.600.desc"
+
+	is_triggered_only = yes
+
+	picture = GFX_evt_megastructure_construction
+	show_sound = event_machinery
+
+	immediate = {
+		set_variable = {
+			which = orbital_arcology_alloy_cost
+			value = event_target:orbital_arcology_planet.orbital_arcology_alloy_cost
+		}
+	}
+
+	option = {
+		name = "giga_mega.600.a"
+		allow = {
+			custom_tooltip = {
+				fail_text = "giga_not_enough_alloys"
+				hidden_trigger = {
+					resource_stockpile_compare = {
+						resource = alloys
+						value > 1
+						mult = orbital_arcology_alloy_cost
+					}
+				}
+			}
+		}
+		add_resource = {
+			alloys = -1
+			mult = orbital_arcology_alloy_cost
+		}
+		hidden_effect = {
+			event_target:orbital_arcology_being_upgraded = {
+				set_variable = {
+					which = orbital_arcology_size
+					value = event_target:orbital_arcology_planet.orbital_arcology_size
+				}
+				upgrade_megastructure_to = orbital_arcology_1
+				set_name = "Orbital Arcology Construction site"
+				# add_modifier = {
+				# 	modifier = orbital_arcology_buildtime
+				# 	multiplier = orbital_arcology_size
+				# }
+			}
+			remove_global_flag = upgrading_orbital_arcology
+		}
+	}
+
+	option = {
+		name = "giga_mega.600.b"
+		hidden_effect = {
+			event_target:orbital_arcology_being_upgraded = { upgrade_megastructure_to = orbital_arcology_0_site }
+			remove_global_flag = upgrading_orbital_arcology
 		}
 	}
 }

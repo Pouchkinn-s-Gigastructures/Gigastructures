@@ -1,6 +1,6 @@
 namespace = giga_menu
 
-@gigastructures_version = 3.14
+@gigastructures_version = 3.15
 
 # On monthly pulse country (Check version)
 country_event = {
@@ -65,7 +65,87 @@ country_event = {
 
 	trigger = { has_country_flag = giga_host }
 
-	immediate = {
+	immediate = {		
+		event_target:global_event_country = {
+			set_variable = { #For ruined warships
+				which = giga_ruined_warships_perc
+				value = 100
+			}
+			set_variable = {
+				which = giga_total_galaxy_star_count
+				value = 0
+			}
+			every_system = {
+				event_target:global_event_country = { #Make a clean star count
+					change_variable = {
+						which = giga_total_galaxy_star_count
+						value = 1
+					}
+				}
+			}
+			
+			#WRECKED SHIP COUNTS
+			set_variable = {
+				which = giga_wrecked_battleship_count
+				value = giga_total_galaxy_star_count
+			}
+			divide_variable = { #600 stars --> 12 wrecked battleships
+				which = giga_wrecked_battleship_count
+				value = 50
+			}
+			ceiling_variable = giga_wrecked_battleship_count
+
+			set_variable = {
+				which = giga_wrecked_titan_count
+				value = giga_total_galaxy_star_count
+			}
+			divide_variable = { #600 stars --> 10 wrecked titans
+				which = giga_wrecked_titan_count
+				value = 60
+			}
+			ceiling_variable = giga_wrecked_titan_count
+
+			set_variable = {
+				which = giga_wrecked_juggernaut_count
+				value = giga_total_galaxy_star_count
+			}
+			divide_variable = { #600 stars --> 4 wrecked juggernauts
+				which = giga_wrecked_juggernaut_count
+				value = 150
+			}
+			ceiling_variable = giga_wrecked_juggernaut_count
+
+			set_variable = {
+				which = giga_wrecked_colossus_count
+				value = giga_total_galaxy_star_count
+			}
+			divide_variable = { #600 stars --> 1 wrecked Colossus
+				which = giga_wrecked_colossus_count
+				value = 600
+			}
+			random_list = {
+				50 = { ceiling_variable = giga_wrecked_colossus_count }
+				50 = { floor_variable = giga_wrecked_colossus_count }
+			}
+
+			set_variable = {
+				which = giga_wrecked_battleship_count_display
+				value = giga_wrecked_battleship_count
+			}
+			set_variable = {
+				which = giga_wrecked_titan_count_display
+				value = giga_wrecked_titan_count
+			}
+			set_variable = {
+				which = giga_wrecked_juggernaut_count_display
+				value = giga_wrecked_juggernaut_count
+			}
+			set_variable = {
+				which = giga_wrecked_colossus_count_display
+				value = giga_wrecked_colossus_count
+			}
+		}
+	
 		country_event = { id = ehof_megastructure.004 days = 30 }	# Mod compatibility check error
 
 		if = {
@@ -74,12 +154,80 @@ country_event = {
 			set_variable = { which = giga_version value = @gigastructures_version }
 		}
 
-		if = { #buff aeternum for acot
-			limit = { has_global_flag = acot_activated }
-			set_global_flag = giga_core_aeternum_2
+		#CHECK FOR BLOKKAT DIFFICULTY
+		if = {
+			limit = {
+				NOR = {
+					has_global_flag = giga_blokkats_endtech
+					has_global_flag = giga_blokkats_bismuth
+					has_global_flag = giga_blokkats_normal
+					has_global_flag = giga_blokkats_easy
+				}
+			}
+			if = {
+				limit = {
+					any_country = {
+						has_country_flag = oe_player
+					}
+				}
+				set_global_flag = giga_blokkats_endtech
+			}
+			else_if = {
+				limit = {
+					OR = {
+						has_global_flag = acot_full_activated
+						has_global_flag = acot_activated
+						has_global_flag = sofe_activated 
+					}
+				}
+				set_global_flag = giga_blokkats_bismuth
+			}
+			else_if = {
+				limit = {
+					OR = {
+						has_global_flag = nhsc_v30
+						has_global_flag = nhsc_overwrites_v30
+						has_global_flag = has_nsc_active
+					}
+				}
+				set_global_flag = giga_blokkats_normal
+			}
+			else = {
+				set_global_flag = giga_blokkats_easy
+			}
 		}
-		else = {
-			set_global_flag = giga_core_aeternum_1
+
+		event_target:global_event_country = {
+			set_variable = {
+				which = blokkat_spawn_date
+				value = 2500
+			}
+		}
+
+		if = {
+			limit = { 
+				is_multiplayer = yes
+				NOT = { has_global_flag = set_blokkats_to_disabled } 
+			}
+			set_global_flag = set_blokkats_to_disabled
+			set_global_flag = giga_blokkats_disabled
+		}
+	
+		if = {
+			limit = {
+				NOR = {
+					has_global_flag = giga_core_aeternum_3
+					has_global_flag = giga_core_aeternum_2
+					has_global_flag = giga_core_aeternum_1
+				}
+			}
+			if = { #buff aeternum for acot
+				limit = { has_global_flag = acot_activated }
+				set_global_flag = giga_core_aeternum_2
+			}
+			else = {
+				set_global_flag = giga_core_aeternum_1
+			}
 		}
 
 		#Disable O-Stars for real space
@@ -163,6 +311,18 @@ country_event = {
 					event_target:global_event_country = {
 						country_event = { id = giga_o_star.1000 }
 					}
+				}
+				# Wrecked ships
+				if = {
+					limit = { NOT = { has_global_flag = giga_wrecked_ships_disabled } }
+					event_target:global_event_country = {
+						country_event = { id = giga_wrecked_ships.1000 }
+					}
+				}
+
+				# More unique systems
+				event_target:global_event_country = {
+					country_event = { id = giga_flavor_systems.1000 }
 				}
 
 				# Modifiers
