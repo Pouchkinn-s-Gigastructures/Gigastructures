@@ -1717,7 +1717,7 @@ country_event = {
 				is_megastructure_type = neutronium_gigaforge_3
 				is_megastructure_type = neutronium_gigaforge_restored
 				is_megastructure_type = nidavellir_forge_4
-				is_megastructure_type = orbital_arcology_1_s
+				is_megastructure_type = orbital_arcology_1
 				is_megastructure_type = orbital_arcology_1_m
 				is_megastructure_type = orbital_arcology_1_l
 				is_megastructure_type = orbital_artificial_eco_1
@@ -1858,6 +1858,626 @@ country_event = {
 		hidden_effect = {
 			event_target:orbital_arcology_being_upgraded = { upgrade_megastructure_to = orbital_arcology_0_site }
 			remove_global_flag = upgrading_orbital_arcology
+		}
+	}
+}
+
+#The Nexus deploys ships
+planet_event = {
+	id = giga_mega.7001
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		planet_event = { id = giga_mega.7003 days = 10 }
+		create_fleet = {
+			name = "[ROOT.GetName] Defense Squadron"
+			settings = {
+				spawn_debris = no
+				can_change_composition = no
+				is_boss = no
+				can_disband = no
+				can_upgrade = no
+				uses_naval_capacity = no
+				can_change_leader = no
+			}
+			effect = {
+				set_owner = ROOT.owner
+				while = {
+					count = ROOT.giga_nexus_ship_count
+					create_ship = {
+						name = "Strike Corvette"
+						graphical_culture = ROOT.owner
+						random_existing_design = corvette
+						effect = {
+							add_modifier = {
+								modifier = giga_strike_corvette_modifier
+								days = -1
+							}
+							if = {
+								limit = { ROOT.owner = { has_ascension_perk = ap_eternal_vigilance } }
+								add_modifier = {
+									modifier = giga_strike_corvette_vigilance_ap
+									days = -1
+								}
+							}
+							if = {
+								limit = { ROOT.owner = { has_technology = giga_tech_defense_nexus_damage_1 } }
+								add_modifier = {
+									modifier = giga_strike_corvette_buff_tech_1
+									days = -1
+								}
+							}
+							if = {
+								limit = { ROOT.owner = { has_technology = giga_tech_defense_nexus_damage_2 } }
+								add_modifier = {
+									modifier = giga_strike_corvette_buff_tech_2
+									days = -1
+								}
+							}
+						}
+					}
+				}
+				set_fleet_stance = aggressive
+				set_fleet_flag = giga_yard_entity_@ROOT
+				fleet_event = { id = giga_mega.7002 days = 30 }
+				set_formation_scale = 1
+				set_location = {
+					target = ROOT
+					distance = 0
+					angle = 0
+				}
+				ROOT = {
+					set_planet_flag = giga_yard_entity_fleet_@PREV
+					set_planet_flag = defence_squadron_deployed
+					set_timed_planet_flag = {
+						flag = giga_defence_squadron_cooldown
+						days = 90
+					}
+				}
+			}
+		}
+	}
+}
+
+fleet_event = {
+	id = giga_mega.7002
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		fleet_event = { id = giga_mega.7002 days = 30 }
+		if = {
+			limit = { solar_system = { NOT = { any_system_planet = { has_planet_flag = giga_yard_entity_fleet_@ROOT } } } }
+			random_galaxy_planet = {
+				limit = { has_planet_flag = giga_yard_entity_fleet_@ROOT }
+				save_event_target_as = giga_defense_force_planet
+			}
+			set_location = event_target:giga_defense_force_planet
+		}
+		if = {
+			limit = {
+				solar_system = {
+					NOR = { 
+						any_ship_in_system = { owner = { is_hostile_to = ROOT.owner } }
+						any_ship_in_system = { owner = { is_at_war_with = ROOT.owner } }
+					}
+				}
+			}
+			queue_actions = {
+				find_closest_planet = {
+					trigger = {
+						id = giga_mega.7001
+						has_planet_flag = giga_yard_entity_fleet_@ROOT
+					}
+					found_planet = {
+						move_to = this
+						effect = {
+							id = giga_mega.7002
+							save_event_target_as = giga_nexus_return_planet
+							set_variable = {
+								which = giga_nexus_ship_count
+								value = 0
+							}
+							ROOT = { #Count ships that returned
+								every_owned_ship = {
+									ROOT = {
+										change_variable = {
+											which = giga_nexus_ship_count
+											value = 1
+										}
+									}
+								}
+							}
+							set_variable = {
+								which = giga_nexus_ship_count
+								value = root.giga_nexus_ship_count
+							}
+							remove_planet_flag = giga_yard_entity_fleet_@ROOT
+							remove_planet_flag = defence_squadron_deployed
+							delete_fleet = ROOT
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+planet_event = {
+	id = giga_mega.7003
+
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = { has_planet_flag = defence_squadron_deployed }
+			planet_event = { id = giga_mega.7003 days = 10 }
+			if = {
+				limit = { 
+					ROOT.owner = { NOT = { any_owned_fleet = { has_fleet_flag = giga_yard_entity_@ROOT } } }
+					has_planet_flag = defence_squadron_deployed 
+				}
+				set_variable = {
+					which = giga_nexus_ship_count
+					value = 0
+				}
+				remove_planet_flag = defence_squadron_deployed
+			}
+		}
+	}
+}
+
+#Monthly event
+planet_event = {
+	id = giga_mega.7004
+
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = { #Remove the modifiers if not a colony anymore (very sad)
+		if = {
+			limit = { 
+				is_colony = yes
+				OR = { 
+					has_modifier = planetary_drive_yard_fortress_modifier 
+					has_modifier = planetary_drive_yard_fortress_modifier_gestalt
+				}
+			}
+			planet_event = { id = giga_mega.7004 days = 30 }
+		}
+		if = {
+			limit = {
+				NOR = { 
+					has_planet_flag = giga_defence_army_cooldown
+					is_occupied_flag = yes
+					has_ground_combat = yes
+				} 
+			}
+			every_planet_army = {
+				limit = { army_type = "giga_defense_nexus_army" }
+				remove_army = yes
+			}
+			set_variable = {
+				which = giga_nexus_army_count
+				value = trigger:num_pops
+			}
+			divide_variable = {
+				which = giga_nexus_army_count
+				value = 10
+			}
+			ceiling_variable = giga_nexus_army_count
+			while = {
+				count = giga_nexus_army_count
+				create_army = {
+					owner = THIS.owner
+					type = giga_defense_nexus_army
+					name = "Planetary Guardians"
+				}
+			}
+			set_timed_planet_flag = {
+				flag = giga_defence_army_cooldown
+				days = 120
+			}
+		}
+		set_variable = {
+			which = giga_nexus_ship_count_tech
+			value = owner.giga_nexus_ship_count_tech
+		}
+		giga_drive_yard_calculate_max_ship_count = yes
+		giga_drive_yard_calculate_monthly_ship_count = yes
+		if = {
+			limit = { 
+				NOT = { has_planet_flag = defence_squadron_deployed }
+				check_variable = {
+					which = giga_nexus_ship_count
+					value < giga_nexus_ship_count_max
+				}
+			}
+			change_variable = {
+				which = giga_nexus_ship_count
+				value = giga_nexus_ship_count_monthly
+			}
+		}
+		if = {
+			limit = { 
+				check_variable = {
+					which = giga_nexus_ship_count
+					value > giga_nexus_ship_count_max
+				}
+			}
+			set_variable = {
+				which = giga_nexus_ship_count
+				value = giga_nexus_ship_count_max
+			}
+		}
+	}
+}
+
+#Defense Nexus Deployment
+fleet_event = {
+	id = giga_mega.7005
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		from = { 
+			any_system_planet = { 
+				has_planet_flag = defense_nexus_deploy_system 
+				giga_can_deploy_defense_squadron = yes
+			}
+		}
+		THIS.owner = {
+			OR = {
+				is_hostile_to = from.space_owner
+				is_at_war_with = from.space_owner
+			}
+		}
+	}
+
+	immediate = {
+		from = {
+			every_system_planet = {
+				limit = {
+					has_planet_flag = defense_nexus_deploy_system
+					giga_can_deploy_defense_squadron = yes
+				}
+				planet_event = { id = giga_mega.7001 }
+			}
+		}
+	}
+}
+
+#Defense Nexus Deployment on Bombard
+planet_event = {
+	id = giga_mega.7006
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_planet_flag = defense_nexus_deploy_bombard
+		giga_can_deploy_defense_squadron = yes
+	}
+
+	immediate = {
+		planet_event = { id = giga_mega.7001 }
+	}
+}
+
+#FORCE SCALING (pdx why)
+country_event = {
+	id = giga_mega.7007
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		any_owned_megastructure = {
+			OR = {
+				is_megastructure_type = orbital_arcology_1
+				is_megastructure_type = planetary_drive_yard_1
+				is_megastructure_type = planetary_drive_yard_1_shipyard
+				is_megastructure_type = planetary_drive_yard_1_fortress
+			}
+		}
+	}
+
+	immediate = {
+		every_system_within_border = {
+			limit = {
+				any_system_megastructure = {
+					OR = {
+						is_megastructure_type = orbital_arcology_1
+						is_megastructure_type = planetary_drive_yard_1
+						is_megastructure_type = planetary_drive_yard_1_shipyard
+						is_megastructure_type = planetary_drive_yard_1_fortress
+					}
+				}
+			}
+			every_system_ambient_object = {
+				limit = {
+					OR = {
+						is_ambient_object_type = giga_orbital_arcology_object
+						is_ambient_object_type = giga_planetary_drive_yard_object
+						is_ambient_object_type = giga_planetary_drive_yard_shipyard_object
+						is_ambient_object_type = giga_planetary_drive_yard_fortress_object
+					}
+				}
+				destroy_ambient_object = THIS
+			}
+			every_system_megastructure = {
+				limit = { is_megastructure_type = orbital_arcology_1 }
+				planet = {
+					create_ambient_object = {
+						type = "giga_orbital_arcology_object" 
+						use_3d_location = yes
+						location = this
+						entity_scale_to_size = yes
+						entity_face_object = THIS
+					}
+				}
+			}
+			every_system_megastructure = {
+				limit = { is_megastructure_type = planetary_drive_yard_1 }
+				planet = {
+					create_ambient_object = {
+						type = "giga_planetary_drive_yard_object" 
+						use_3d_location = yes
+						location = this
+						entity_scale_to_size = yes
+						entity_face_object = THIS
+						effect = {
+							set_ambient_object_flag = giga_yard_entity_@PREV
+						}
+					}
+				}
+			}
+			every_system_megastructure = {
+				limit = { is_megastructure_type = planetary_drive_yard_1_shipyard }
+				planet = {
+					create_ambient_object = {
+						type = "giga_planetary_drive_yard_shipyard_object" 
+						use_3d_location = yes
+						location = this
+						entity_scale_to_size = yes
+						entity_face_object = THIS
+						effect = {
+							set_ambient_object_flag = giga_yard_entity_@PREV
+						}
+					}
+				}
+			}
+			every_system_megastructure = {
+				limit = { is_megastructure_type = planetary_drive_yard_1_fortress }
+				planet = {
+					create_ambient_object = {
+						type = "giga_planetary_drive_yard_fortress_object" 
+						use_3d_location = yes
+						location = this
+						entity_scale_to_size = yes
+						entity_face_object = THIS
+						effect = {
+							set_ambient_object_flag = giga_yard_entity_@PREV
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+planet_event = {
+	id = giga_mega.7008
+
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = { #Remove the modifiers if not a colony anymore (very sad)
+		if = {
+			limit = { is_colony = no }
+			solar_system = {
+				random_system_ambient_object = {
+					limit = { has_ambient_object_flag = giga_yard_entity_@ROOT }
+					destroy_ambient_object = THIS
+				}
+				random_system_megastructure = {
+					limit = { planet = { is_same_value = ROOT } }
+					remove_megastructure = THIS
+				}
+			}
+			remove_modifier = planetary_drive_yard_modifier
+			remove_modifier = planetary_drive_yard_fortress_modifier
+			remove_modifier = planetary_drive_yard_modifier_gestalt
+			remove_modifier = planetary_drive_yard_fortress_modifier_gestalt
+			giga_drive_yard_reset_variables = yes
+		}
+		else_if = {
+			limit = { is_colony = yes }
+			planet_event = { id = giga_mega.7008 days = 30 }
+		}
+	}
+}
+
+#DISMANTLE
+planet_event = {
+	id = giga_mega.7009
+	
+	title = "giga_mega.7008.name"
+	desc = "giga_mega.7008.desc"
+
+	picture = GFX_evt_megastructure_construction
+	show_sound = event_construction
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_mega.7008.a"
+		owner = {
+			add_resource = {
+				alloys = 2000
+			}
+		}
+		hidden_effect = {
+			owner = {
+				remove_country_flag = giga_defense_nexus_dismantle_popup
+				set_country_flag = giga_just_dismantled_planet_dockyard
+			}
+			remove_modifier = planetary_drive_yard_fortress_modifier
+			remove_modifier = planetary_drive_yard_fortress_modifier_gestalt
+			every_planet_army = {
+				limit = { army_type = "giga_defense_nexus_army" }
+				remove_army = yes
+			}
+			if = {
+				limit = { has_building = building_defense_nexus_construction }
+				while = {
+					limit = { has_building = building_defense_nexus_construction }
+					remove_building = building_defense_nexus_construction
+				}
+			}
+			if = {
+				limit = { has_building = building_defense_nexus_capacity }
+				while = {
+					limit = { has_building = building_defense_nexus_capacity }
+					remove_building = building_defense_nexus_capacity
+				}
+			}
+			giga_drive_yard_reset_variables = yes
+			solar_system = {
+				random_system_megastructure = {
+					limit = { planet = { is_same_value = ROOT } }
+					remove_megastructure = THIS
+				}
+				random_system_ambient_object = {
+					limit = { has_ambient_object_flag = giga_yard_entity_@ROOT }
+					destroy_ambient_object = THIS
+				}
+				spawn_megastructure = {
+					type = planetary_drive_yard_1
+					planet = ROOT
+					owner = ROOT.owner
+				}
+			}
+		}
+	}
+
+	option = {
+		name = "giga_mega.7008.b"
+		owner = {
+			add_resource = {
+				alloys = 3500
+			}
+		}
+		hidden_effect = {
+			owner = {
+				remove_country_flag = giga_defense_nexus_dismantle_popup
+			}
+			remove_modifier = planetary_drive_yard_fortress_modifier
+			remove_modifier = planetary_drive_yard_fortress_modifier_gestalt
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = megastructure
+			remove_planet_flag = giga_drive_yard
+			every_planet_army = {
+				limit = { army_type = "giga_defense_nexus_army" }
+				remove_army = yes
+			}
+			if = {
+				limit = { has_building = building_defense_nexus_construction }
+				while = {
+					limit = { has_building = building_defense_nexus_construction }
+					remove_building = building_defense_nexus_construction
+				}
+			}
+			if = {
+				limit = { has_building = building_defense_nexus_capacity }
+				while = {
+					limit = { has_building = building_defense_nexus_capacity }
+					remove_building = building_defense_nexus_capacity
+				}
+			}
+			giga_drive_yard_reset_variables = yes
+			solar_system = {
+				random_system_megastructure = {
+					limit = { planet = { is_same_value = ROOT } }
+					remove_megastructure = THIS
+				}
+				random_system_ambient_object = {
+					limit = { has_ambient_object_flag = giga_yard_entity_@ROOT }
+					destroy_ambient_object = THIS
+				}
+			}
+		}
+	}
+
+	option = {
+		name = "giga_mega.7008.c"
+		hidden_effect = {
+			owner = { remove_country_flag = giga_defense_nexus_dismantle_popup }
+		}
+	}
+}
+
+country_event = {
+	id = giga_mega.7010
+	is_triggered_only = yes
+
+	hide_window = yes
+
+	trigger = {
+		last_increased_tech = giga_tech_repeatable_defense_nexus_capacity_upgrade
+	}
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_country_flag = giga_nexus_tech_flag_set } }
+			set_country_flag = giga_nexus_tech_flag_set
+			set_variable = {
+				which = giga_nexus_ship_count_tech
+				value = 1
+			}
+		}
+		multiply_variable = {
+			which = giga_nexus_ship_count_tech
+			value = 1.15
+		}
+	}
+}
+
+###FIX SPACING FOR MOON/PLANET FLEETS###
+
+
+country_event = {
+	id = giga_mega.8000
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		any_owned_fleet = {
+			any_owned_ship = {
+				OR = {
+					is_ship_size = giga_aeternum_planetcraft
+					is_ship_size = giga_planet_behemoth
+					is_ship_size = giga_massive_planet
+				}
+			}
+		}
+	}
+
+	immediate = {
+		every_owned_fleet = {
+			limit = {
+				OR = {
+					any_owned_ship = { is_ship_size = giga_planet_behemoth }
+					any_owned_ship = { is_ship_size = giga_aeternum_planetcraft }
+				}
+			}
+			set_formation_scale = 10
+		}
+		every_owned_fleet = {
+			limit = {
+				any_owned_ship = { is_ship_size = giga_massive_planet }
+			}
+			set_formation_scale = 5
 		}
 	}
 }

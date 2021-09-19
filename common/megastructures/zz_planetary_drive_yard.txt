@@ -1,0 +1,334 @@
+planetary_drive_yard_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_planetary_drive_yard }
+
+	build_time = 900
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 1750
+			influence = 100
+		}
+		upkeep = {
+			energy = 5
+			alloys = 5
+		}
+	}
+
+	potential = {
+		has_technology = giga_tech_planetary_drive_yard
+		NOT = { has_global_flag = planetary_drive_yard_disabled }
+		OR = {
+			check_variable = { which = giga_planetshipyard_cap value = 0 }						# No Cap
+			check_variable = { which = giga_current_planetshipyard value < giga_planetshipyard_cap }
+		}
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border"					is_inside_border = from }
+		custom_tooltip = { fail_text = "requires_surveyed_system"				giga_system_is_surveyed = yes }
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					check_variable = { which = giga_planetshipyard_cap value = 0 }						# No Cap
+					check_variable = { which = giga_current_planetshipyard value < giga_planetshipyard_cap }
+				}
+			}
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_surveyed_planet"				is_surveyed = { who = prev.from status = yes } }
+			custom_tooltip = { fail_text = "requires_no_anomaly"					has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_not_asteroid"					is_asteroid = no }
+			custom_tooltip = { fail_text = "must_build_around_habitable_planet"		is_colony = yes }
+			custom_tooltip = { fail_text = "requires_not_star"						is_star = no }
+			custom_tooltip = { fail_text = "requires_non_giga_habitable_structure"	giga_habitable_structure = no }
+			custom_tooltip = { fail_text = "requires_nothing_in_orbit"			
+				NOR = { 
+					has_planet_flag = orbital_arcology 
+					has_planet_flag = giga_drive_yard
+				} 
+			}
+			custom_tooltip = { fail_text = "requires_no_birch"						NOT = { is_planet_class = pc_birch } }
+		}
+	}
+
+	ai_weight = {
+		weight = 300	# Default = 100
+
+		# Can we afford the upkeep
+
+		# Do we want the production
+
+		# Is this system a good location?
+		modifier = { factor = 0.1	any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } }
+		modifier = { factor = 0.5	any_neighbor_system = { any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } } }
+		modifier = { factor = 4		fromfrom.planet = { is_capital = yes } }
+		modifier = {
+			factor = 2
+			fromfrom.planet = {
+				OR = {
+					is_planet_class = pc_city
+					count_owned_pop = { count >= 40 }
+				}
+			}
+		}
+		modifier = {
+			factor = 0
+			fromfrom.planet = {
+				NOR = {
+					is_capital = yes
+					is_planet_class = pc_city
+					count_owned_pop = { count >= 40 }
+				}
+			}
+		}
+
+		# Do we lean towards this from federation/ethic/civic?
+
+		# How many of this megastructure can the AI build?
+		modifier = { factor = 0.00 from = { has_country_flag = has_recently_built_planetary_drive_yard } }
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+			set_planet_flag = giga_drive_yard
+		}
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_planetary_drive_yard years = 20 }
+			country_event = { id = giga_dialog.13400 }	# Notification
+			change_variable = { which = giga_current_planetshipyard value = 1 }
+		}
+	}
+}
+
+planetary_drive_yard_1 = {
+	entity = ""
+	construction_entity = ""
+	portrait = "GFX_megastructure_planetary_dockyard"
+	upgrade_from = { planetary_drive_yard_0 }
+
+	build_time = 900
+
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 4000
+		}
+		upkeep = {
+			alloys = 5
+			energy = 30
+		}
+	}
+
+	country_modifier = {
+		country_naval_cap_add = 40
+		country_naval_cap_mult = 0.025
+	}
+	
+	possible = {
+		from = { has_technology = giga_tech_planetary_drive_yard }
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		fromfrom = {
+			set_megastructure_flag = completed_mega
+			set_megastructure_flag = giga_yard_entity_@ROOT.fromfrom.planet
+		}
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			planet_event = { id = giga_mega.7008 days = 30 }
+			save_event_target_as = giga_planet
+			if = {
+				limit = { owner = { is_gestalt = no } }
+				add_modifier = {
+					modifier = "planetary_drive_yard_modifier" 
+					days = -1
+				}
+			}
+			if = {
+				limit = { owner = { is_gestalt = yes } }
+				add_modifier = {
+					modifier = "planetary_drive_yard_modifier_gestalt" 
+					days = -1
+				}
+			}
+			create_ambient_object = {
+				type = "giga_planetary_drive_yard_object" 
+				use_3d_location = yes
+				location = this
+				entity_scale_to_size = yes
+				entity_face_object = THIS
+				effect = {
+					set_ambient_object_flag = giga_yard_entity_@ROOT.fromfrom.planet
+				}
+			}
+			set_planet_flag = giga_yard_entity_@ROOT.fromfrom.planet
+		}
+		from = {
+			if = {
+				limit = { NOT = { has_country_flag = giga_just_dismantled_planet_dockyard } }
+				country_event = { id = giga_dialog.13401 }	# Notification
+			}
+			else = { remove_country_flag = giga_just_dismantled_planet_dockyard }
+		}
+	}
+}
+
+planetary_drive_yard_1_shipyard = {
+	entity = ""
+	construction_entity = ""
+	portrait = "GFX_megastructure_planetary_dockyard"
+	upgrade_from = { planetary_drive_yard_1 }
+
+	build_time = 900
+
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 6000
+		}
+		upkeep = {
+			alloys = 10
+			energy = 60
+		}
+	}
+
+	country_modifier = {
+		country_naval_cap_add = 80
+		country_naval_cap_mult = 0.05
+	}
+	
+	possible = {
+		from = { has_technology = giga_tech_planetary_drive_yard_shipyard }
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		fromfrom = {
+			set_megastructure_flag = completed_mega
+			set_megastructure_flag = giga_yard_entity_@ROOT.fromfrom.planet
+		}
+		save_global_event_target_as = giga_system
+		random_system_ambient_object = {
+			limit = { has_ambient_object_flag = giga_yard_entity_@ROOT.fromfrom.planet }
+			destroy_ambient_object = THIS
+		}
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+			create_ambient_object = {
+				type = "giga_planetary_drive_yard_shipyard_object" 
+				use_3d_location = yes
+				location = this
+				entity_scale_to_size = yes
+				entity_face_object = THIS
+				effect = {
+					set_ambient_object_flag = giga_yard_entity_@ROOT.fromfrom.planet
+				}
+			}
+		}
+		from = {
+			country_event = { id = giga_dialog.13404 }	# Notification
+		}
+	}
+}
+
+planetary_drive_yard_1_fortress = {
+	entity = ""
+	construction_entity = ""
+	portrait = "GFX_megastructure_planetary_dockyard"
+	upgrade_from = { planetary_drive_yard_1 }
+
+	build_time = 900
+
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 7500
+		}
+		upkeep = {
+			alloys = 10
+			energy = 60
+		}
+	}
+
+	country_modifier = {
+		country_naval_cap_add = 40
+		country_naval_cap_mult = 0.025
+		country_command_limit_add = 25
+	}
+	
+	possible = {
+		from = { has_technology = giga_tech_planetary_drive_yard_defense }
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		from = {
+			if = {
+				limit = { NOT = { has_country_flag = giga_nexus_tech_flag_set } }
+				set_country_flag = giga_nexus_tech_flag_set
+				set_variable = {
+					which = giga_nexus_ship_count_tech
+					value = 1
+				}
+			}
+			country_event = { id = giga_dialog.13402 }	# Notification
+		}
+		fromfrom = {
+			set_megastructure_flag = completed_mega
+			set_megastructure_flag = giga_yard_entity_@ROOT.fromfrom.planet
+		}
+		save_global_event_target_as = giga_system
+		random_system_ambient_object = {
+			limit = { has_ambient_object_flag = giga_yard_entity_@ROOT.fromfrom.planet }
+			destroy_ambient_object = THIS
+		}
+		fromfrom.planet = {
+			remove_modifier = planetary_drive_yard_modifier
+			remove_modifier = planetary_drive_yard_modifier_gestalt
+			if = {
+				limit = { owner = { is_gestalt = no } }
+				add_modifier = {
+					modifier = "planetary_drive_yard_fortress_modifier" 
+					days = -1
+				}
+			}
+			if = {
+				limit = { owner = { is_gestalt = yes } }
+				add_modifier = {
+					modifier = "planetary_drive_yard_fortress_modifier_gestalt" 
+					days = -1
+				}
+			}
+			giga_drive_yard_reset_variables = yes
+			planet_event = { id = giga_mega.7004 }
+			save_event_target_as = giga_planet
+			set_planet_flag = defense_nexus_deploy_system
+			giga_drive_yard_calculate_max_ship_count = yes
+			set_variable = {
+				which = giga_nexus_ship_count
+				value = giga_nexus_ship_count_max
+			}
+			create_ambient_object = {
+				type = "giga_planetary_drive_yard_fortress_object" 
+				use_3d_location = yes
+				location = this
+				entity_scale_to_size = yes
+				entity_face_object = THIS
+				effect = {
+					set_ambient_object_flag = giga_yard_entity_@ROOT.fromfrom.planet
+				}
+			}
+		}
+	}
+}
