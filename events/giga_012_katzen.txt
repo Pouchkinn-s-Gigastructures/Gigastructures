@@ -511,6 +511,31 @@ country_event = {
 				days = -1
 			}
 		}
+		create_leader = {
+			class = governor
+			species = event_target:flusion_katzens
+			name = "Loris Von Kattensbach"
+			skill = 4
+			set_age = 67
+			gender = male
+			traits = {
+				trait = katzen_trait_elite
+				trait = leader_trait_architectural_interest
+				trait = leader_trait_environmental_engineer
+				trait = leader_trait_army_veteran
+			}
+			effect = {
+				save_global_event_target_as = flusion_loris
+			}
+		}
+		capital_scope = {
+			if = {
+                limit = { exists = sector }
+                sector = {
+					assign_leader = event_target:flusion_loris
+                }
+            }
+		}
 		if = {
 			limit = {
 				NOT = {
@@ -530,6 +555,7 @@ country_event = {
 				}
 				effect = {
 					save_global_event_target_as = flusion_douclaw
+					set_douclaw_real_portrait = yes
 				}
 			}
 		}
@@ -1163,6 +1189,7 @@ country_event = {
 			effect = {
 				set_leader_flag = dofus
 				save_global_event_target_as = dofus
+				set_dofus_real_portrait = yes
 			}
 		}
 		create_leader = {
@@ -2055,6 +2082,7 @@ country_event = { #hello
 			NOT = {
 				has_country_flag = stellarite_kaiser_war
 			}
+			NOT = { has_global_flag = galcom_kaiser_crusade }
 		}
 		allow = {
 			custom_tooltip = {
@@ -2148,6 +2176,7 @@ country_event = { #hello
 				has_country_flag = katzen_vassal
 				has_global_flag = katzenartig_stellarite
 				has_global_flag = katzenartig_improbable
+				has_global_flag = galcom_kaiser_crusade
 			}
 		}
 		allow = {
@@ -2619,6 +2648,10 @@ country_event = {
 	show_sound = event_celebration
 
 	immediate = {
+		if = {
+			limit = { has_modifier = galcom_mobilizes_against_kaiser }
+			remove_modifier = galcom_mobilizes_against_kaiser
+		}
 		every_subject = {
 			clear_contribute_ezic_modifiers = yes
 			country_event = { id = giga_katzen.0032 days = 30 } #monthly event to replace the governor if they got yeeted
@@ -5160,6 +5193,466 @@ country_event = { #stellarite kaiser declares war on literally everyone
 	}
 }
 
+#GALCON WAR
+country_event = {
+	id = giga_katzen.8000
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		every_country = {
+			country_event = { id = giga_katzen.8001 }
+		}
+		set_global_flag = galcom_kaiser_crusade
+		every_war = {
+			limit = { any_war_participant = { is_country_type = katzenartig_imperium } }
+			end_war_effect = yes
+		}
+		every_war = {
+			limit = {
+				any_war_participant = {
+					is_country_type = default
+					is_galactic_community_member = yes
+					NOR = {
+						has_country_flag = allied_to_kaiser
+						has_country_flag = katzen_vassal
+					}
+				}
+				NOT = { any_war_participant = { is_galactic_community_member = no } }
+				NOT = { any_war_participant = { NOT = { is_country_type = default } } }
+				NOT = { any_war_participant = { is_crisis_faction = yes } }
+				NOT = { any_war_participant = { has_ascension_perk = ap_become_the_crisis } }
+			}
+			end_war_effect = yes
+		}
+		random_country = {
+			limit = { 
+				is_ai = no
+				NOT = { is_at_war_with = event_target:katzenartig_imperium }
+				is_country_type = default
+				NOR = {
+					is_at_war_with = event_target:flusion_primitives_country
+					has_country_flag = allied_to_kaiser
+					has_country_flag = katzen_vassal
+					is_subject = yes
+				}
+				is_galactic_community_member = yes
+			}
+			set_kaiser_war_opinion = yes
+			declare_war = {
+				target = event_target:flusion_primitives_country
+				attacker_war_goal = "wg_katzen_defence"
+				name = "Katzenkrieg"
+			}
+			if = {
+				limit = { has_modifier = katzen_attache }
+				remove_modifier = katzen_attache
+			}
+			save_global_event_target_as = kaiser_crusade_war_leader
+		}
+		every_country = {
+			limit = {
+				NOT = { is_country = event_target:kaiser_crusade_war_leader }
+				NOT = { is_at_war_with = event_target:katzenartig_imperium }
+				is_country_type = default
+				NOR = {
+					is_at_war_with = event_target:flusion_primitives_country
+					has_country_flag = allied_to_kaiser
+					has_country_flag = katzen_vassal
+				}
+				is_galactic_community_member = yes
+			}
+			set_kaiser_war_opinion = yes
+			if = {
+				limit = { has_modifier = katzen_attache }
+				remove_modifier = katzen_attache
+			}
+			join_war = event_target:kaiser_crusade_war_leader
+		}
+		every_country = {
+			limit = {
+				OR = {
+					has_country_flag = allied_to_kaiser
+					has_country_flag = katzen_vassal
+				}
+			}
+			remove_from_galactic_community = yes
+		}
+	}
+}
+
+country_event = { #galcom war
+	id = giga_katzen.8001
+	title = "giga_katzen.8001.name"
+	desc = "giga_katzen.8001.desc"
+	picture = GFX_evt_open_revolt
+	show_sound = event_air_raid_siren
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_katzen.8001.a"
+		custom_tooltip = "giga_katzen.8001.a.tooltip"
+	}
+}
+
+country_event = { #solakia recognized
+	id = giga_katzen.8002
+	title = "giga_katzen.8002.name"
+	desc = "giga_katzen.8002.desc"
+	picture = GFX_evt_dofus_solakia
+	show_sound = event_announcement
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_katzen.8002.a"
+		custom_tooltip = "giga_katzen.8002.a.tooltip"
+		add_resource = { influence = 50 }
+		hidden_effect = {
+			if = {
+				limit = { is_ai = no }
+				decrease_kaiser_opinion = yes
+			}
+		}
+	}
+}
+
+country_event = { #Ezic invasion denounced
+	id = giga_katzen.8003
+	title = "giga_katzen.8003.name"
+	desc = "giga_katzen.8003.desc"
+	picture = GFX_evt_louf_ezicania
+	show_sound = event_announcement
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_katzen.8003.a"
+		custom_tooltip = "giga_katzen.8003.a.tooltip"
+		add_resource = { influence = 50 }
+		hidden_effect = {
+			if = {
+				limit = { is_ai = no }
+				decrease_kaiser_opinion = yes
+			}
+		}
+	}
+}
+
+country_event = { #laurandar recognized
+	id = giga_katzen.8004
+	title = "giga_katzen.8004.name"
+	desc = "giga_katzen.8004.desc"
+	picture = GFX_evt_aaron_laurandar
+	show_sound = event_announcement
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_katzen.8004.a"
+		custom_tooltip = "giga_katzen.8004.a.tooltip"
+		add_resource = {
+			influence = 50
+			energy = 500
+			minor_artifacts = 10
+		}
+		hidden_effect = {
+			if = {
+				limit = { is_ai = no }
+				decrease_kaiser_opinion = yes
+				decrease_kaiser_opinion = yes
+			}
+		}
+	}
+}
+
+country_event = { #Dofus demands Solakia
+	id = giga_katzen.8010
+	title = "giga_katzen.8010.name"
+	desc = {
+		text = "giga_katzen.8010.desc"
+		trigger = { NOT = { has_global_flag = solakia_recognised } }
+	}
+	desc = {
+		text = "giga_katzen.8010.descrec"
+		trigger = { has_global_flag = solakia_recognised }
+	}
+	picture = GFX_evt_dofus_solakia
+	show_sound = event_radio_chatter
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_katzen.8010.a"
+		custom_tooltip = "giga_katzen.8010.a.tooltip"
+		event_target:gigaflusion = {
+			add_modifier = {
+				modifier = solakia_free_state
+				days = -1
+			}
+		}
+		if = {
+			limit = { exists = event_target:solakia }
+			event_target:solakia = {
+				add_opinion_modifier = {
+					who = ROOT
+					modifier = opinion_flusion_gave_land_back
+				}
+			}
+		}
+	}
+
+	option = {
+		name = "giga_katzen.8010.b"
+		custom_tooltip = "giga_katzen.8010.b.tooltip"
+		event_target:gigaflusion = {
+			if = {
+				limit = { has_global_flag = solakia_recognised }
+				add_modifier = {
+					modifier = solak_angry
+					days = 3600
+					multiplier = 2
+				}
+			}
+			else = {
+				add_modifier = {
+					modifier = solak_angry
+					days = 3600
+				}
+			}
+		}
+		if = {
+			limit = { exists = event_target:solakia }
+			event_target:solakia = {
+				add_opinion_modifier = {
+					who = ROOT
+					modifier = opinion_flusion_betrayed_us
+				}
+			}
+		}
+		if = {
+			limit = { has_global_flag = solakia_recognised }
+			every_country = {
+				limit = {
+					is_galactic_community_member = yes
+					NOT = { is_country = ROOT }
+				}
+				add_opinion_modifier = {
+					who = ROOT
+					modifier = opinion_flusion_violated_galcom
+				}
+			}
+		}
+	}
+}
+
+#Dofus takes Flusion
+country_event = { #Flusion is INVADED
+	id = giga_katzen.8011
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_country_flag = solakia_seizing_flusion
+		fromfrom = {
+			has_planet_flag = gigaflusion
+			has_planet_flag = seizing_solakia
+		}
+	}
+
+	immediate = {
+		ROOT.fromfrom.owner = {
+			save_event_target_as = former_flusion_owner
+		}
+		fromfrom = {
+			owner = { country_event = { id = giga_katzen.8012 } }
+		}
+		if = {
+			limit = { is_country_type = faction }
+			event_target:solakia = { destroy_country = yes }
+			create_country = {
+				species = event_target:solakians
+				name = "Solakian Republic"
+				authority = auth_democratic
+				ethos = {
+					ethic = ethic_xenophile
+					ethic = ethic_materialist
+					ethic = ethic_egalitarian
+				}
+				origin = origin_katzen_splinter
+				civics = random
+				flag = {
+					icon={
+						category="flusionian"
+						file="solakia_flag.dds"
+					}
+					background={
+						category="backgrounds"
+						file="circle.dds"
+					}
+					colors={
+						"dark_purple"
+						"purple"
+						"null"
+						"null"
+					}
+				}
+				type = default
+				effect = {
+					create_leader = {
+						class = ruler
+						species = event_target:solakians
+						name = "Dofus Teknik Makina"
+						gender = male
+						effect = { save_event_target_as = solakia_ruler set_dofus_real_portrait = yes }
+					}
+					set_leader = event_target:solakia_ruler
+					set_country_flag = solakia
+					save_global_event_target_as = solakia
+					apply_katzen_difficulty = yes
+					add_modifier = {
+						modifier = katzenartig_major_splinter
+						days = -1
+					}
+					copy_techs_from = {
+						target = event_target:former_flusion_owner
+					}
+					every_country = {
+						establish_communications_no_message = event_target:solakia
+						establish_contact = {
+							who = event_target:flusion_primitives_country
+							location = event_target:giga_jublio_system
+						}
+					}
+				}
+			}
+		}
+		fromfrom = {
+			remove_planet_flag = seizing_solakia
+			remove_modifier = solakia_free_state
+			set_controller = event_target:solakia
+			set_owner = event_target:solakia
+			solar_system = {
+				add_claims = {
+					who = event_target:former_flusion_owner
+					num_of_claims = 1
+					show_notification = yes
+				}
+				starbase = { set_owner = event_target:solakia }
+			}
+		}
+		if = {
+			limit = { is_country_type = faction }
+			set_country_type = default
+			remove_country_flag = solakia_waiting_to_get_flusion
+		}
+		remove_country_flag = solakia_seizing_flusion
+		add_opinion_modifier = {
+			who = event_target:former_flusion_owner
+			modifier = opinion_flusion_betrayed_us
+		}
+	}
+}
+
+country_event = { #solakia lost
+	id = giga_katzen.8012
+	title = "giga_katzen.8012.name"
+	desc = "giga_katzen.8012.desc"
+	picture = GFX_evt_dofus_solakia
+	show_sound = event_planetary_riot
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_katzen.8012.a"
+		custom_tooltip = "giga_katzen.8012.a.tooltip"
+	}
+}
+
+country_event = { #solakia acquired
+	id = giga_katzen.8013
+	title = "giga_katzen.8013.name"
+	desc = "giga_katzen.8013.desc"
+	picture = GFX_evt_dofus_solakia
+	show_sound = event_ground_battle
+
+	is_triggered_only = yes
+
+	trigger = {
+		fromfrom = {
+			has_planet_flag = gigaflusion
+			has_planet_flag = seizing_solakia
+		}
+		from = { is_country = event_target:solakia }
+	}
+
+	option = {
+		name = "giga_katzen.8013.a"
+		event_target:gigaflusion = {
+			remove_modifier = solakia_free_state
+			add_modifier = {
+				modifier = solak_angry
+				days = 3600
+			}
+		}
+		hidden_effect = {
+			event_target:gigaflusion = { remove_planet_flag = seizing_solakia }
+		}
+	}
+}
+
+#Solakia turns into UFS
+country_event = {
+	id = giga_katzen.8020
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		is_country = event_target:solakia
+		any_owned_planet = {
+			has_planet_flag = gigaflusion
+		}
+		NOT = { has_country_flag = solakia_formed_ufs }
+	}
+
+	immediate = {
+		set_country_flag = solakia_formed_ufs
+		change_country_flag = {
+			icon={
+				category="flusionian"
+				file="ufs_flag.dds"
+			}
+			background={
+				category="backgrounds"
+				file="double_triangles.dds"
+			}
+			colors={
+				"green"
+				"light_blue"
+				"null"
+				"null"
+			}
+		}
+		set_name = "United Flusionian States"
+		event_target:gigaflusion = { set_capital = yes }
+	}
+}
+
+country_event = { #solakia gets flusion
+	id = giga_katzen.8021
+	title = "giga_katzen.8021.name"
+	desc = "giga_katzen.8021.desc"
+	picture = GFX_evt_diplomatic_visit
+	show_sound = event_celebration
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_katzen.8021.a"
+	}
+}
+
 #improbable kaiser go to war
 country_event = { #infinite kaiser declares war on literally everyone
 	id = giga_katzen.04006
@@ -7111,6 +7604,19 @@ country_event = { #Flusion is INVADED
 				}
 			}
 		}
+		if = {
+			limit = {
+				event_target:gigaflusion = {
+					is_colony = yes
+					owner = { has_country_flag = contacted_solak_rebels }
+				}
+			}
+			event_target:gigaflusion = {
+				owner = { #Dofus wants his land back lol
+					country_event = { id = giga_katzen.8010 days = 60 }
+				}
+			}
+		}
 		set_global_flag = katzenartig_imperium_defeated
 		every_country = {
 			country_event = { id = giga_katzen.094 }
@@ -7311,6 +7817,14 @@ country_event = { #Collapse of Katzenartig
 	is_triggered_only = yes
 
 	immediate = {
+		every_country = {
+			limit = { has_modifier = galcom_mobilizes_against_kaiser }
+			remove_modifier = galcom_mobilizes_against_kaiser
+		}
+		if = {
+			limit = { has_global_flag = galcom_kaiser_crusade }
+			remove_global_flag = galcom_kaiser_crusade
+		}
 		every_country = {
 			limit = { has_modifier = katzen_attache }
 			remove_modifier = katzen_attache

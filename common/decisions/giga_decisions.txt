@@ -497,3 +497,243 @@ decision_claim_system_megas = {
 		weight = 0
 	}
 }
+
+#Claim Solakia
+decision_take_solakia_back = {
+	owned_planets_only = yes
+	sound = event_ground_battle
+	icon = decision_take_solakia_back
+	ai_weight = { weight = 0 }
+	potential = {
+		has_planet_flag = gigaflusion
+		has_modifier = solakia_free_state
+		owner = { is_ai = no }
+	}
+
+	resources = {
+		category = decisions
+		cost = { influence = 100 }
+	}
+
+	allow = {
+		hidden_trigger = { has_planet_flag = gigaflusion }
+		has_modifier = solakia_free_state
+		has_ground_combat = no
+	}
+
+	effect = {
+		custom_tooltip = decision_take_solakia_back_effect
+		hidden_effect = {
+			set_planet_flag = seizing_solakia
+			if = {
+				limit = {
+					exists = event_target:solakia
+					root.owner = { NOT = { is_at_war_with = event_target:solakia } }
+				}
+				root.owner = {
+					declare_war = {
+						target = event_target:solakia
+						attacker_war_goal = wg_conquest
+					}
+				}
+				event_target:solakia = {
+					add_opinion_modifier = {
+						who = root.owner
+						modifier = opinion_flusion_betrayed_us
+					}
+				}
+			}
+			if = {
+				limit = { NOT = { exists = event_target:solakia } }
+				create_country = {
+					species = event_target:solakians
+					name = "Solakian Republic"
+					authority = auth_democratic
+					ethos = {
+						ethic = ethic_xenophile
+						ethic = ethic_materialist
+						ethic = ethic_egalitarian
+					}
+					origin = origin_katzen_splinter
+					civics = random
+					flag = {
+						icon={
+							category="flusionian"
+							file="solakia_flag.dds"
+						}
+						background={
+							category="backgrounds"
+							file="circle.dds"
+						}
+						colors={
+							"dark_purple"
+							"purple"
+							"null"
+							"null"
+						}
+					}
+					type = faction
+					effect = {
+						create_leader = {
+							class = ruler
+							species = event_target:solakians
+							name = "Dofus Teknik Makina"
+							gender = male
+							effect = { save_event_target_as = solakia_ruler set_dofus_real_portrait = yes }
+						}
+						set_leader = event_target:solakia_ruler
+						set_country_flag = solakia
+						save_global_event_target_as = solakia
+						apply_katzen_difficulty = yes
+						add_modifier = {
+							modifier = katzenartig_major_splinter
+							days = -1
+						}
+						copy_techs_from = {
+							target = ROOT.owner
+						}
+						set_hostile = root.owner
+						set_country_flag = solakia_waiting_to_get_flusion
+					}
+				}
+				ROOT.owner = { set_hostile = event_target:solakia }
+			}
+			while = {
+				count = 8
+				create_army = {
+					name = "Solakian Armed Forces"
+					owner = event_target:solakia
+					species = event_target:solakians
+					type = "flusion_army"
+				}
+			}
+			event_target:solakia = {
+				set_country_flag = solakia_seizing_flusion
+			}
+		}
+	}
+}
+
+decision_give_flusion_to_solakia = {
+	owned_planets_only = yes
+	sound = event_celebration
+	icon = decision_give_flusion_to_solakia
+	ai_weight = { weight = 0 }
+	potential = {
+		has_planet_flag = gigaflusion
+		has_modifier = solakia_free_state
+		owner = { is_ai = no }
+		NOT = {
+			AND = {
+				exists = event_target:solakia
+				owner = { is_at_war_with = event_target:solakia }
+			}
+		}
+	}
+
+	resources = {
+		category = decisions
+		cost = { influence = 50 }
+	}
+
+	allow = {
+		hidden_trigger = { has_planet_flag = gigaflusion }
+		has_modifier = solakia_free_state
+		has_ground_combat = no
+	}
+
+	effect = {
+		custom_tooltip = decision_give_flusion_to_solakia_effect
+		hidden_effect = {
+			root.owner = {
+				save_event_target_as = former_flusion_owner
+			}
+			if = {
+				limit = { NOT = { exists = event_target:solakia } }
+				create_country = {
+					species = event_target:solakians
+					name = "Solakian Republic"
+					authority = auth_democratic
+					ethos = {
+						ethic = ethic_xenophile
+						ethic = ethic_materialist
+						ethic = ethic_egalitarian
+					}
+					origin = origin_katzen_splinter
+					civics = random
+					flag = {
+						icon={
+							category="flusionian"
+							file="solakia_flag.dds"
+						}
+						background={
+							category="backgrounds"
+							file="circle.dds"
+						}
+						colors={
+							"dark_purple"
+							"purple"
+							"null"
+							"null"
+						}
+					}
+					type = default
+					effect = {
+						create_leader = {
+							class = ruler
+							species = event_target:solakians
+							name = "Dofus Teknik Makina"
+							gender = male
+							effect = { save_event_target_as = solakia_ruler set_dofus_real_portrait = yes }
+						}
+						set_leader = event_target:solakia_ruler
+						set_country_flag = solakia
+						save_global_event_target_as = solakia
+						apply_katzen_difficulty = yes
+						add_modifier = {
+							modifier = katzenartig_major_splinter
+							days = -1
+						}
+						copy_techs_from = {
+							target = ROOT.owner
+						}
+					}
+				}
+			}
+			while = {
+				count = 8
+				create_army = {
+					name = "Solakian Armed Forces"
+					owner = event_target:solakia
+					species = event_target:solakians
+					type = "flusion_army"
+				}
+			}
+			event_target:gigaflusion = {
+				set_controller = event_target:solakia
+				set_owner = event_target:solakia
+				remove_modifier = solakia_free_state
+				solar_system = {
+					starbase = { set_owner = event_target:solakia }
+				}
+			}
+			every_country = { establish_communications_no_message = event_target:solakia }
+			every_country = {
+				establish_contact = {
+					who = event_target:solakia
+					location = event_target:giga_jublio_system
+				}
+			}
+			every_country = {
+				limit = { OR = { is_country_type = default is_ai = no } }
+				country_event = { id = giga_katzen.8021 }
+			}
+			event_target:solakia = {
+				add_opinion_modifier = {
+					who = event_target:former_flusion_owner
+					modifier = opinion_gave_flusion_back
+				}
+			}
+		}
+	}
+}

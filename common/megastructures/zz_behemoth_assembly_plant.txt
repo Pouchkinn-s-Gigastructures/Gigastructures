@@ -1,0 +1,272 @@
+planetcraft_printer_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_planet_assembly }
+
+	build_time = 1800
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 5000
+			influence = 100
+		}
+		upkeep = { energy = 5 }
+	}
+
+	potential = {
+		has_technology = giga_tech_planet_assembly
+		NOT = { has_global_flag = warplanet_disabled }
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+			custom_tooltip = { fail_text = "requires_standard_planet_class"			giga_is_standard_star = yes }
+		}
+	}
+
+	ai_weight = {
+		weight = 100	# Default = 100
+
+		# Can we afford the upkeep
+		modifier = { factor = 1.00	chk_afford_energy_10 = yes }
+		modifier = { factor = 0.90	chk_afford_energy_09 = yes }
+		modifier = { factor = 0.80	chk_afford_energy_08 = yes }
+		modifier = { factor = 0.70	chk_afford_energy_07 = yes }
+		modifier = { factor = 0.60	chk_afford_energy_06 = yes }
+		modifier = { factor = 0.50	chk_afford_energy_05 = yes }
+		modifier = { factor = 0.40	chk_afford_energy_04 = yes }
+		modifier = { factor = 0.30	chk_afford_energy_03 = yes }
+		modifier = { factor = 0.20	chk_afford_energy_25 = yes }
+		modifier = { factor = 0.10	chk_afford_energy_02 = yes }
+		modifier = { factor = 0.00	chk_afford_energy_15 = yes }
+
+		modifier = { factor = 1.00	chk_afford_alloys_10 = yes }
+		modifier = { factor = 0.90	chk_afford_alloys_09 = yes }
+		modifier = { factor = 0.80	chk_afford_alloys_08 = yes }
+		modifier = { factor = 0.70	chk_afford_alloys_07 = yes }
+		modifier = { factor = 0.60	chk_afford_alloys_06 = yes }
+		modifier = { factor = 0.50	chk_afford_alloys_05 = yes }
+		modifier = { factor = 0.40	chk_afford_alloys_04 = yes }
+		modifier = { factor = 0.30	chk_afford_alloys_03 = yes }
+		modifier = { factor = 0.20	chk_afford_alloys_25 = yes }
+		modifier = { factor = 0.10	chk_afford_alloys_02 = yes }
+		modifier = { factor = 0.00	chk_afford_alloys_15 = yes }
+
+		# Do we want the production
+
+		# Is this system a good location?
+		modifier = { factor = 0.75	any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } }
+
+		# Do we lean towards this from federation/ethic/civic?
+		modifier = { factor = 10	from = { has_country_flag = pangalactic_defense_league } }
+		modifier = { factor = 2		from = { has_federation = yes federation = { has_federation_type = military_federation } } }
+		modifier = { factor = 3		from = { has_ethic = ethic_fanatic_militarist } }
+		modifier = { factor = 1.5	from = { has_ethic = ethic_militarist } }
+		modifier = { factor = 1.5	from = { has_civic = civic_machine_terminator } }
+		modifier = { factor = 1.5	from = { has_civic = civic_fanatic_purifiers } }
+		modifier = { factor = 1.5	from = { has_civic = civic_hive_devouring_swarm } }
+		modifier = { factor = 2		from = { is_at_war = yes } }
+
+		# How many of this megastructure can the AI build?
+		modifier = { factor = 0.00 from = { has_country_flag = has_recently_built_war_moon } }
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = {
+			country_event = { id = giga_printer.2010 }	# Notification
+		}
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+		}
+	}
+}
+
+planetcraft_printer_1 = {
+	entity = "war_planet_printer_1_entity"
+	construction_entity = "war_planet_printer_1_entity"
+	portrait = "GFX_megastructure_planetcraft"
+	upgrade_from = { planetcraft_printer_0 }
+	place_entity_on_planet_plane = no
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { 
+			alloys = 15000
+			rare_crystals = 1000
+			volatile_motes = 1000
+			exotic_gases = 1000
+		}
+		upkeep = {
+			energy = 400
+			alloys = 200
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warplanet_disabled } }
+	possible = { from = { has_technology = giga_tech_planet_assembly } }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_printer.2011 } }	# Notification
+	}
+}
+
+
+planetcraft_printer_2 = {
+	entity = "war_planet_printer_2_entity"
+	construction_entity = "war_planet_printer_2_construction_entity"
+	portrait = "GFX_megastructure_planetcraft"
+	upgrade_from = { planetcraft_printer_1 }
+	place_entity_on_planet_plane = no
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { 
+			alloys = 80000
+			rare_crystals = 2000
+			volatile_motes = 2000
+			exotic_gases = 2000
+		}
+		upkeep = {
+			energy = 800
+			alloys = 300
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warplanet_disabled } }
+	possible = { from = { has_technology = giga_tech_planet_assembly } }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_printer.2012 } }	# Notification
+	}
+}
+
+planetcraft_printer_3 = {
+	entity = "war_planet_printer_3_entity"
+	construction_entity = "war_planet_printer_3_construction_entity"
+	portrait = "GFX_megastructure_planetcraft"
+	upgrade_from = { planetcraft_printer_2 }
+	place_entity_on_planet_plane = no
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 200000
+			rare_crystals = 5000
+			volatile_motes = 5000
+			exotic_gases = 5000
+		}
+		upkeep = {
+			energy = 1500
+			alloys = 600
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warplanet_disabled } }
+	possible = { from = { has_technology = giga_tech_planet_assembly } }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { 
+			if = {
+				limit = {
+					NOT = { has_country_flag = just_assembled_planetcraft }
+				}
+				country_event = { id = giga_printer.2013 }	# Notification
+			}
+			else_if = {
+				limit = { has_country_flag = just_assembled_planetcraft }
+				remove_country_flag = just_assembled_planetcraft
+			}
+		}
+	}
+}
+
+planetcraft_printer_make_planet = {
+	entity = "war_planet_printer_printing_entity"
+	construction_entity = "war_planet_printer_printing_entity"
+	portrait = "GFX_megastructure_planetcraft"
+	upgrade_from = { planetcraft_printer_3 }
+	place_entity_on_planet_plane = no
+
+	build_time = 12600
+	resources = {
+		category = megastructures
+		cost = {
+			energy = 200000
+			alloys = 250000
+			sr_solar_energy = 26
+		}
+		upkeep = {
+			energy = 1500
+			alloys = 600
+		}
+	}
+
+	potential = { 
+		NOT = { has_global_flag = warplanet_disabled }
+		OR = {
+			check_variable = { which = giga_warplanet_cap value = 0 }						# No Cap
+			check_variable = { which = giga_current_warplanet value < giga_warplanet_cap }
+		}
+	}
+	
+	possible = { 
+		from = { has_technology = giga_tech_planet_assembly }
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					check_variable = { which = giga_warplanet_cap value = 0 }						# No Cap
+					check_variable = { which = giga_current_warplanet value < giga_warplanet_cap }
+				}
+			}
+		}
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+
+	on_build_complete = {
+		save_event_target_as = giga_planetcraft_print
+		from = {
+			set_country_flag = just_assembled_planetcraft
+			country_event = { id = giga_printer.2000 }				# Notification
+			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_83
+					}
+				}
+				set_country_flag = giga_achievement_83
+				set_timed_country_flag = { flag = giga_achievement_83_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+	}
+}

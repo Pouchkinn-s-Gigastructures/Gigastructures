@@ -934,8 +934,468 @@ country_event = {
 			limit = { any_owned_megastructure = { is_megastructure_type = lunar_disco_ball_2 } }
 			country_event = { id = giga_disco.100 }
 		}
+		if = {
+			limit = { any_owned_megastructure = { OR = { is_megastructure_type = yggdrasil_orchid_3 is_megastructure_type = yggdrasil_orchid_restored } } }
+			country_event = { id = giga_yggdrasil.100 }
+		}
 	}
 }
+
+namespace = giga_yggdrasil
+#random event generator
+country_event = {
+	id = giga_yggdrasil.100
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		every_owned_megastructure = {
+			limit = {
+				OR = { is_megastructure_type = yggdrasil_orchid_3 is_megastructure_type = yggdrasil_orchid_restored }
+				planet = { NOT = { has_planet_flag = giga_mega_event_occured_recently } }
+			}
+			#random stuff
+			random_list = {
+				1 = { #Lifeforms eat the food
+					planet = {
+						set_timed_planet_flag = {
+							flag = giga_mega_event_occured_recently
+							days = 3600
+						}
+						save_event_target_as = giga_event_planet
+					}
+					save_event_target_as = yggdrasil_lifeforms
+					owner = { 
+						country_event = { id = giga_yggdrasil.140 days = 30 random = 15 }
+						set_country_flag = yggdrasil_lifeforms_happened
+					}
+					set_megastructure_flag = yggdrasil_lifeforms
+					modifier = {
+						factor = 0
+						owner = { has_country_flag = yggdrasil_lifeforms_happened }
+					}
+					modifier = {
+						factor = 0
+						has_megastructure_flag = yggdrasil_lifeforms
+					}
+				}
+				1 = { #Storm: reduces output
+					planet = {
+						set_timed_planet_flag = {
+							flag = giga_mega_event_occured_recently
+							days = 3600
+						}
+						save_event_target_as = giga_event_planet
+					}
+					save_event_target_as = yggdrasil_storm
+					owner = { 
+						country_event = { id = giga_yggdrasil.130 days = 30 random = 15 }
+						set_timed_country_flag = {
+							flag = yggdrasil_storm_happened
+							days = 1800
+						}
+					}
+					modifier = {
+						factor = 0
+						owner = {
+							has_country_flag = yggdrasil_storm_happened
+						}
+					}
+					modifier = {
+						factor = 0
+						has_megastructure_flag = yggdrasil_storm
+					}
+				}
+				1 = { #Hallucinogens: Plants mutate to become drugs
+					planet = {
+						set_timed_planet_flag = {
+							flag = giga_mega_event_occured_recently
+							days = 3600
+						}
+						save_event_target_as = giga_event_planet
+					}
+					save_event_target_as = yggdrasil_drugs
+					set_megastructure_flag = yggdrasil_drugs
+					owner = { 
+						country_event = { id = giga_yggdrasil.110 days = 30 random = 15 }
+						set_country_flag = yggdrasil_drugs_happened 
+					}
+					modifier = {
+						factor = 0
+						owner = {
+							OR = {
+								is_gestalt = yes
+								has_country_flag = yggdrasil_drugs_happened
+							}
+						}
+					}
+					modifier = {
+						factor = 0
+						has_megastructure_flag = yggdrasil_drugs
+					}
+				}
+				1 = { #Another empire asks for a cut of the production
+					planet = {
+						set_timed_planet_flag = {
+							flag = giga_mega_event_occured_recently
+							days = 3600
+						}
+						save_event_target_as = giga_event_planet
+					}
+					save_event_target_as = yggdrasil_foodshare
+					set_timed_megastructure_flag = {
+						flag = yggdrasil_foodshare
+						days = 720
+					} 
+					random_country = {
+						limit = { is_valid_yggdrasil_food_beggar = yes }
+						save_event_target_as = yggdrasil_food_beggar_country
+					}
+					owner = {  country_event = { id = giga_yggdrasil.120 days = 10 random = 10 } }
+					modifier = {
+						factor = 0
+						has_megastructure_flag = yggdrasil_foodshare
+					}
+					modifier = {
+						add = 5
+						any_country = {
+							is_valid_yggdrasil_food_beggar = yes
+						}
+						ROOT = {
+							NOR = {
+								has_modifier = yggdrasil_food_share_donator
+								has_valid_civic = civic_fanatic_purifiers
+								has_valid_civic = civic_hive_devouring_swarm
+								has_valid_civic = civic_machine_terminator
+							}
+						}
+					}
+				}
+				96 = {}
+			}
+		}
+	}
+}
+
+#Lifeforms eat the food
+country_event = {
+	id = giga_yggdrasil.140
+	title = "giga_yggdrasil.140.name"
+	desc = "giga_yggdrasil.140.desc"
+
+	picture = GFX_evt_alien_nature
+	show_sound = event_space_amoeba
+
+	is_triggered_only = yes
+	
+	location = event_target:giga_event_planet
+
+	option = { #Hunt them
+		name = "giga_yggdrasil.140.a"
+		custom_tooltip = "giga_yggdrasil.140.a.tooltip"
+		hidden_effect = {
+			event_target:yggdrasil_lifeforms = {
+				set_timed_megastructure_flag = {
+					flag = clearing_yggdrasil_locusts
+					days = 720
+				}
+			}
+			country_event = { id = giga_yggdrasil.141 days = 720 }
+		}
+	}
+
+	option = { #Whatever
+		name = "giga_yggdrasil.140.b"
+		custom_tooltip = "giga_yggdrasil.140.b.tooltip"
+		hidden_effect = {
+			event_target:yggdrasil_lifeforms = {
+				set_timed_megastructure_flag = {
+					flag = yggdrasil_locusts
+					days = 1800
+				}
+			}
+			country_event = { id = giga_yggdrasil.142 days = 1800 }
+		}
+	}
+
+	option = { #Preserve
+		name = "giga_yggdrasil.140.c"
+		custom_tooltip = "giga_yggdrasil.140.c.tooltip"
+		hidden_effect = {
+			event_target:yggdrasil_lifeforms = {
+				set_megastructure_flag = studying_yggdrasil_locusts
+			}
+		}
+	}
+}
+
+country_event = {
+	id = giga_yggdrasil.141
+	title = "giga_yggdrasil.141.name"
+	desc = "giga_yggdrasil.141.desc"
+
+	is_triggered_only = yes
+
+	picture = GFX_evt_alien_nature
+	show_sound = event_sensor_ping
+
+	option = {
+		name = "giga_yggdrasil.141.a"
+		add_resource = {
+			influence = 25
+		}
+	}
+}
+
+country_event = {
+	id = giga_yggdrasil.142
+	title = "giga_yggdrasil.142.name"
+	desc = "giga_yggdrasil.142.desc"
+
+	is_triggered_only = yes
+
+	picture = GFX_evt_alien_nature
+	show_sound = event_sensor_ping
+
+	option = {
+		name = "giga_yggdrasil.142.a"
+	}
+}
+
+#Storm: Reduces production
+country_event = {
+	id = giga_yggdrasil.130
+	title = "giga_yggdrasil.130.name"
+	desc = "giga_yggdrasil.130.desc"
+
+	picture = GFX_evt_gas_giant
+	show_sound = event_structural_collapse
+
+	is_triggered_only = yes
+	
+	location = event_target:giga_event_planet
+
+	option = { #Spend energy to fix, will last 2 years
+		name = "giga_yggdrasil.130.a"
+		custom_tooltip = "giga_yggdrasil.130.a.tooltip"
+		allow = {
+			resource_stockpile_compare = {
+				resource = energy
+				value >= 10000
+			}
+			resource_stockpile_compare = {
+				resource = alloys
+				value >= 5000
+			}
+			resource_stockpile_compare = {
+				resource = food
+				value >= 2500
+			}
+		}
+		add_resource = {
+			energy = -10000
+			alloys = -5000
+			food = -2000
+		}
+		hidden_effect = {
+			event_target:yggdrasil_storm = {
+				set_timed_megastructure_flag = {
+					flag = yggdrasil_storm
+					days = 720
+				} 
+			}
+		}
+	}
+
+	option = { #Too bad. Will last 5 years.
+		name = "giga_yggdrasil.130.b"
+		custom_tooltip = "giga_yggdrasil.130.b.tooltip"
+		hidden_effect = {
+			event_target:yggdrasil_storm = {
+				set_timed_megastructure_flag = {
+					flag = yggdrasil_storm
+					days = 2700
+				} 
+			}
+		}
+	}
+}
+#Share: A country wants some food
+country_event = {
+	id = giga_yggdrasil.120
+	title = "giga_yggdrasil.120.name"
+	desc = "giga_yggdrasil.120.desc"
+
+	diplomatic = yes
+
+	is_triggered_only = yes
+	
+	location = event_target:yggdrasil_foodshare
+
+	picture_event_data = {
+		portrait = event_target:yggdrasil_food_beggar_country
+		room = event_target:yggdrasil_food_beggar_country
+		planet_background = event_target:yggdrasil_food_beggar_country.capital_scope
+	}
+
+	option = { #Sure!
+		name = "giga_yggdrasil.120.a"
+		custom_tooltip = "giga_yggdrasil.120.a.tooltip"
+		add_modifier = {
+			modifier = yggdrasil_food_share_donator
+			days = 3600
+		}
+		add_favors = {
+			target = event_target:yggdrasil_food_beggar_country
+			value = 5
+		}
+		event_target:yggdrasil_food_beggar_country = {
+			add_modifier = {
+				modifier = yggdrasil_food_share_recipient
+				days = 3600
+			}
+			add_opinion_modifier = {
+				who = root
+				modifier = opinion_yggdrasil_gave_food
+			}
+		}
+	}
+
+	option = { #Sure but pay
+		name = "giga_yggdrasil.120.b"
+		add_modifier = {
+			modifier = yggdrasil_food_share_donator
+			days = 3600
+		}
+		add_resource = {
+			energy = 15000
+		}
+		event_target:yggdrasil_food_beggar_country = {
+			add_modifier = {
+				modifier = yggdrasil_food_share_recipient
+				days = 3600
+			}
+			add_opinion_modifier = {
+				who = root
+				modifier = opinion_yggdrasil_gave_food_paid
+			}
+		}
+	}
+
+	option = { #Niet
+		name = "giga_yggdrasil.120.c"
+		add_resource = {
+			influence = 50
+		}
+		event_target:yggdrasil_food_beggar_country = {
+			add_opinion_modifier = {
+				who = root
+				modifier = opinion_yggdrasil_denied_food
+			}
+		}
+	}
+}
+
+#Hallucinogens: Plants in orchid mutate to become drugs
+country_event = {
+	id = giga_yggdrasil.110
+	title = "giga_yggdrasil.110.name"
+	desc = "giga_yggdrasil.110.desc"
+
+	picture = GFX_evt_space_crystals
+	show_sound = event_alien_nature
+
+	is_triggered_only = yes
+	
+	location = event_target:yggdrasil_drugs
+
+	option = { #Restrict it. Costs energy but less negative effects.
+		name = "giga_yggdrasil.110.a"
+		custom_tooltip = "giga_yggdrasil.110.a.tooltip"
+		add_modifier = {
+			modifier = yggdrasil_drugs_restricted
+			days = 7200
+		}
+		if = {
+			limit = { has_ethic = ethic_egalitarian }
+			add_modifier = {
+				modifier = yggdrasil_drugs_displeased
+				days = 1800
+				multiplier = 1
+			}
+		}
+		if = {
+			limit = { has_ethic = ethic_fanatic_egalitarian }
+			add_modifier = {
+				modifier = yggdrasil_drugs_displeased
+				days = 1800
+				multiplier = 2
+			}
+		}
+	}
+
+	option = { #Free circulation. No cost but negative effects.
+		name = "giga_yggdrasil.110.b"
+		custom_tooltip = "giga_yggdrasil.110.b.tooltip"
+		add_modifier = {
+			modifier = yggdrasil_drugs_free
+			days = 7200
+		}
+		if = {
+			limit = { has_ethic = ethic_authoritarian }
+			add_modifier = {
+				modifier = yggdrasil_drugs_displeased
+				days = 1800
+				multiplier = 1
+			}
+		}
+		if = {
+			limit = { has_ethic = ethic_fanatic_authoritarian }
+			add_modifier = {
+				modifier = yggdrasil_drugs_displeased
+				days = 1800
+				multiplier = 2
+			}
+		}
+	}
+
+	option = { #Sell it! Makes trade value.
+		name = "giga_yggdrasil.110.c"
+		custom_tooltip = "giga_yggdrasil.110.c.tooltip"
+		add_modifier = {
+			modifier = yggdrasil_drugs_sold
+			days = 7200
+		}
+		trigger = {
+			is_authoritarian = no
+			is_megacorp = no 
+		}
+	}
+
+	option = { #Sell it! Makes trade value. (Megacorp)
+		name = "giga_yggdrasil.110.e"
+		custom_tooltip = "giga_yggdrasil.110.e.tooltip"
+		add_modifier = {
+			modifier = yggdrasil_drugs_sold_megacorp
+			days = 7200
+		}
+		trigger = {
+			is_authoritarian = no
+			is_megacorp = yes
+		}
+	}
+
+	option = { #Destroy it.
+		name = "giga_yggdrasil.110.d"
+		custom_tooltip = "giga_yggdrasil.110.d.tooltip"
+		add_resource = {
+			energy = -7500
+			food = -2500
+			influence = 50
+		}
+	}
+}
+
 
 namespace = giga_accelerator
 #random event generator

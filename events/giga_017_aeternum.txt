@@ -1195,8 +1195,12 @@ country_event = {
 	title = "giga_aeternum.4002.name"
 	desc = {
 		text = "giga_aeternum.4002.desc"
+		trigger = { NOT = { has_global_flag = pre_emptive_aeternum_war } }
 	}
-
+	desc = {
+		text = "giga_aeternum.4002.desc.preemptive"
+		trigger = { has_global_flag = pre_emptive_aeternum_war }
+	}
 	diplomatic = yes
 	custom_gui = "giga_aeternum_gui"
 	is_triggered_only = yes
@@ -1215,10 +1219,37 @@ country_event = {
 	}
 
 	option = {
+		name = "giga_aeternum.4002.a.preemptive" #war
+		custom_gui = aeternum_event_option_entry
+		trigger = {
+			has_global_flag = pre_emptive_aeternum_war
+			NOR = {
+				has_valid_civic = civic_fanatic_purifiers
+				has_valid_civic = civic_hive_devouring_swarm
+				has_valid_civic = civic_machine_terminator
+			}
+		}
+		hidden_effect = {
+			remove_country_flag = aeternum_diplomacy_engaged
+			if = {
+				limit = { ROOT = { NOT = { is_at_war_with = event_target:birch_aeternum } } }
+				event_target:birch_aeternum = {
+					declare_war = {
+						target = ROOT
+						attacker_war_goal = "wg_aeternum_conquest"
+						name = "Aeternal Reclamation"
+					}
+				}
+			}
+		}
+	}
+	
+	option = {
 		name = "giga_aeternum.4002.a" #war
 		custom_gui = aeternum_event_option_entry
 		trigger = {
 			NOR = {
+				has_global_flag = pre_emptive_aeternum_war
 				has_valid_civic = civic_fanatic_purifiers
 				has_valid_civic = civic_hive_devouring_swarm
 				has_valid_civic = civic_machine_terminator
@@ -2260,6 +2291,21 @@ country_event = {
 			country_event = { id = giga_aeternum.4302 }
 		}
 		country_event = { id = giga_aeternum.4303 days = 15 }
+	}
+}
+
+#no more AAA
+country_event = {
+	id = giga_aeternum.8040
+	title = "giga_aeternum.8040.name"
+	desc = "giga_aeternum.8040.desc"
+	picture = GFX_evt_arguing_senate
+	show_sound = event_announcement
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_aeternum.8040.a"
+		custom_tooltip = "giga_aeternum.8040.a.tooltip"
 	}
 }
 
@@ -5105,6 +5151,7 @@ country_event = {
 				}
 				effect = {
 					save_global_event_target_as = flusion_douclaw
+					set_douclaw_real_portrait = yes
 				}
 			}
 		}
@@ -5142,6 +5189,7 @@ country_event = {
 			}
 			effect = {
 				save_global_event_target_as = flusion_douclaw
+				set_douclaw_real_portrait = yes
 			}
 		}
 	}
@@ -6570,6 +6618,580 @@ country_event = {
 					event_chain = "aeternum_chain"
 					counter = "aeternum_system_count"
 					amount = -1
+				}
+			}
+		}
+	}
+}
+
+#galcom stuff
+country_event = { #galcom does intel stuff
+	id = giga_aeternum.8000
+	title = "giga_aeternum.8000.name"
+	desc = "giga_aeternum.8000.desc"
+	picture = GFX_evt_physics_research
+	show_sound = event_sensor_ping
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_aeternum.8000.a"
+		add_modifier = {
+			modifier = aeternum_research_cooperative
+			days = 1800
+		}
+		hidden_effect = {
+			country_event = { id = giga_aeternum.8001 days = 1800 } #CHANGE
+		}
+	}
+}
+
+country_event = { #yay
+	id = giga_aeternum.8001
+	title = "giga_aeternum.8001.name"
+	desc = "giga_aeternum.8001.desc"
+	picture = GFX_evt_physics_research
+	show_sound = event_laboratory_sound
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_aeternum.8001.a"
+		custom_tooltip = "giga_aeternum.8001.a.tooltip"
+		remove_modifier = aeternum_research_cooperative
+		add_resource = {
+			influence = 100
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 6
+		}
+		hidden_effect = {
+			while = {
+				count = 3
+				increase_aeternite_intel = yes
+			}
+			every_country = {
+				limit = {
+					is_ai = yes
+					NOT = { has_modifier = galcom_aeternite_intel_buff }
+				}
+				add_modifier = {
+					modifier = galcom_aeternite_intel_buff
+					days = -1
+				}
+			}
+		}
+	}
+}
+
+#Form megafed
+country_event = { 
+	id = giga_aeternum.8010
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		random_country = { #pick president
+			limit = {
+				is_galactic_community_member = yes
+				is_ai = no
+			}
+			set_country_flag = giga_aeternite_league_leader
+			save_global_event_target_as = giga_aeternite_league_leader
+			set_timed_country_flag = { flag = ai_no_leave_fed days = 10800 }
+			if = {
+				limit = { has_federation = yes }
+				leave_alliance = { override_requirements = yes }
+			}
+			set_country_flag = ai_no_leave_fed
+			join_alliance = {
+				who = event_target:giga_aeternite_league_leader
+				name = "Anti-Aeternite Alliance"
+				override_requirements = yes
+			}
+			set_country_flag = is_in_anti_aeternite_alliance
+			federation = {
+				set_federation_type = default_federation
+				set_federation_flag = anti_aeternite_alliance
+				add_cohesion = 100
+				add_federation_experience = 7000
+				save_global_event_target_as = anti_aeternite_federation
+				set_federation_succession_term = years_40
+			}
+		}
+		every_country = { #join the AAA
+			limit = {
+				is_galactic_community_member = yes
+				NOT = { has_country_flag = giga_aeternite_league_leader }
+			}
+			set_timed_country_flag = {
+				flag = ai_no_leave_fed
+				days = 9000
+			}
+			if = {
+				limit = { has_federation = yes }
+				leave_alliance = { override_requirements = yes }
+			}
+			join_alliance = {
+				who = event_target:giga_aeternite_league_leader
+				override_requirements = yes
+			}
+			set_country_flag = is_in_anti_aeternite_alliance
+			federation = {
+				add_cohesion = 100
+				add_federation_experience = 150
+			}
+			if = {
+				limit = { is_at_war = yes }
+				every_war = { remove_war_participant = prev }
+			}
+		}
+		every_country = {
+			limit = { has_country_flag = is_in_anti_aeternite_alliance }
+			every_country = {
+				limit = { has_country_flag = is_in_anti_aeternite_alliance }
+				add_opinion_modifier = {
+					who = PREV
+					modifier = opinion_put_differences_aside_aeternum
+				}
+			}
+		}
+		every_country = {
+			country_event = { id = giga_aeternum.8011 }
+		}
+	}
+}
+
+country_event = { #galcom forms AAA
+	id = giga_aeternum.8011
+	title = "giga_aeternum.8011.name"
+	desc = "giga_aeternum.8011.desc"
+	picture = GFX_evt_galactic_senate
+	show_sound = event_celebration
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_aeternum.8011.a"
+		custom_tooltip = "giga_aeternum.8011.a.tooltip"
+		if = {
+			limit = { has_country_flag = is_in_anti_aeternite_alliance }
+			add_modifier = {
+				modifier = anti_aeternite_league_emergency
+				days = -1
+			}
+		}
+	}
+}
+
+
+country_event = { #New Galcom members join AAA
+	id = giga_aeternum.8012
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_global_flag = galcom_anti_aeternite_league_formed
+	}
+
+	immediate = {
+		event_target:anti_aeternite_federation = {
+			federation_leader = { save_event_target_as = event_target:giga_aeternite_league_leader }
+		}
+		if = {
+			limit = { has_federation = yes }
+			leave_alliance = { override_requirements = yes }
+		}
+		join_alliance = {
+			who = event_target:giga_aeternite_league_leader
+			name = "Anti-Aeternite Alliance"
+			override_requirements = yes
+		}
+		if = {
+			limit = { is_at_war = yes }
+			every_war = { remove_war_participant = prev }
+		}
+		set_timed_country_flag = {
+			flag = ai_no_leave_fed
+			days = 9000
+		}
+		add_modifier = {
+			modifier = anti_aeternite_league_emergency
+			days = -1
+		}
+	}
+}
+
+country_event = { #Remove countries from AAA
+	id = giga_aeternum.8013
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_global_flag = galcom_anti_aeternite_league_formed
+	}
+
+	immediate = {
+		event_target:anti_aeternite_federation = {
+			federation_leader = { save_event_target_as = event_target:giga_aeternite_league_leader }
+		}
+		if = {
+			limit = {
+				has_federation = yes
+				federation = { has_federation_flag = anti_aeternite_alliance } 
+			}
+			leave_alliance = { override_requirements = yes }
+		}
+		remove_modifier = anti_aeternite_league_emergency
+	}
+}
+
+#Invite FEs
+country_event = { 
+	id = giga_aeternum.8020
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				any_country = {
+					NOT = { has_country_flag = already_invited_to_aaa }
+					OR = {
+						is_country_type = fallen_empire
+						is_country_type = awakened_fallen_empire
+					}
+				}
+			}
+			random_country = {
+				limit = {
+					NOT = { has_country_flag = already_invited_to_aaa }
+					OR = {
+						is_country_type = fallen_empire
+						is_country_type = awakened_fallen_empire
+					} 
+				}
+				save_global_event_target_as = precursor_invited_to_aaa
+			}
+			#We picked a FE to invite now let's determine if they say yes or no
+			event_target:precursor_invited_to_aaa = {
+				set_country_flag = already_invited_to_aaa
+				random_list = {
+					80 = { #Joins
+						set_country_flag = precursor_joined_aaa
+						set_timed_country_flag = {
+							flag = ai_no_leave_fed
+							days = 9000
+						}
+						add_modifier = {
+							modifier = anti_aeternite_league_emergency
+							days = -1
+						}
+						if = {
+							limit = { has_federation = yes }
+							leave_alliance = { override_requirements = yes }
+						}
+						event_target:anti_aeternite_federation = {
+							federation_leader = { save_event_target_as = event_target:giga_aeternite_league_leader }
+						}
+						join_alliance = {
+							who = event_target:giga_aeternite_league_leader
+							override_requirements = yes
+						}
+						set_country_flag = is_in_anti_aeternite_alliance
+						federation = {
+							add_cohesion = 100
+							add_federation_experience = 150
+						}
+						if = {
+							limit = { is_at_war = yes }
+							every_war = { remove_war_participant = prev }
+						}
+						every_country = {
+							limit = { has_country_flag = is_in_anti_aeternite_alliance }
+							country_event = { id = giga_aeternum.8022 }
+						}
+						every_country = {
+							limit = { has_country_flag = is_in_anti_aeternite_alliance }
+							add_opinion_modifier = {
+								who = event_target:precursor_invited_to_aaa
+								modifier = opinion_put_differences_aside_aeternum
+							}
+							event_target:precursor_invited_to_aaa = {
+								add_opinion_modifier = {
+									who = PREV
+									modifier = opinion_put_differences_aside_aeternum
+								}
+							}
+						}
+						modifier = { #xenophobes say no
+							add = -80 
+							has_ethic = ethic_fanatic_xenophobe
+						}
+						modifier = { #xenophiles say yes
+							add = 15
+							has_ethic = ethic_fanatic_xenophile
+						}
+						modifier = { #being at with a country in the AAA reduces odds
+							add = -30 
+							any_country = {
+								has_country_flag = is_in_anti_aeternite_alliance
+								is_at_war_with = event_target:precursor_invited_to_aaa
+							}
+						}
+						modifier = { #FEs less likely to join
+							add = -10
+							is_country_type = fallen_empire
+						}
+						modifier = {
+							factor = 3
+							is_at_war_with = event_target:birch_aeternum
+						}
+					}
+					20 = { #Refuses
+						set_country_flag = precursor_rejected_aaa
+						every_country = {
+							limit = { has_country_flag = is_in_anti_aeternite_alliance }
+							country_event = { id = giga_aeternum.8023 }
+						}
+						modifier = { #xenophobes say no
+							add = 80 
+							has_ethic = ethic_fanatic_xenophobe
+						}
+						modifier = { #xenophiles say yes
+							add = -15
+							has_ethic = ethic_fanatic_xenophile
+						}
+						modifier = { #being at with a country in the AAA reduces odds
+							add = 30 
+							any_country = {
+								has_country_flag = is_in_anti_aeternite_alliance
+								is_at_war_with = event_target:precursor_invited_to_aaa
+							}
+						}
+						modifier = { #FEs less likely to join
+							add = 10
+							is_country_type = fallen_empire
+						}
+					}
+				}
+			}
+			country_event = { id = giga_aeternum.8020 days = 30 }
+		}
+	}
+}
+
+country_event = { #inviting FEs
+	id = giga_aeternum.8021
+	title = "giga_aeternum.8021.name"
+	desc = "giga_aeternum.8021.desc"
+	picture = GFX_evt_alien_propaganda
+	show_sound = event_announcement
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_aeternum.8021.a"
+		custom_tooltip = "giga_aeternum.8021.a.tooltip"
+		add_resource = {
+			influence = 50
+		}
+	}
+}
+
+country_event = { #FE says yes!
+	id = giga_aeternum.8022
+	title = "giga_aeternum.8022.name"
+	desc = "giga_aeternum.8022.desc"
+	picture = GFX_evt_diplomatic_visit
+	show_sound = event_celebration
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_aeternum.8022.a"
+		custom_tooltip = "giga_aeternum.8022.a.tooltip"
+		add_resource = {
+			influence = 50
+		}
+	}
+}
+
+country_event = { #FE says no
+	id = giga_aeternum.8023
+	title = "giga_aeternum.8023.name"
+	desc = "giga_aeternum.8023.desc"
+	picture = GFX_evt_assembly_fight
+	show_sound = event_planetary_riot
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_aeternum.8023.a"
+		custom_tooltip = "giga_aeternum.8023.a.tooltip"
+		add_resource = {
+			influence = -25
+		}
+	}
+}
+
+event = {
+	id = giga_aeternum.8024
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_global_flag = galcom_anti_aeternite_league_formed
+	}
+
+	immediate = {
+		if = {
+			limit = { 
+				has_global_flag = galcom_anti_aeternite_league_formed
+				NOT = { any_country = { is_country_type = dormant_aeternum } } 
+			}
+			remove_global_flag = galcom_anti_aeternite_league_formed
+			every_country = {
+				limit = {
+					has_federation = yes
+					federation = { has_federation_flag = anti_aeternite_alliance }
+				}
+				remove_country_flag = is_in_anti_aeternite_alliance
+				if = {
+					limit = { has_federation = yes }
+					leave_alliance = { override_requirements = yes }
+				}
+				if = {
+					limit = { has_country_flag = ai_no_leave_fed }
+					remove_country_flag = ai_no_leave_fed
+				}
+				remove_modifier = anti_aeternite_league_emergency
+				country_event = { id = giga_aeternum.8040 }
+			}
+			every_country = {
+				every_country = {
+					limit = {
+						has_opinion_modifier = {
+							who = PREV
+							modifier = opinion_put_differences_aside_aeternum
+						}
+					}
+					remove_opinion_modifier = {
+						who = PREV
+						modifier = opinion_put_differences_aside_aeternum
+					}
+				}
+			}
+		}
+		else = {
+			event_target:anti_aeternite_federation = {
+				if = {
+					limit = { NOT = { has_federation_type = default_federation } }
+					set_federation_type = default_federation
+				}
+				add_cohesion = 100
+			}
+			if = { #countries in galcom but not in anti-aeternite alliance, remove from league
+				limit = {
+					any_country = {
+						is_galactic_community_member = yes
+						OR = {
+							has_federation = no
+							federation = { NOT = { has_federation_flag = anti_aeternite_alliance } }
+						}
+					}
+				}
+				every_country = {
+					limit = {
+						is_galactic_community_member = yes
+						OR = {
+							has_federation = no
+							federation = { NOT = { has_federation_flag = anti_aeternite_alliance } }
+						}
+					}
+					remove_from_galactic_community = yes
+					remove_modifier = anti_aeternite_league_emergency
+					remove_country_flag = is_in_anti_aeternite_alliance
+				}
+			}
+			if = { #countries in AAA but not in community, add to community
+				limit = {
+					any_country = {
+						is_galactic_community_member = no
+						has_federation = yes
+						federation = { has_federation_flag = anti_aeternite_alliance }
+					}
+				}
+				every_country = {
+					limit = {
+						is_galactic_community_member = no
+						has_federation = yes
+						federation = { has_federation_flag = anti_aeternite_alliance }
+					}
+					add_to_galactic_community = yes
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = giga_aeternum.8025
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = { has_country_flag = is_in_anti_aeternite_alliance }
+
+	immediate = {
+		remove_country_flag = is_in_anti_aeternite_alliance
+		remove_modifier = anti_aeternite_league_emergency
+		remove_from_galactic_community = yes 
+	}
+}
+
+country_event = { #AAA attacks aeternum
+	id = giga_aeternum.8030
+	title = "giga_aeternum.8030.name"
+	desc = "giga_aeternum.8030.desc"
+	picture = GFX_evt_machine_space_battle
+	show_sound = event_ground_battle
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_aeternum.8030.a"
+		custom_tooltip = "giga_aeternum.8030.a.tooltip"
+		if = {
+			limit = { has_country_flag = is_in_anti_aeternite_alliance }
+			add_modifier = {
+				modifier = pre_emptive_aeternite_strike
+				days = 720
+			}
+		}
+	}
+}
+
+fleet_event = {
+	id = giga_aeternum.8031
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		if = {
+			limit = { has_fleet_flag = moving_towards_aiondia }
+			fleet_event = { id = giga_aeternum.8031 days = 10 }
+		}
+		queue_actions = { #Move to Aiondia
+			find_closest_system = {
+				trigger = {
+					id = giga_aeternum.8031.trigger.1
+					any_system_planet = {
+						is_planet_class = pc_birch
+					}
+				}
+				found_system = {
+					move_to = this
 				}
 			}
 		}
