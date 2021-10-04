@@ -1,5 +1,5 @@
 name="Gigastructural Engineering & More (DEBUG)"
-version="2.8.*"
+version="3.1.*"
 tags={
 	"Gameplay"
 	"Megastructures"
