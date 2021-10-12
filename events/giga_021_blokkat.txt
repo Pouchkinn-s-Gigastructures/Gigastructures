@@ -486,7 +486,10 @@ event = {
 		#Make the species
 		if = {
 			limit = {
-				NOT = { has_global_flag = vintage_blokkats }
+				NOR = {
+					has_global_flag = vintage_blokkats
+					has_global_flag = anime_blokkats 
+				}
 			}
 			create_species = {
 				class = BLOKKAT
@@ -580,6 +583,59 @@ event = {
 				plural = "Blokkats"
 				adjective = "Blokkat"
 				portrait = admiraloldblokkat
+				namelist = "AI"
+				traits = {
+					trait = species_trait_blokkat
+					trait = trait_mechanical
+					trait = trait_psionic
+				}
+				effect = {
+					save_global_event_target_as = admiral_blokkat_species
+				}
+			}
+		}
+
+		#Make the species
+		else_if = {
+			limit = { has_global_flag = anime_blokkats }
+			create_species = {
+				class = BLOKKAT
+				name = "Blokkat"
+				plural = "Blokkats"
+				adjective = "Blokkat"
+				portrait = animeblokkat
+				namelist = "AI"
+				traits = {
+					trait = species_trait_blokkat
+					trait = trait_mechanical
+					trait = trait_psionic
+				}
+				effect = {
+					save_global_event_target_as = blokkat_species
+				}
+			}
+			create_species = { #Portraits with diversity used for admirals
+				class = BLOKKAT
+				name = "Blokkat"
+				plural = "Blokkats"
+				adjective = "Blokkat"
+				portrait = diverseanimeblokkat
+				namelist = "AI"
+				traits = {
+					trait = species_trait_blokkat
+					trait = trait_mechanical
+					trait = trait_psionic
+				}
+				effect = {
+					save_global_event_target_as = diverse_blokkat_species
+				}
+			}
+			create_species = { #Portraits with diversity used for admirals
+				class = BLOKKAT
+				name = "Blokkat"
+				plural = "Blokkats"
+				adjective = "Blokkat"
+				portrait = diverseanimeblokkat
 				namelist = "AI"
 				traits = {
 					trait = species_trait_blokkat
@@ -1414,7 +1470,7 @@ country_event = {
 						} 
 					}
 				}
-				destroy_fleet = THIS
+				delete_fleet = THIS
 			}
 			every_owned_fleet = {
 				limit = { has_fleet_flag = blokkat_scout_fleet }
@@ -2022,6 +2078,18 @@ country_event = {
 		response_text = "giga_blokkat.5010.nogalaxytravel.response"
 		is_dialog_only = yes
 	}
+
+	# option = { #Uh oh
+	# 	name = "giga_blokkat.5010.scourge"
+	# 	response_text = "giga_blokkat.5010.scourge.response"
+	# 	is_dialog_only = yes
+	# 	trigger = {
+	# 		OR = {
+	# 			any_country = { is_country_type = swarm }
+	# 			any_country = { is_country_type = swarm_fleeing_blokkats }
+	# 		}
+	# 	}
+	# }
 
 	option = { #Uh oh
 		name = "giga_blokkat.5010.a"
@@ -5364,6 +5432,31 @@ fleet_event = {
 	}
 }
 
+#PART 3.5
+fleet_event = {
+	id = giga_blokkat.33161
+	title = "giga_blokkat.33161.name"
+	desc = "giga_blokkat.33161.desc"
+
+	picture = GFX_evt_assembly_fight
+	archaeology = yes
+	show_sound = event_dig_site
+
+	is_triggered_only = yes
+
+	immediate = { fromfrom = { set_site_progress_locked = yes } }
+
+	option = { #what!
+		name = "giga_blokkat.33161.a"
+		owner = { 
+			small_artifact_reward = yes
+		}
+		hidden_effect = {
+			fromfrom = { set_site_progress_locked = no }
+		}
+	}
+}
+
 #PART 4
 fleet_event = {
 	id = giga_blokkat.3317
@@ -7615,6 +7708,7 @@ country_event = {
 							set_leader_flag = blokkat_leader
 						}
 					}
+					modifier = { add = 1000 has_leader_flag = blokkmo_leader }
 				}
 				1 = {
 					create_leader = {
@@ -7681,6 +7775,7 @@ country_event = {
 							limit = { has_leader_flag = blokkat_is_governor }
 							add_trait = leader_trait_governor_chosen
 						}
+						modifier = { add = 1000 has_leader_flag = blokkmo_leader }
 					}
 					1 = {
 						set_leader_flag = blokkat_is_keen
@@ -7702,6 +7797,7 @@ country_event = {
 				random_list = {
 					3 = {
 						set_leader_flag = blokkat_is_angry
+						modifier = { add = 1000 has_leader_flag = blokkmo_leader }
 					}
 					2 = {
 						set_leader_flag = blokkat_is_indifferent
@@ -9300,6 +9396,382 @@ country_event = {
 	}
 }
 
+#scourge runs away
+event = {
+	id = giga_blokkat.6600
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		any_country = { is_country_type = blokkat_stripminers }
+		any_country = { is_country_type = swarm }
+		NOT = { has_global_flag = scourge_ran_away_from_blokkats }
+	}
+
+	immediate = {
+		every_country = {
+			limit = { is_ai = no }
+			country_event = { id = giga_blokkat.6607 days = 10 }
+		}
+		event_target:global_event_country = {
+			country_event = { id = giga_blokkat.6606 days = 720 } #Clear Prethoryn when dead
+		}
+		set_global_flag = scourge_ran_away_from_blokkats
+		random_rim_system = { #designate random rim system to flee to
+			limit = {
+				NOR = { 
+					any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
+					has_star_flag = blokkat_stripmined_system
+					has_star_flag = blokkat_system_being_stripmined
+					is_star_class = sc_blokkat_stripmined 
+				}
+			}
+			set_star_flag = scourge_escape_system
+			save_global_event_target_as = scourge_escape_system
+			#set_name = "Bonjour"
+		}
+		every_galaxy_planet = {
+			limit = { is_planet_class = pc_infested }
+			event_target:prethoryn = {
+				random_list = {
+					75 = {
+						create_leader = {
+							class = admiral
+							species = event_target:prethoryn_species
+							name = random
+							skill = 3
+							set_age = 1125
+						}
+					}
+					25 = {
+						create_leader = {
+							class = admiral
+							species = event_target:prethoryn_species
+							name = random
+							skill = 3
+							set_age = 1125
+							traits = {
+								trait = leader_trait_hive_affinity
+							}
+						}
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Prethoryn_Star_Brood"
+				effect = {
+					set_owner = event_target:prethoryn
+					create_ship = {
+						name = random
+						design = "NAME_Swarm_Queen"
+						graphical_culture = "swarm_01"
+					}
+					assign_leader = last_created_leader
+					while = {
+						count = 2
+						create_ship = {
+							name = random
+							design = "NAME_Swarm_Large"
+							graphical_culture = "swarm_01"
+						}
+					}
+					while = {
+						count = 4
+						create_ship = {
+							name = random
+							design = "NAME_Swarm_Carrier"
+							graphical_culture = "swarm_01"
+						}
+					}
+					while = {
+						count = 10
+						create_ship = {
+							name = random
+							design = "NAME_Swarm_Small"
+							graphical_culture = "swarm_01"
+						}
+					}
+					set_location = PREV
+					set_fleet_stance = aggressive
+					set_aggro_range = 500
+					set_aggro_range_measure_from = self
+					set_fleet_bombardment_stance = armageddon
+				}
+			}
+			change_pc = pc_barren
+		}
+		every_country = {
+			limit = { is_country_type = swarm }
+			set_country_type = swarm_fleeing_blokkats
+			#set_name = "oh god oh fuck"
+			country_event = { id = giga_blokkat.6603 days = 30 } #Loop it!
+			every_owned_fleet = {
+				set_fleet_flag = scourge_fleet_fleeing_from_blokkat
+				fleet_event = { id = giga_blokkat.6601 } #Fleets bail
+			}
+			every_owned_ship = {
+				limit = {
+					OR = {
+						is_ship_size = construction_ship_swarm
+						is_ship_size = colony_ship_swarm
+						is_ship_size = transport_ship_swarm
+					}
+				}
+				delete_ship = THIS
+			}
+			country_event = { id = giga_blokkat.6604 days = 3600 } #If not escaped by 10 years wipe them anyways
+		}
+	}
+}
+
+#Move to escape route
+fleet_event = {
+	id = giga_blokkat.6601
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		if = {
+			limit = { solar_system = { NOT = { has_star_flag = scourge_escape_system } } }
+			fleet_event = { id = giga_blokkat.6601 days = 10 }
+		}
+		if = {
+			limit = {
+				OR = { 
+					solar_system = { has_star_flag = scourge_escape_system }
+					solar_system = { is_rim_system = yes } 
+				}
+			}
+			delete_fleet = THIS
+		}
+		queue_actions = { #Move to escape route
+			find_closest_system = {
+				trigger = {
+					id = giga_blokkat.6601.trigger.1
+					has_star_flag = scourge_escape_system
+				}
+				found_system = {
+					move_to = this
+				}
+			}
+		}
+	}
+}
+
+#Delete if escape route reached
+fleet_event = {
+	id = giga_blokkat.6602
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		owner = { is_country_type = swarm_fleeing_blokkats }
+		has_global_flag = scourge_ran_away_from_blokkats
+		from = {
+			OR = {
+				is_rim_system = yes
+				has_star_flag = scourge_escape_system
+			}
+		}
+	}
+
+	immediate = {
+		delete_fleet = THIS
+	}
+}
+
+#Force all fleets to move to escape route
+country_event = {
+	id = giga_blokkat.6603
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		country_event = { id = giga_blokkat.6603 days = 30 }
+		every_owned_fleet = {
+			limit = { NOT = { has_fleet_flag = scourge_fleet_fleeing_from_blokkat } }
+			fleet_event = { id = giga_blokkat.6601 }
+		}
+		every_owned_fleet = {
+			limit = {
+				OR = {
+					solar_system = { is_rim_system = yes }
+					solar_system = { has_star_flag = scourge_escape_system }
+				}
+			}
+			delete_fleet = THIS
+		}
+	}
+}
+
+#Clear them all in the end
+country_event = {
+	id = giga_blokkat.6604
+	hide_window = yes
+	is_triggered_only = yes
+	
+	trigger = {
+		any_country = { is_country_type = swarm_fleeing_blokkats }
+	}
+
+	immediate = {
+		stop_crisis_sound = yes
+		end_crisis = yes
+		remove_global_flag = ongoing_prethoryn_invasion
+		set_global_flag = prethoryn_invasion_defeated
+		every_country = {
+			limit = { has_event_chain = "prethoryn_scourge_chain" }
+			end_event_chain = "prethoryn_scourge_chain"
+		}
+		event_target:prethoryn = {
+			every_owned_fleet = { delete_fleet = THIS } 
+			destroy_country = yes 
+		}
+		if = {
+			limit = { exists = event_target:sentinels }
+			event_target:sentinels = {
+				country_event = { id = crisis.75 days = 15 random = 10 }
+			}
+		}
+	}
+}
+ 
+#Debug
+country_event = {
+	id = giga_blokkat.6605
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		every_galaxy_planet = {
+			random = {
+				chance = 5
+				change_pc = pc_infested
+			}
+		}
+	}
+}
+
+#Clear if dead
+country_event = {
+	id = giga_blokkat.6606
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = { 
+				OR = {
+					NOT = { any_country = { is_country_type = swarm_fleeing_blokkats } }
+					AND = {
+						exists = event_target:prethoryn
+						event_target:prethoryn = {
+							NOR = {
+								any_owned_ship = { is_ship_size = large_ship_swarm } 
+								any_owned_ship = { is_ship_size = large_ship_carrier_swarm } 
+								any_owned_ship = { is_ship_size = small_ship_swarm } 
+								any_owned_ship = { is_ship_size = queen_swarm } 
+							}
+						}
+					}
+				}
+			}
+			stop_crisis_sound = yes
+			end_crisis = yes
+			remove_global_flag = ongoing_prethoryn_invasion
+			set_global_flag = prethoryn_invasion_defeated
+			every_country = {
+				limit = { has_event_chain = "prethoryn_scourge_chain" }
+				end_event_chain = "prethoryn_scourge_chain"
+			}
+			if = {
+				limit = { exists = event_target:sentinels }
+				event_target:sentinels = {
+					country_event = { id = crisis.75 days = 15 random = 10 }
+				}
+			}
+			if = {
+				limit = { exists = event_target:prethoryn }
+				event_target:prethoryn = {
+					every_owned_fleet = { delete_fleet = THIS } 
+					destroy_country = yes 
+				}
+			}
+		}
+		else = { country_event = { id = giga_blokkat.6606 days = 30 } }
+	}
+}
+
+country_event = {
+	id = giga_blokkat.6607
+	title = "giga_blokkat.6607.name"
+	desc = "giga_blokkat.6607.desc"
+	is_triggered_only = yes
+	show_sound = event_yellow_alert
+	picture = GFX_evt_worrying_signal
+
+	option = { #kk
+		name = "giga_blokkat.6607.a"
+		hidden_effect = {
+			country_event = { id = giga_blokkat.6608 }
+		}
+	}
+}
+
+country_event = {
+	id = giga_blokkat.6608
+	title = "TRANSMISSION"
+	desc = {
+		text = "giga_blokkat.6608.desc.notpsi"
+		trigger = {
+			NOT = { owner_species = { OR = { has_trait = trait_psionic has_trait = trait_hive_mind } } }
+		}
+	}
+	desc = {
+		text = "giga_blokkat.6608.desc.psi"
+		trigger = {
+			owner_species = { has_trait = trait_psionic }
+		}
+	}
+	desc = {
+		text = "giga_blokkat.6608.desc.hive"
+		trigger = {
+			owner_species = { has_trait = trait_hive_mind }
+		}
+	}
+	is_triggered_only = yes
+
+	diplomatic = yes
+
+	picture_event_data = {
+		portrait = swarm1
+		room = "swarm_room"
+	}
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_blokkat.6608.b"
+		trigger = {
+			owner_species = { OR = { has_trait = trait_psionic has_trait = trait_hive_mind } }
+		}
+		response_text = "giga_blokkat.6608.b.response"
+		is_dialog_only = yes
+	}
+
+	option = {
+		name = "giga_blokkat.6608.c"
+		trigger = {
+			owner_species = { OR = { has_trait = trait_psionic has_trait = trait_hive_mind } }
+		}
+		response_text = "giga_blokkat.6608.c.response"
+		is_dialog_only = yes
+	}
+
+	option = { #kk
+		name = "giga_blokkat.6608.a"
+	}
+}
 
 #####FLEET MOVEMENT#####
 

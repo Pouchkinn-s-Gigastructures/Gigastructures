@@ -345,6 +345,39 @@ spawn_katzen_cruiser_fleet = {
 	}
 }
 
+spawn_katzen_submarine_fleet = {
+	create_fleet = { #Spawn a simple task force of bombers
+		name = "Unterraumboot Force"
+		settings = {
+			spawn_debris = no
+			can_upgrade = no
+			uses_naval_capacity = no
+			can_change_composition = no
+		}
+		effect = {
+			set_owner = event_target:flusion_primitives_country
+			while = {
+				count = 6
+				create_ship = {
+					name = random
+					design = "Kimitz"
+					prefix = no
+					effect = { set_disable_at_health = 0.05 }
+				}
+			}
+			assign_leader = last_created_leader
+			set_fleet_flag = katzen_reserve_fleet
+			set_fleet_flag = katzen_submarine_fleet
+			set_formation_scale = 2
+			set_location = {
+				target = ROOT
+				distance = 10
+				angle = random
+			}
+		}
+	}
+}
+
 rename_planet_katzen = {
 	if = {
 		limit = {
@@ -2068,4 +2101,95 @@ clear_flusion_texture_flags = {
 	if = { limit = { has_planet_flag = flusion_shrouded_texture_applied } remove_planet_flag = flusion_shrouded_texture_applied }
 	if = { limit = { has_planet_flag = flusion_fluffy_texture_applied } remove_planet_flag = flusion_fluffy_texture_applied }
 	if = { limit = { has_planet_flag = flusion_computer_texture_applied } remove_planet_flag = flusion_computer_texture_applied }
+}
+
+katzen_submarine_submerge = {
+	set_variable = {
+		which = giga_submarine_fleet_ship_count
+		value = 0
+	}
+	ROOT = { #Count submarines
+		every_owned_ship = {
+			ROOT = {
+				change_variable = {
+					which = giga_submarine_fleet_ship_count
+					value = 1
+				}
+			}
+		}
+	}
+	create_fleet = {
+		name = "Subspace Disruption"
+		settings = {
+			spawn_debris = no
+			can_upgrade = no
+			uses_naval_capacity = no
+			can_change_composition = no
+			is_boss = yes
+		}
+		effect = {
+			set_owner = event_target:katzen_submarine_country
+			while = {
+				count = 1 #test
+				create_ship = {
+					name = random
+					design = "Anomalous Subspace"
+					prefix = no
+				}
+			}
+			set_fleet_flag = submerged_katzen_submarines_fleet
+			set_location = {
+				target = ROOT
+				distance = 1
+				angle = random
+			}
+			set_fleet_stance = passive
+			set_variable = {
+				which = giga_submarine_fleet_ship_count
+				value = ROOT.giga_submarine_fleet_ship_count
+			}
+			fleet_event = { id = giga_katzen.8508 days = 360 }
+			every_country = {
+				set_faction_hostility = {
+					target = event_target:katzen_submarine_country
+					set_hostile = no
+					set_neutral = yes
+					set_friendly = no
+				}
+			}
+		}
+	}
+	delete_fleet = ROOT
+}
+
+katzen_submarine_unsubmerge = {
+	create_fleet = {
+		name = "Unterraumboot Flotte"
+		settings = {
+			spawn_debris = no
+			can_upgrade = no
+			uses_naval_capacity = no
+			can_change_composition = no
+		}
+		effect = {
+			set_owner = event_target:flusion_primitives_country
+			while = {
+				count = ROOT.giga_submarine_fleet_ship_count
+				create_ship = {
+					name = random
+					design = "Kimitz"
+					prefix = no
+					effect = { set_disable_at_health = 0.05 }
+				}
+			}
+			set_location = {
+				target = ROOT
+				distance = 1
+				angle = random
+			}
+			set_formation_scale = 2
+			set_fleet_flag = katzen_submarine_fleet
+		}
+	}
+	delete_fleet = ROOT
 }
