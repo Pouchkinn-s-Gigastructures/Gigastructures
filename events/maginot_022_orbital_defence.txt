@@ -17,7 +17,7 @@ country_event = {
 		from.solar_system = {
 			random_system_planet = {
 				limit = {
-					is_planet_class = pc_giga_maginot_world
+					is_giga_maginot_world = yes
 					check_variable = {
 						which = giga_maginot_id
 						value = ROOT.from.giga_maginot_fleet_id
@@ -85,7 +85,7 @@ country_event = {
 		event_target:maginot_battle_system = {
 			random_system_planet = {
 				limit = {
-					is_planet_class = pc_giga_maginot_world
+					is_giga_maginot_world = yes
 					check_variable = {
 						which = giga_maginot_id
 						value = event_target:maginot_orbital_defence_fleet.giga_maginot_fleet_id
@@ -129,7 +129,7 @@ country_event = {
 		event_target:maginot_battle_system = {
 			random_system_planet = {
 				limit = {
-					is_planet_class = pc_giga_maginot_world
+					is_giga_maginot_world = yes
 					check_variable = {
 						which = giga_maginot_id
 						value = event_target:maginot_orbital_defence_fleet.giga_maginot_fleet_id
@@ -206,7 +206,7 @@ planet_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		is_planet_class = pc_giga_maginot_world
+		is_giga_maginot_world = yes
 		has_planet_flag = giga_maginot_world
 		NOT = { has_planet_flag = maginot_has_orbital_defence }
 		exists = planet_owner
@@ -275,7 +275,7 @@ planet_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		is_planet_class = pc_giga_maginot_world
+		is_giga_maginot_world = yes
 		has_planet_flag = giga_maginot_world
 	}
 
@@ -321,7 +321,128 @@ planet_event = {
 	}
 }
 
-# keep maginot_orbital_defence.2000s events for potential buff techs
+### refund points for secondary SD platforms
+## on_ship_destroyed_victim
+# This = owner of ship 1 (destroyed)
+# From = owner of ship 2 (combatant)
+# FromFrom = ship 1
+# FromFromFrom = ship 2
+country_event = {
+	id = maginot_orbital_defence.1008
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		fromfrom = {
+			fleet = { has_fleet_flag = maginot_orbital_defence }
+			is_ship_size = asteroid_artillery
+		}
+	}
+
+	immediate = {
+		save_event_target_as = maginot_orbital_defence_owner
+		fromfrom.fleet = { save_event_target_as = maginot_orbital_defence_fleet }
+		fromfrom.fleet.solar_system = { save_event_target_as = maginot_battle_system }
+		event_target:maginot_battle_system = {
+			random_system_planet = {
+				limit = {
+					is_giga_maginot_world = yes
+					check_variable = {
+						which = giga_maginot_id
+						value = event_target:maginot_orbital_defence_fleet.giga_maginot_fleet_id
+					}
+				}
+				save_event_target_as = maginot_world_location
+				# decrement platform counter
+				subtract_variable = {
+					which = giga_maginot_current_SD_platform_count
+					value = 1
+				}
+				# remove 2 points used
+				subtract_variable = {
+					which = maginot_offensive_upgrade_points_used
+					value = 2
+				}
+				# add 2 available points
+				change_variable = {
+					which = maginot_offensive_upgrade_points_current
+					value = 2
+				}
+			}
+		}
+	}
+}
+
+# keep maginot_orbital_defence.2000s events for buff techs
+
+# Firepower Upgrade
+country_event = {
+	id = maginot_orbital_defence.2001
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		last_increased_tech = "giga_tech_maginot_firepower_1"
+	}
+
+	immediate = {
+		every_owned_fleet = {
+			limit = {
+				has_fleet_flag = maginot_orbital_defence
+			}
+			add_modifier = {
+				modifier = giga_maginot_firepower_1
+				days = -1
+			}
+		}
+	}
+}
+
+# Pl*netcraft Upgrade
+country_event = {
+	id = maginot_orbital_defence.2002
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		last_increased_tech = "giga_tech_maginot_planetcraft_upgrade"
+	}
+
+	immediate = {
+		every_owned_fleet = {
+			limit = {
+				has_fleet_flag = maginot_orbital_defence
+			}
+			add_modifier = {
+				modifier = giga_maginot_planetcraft_upgrade
+				days = -1
+			}
+		}
+	}
+}
+
+# Systemcraft Upgrade
+country_event = {
+	id = maginot_orbital_defence.2003
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		last_increased_tech = "giga_tech_maginot_systemcraft_upgrade"
+	}
+
+	immediate = {
+		every_owned_fleet = {
+			limit = {
+				has_fleet_flag = maginot_orbital_defence
+			}
+			add_modifier = {
+				modifier = giga_maginot_systemcraft_upgrade
+				days = -1
+			}
+		}
+	}
+}
 
 ## can't scope to the orbital defence fleet direct from decisions (doesn't like random_fleet), so the effects are here instead
 
@@ -332,7 +453,7 @@ planet_event = {
 	hide_window = yes
 
 	trigger = {
-		is_planet_class = pc_giga_maginot_world
+		is_giga_maginot_world = yes
 		has_planet_flag = giga_maginot_world
 		has_planet_flag = maginot_has_orbital_defence
 	}
@@ -407,7 +528,7 @@ planet_event = {
 	hide_window = yes
 
 	trigger = {
-		is_planet_class = pc_giga_maginot_world
+		is_giga_maginot_world = yes
 		has_planet_flag = giga_maginot_world
 		has_planet_flag = maginot_has_orbital_defence
 	}
@@ -456,6 +577,13 @@ planet_event = {
 			which = maginot_defensive_upgrade_points_used
 			value = 1
 		}
+		# subtract alloys based on cost variable
+		planet_owner = {
+			add_resource = {
+					alloys = -1
+					mult = ROOT.maginot_orbital_defence_hp_cost
+			}
+		}
 		#increase cost
 		multiply_variable = {
 			which = maginot_orbital_defence_hp_cost
@@ -482,7 +610,7 @@ planet_event = {
 	hide_window = yes
 
 	trigger = {
-		is_planet_class = pc_giga_maginot_world
+		is_giga_maginot_world = yes
 		has_planet_flag = giga_maginot_world
 		has_planet_flag = maginot_has_orbital_defence
 	}
@@ -531,6 +659,13 @@ planet_event = {
 			which = maginot_offensive_upgrade_points_used
 			value = 1
 		}
+		# subtract alloys based on cost variable
+		planet_owner = {
+			add_resource = {
+					alloys = -1
+					mult = ROOT.maginot_orbital_defence_atk_cost
+			}
+		}
 		#increase cost
 		multiply_variable = {
 			which = maginot_orbital_defence_atk_cost
@@ -553,7 +688,7 @@ planet_event = {
 	hide_window = yes
 
 	trigger = {
-		is_planet_class = pc_giga_maginot_world
+		is_giga_maginot_world = yes
 		has_planet_flag = giga_maginot_world
 		has_planet_flag = maginot_has_orbital_defence
 	}
@@ -602,6 +737,13 @@ planet_event = {
 			which = maginot_defensive_upgrade_points_used
 			value = 1
 		}
+		# subtract alloys based on cost variable
+		planet_owner = {
+			add_resource = {
+					alloys = -1
+					mult = ROOT.maginot_orbital_defence_trg_cost
+			}
+		}
 		#increase cost
 		multiply_variable = {
 			which = maginot_orbital_defence_trg_cost
@@ -633,7 +775,7 @@ planet_event = {
 
 	trigger = {
 		exists = ROOT.owner
-		is_planet_class = pc_giga_maginot_world
+		is_giga_maginot_world = yes
 	}
 
 	immediate = {

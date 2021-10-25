@@ -49,17 +49,20 @@ maginot_world_0 = {
 			# 3.0 feature, replacement for habitable structure checks?
 			custom_tooltip = { 
 				fail_text = "requires_non_artifical_planet"
-				NOR = {
-					is_artificial = yes
+				OR = {
+					NOR = {
+						is_artificial = yes
+						is_planet_class = pc_giga_planetary_computer
+					}
+					# you can't stop the habitable gas giant maginot
 					is_planet_class = pc_habitable_gas_giant
-					is_planet_class = pc_giga_planetary_computer
 				}
 			}
 			# double check not building a maginot world on a maginot world, that makes no sense
 			custom_tooltip = {
 				fail_text = "requires_not_maginot_world"					
 				NOR = {
-					is_planet_class = pc_giga_maginot_world
+					is_giga_maginot_world = yes
 					has_planet_flag = giga_maginot_world
 				}
 			}
@@ -141,14 +144,17 @@ maginot_world_0 = {
 		}
 	}
 
+	on_build_start = { apply_giga_bulwark_trad_build_speed = yes }
+
 	on_build_complete = {
 		save_event_target_as = giga_system
 		fromfrom.planet = {
 			save_event_target_as = giga_planet
 			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
-			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
-			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
-			set_planet_flag = has_planet_mw_mega	# Has the construction site
+			set_planet_flag = megastructure					# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure				# Vanilla uses to check if an orbital station can be built here
+			set_planet_flag = has_planet_mw_mega			# Has the construction site
+			add_deposit = d_maginot_construction_blocker 	# Deposit blocker for ongoing construction, stops arcology project
 		}
 		from = {
 			set_timed_country_flag = { flag = has_recently_built_maginot years = 10 }
@@ -181,6 +187,7 @@ maginot_world_1 = {
 	possible = { from = { has_technology = giga_tech_maginot_world } }
 
 	ai_weight = { factor = 10000 } # If we can build it, we will finish it
+	on_build_start = { apply_giga_bulwark_trad_build_speed = yes }
 	on_build_complete = {
 		save_event_target_as = giga_system
 		fromfrom.planet = { save_event_target_as = giga_planet }
@@ -208,6 +215,7 @@ maginot_world_2 = {
 	possible = { from = { has_technology = giga_tech_maginot_world } }
 
 	ai_weight = { factor = 10000 } # If we can build it, we will finish it
+	on_build_start = { apply_giga_bulwark_trad_build_speed = yes }
 	on_build_complete = {
 		save_event_target_as = giga_system
 		fromfrom.planet = { save_event_target_as = giga_planet }
@@ -228,15 +236,28 @@ maginot_world_2 = {
 			# }
 		}
 		fromfrom.planet = {
+			# clean flags
 			#remove_planet_flag = has_megastructure
 			#remove_planet_flag = megastructure
 			remove_planet_flag = has_planet_mw_mega
 			
+			# set flags
 			set_planet_flag = giga_maginot_world
 			set_planet_flag = colony_event # avoids subterranean civilization
 		    
-			change_pc = pc_giga_maginot_world
+			# change the planet class depending on what is being converted
+			if = {
+				limit = { is_planet_class = pc_habitable_gas_giant }
+				change_pc = pc_giga_maginot_gas_giant
+			}
+			else = {
+				change_pc = pc_giga_maginot_world
+			}
+
+			# attached deposit
 			add_deposit = d_maginot_command
+			# remove the construction one
+			remove_deposit = d_maginot_construction_blocker
 			#add_modifier = { modifier = "giga_maginot_world" days = -1 }
 
 			# "upgrade" attached building
@@ -371,6 +392,13 @@ maginot_world_2 = {
 				id = maginot_orbital_defence.1007
 				days = 30
 			}
+			if = {
+				limit = { ROOT.from = { has_active_tradition = tr_gigabulwark_happy_defenses } }
+				add_modifier = {
+					modifier = giga_bulwark_trad_stability_maginot
+					days = -1
+				}
+			}
 		}
 		create_fleet = {
 			name = "Planetary Defence Command"
@@ -391,7 +419,28 @@ maginot_world_2 = {
 					which = giga_maginot_fleet_id
 					value = event_target:giga_planet.giga_maginot_id
 				}
-				#apply_ast_art_tech_upgrades = yes
+				# tech upgrades
+				if = {
+					limit = { event_target:maginot_world_owner = { has_technology = giga_tech_maginot_firepower_1 } }
+					add_modifier = {
+						modifier = giga_maginot_firepower_1
+						days = -1
+					}
+				}
+				if = {
+					limit = { event_target:maginot_world_owner = { has_technology = giga_tech_maginot_planetcraft_upgrade } }
+					add_modifier = {
+						modifier = giga_maginot_planetcraft_upgrade
+						days = -1
+					}
+				}
+				if = {
+					limit = { event_target:maginot_world_owner = { has_technology = giga_tech_maginot_systemcraft_upgrade } }
+					add_modifier = {
+						modifier = giga_maginot_systemcraft_upgrade
+						days = -1
+					}
+				}
 			}
 		}
 		# last, remove megastructure, everything from here is done by planet

@@ -17,7 +17,7 @@ assign_giga_maginot_id = {
 		limit = {
 			OR = {
 				has_planet_flag = giga_maginot_world
-				is_planet_class = pc_giga_maginot_world
+				is_giga_maginot_world = yes
 			}
 			NOT = { has_planet_flag = has_giga_maginot_id }
 		}
@@ -33,7 +33,7 @@ assign_giga_maginot_id = {
 			limit = {
 				OR = {
 					has_planet_flag = giga_maginot_world
-					is_planet_class = pc_giga_maginot_world
+					is_giga_maginot_world = yes
 				}
 				has_planet_flag = doesnt_have_giga_maginot_id
 			}
@@ -55,6 +55,7 @@ assign_giga_maginot_id = {
 # and then checks how many are used by orbiting defences (SD Platforms cost 2 offensive points each)
 # * call from planet scope (a Maginot World specifically)
 maginot_check_upgrade_points = {
+	save_event_target_as = maginot_world_location
 	## max points
 	# offensive
 	if = {
@@ -109,15 +110,20 @@ maginot_check_upgrade_points = {
 						value = prevprev.giga_maginot_id
 					}
 				}
-				set_variable = {
-					which = prevprev.giga_maginot_current_SD_platform_count
-					value = 0
+				event_target:maginot_world_location = {
+					set_variable = {
+						which = giga_maginot_current_SD_platform_count
+						value = 0
+					}	
 				}
 				every_owned_ship = {
 					limit = { is_ship_size = asteroid_artillery }
-					change_variable = {
-						which = prevprevprev.giga_maginot_current_SD_platform_count
-						value = 1
+					# should run this code once per ship
+					event_target:maginot_world_location = {
+						change_variable = {
+							which = giga_maginot_current_SD_platform_count
+							value = 1
+						}
 					}
 				}
 			}
@@ -181,6 +187,7 @@ maginot_check_upgrade_points = {
 		which = giga_current_alloy_stockpile
 		value = planet_owner.giga_current_alloy_stockpile
 	}
+	round_variable = giga_current_alloy_stockpile
 }
 
 # Reapplies modifiers according to current upgrades bought on the Maginot World
@@ -247,6 +254,43 @@ maginot_reapply_upgrades = {
 				add_modifier = {
 					modifier = giga_maginot_orbital_defence_trg
 					multiplier = prev.giga_maginot_orbital_defence_trg
+				}
+				## tech buffs
+				# firepower
+				if = {
+					limit = { has_modifier = giga_maginot_firepower_1 }
+					remove_modifier = giga_maginot_firepower_1
+				}
+				if = {
+					limit = { event_target:maginot_world_location.owner = { has_technology = giga_tech_maginot_firepower_1 } }
+					add_modifier = {
+						modifier = giga_maginot_firepower_1
+						days = -1
+					}
+				}
+				# pl*netcraft upgrade
+				if = {
+					limit = { has_modifier = giga_maginot_planetcraft_upgrade }
+					remove_modifier = giga_maginot_planetcraft_upgrade
+				}
+				if = {
+					limit = { event_target:maginot_world_location.owner = { has_technology = giga_tech_maginot_planetcraft_upgrade } }
+					add_modifier = {
+						modifier = giga_maginot_planetcraft_upgrade
+						days = -1
+					}
+				}
+				# systemcraft upgrade
+				if = {
+					limit = { has_modifier = giga_maginot_systemcraft_upgrade }
+					remove_modifier = giga_maginot_systemcraft_upgrade
+				}
+				if = {
+					limit = { event_target:maginot_world_location.owner = { has_technology = giga_tech_maginot_systemcraft_upgrade } }
+					add_modifier = {
+						modifier = giga_maginot_systemcraft_upgrade
+						days = -1
+					}
 				}
 			}
 		}
