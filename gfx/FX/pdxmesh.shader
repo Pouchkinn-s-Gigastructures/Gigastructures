@@ -4649,3 +4649,146 @@ Effect PdxMeshNavigationButtonGate
     }
     #DepthStencilState = "DepthStencilNoZWrite"
 }
+
+#// portrait with depth
+
+Effect PdxMeshPortraitDepth
+{
+	VertexShader = "VertexPdxMeshPortraitStandard"
+	PixelShader = "PixelPdxMeshPortrait"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+}
+
+Effect PdxMeshPortraitDepthSkinned
+{
+	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
+	PixelShader = "PixelPdxMeshPortrait"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+}
+
+Effect PdxMeshPortraitClothesDepth
+{
+	VertexShader = "VertexPdxMeshPortraitStandard"
+	PixelShader = "PixelPdxMeshPortrait"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+	RasterizerState = "RasterizerStateNoCulling"
+	Defines = { "CLOTHES" }
+}
+
+Effect PdxMeshPortraitClothesDepthSkinned
+{
+	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
+	PixelShader = "PixelPdxMeshPortrait"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+	RasterizerState = "RasterizerStateNoCulling"
+	Defines = { "CLOTHES" }
+}
+
+Effect PdxMeshPortraitHairDepth
+{
+	VertexShader = "VertexPdxMeshPortraitStandard"
+	PixelShader = "PixelPdxMeshPortrait"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+	RasterizerState = "RasterizerStateNoCulling"
+	Defines = { "HAIR" }
+}
+
+Effect PdxMeshPortraitHairDepthSkinned
+{
+	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
+	PixelShader = "PixelPdxMeshPortrait"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+	RasterizerState = "RasterizerStateNoCulling"
+	Defines = { "HAIR" }
+}
+
+Effect PdxMeshPortraitDepthShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+Effect PdxMeshPortraitDepthSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+Effect PdxMeshPortraitClothesDepthShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+Effect PdxMeshPortraitClothesDepthSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+Effect PdxMeshPortraitHairDepthShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+Effect PdxMeshPortraitHairDepthSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+
+#// rainbow blokkat
+
+PixelShader = {
+	MainCode PixelRainbowBlokkat
+		ConstantBuffers = { PortraitCommon, TwelthKind, Shadow }
+	[[
+		float3 ApplyHue(float3 col, float hueAdjust)
+		{
+			const float3 k = float3(0.57735, 0.57735, 0.57735);
+			half cosAngle = cos(hueAdjust);
+			return col * cosAngle + cross(k, col) * sin(hueAdjust) + k * dot(k, col) * (1.0 - cosAngle);
+		}
+
+		float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
+		{
+			float4 UVLod = float4( (In.vUV0), 0.0, PortraitMipLevel * 0.35 );
+
+			float4 vDiffuse;
+			if( CustomDiffuseTexture > 0.5f ) {
+				vDiffuse = tex2Dlod( PortraitCharacter, UVLod );
+			} else {
+				vDiffuse = tex2Dlod( DiffuseMap, UVLod );
+			}
+
+			float shift = (In.vPos.x * 0.005) % 1;
+
+			vDiffuse.rgb = ApplyHue(vDiffuse.rgb, shift * 2 * 3.14159);
+
+			return float4( ToGamma( vDiffuse.rgb ), vDiffuse.a );
+		}
+
+	]]
+}
+
+Effect PdxMeshRainbowBlokkatPortraitSkinned
+{
+	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
+	PixelShader = "PixelRainbowBlokkat"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+}
+
+Effect PdxMeshRainbowBlokkatPortraitSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
