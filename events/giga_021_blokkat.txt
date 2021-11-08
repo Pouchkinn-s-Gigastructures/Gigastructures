@@ -421,7 +421,7 @@ country_event = {
 
 	picture_event_data = {
 		portrait = event_target:blokkat_country.ruler
-		room = blokkat_room
+		room = blokkat3d_room
 	}
 
 	option = { #Uh oh
@@ -487,10 +487,64 @@ event = {
 		if = {
 			limit = {
 				NOR = {
+					has_global_flag = regular_blokkats
 					has_global_flag = vintage_blokkats
 					has_global_flag = anime_blokkats 
 				}
 			}
+			create_species = {
+				class = BLOKKAT
+				name = "Blokkat"
+				plural = "Blokkats"
+				adjective = "Blokkat"
+				portrait = blokkat3d_ruler
+				namelist = "AI"
+				traits = {
+					trait = species_trait_blokkat
+					trait = trait_mechanical
+					trait = trait_psionic
+				}
+				effect = {
+					save_global_event_target_as = blokkat_species
+				}
+			}
+			create_species = { #Portraits with diversity used for admirals
+				class = BLOKKAT
+				name = "Blokkat"
+				plural = "Blokkats"
+				adjective = "Blokkat"
+				portrait = blokkat3d
+				namelist = "AI"
+				traits = {
+					trait = species_trait_blokkat
+					trait = trait_mechanical
+					trait = trait_psionic
+				}
+				effect = {
+					save_global_event_target_as = diverse_blokkat_species
+				}
+			}
+			create_species = { #Portraits used for Terminator leaders
+				class = BLOKKAT
+				name = "Blokkat"
+				plural = "Blokkats"
+				adjective = "Blokkat"
+				portrait = blokkat3d
+				namelist = "AI"
+				traits = {
+					trait = species_trait_blokkat
+					trait = trait_mechanical
+					trait = trait_psionic
+				}
+				effect = {
+					save_global_event_target_as = admiral_blokkat_species
+				}
+			}
+		}
+
+		#Make the species
+		else_if = {
+			limit = { has_global_flag = regular_blokkats }
 			create_species = {
 				class = BLOKKAT
 				name = "Blokkat"
@@ -541,7 +595,6 @@ event = {
 			}
 		}
 
-	
 		#Make the species
 		else_if = {
 			limit = { has_global_flag = vintage_blokkats }
@@ -1400,6 +1453,7 @@ country_event = {
 				NOT = { has_global_flag = gotta_respawn_blokkat_mothership }
 				NOT = { has_global_flag = blokkat_mothership_shield_down }
 				NOT = { has_global_flag = blokkat_mothership_killed_legit }
+				NOT = { has_global_flag = blokkat_crisis_defeated }
 				OR = {
 					NOT = { any_owned_fleet = { has_fleet_flag = blokkat_mothership_fleet }  }
 					event_target:blokkat_mothership_ship = {
@@ -1685,7 +1739,7 @@ country_event = {
 		}
 		multiply_variable = {
 			which = blokkat_new_inquietude_value
-			value = 1
+			value = 2 #doubled
 		}
 		every_country = { #a cool side effect is that inquietude will actually go *down* if more systems are created through the EHOF
 			limit = {
@@ -1804,7 +1858,7 @@ country_event = {
 
 	picture_event_data = {
 		portrait = event_target:blokkat_country.ruler
-		room = blokkat_room
+		room = blokkat3d_room
 	}
 
 	option = { #wtf rude
@@ -1854,7 +1908,7 @@ country_event = {
 
 	picture_event_data = {
 		portrait = event_target:blokkat_country.ruler
-		room = blokkat_room
+		room = blokkat3d_room
 	}
 
 	option = { #wtf rude
@@ -2056,7 +2110,7 @@ country_event = {
 
 	picture_event_data = {
 		portrait = event_target:blokkat_country.ruler
-		room = blokkat_room
+		room = blokkat3d_room
 	}
 
 	immediate = { set_country_flag = blokkat_diplomacy_engaged }
@@ -2535,6 +2589,7 @@ ship_event = {
 					value <= 1
 				}
 				is_ship_size = giga_blokkat_harvester
+				solar_system = { NOT = { any_system_ambient_object = { has_ambient_object_flag = blokkat_star_collapse } } }
 			}
 			save_event_target_as = recently_destroyed_blokkat_harvester
 			From.owner = {
@@ -2547,10 +2602,18 @@ ship_event = {
 					which = blokkat_ship_life_count
 					value > 1
 				}
+				solar_system = { NOT = { any_system_ambient_object = { has_ambient_object_flag = blokkat_star_collapse } } }
 			}
 			subtract_variable = {
 				which = blokkat_ship_life_count
 				value = 1
+			}
+			repair_ship = yes
+			set_disabled = no
+		}
+		else_if = {
+			limit = {
+				solar_system = { NOT = { any_system_ambient_object = { has_ambient_object_flag = blokkat_star_collapse } } }
 			}
 			repair_ship = yes
 			set_disabled = no
@@ -2996,7 +3059,7 @@ country_event = {
 	immediate = {
 		subtract_variable = {
 			which = blokkat_inquietude_value
-			value = 5
+			value = 3
 		}
 		if = {
 			limit = { check_variable = { which = blokkat_inquietude_value value < 0 } }
@@ -3113,7 +3176,7 @@ country_event = {
 		hidden_effect = {
 			subtract_variable = {
 				which = blokkat_inquietude_value
-				value = 3
+				value = 1.5
 			}
 			if = {
 				limit = { check_variable = { which = blokkat_inquietude_value value < 0 } }
@@ -7525,7 +7588,7 @@ planet_event = {
 	picture = GFX_evt_inhabited_solar_system
 
 	trigger = {
-		NOT = { has_country_flag = currently_fighting_blokkat }
+		owner = { NOT = { has_country_flag = currently_fighting_blokkat } }
 	}
 
 	immediate = {
@@ -7550,7 +7613,7 @@ planet_event = {
 	option = { #kk
 		name = "giga_blokkat.3204.a"
 		custom_tooltip = "giga_blokkat.3204.a.tooltip"
-		add_resource = { influence = 50 }
+		owner = { add_resource = { influence = 50 } }
 		hidden_effect = {
 			set_planet_flag = planet_fighting_blokkat
 			planet_event = { id = giga_blokkat.3205 }
@@ -7587,7 +7650,7 @@ planet_event = {
 	option = { #kk
 		name = "giga_blokkat.3204.b"
 		hidden_effect = {
-			remove_country_flag = currently_fighting_blokkat
+			owner = { remove_country_flag = currently_fighting_blokkat }
 		}
 	}
 }
@@ -7667,7 +7730,7 @@ country_event = {
 
 	trigger = {
 		from = { is_country_type = blokkat_stripminers }
-		fromfrom = {  has_planet_flag = planet_fighting_blokkat }
+		fromfrom = { has_planet_flag = planet_fighting_blokkat }
 		any_owned_megastructure = { is_megastructure_type = blokkat_prison_1_empty }
 	}
 
@@ -7724,9 +7787,18 @@ country_event = {
 						effect = {
 							set_leader_flag = blokkat_is_scientist
 							set_leader_flag = blokkat_leader
+							random_list = {
+								10 = { 
+									set_leader_flag = blokkmo_leader
+									modifier = { #Only 1 Blokkmo
+										factor = 0
+										any_country = { any_owned_leader = { has_leader_flag = blokkmo_leader } }
+									}
+								}
+								90 = {}
+							}
 						}
 					}
-					modifier = { add = 1000 has_leader_flag = blokkmo_leader }
 				}
 				1 = {
 					create_leader = {
@@ -8135,6 +8207,10 @@ country_event = {
 						which = blokkat_prison_id
 						value = event_target:reprogrammed_blokkat_prison.blokkat_prison_id
 					}
+				}
+				if = {
+					limit = { has_leader_flag = blokkat_is_angry }
+					remove_leader_flag = blokkat_is_angry
 				}
 				save_global_event_target_as = reprogrammed_blokkat
 				exile_leader_as = reprogrammed_blokkat
@@ -8903,11 +8979,13 @@ country_event = {
 				}
 			}
 		}
+		trigger = { NOT = { has_global_flag = just_activated_blokkat_shieldkiller } }
 		add_resource = { 
 			energy = -1
 			mult = blokkat_shieldkiller_activation_cost
 		}
 		hidden_effect = {
+			set_global_flag = just_activated_blokkat_shieldkiller
 			country_event = { id = giga_blokkat.30692 days = 20 }
 			event_target:blokkat_country = {
 				multiply_variable = {
@@ -8978,6 +9056,7 @@ country_event = {
 
 	immediate = {
 		set_global_flag = blokkat_mothership_shield_down
+		remove_global_flag = just_activated_blokkat_shieldkiller
 		every_system = {
 			limit = { has_modifier = blokkat_mothership_shield }
 			remove_modifier = blokkat_mothership_shield
@@ -9757,7 +9836,6 @@ country_event = {
 			owner_species = { has_trait = trait_hive_mind }
 		}
 	}
-	is_triggered_only = yes
 
 	diplomatic = yes
 
