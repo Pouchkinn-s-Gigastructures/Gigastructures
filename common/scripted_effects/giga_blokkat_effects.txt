@@ -217,7 +217,11 @@ blokkat_harvest_system = {
 	set_star_class = sc_blokkat_stripmined
 	remove_star_flag = blokkat_system_being_stripmined
 	set_star_flag = blokkat_stripmined_system
-	set_name = "[PREV.GetName] Void"
+	if = {
+		limit = { NOT = { has_star_flag = blokkat_system_name_set_to_void } }
+		set_star_flag = blokkat_system_name_set_to_void
+		set_name = "[PREV.GetName] Void"
+	}
 	set_asteroid_belt = { radius = 0 }
 	every_fleet_in_system = {
 		limit = { has_fleet_flag = blokkat_stripmine_fleet }
@@ -387,7 +391,11 @@ blokkat_harvest_system_mothership = {
 	set_star_class = sc_blokkat_stripmined
 	remove_star_flag = blokkat_system_being_stripmined
 	set_star_flag = blokkat_stripmined_system
-	set_name = "[current_blokkat_mothership_system.GetName] Void"
+	if = {
+		limit = { NOT = { has_star_flag = blokkat_system_name_set_to_void } }
+		set_star_flag = blokkat_system_name_set_to_void
+		set_name = "[current_blokkat_mothership_system.GetName] Void"
+	}
 	set_asteroid_belt = { radius = 0 }
 	random_fleet_in_system = {
 		limit = { has_fleet_flag = blokkat_mothership_fleet }
@@ -854,62 +862,8 @@ spawn_blokkat_mothership_fleet = {
 				prefix = no
 				effect = {
 					apply_blokkat_difficulty_modifier_bigship_damage = yes
-					set_disable_at_health = 0.01
+					set_disable_at_health = 0.05
 					save_global_event_target_as = blokkat_mothership_ship
-				}
-			}
-			if = {
-				limit = { has_global_flag = giga_blokkats_bismuth }
-				while = {
-					count = 2
-					create_ship = {
-						name = "Blokk-Terminator"
-						design = "Blokk-Terminator"
-						prefix = no
-						effect = {
-							set_disable_at_health = 0.01
-							set_variable = {
-								which = blokkat_ship_life_count
-								value = event_target:blokkat_country.blokkat_terminator_life_count
-							}
-						}
-					}
-				}
-			}
-			if = {
-				limit = { has_global_flag = giga_blokkats_endtech }
-				while = {
-					count = 5
-					create_ship = {
-						name = "Blokk-Terminator"
-						design = "Blokk-Terminator"
-						prefix = no
-						effect = {
-							set_disable_at_health = 0.01
-							set_variable = {
-								which = blokkat_ship_life_count
-								value = event_target:blokkat_country.blokkat_terminator_life_count
-							}
-						}
-					}
-				}
-				while = {
-					count = 50
-					create_ship = {
-						name = "Blokk-Custodian"
-						design = "Blokk-Custodian"
-						prefix = no
-						effect = { apply_blokkat_difficulty_modifier = yes apply_blokkat_difficulty_modifier_damage = yes }
-					}
-				}
-				while = {
-					count = 250
-					create_ship = {
-						name = "Blokk-Evictor"
-						design = "Blokk-Evictor"
-						prefix = no
-						effect = { apply_blokkat_difficulty_modifier = yes apply_blokkat_difficulty_modifier_damage = yes }
-					}
 				}
 			}
 			set_location = {
@@ -922,6 +876,102 @@ spawn_blokkat_mothership_fleet = {
 			set_fleet_flag = blokkat_mothership_fleet
 			set_fleet_flag = blokkat_fleet
 			save_global_event_target_as = blokkat_mothership_fleet
+		}
+	}
+	if = {
+		limit = {
+			OR = {
+				has_global_flag = giga_blokkats_bismuth
+				has_global_flag = giga_blokkats_endtech
+			}
+		}
+		event_target:blokkat_country = {
+			create_strong_blokkat_admiral = yes
+		}
+		create_fleet = { #Spawn the escort fleet
+			name = "Blokk-Vesteskort"
+			settings = {
+				spawn_debris = no
+				can_upgrade = no
+				uses_naval_capacity = no
+				can_change_composition = no
+				is_boss = no
+			}
+			effect = {
+				set_owner = ROOT
+				if = {
+					limit = { has_global_flag = giga_blokkats_bismuth }
+					while = {
+						count = 2
+						create_ship = {
+							name = "Blokk-Terminator"
+							design = "Blokk-Terminator"
+							prefix = no
+							effect = {
+								set_disable_at_health = 0.01
+								set_variable = {
+									which = blokkat_ship_life_count
+									value = event_target:blokkat_country.blokkat_terminator_life_count
+								}
+							}
+						}
+					}
+				}
+				if = {
+					limit = { has_global_flag = giga_blokkats_endtech }
+					while = {
+						count = 5
+						create_ship = {
+							name = "Blokk-Terminator"
+							design = "Blokk-Terminator"
+							prefix = no
+							effect = {
+								set_disable_at_health = 0.01
+								set_variable = {
+									which = blokkat_ship_life_count
+									value = event_target:blokkat_country.blokkat_terminator_life_count
+								}
+							}
+						}
+					}
+					while = {
+						count = 50
+						create_ship = {
+							name = "Blokk-Custodian"
+							design = "Blokk-Custodian"
+							prefix = no
+							effect = { apply_blokkat_difficulty_modifier = yes apply_blokkat_difficulty_modifier_damage = yes }
+						}
+					}
+					while = {
+						count = 250
+						create_ship = {
+							name = "Blokk-Evictor"
+							design = "Blokk-Evictor"
+							prefix = no
+							effect = { apply_blokkat_difficulty_modifier = yes apply_blokkat_difficulty_modifier_damage = yes }
+						}
+					}
+				}
+				set_location = {
+					target = event_target:future_blokkat_mothership_system.star
+					distance = 5
+					angle = random
+				}
+				set_formation_scale = 10
+				assign_leader = last_created_leader
+				set_fleet_flag = blokkat_mothership_escort_fleet
+				set_fleet_flag = blokkat_fleet
+				save_global_event_target_as = blokkat_mothership_escort_fleet
+				clear_fleet_actions = this
+				clear_orders = yes
+				remove_auto_move_target = yes
+				auto_follow_fleet = {
+					target = event_target:blokkat_mothership_fleet
+					attack_fleet = no
+				}
+				fleet_event = { id = giga_blokkat.7008 days = 15 }
+			}
 		}
 	}
 }
