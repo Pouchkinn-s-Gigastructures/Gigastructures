@@ -3920,6 +3920,57 @@ Effect PdxMeshShipSkinnedShadow
 	Defines = { "IS_SHADOW" }
 }
 
+Effect PdxMeshShipDiffuseEmissive
+{
+	VertexShader = "VertexPdxMeshStandard"
+	PixelShader = "PixelPdxMeshShip"
+	Defines = {
+		"PDX_IMPROVED_BLINN_PHONG"
+		"RIM_LIGHT"
+		"RECOLOR_EMISSIVE"
+	}
+}
+
+Effect PdxMeshShipDiffuseEmissiveAlpha
+{
+	VertexShader = "VertexPdxMeshStandard"
+	PixelShader = "PixelPdxMeshShip"
+	BlendState = "BlendStateAlphaBlend";
+	Defines = {
+		"PDX_IMPROVED_BLINN_PHONG"
+		"RIM_LIGHT"
+		"RECOLOR_EMISSIVE"
+		"NO_ALPHA_MULTIPLIED_EMISSIVE"
+	}
+}
+
+Effect PdxMeshShipDiffuseEmissiveAlphaSkinned
+{
+	VertexShader = "VertexPdxMeshStandardSkinned"
+	PixelShader = "PixelPdxMeshShip"
+	BlendState = "BlendStateAlphaBlend";
+	Defines = {
+		"PDX_IMPROVED_BLINN_PHONG"
+		"RIM_LIGHT"
+		"RECOLOR_EMISSIVE"
+		"NO_ALPHA_MULTIPLIED_EMISSIVE"
+	}
+}
+
+Effect PdxMeshShipDiffuseEmissiveAlphaShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+Effect PdxMeshShipDiffuseEmissiveAlphaSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardSkinnedShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
 Effect PdxMeshExtraDimensionalShip
 {
 	VertexShader = "VertexPdxMeshStandard"
