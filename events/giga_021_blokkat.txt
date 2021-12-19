@@ -1237,7 +1237,10 @@ country_event = {
 		if = {
 			limit = {
 				NOT = { has_global_flag = blokkat_crisis_defeated }
-				NOT = { any_system = { NOT = { systems_blokkats_wont_stripmine = yes } } }
+				OR = {
+					NOT = { any_system = { NOT = { systems_blokkats_wont_stripmine = yes } } }
+					has_global_flag = blokkats_ate_most_of_galaxy
+				}
 				NOT = { has_global_flag = blokkat_vester_gonna_destroy_galaxy }
 			}
 			set_global_flag = blokkat_vester_gonna_destroy_galaxy
@@ -1446,7 +1449,10 @@ country_event = {
 		if = {
 			limit = { has_global_flag = gotta_respawn_blokkat_mothership }
 			remove_global_flag = gotta_respawn_blokkat_mothership
-			every_country = { country_event = { id = giga_blokkat.5004 } }
+			if = {
+				limit = { NOT = { has_global_flag = blokkats_respawned_to_unstuck } }
+				every_country = { country_event = { id = giga_blokkat.5004 } }
+			}
 			spawn_blokkat_mothership_fleet = yes
 		}
 		if = {
@@ -1474,8 +1480,11 @@ country_event = {
 				limit = { exists = event_target:blokkat_mothership_escort_fleet }
 				event_target:blokkat_mothership_escort_fleet = { destroy_fleet = THIS }
 			}
-			every_country = {
-				country_event = { id = giga_blokkat.50031 }
+			if = {
+				limit = { NOT = { has_global_flag = blokkats_respawned_to_unstuck } }
+				every_country = {
+					country_event = { id = giga_blokkat.50031 }
+				}
 			}
 			set_global_flag = gotta_respawn_blokkat_mothership
 		}
@@ -1758,6 +1767,16 @@ country_event = {
 		}
 		round_variable = blokkat_stripmined_system_perc
 		round_variable = blokkat_stripmined_system_perc_last_month
+		if = {
+			limit = {
+				check_variable = {
+					which = blokkat_stripmined_system_perc
+					value > 95
+				}
+				NOT = { has_global_flag = blokkats_ate_most_of_galaxy }
+			}
+			set_global_flag = blokkats_ate_most_of_galaxy
+		}
 		set_variable = { #how much inquietude the last month generated
 			which = blokkat_new_inquietude_value
 			value = blokkat_stripmined_system_perc
@@ -10195,6 +10214,52 @@ system_event = {
 						}
 					}
 				}
+			}
+		}
+	}
+}
+
+#Set unbork timer (vester)
+fleet_event = {
+	id = giga_blokkat.7011
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_fleet_flag = blokkat_mothership_fleet
+		FROM = { NOT = { is_star_class = sc_blokkat_stripmined } }
+	}
+
+	immediate = {
+		FROM = { #give it a kick if stuck
+			system_event = { id = giga_blokkat.7012 days = 540 }
+		}
+	}
+}
+
+system_event = {
+	id = giga_blokkat.7012
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		any_fleet_in_system = { has_fleet_flag = blokkat_mothership_fleet }
+	}
+
+	immediate = {
+		set_timed_global_flag = {
+			flag = blokkats_respawned_to_unstuck
+			days = 180
+		}
+		if = {
+			limit = { 
+				any_fleet_in_system = { has_fleet_flag = blokkat_mothership_fleet } 
+			}
+			system_event = { id = giga_blokkat.7012 days = 30 }
+			if = {
+				limit = { event_target:blokkat_mothership_fleet = { is_in_combat = no } }
+				event_target:blokkat_mothership_fleet = { set_disabled = yes }
+				event_target:blokkat_mothership_fleet = { destroy_fleet = THIS }
 			}
 		}
 	}
