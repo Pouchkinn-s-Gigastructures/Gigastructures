@@ -1019,6 +1019,197 @@ spawn_blokkat_harvesting_fleet = {
 	}
 }
 
+blokkat_movement_queue = {
+	queue_actions = {
+		repeat = {
+			effect = {
+				id = "blokkscoutmovement.1"
+				solar_system = {
+					#set_star_flag = blokk_scout_arrived
+					change_variable = {
+						which = times_blokk_scout_arrived
+						value = 1
+					}
+					random_list = {
+						0 = {
+							set_timed_star_flag = { months = 2 flag = blokk_scout_arrived }
+							modifier = { check_variable = { value >= 1 which = times_blokk_scout_arrived } add = 1 }
+						}
+						0 = {
+							set_timed_star_flag = { months = 4 flag = blokk_scout_arrived }
+							modifier = { check_variable = { value >= 2 which = times_blokk_scout_arrived } add = 2 }
+						}
+						0 = {
+							set_timed_star_flag = { months = 6 flag = blokk_scout_arrived }
+							modifier = { check_variable = { value >= 3 which = times_blokk_scout_arrived } add = 3 }
+						}
+						0 = {
+							set_timed_star_flag = { months = 8 flag = blokk_scout_arrived }
+							modifier = { check_variable = { value >= 4 which = times_blokk_scout_arrived } add = 4 }
+						}
+						0 = {
+							set_timed_star_flag = { months = 10 flag = blokk_scout_arrived }
+							modifier = { check_variable = { value >= 5 which = times_blokk_scout_arrived } add = 5 }
+						}
+					}
+					# Case 1 - Random unsighted system outside of Mining Fleet
+					if = {
+						limit = {
+							any_system = {
+								has_hyperlane_to = prev
+								NOR = { 
+									has_star_flag = blokk_scout_arrived 
+									has_star_flag = blokkat_harvester_en_route
+									any_fleet_in_system = {
+										is_owned_by = prevprevprev.owner
+									}
+								}
+								NOT = { is_star_class = sc_blokkat_stripmined }
+							}
+						}
+						random_system = {
+							limit = {
+								has_hyperlane_to = prev
+								NOR = { 
+									has_star_flag = blokk_scout_arrived 
+									has_star_flag = blokkat_harvester_en_route
+									any_fleet_in_system = {
+										is_owned_by = prevprevprev.owner
+									}
+								}
+								NOT = { is_star_class = sc_blokkat_stripmined }
+							}
+							set_star_flag = blokk_scout_moving_here@prevprev
+						}
+					}
+					# Case 2 - Random unsighted neighbour system both outside of Mining Flotilla
+					else_if = {
+						limit = {
+							any_system = {
+								has_hyperlane_to = prev
+								NOR = { 
+									has_star_flag = blokk_scout_arrived 
+									has_star_flag = blokkat_harvester_en_route
+									any_fleet_in_system = {
+										is_owned_by = prevprevprev.owner
+									}
+								}
+								any_system = {
+									has_hyperlane_to = prev
+									NOR = { 
+										has_star_flag = blokk_scout_arrived 
+										has_star_flag = blokkat_harvester_en_route
+										any_fleet_in_system = {
+											is_owned_by = prevprevprev.owner
+										}
+									}
+								}
+								NOT = { is_star_class = sc_blokkat_stripmined }
+							}
+						}
+						random_system = {
+							limit = {
+								has_hyperlane_to = prev
+								NOR = { 
+									has_star_flag = blokk_scout_arrived 
+									has_star_flag = blokkat_harvester_en_route
+									any_fleet_in_system = {
+										is_owned_by = prevprevprev.owner
+									}
+								}
+								any_system = {
+									has_hyperlane_to = prev
+									NOR = { 
+										has_star_flag = blokk_scout_arrived 
+										has_star_flag = blokkat_harvester_en_route
+										any_fleet_in_system = {
+											is_owned_by = prevprevprev.owner
+										}
+									}
+								}
+								NOT = { is_star_class = sc_blokkat_stripmined }
+							}
+							set_star_flag = blokk_scout_moving_here@prevprev
+						}
+					}
+					# Case 3 - Random unsighted neighbour system outside of Mining Flotilla
+					else_if = {
+						limit = {
+							any_system = {
+								has_hyperlane_to = prev
+								any_system = {
+									has_hyperlane_to = prev
+									NOR = { 
+										has_star_flag = blokk_scout_arrived 
+										has_star_flag = blokkat_harvester_en_route
+										any_fleet_in_system = {
+											is_owned_by = prevprevprev.owner
+										}
+									}
+								}
+								NOT = { is_star_class = sc_blokkat_stripmined }
+							}
+						}
+						random_system = {
+							limit = {
+								has_hyperlane_to = prev
+								any_system = {
+									has_hyperlane_to = prev
+									NOR = { 
+										has_star_flag = blokk_scout_arrived 
+										has_star_flag = blokkat_harvester_en_route
+										any_fleet_in_system = {
+											is_owned_by = prevprevprev.owner
+										}
+									}
+								}
+								NOT = { is_star_class = sc_blokkat_stripmined }
+							}
+							set_star_flag = blokk_scout_moving_here@prevprev
+						}
+					}
+					# otherwise just pick a random neighbour
+					else = {
+						random_system = {
+							limit = {
+								has_hyperlane_to = prev
+								NOT = { is_star_class = sc_blokkat_stripmined }
+							}
+							set_star_flag = blokk_scout_moving_here@prevprev
+						}
+					}
+				}
+			}
+			find_random_system = {
+				trigger = {
+					id = "blokkscoutmovement.1"
+					has_star_flag = blokk_scout_moving_here@prev
+				}
+				found_system = {
+					move_to = this
+					effect = {
+						id = "blokkscoutmovement.1"
+						remove_star_flag = blokk_scout_moving_here@prev
+					}
+					wait = {
+						duration = 10
+						random = 20
+					}
+				}
+			}
+			# effect = {
+			# 	id = "blokkscoutmovement.1"
+			# 	random_system = {
+			# 		limit = {
+			# 			has_star_flag = blokk_scout_moving_here@prev
+			# 		}
+			# 		remove_star_flag = blokk_scout_moving_here@prev
+			# 	}
+			# }
+		}
+	}
+}
+
 spawn_blokkat_scout_fleet = {
 	if = {
 		limit = { NOT = { has_global_flag = giga_blokkats_endtech } }
@@ -1084,6 +1275,8 @@ spawn_blokkat_scout_fleet = {
 				set_fleet_flag = blokkat_scout_fleet
 				set_fleet_flag = blokkat_fleet
 				assign_leader = event_target:new_blokkat_admiral
+
+				blokkat_movement_queue = yes
 			}
 		}
 	}
@@ -1131,6 +1324,8 @@ spawn_blokkat_scout_fleet = {
 				set_fleet_flag = blokkat_terminator_fleet
 				set_fleet_flag = blokkat_fleet
 				assign_leader = event_target:new_blokkat_admiral
+
+				blokkat_movement_queue = yes
 			}
 		}
 	}
