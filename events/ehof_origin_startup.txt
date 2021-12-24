@@ -1,0 +1,698 @@
+namespace = ehof_incohesive
+
+event = {
+	id = ehof_incohesive.1
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		any_playable_country = {
+			has_origin = origin_incohesive
+		}
+	}
+
+	immediate = {
+		every_playable_country = {
+			limit = {
+				has_origin = origin_incohesive
+			}
+			set_country_flag = ehof_precursor_spawned
+			set_country_flag = starting_event # go away
+			country_event = {
+				id = ehof_incohesive.2
+			}
+		}
+	}
+}
+
+
+# There is some trickiness to this event - most of these effects appear redundant
+# but are required to fire IN THIS ORDER to work correctly. This is most for names
+# - Lans
+
+# MAIN EVENT - should hopefully scope correctly if multiple ppl have the origin
+# It's on you if you play MP with 8+ people all using this origin, though.
+# DO NOT FIRE THIS EVENT MANUALLY
+
+country_event = {
+	id = ehof_incohesive.2
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_origin = origin_incohesive
+		NOT = { has_country_flag = ehofo_SETUP }
+	}
+
+	immediate = {
+		set_country_flag = ehofo_SETUP
+
+		add_research_option = tech_abstract_1
+		add_research_option = tech_wormhole_stabilization
+		#add_tech_progress = {
+		#	tech = tech_abstract_1
+		#	progress = 0.10
+		#	tech = tech_wormhole_stabilization
+        #	progress = 0.10
+		#}
+		add_relic = r_arcane_manipulator_1
+
+
+		country_event = {
+			id = ehof_incohesive.3
+		}
+		country_event = {
+			id = ehof_incohesive.6
+			days = 5
+		}
+		# so help you God if it takes you longer than 5 days to set your giga settings.
+
+		random_owned_leader = {
+			limit = {
+				leader_class = governor
+			}
+			unassign_leader = this
+			save_global_event_target_as = ehofo_governor
+		}
+
+		capital_scope = {
+			save_global_event_target_as = ehofo_old_world
+			solar_system = {
+				save_global_event_target_as = ehofo_old_system
+			}
+			sector = {
+				set_name = "" # hide from galaxy map?
+			}
+		}
+
+		# New System name changes to Old System name
+		# Old Star name changes to New Star name
+		# New Star name changes to New System name
+		# Old System name changes to Old Star name
+		# New Capital name changes to Old Capital name
+
+		event_target:ehofo_new_system = {
+			set_name = "ehofo_new_system_name"
+		}
+		event_target:ehofo_old_system = {
+			system_star = {
+				set_name = "ehofo_old_star_name"
+			}
+		}
+		event_target:ehofo_new_system = {
+			system_star = {
+				set_name = "ehofo_new_star_name"
+			}
+			every_system_planet = {
+				ehofo_name_new_barren = yes
+				every_moon = {
+					prev = {
+						save_global_event_target_as = ehofo_previous_planet
+					}
+					set_name = "ehofo_NEW_moon"
+					# This initialiser should only have 1 moon per each planet.
+					# dont change
+					clear_global_event_target = ehofo_previous_planet
+				}
+			}
+		}
+		event_target:ehofo_old_system = {
+			set_name = "ehofo_old_system_name"
+		}
+
+		event_target:ehofo_new_system = {
+			random_system_planet = {
+				limit = {
+					is_star = no
+					is_asteroid = no
+				}
+				set_planet_flag = forbid_guillis_planet_modifiers
+				#
+				clear_deposits = yes
+				change_pc = pc_ll_temperate
+				create_colony = {
+					owner = root
+				}
+				save_global_event_target_as = ehofo_new_world
+				set_name = "ehofo_new_capital_name"
+			}
+			save_event_target_as = ehof_color_system_name
+		}
+
+		country_event = { id = ehof_systems.005 }	# Generate System Color
+
+		event_target:ehofo_new_system = {
+			create_starbase = { 
+				size = "starbase_starport"
+				module = "shipyard"
+				building = "crew_quarters"
+				owner = root 
+
+				effect = {
+					save_global_event_target_as = ehofo_starbase
+				}
+			} # AFTER system colour, so the starbase is named with the colour of the system (:
+		}
+
+		event_target:ehofo_old_system = {
+			random_system_planet = {
+				limit = { has_planet_flag = ehof_origin_planet_1 }
+				set_name = "ehofo_old_planet_name_1"
+			}
+			random_system_planet = {
+				limit = { has_planet_flag = ehof_origin_planet_2 }
+				set_name = "ehofo_old_planet_name_2"
+			}
+		}
+
+		capital_scope = {
+			solar_system = {
+				starbase = {
+					fleet = {
+						destroy_fleet = this
+					}
+				}
+			}
+			random_owned_pop = {
+				limit = {
+					root.owner_main_species = {
+						NOT = {
+							is_same_species = prev.species
+						}
+					}
+				}
+				save_global_event_target_as = ehofo_secondary_species
+			}
+		}
+
+		every_owned_fleet = {
+			limit = {
+				any_owned_ship = {
+					OR = {
+						is_ship_size = constructor
+						is_ship_size = science
+						is_ship_size = corvette
+					}
+				}
+			}
+			if = {
+				limit = {
+					exists = leader
+				}
+				leader = {
+					unassign_leader = this
+					save_global_event_target_as = ehofo_scientist
+				}
+			}
+			destroy_fleet = this
+		}
+
+		event_target:ehofo_new_world = {
+			change_pc = root.owner_species
+			generate_start_deposits_and_blockers = yes
+			generate_start_buildings_and_districts = yes
+			generate_start_pops = yes
+			if = {
+				limit = {
+					exists = event_target:ehofo_secondary_species
+				}
+				every_owned_pop = {
+					limit = {
+						species = {
+							NOT = {
+								root.owner_main_species = {
+									is_same_species = prev
+								}
+							}
+						}
+					}
+					prev = {
+						create_pop = {
+							species = event_target:ehofo_secondary_species
+						}
+					}
+					kill_pop = yes
+				}
+			}
+			set_planet_size = 20
+		}
+
+		event_target:ehofo_old_world = {
+			destroy_colony = yes
+			clear_deposits = yes
+			remove_all_buildings = yes
+			remove_all_districts = yes
+			change_pc = pc_barren_cold
+			#remove_planet = yes # not required
+		}
+
+		country_event = {
+			id = ehof_incohesive.4
+		}
+
+		event_target:ehofo_new_world = {
+			sector = { assign_leader = event_target:ehofo_governor }
+		}
+
+
+		create_fleet = {
+			effect = {
+				set_owner = prev
+
+				create_ship = {
+					name = random
+					random_existing_design = science
+				}
+
+				set_fleet_stance = evasive
+				#set_location = prev.capital_star
+				set_location = event_target:ehofo_new_system
+
+				set_leader = event_target:ehofo_scientist
+			}
+		}
+
+		create_fleet = {
+			effect = {
+				set_owner = prev
+
+				create_ship = {
+					name = random
+					random_existing_design = constructor
+				}
+
+				set_fleet_stance = evasive
+				set_location = event_target:ehofo_new_system
+			}
+		}
+
+		create_fleet = {
+			set_take_point = yes
+			effect = {
+				set_owner = prev
+
+				while = {
+					count = 3
+					create_ship = {
+						name = random
+						random_existing_design = corvette
+					}
+				}
+
+				set_location = event_target:ehofo_new_system
+			}
+		}
+
+		clear_global_event_target = ehofo_old_world
+		clear_global_event_target = ehofo_old_system
+		clear_global_event_target = ehofo_new_world
+		clear_global_event_target = ehofo_new_system
+		clear_global_event_target = ehofo_starbase
+		clear_global_event_target = ehofo_scientist
+		clear_global_event_target = ehofo_governor
+		clear_global_event_target = ehofo_secondary_species
+
+		country_event = {
+			id = ehof_incohesive.5
+		}
+
+		#add_modifier = {
+		#	modifier = mod_ehof_origin_sensorrange_debug
+		#}
+	}
+}
+
+# Generate new ehof cluster to use
+country_event = {
+	id = ehof_incohesive.3
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_origin = origin_incohesive
+	}
+
+	immediate = {
+		if = {
+			limit = { exists = event_target:current_system_creator }
+			clear_global_event_target = current_system_creator
+		}
+		save_global_event_target_as = current_system_creator
+		set_country_flag = has_ehof_cluster
+		random_list = {
+			1 = {
+				modifier = { factor = 0 has_global_flag = ehof_10_taken }
+				set_global_flag = ehof_10_taken
+				if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 10 max_orientation_angle = 15 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 10 max_orientation_angle = 15 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 10 max_orientation_angle = 15 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 10 max_orientation_angle = 15 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 10 max_orientation_angle = 15 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else = {									 no_scope = { spawn_system = { min_orientation_angle = 10 max_orientation_angle = 15 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			}
+			1 = {
+				modifier = { factor = 0 has_global_flag = ehof_30_taken }
+				set_global_flag = ehof_30_taken
+				if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 30 max_orientation_angle = 35 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 30 max_orientation_angle = 35 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 30 max_orientation_angle = 35 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 30 max_orientation_angle = 35 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 30 max_orientation_angle = 35 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else = {									 no_scope = { spawn_system = { min_orientation_angle = 30 max_orientation_angle = 35 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			}
+			1 = {
+				modifier = { factor = 0 has_global_flag = ehof_50_taken }
+				set_global_flag = ehof_50_taken
+				if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 50 max_orientation_angle = 55 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 50 max_orientation_angle = 55 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 50 max_orientation_angle = 55 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 50 max_orientation_angle = 55 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 50 max_orientation_angle = 55 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else = {									 no_scope = { spawn_system = { min_orientation_angle = 50 max_orientation_angle = 55 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			}
+			#1 = {
+			#	modifier = { factor = 0 has_global_flag = ehof_70_taken }
+			#	set_global_flag = ehof_70_taken
+			#	if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 70 max_orientation_angle = 75 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 70 max_orientation_angle = 75 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 70 max_orientation_angle = 75 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 70 max_orientation_angle = 75 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 70 max_orientation_angle = 75 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else = {									 no_scope = { spawn_system = { min_orientation_angle = 70 max_orientation_angle = 75 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#}
+			#1 = {
+			#	modifier = { factor = 0 has_global_flag = ehof_90_taken }
+			#	set_global_flag = ehof_90_taken
+			#	if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 90 max_orientation_angle = 95 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 90 max_orientation_angle = 95 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 90 max_orientation_angle = 95 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 90 max_orientation_angle = 95 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 90 max_orientation_angle = 95 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else = {									 no_scope = { spawn_system = { min_orientation_angle = 90 max_orientation_angle = 95 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#}
+			#1 = {
+			#	modifier = { factor = 0 has_global_flag = ehof_110_taken }
+			#	set_global_flag = ehof_110_taken
+			#	if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 110 max_orientation_angle = 115 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 110 max_orientation_angle = 115 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 110 max_orientation_angle = 115 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 110 max_orientation_angle = 115 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 110 max_orientation_angle = 115 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else = {									 no_scope = { spawn_system = { min_orientation_angle = 110 max_orientation_angle = 115 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#}
+			1 = {
+				modifier = { factor = 0 has_global_flag = ehof_130_taken }
+				set_global_flag = ehof_130_taken
+				if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 130 max_orientation_angle = 135 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 130 max_orientation_angle = 135 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 130 max_orientation_angle = 135 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 130 max_orientation_angle = 135 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 130 max_orientation_angle = 135 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else = {									 no_scope = { spawn_system = { min_orientation_angle = 130 max_orientation_angle = 135 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			}
+			1 = {
+				modifier = { factor = 0 has_global_flag = ehof_150_taken }
+				set_global_flag = ehof_150_taken
+				if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 150 max_orientation_angle = 155 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 150 max_orientation_angle = 155 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 150 max_orientation_angle = 155 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 150 max_orientation_angle = 155 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 150 max_orientation_angle = 155 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else = {									 no_scope = { spawn_system = { min_orientation_angle = 150 max_orientation_angle = 155 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			}
+			1 = {
+				modifier = { factor = 0 has_global_flag = ehof_170_taken }
+				set_global_flag = ehof_170_taken
+				if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 170 max_orientation_angle = 175 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 170 max_orientation_angle = 175 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 170 max_orientation_angle = 175 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 170 max_orientation_angle = 175 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 170 max_orientation_angle = 175 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else = {									 no_scope = { spawn_system = { min_orientation_angle = 170 max_orientation_angle = 175 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			}
+			1 = {
+				modifier = { factor = 0 has_global_flag = ehof_190_taken }
+				set_global_flag = ehof_190_taken
+				if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 190 max_orientation_angle = 195 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 190 max_orientation_angle = 195 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 190 max_orientation_angle = 195 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 190 max_orientation_angle = 195 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 190 max_orientation_angle = 195 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else = {									 no_scope = { spawn_system = { min_orientation_angle = 190 max_orientation_angle = 195 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			}
+			1 = {
+				modifier = { factor = 0 has_global_flag = ehof_210_taken }
+				set_global_flag = ehof_210_taken
+				if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 210 max_orientation_angle = 215 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 210 max_orientation_angle = 215 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 210 max_orientation_angle = 215 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 210 max_orientation_angle = 215 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 210 max_orientation_angle = 215 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else = {									 no_scope = { spawn_system = { min_orientation_angle = 210 max_orientation_angle = 215 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			}
+			1 = {
+				modifier = { factor = 0 has_global_flag = ehof_230_taken }
+				set_global_flag = ehof_230_taken
+				if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 230 max_orientation_angle = 235 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 230 max_orientation_angle = 235 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 230 max_orientation_angle = 235 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 230 max_orientation_angle = 235 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 230 max_orientation_angle = 235 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else = {									 no_scope = { spawn_system = { min_orientation_angle = 230 max_orientation_angle = 235 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			}
+			#1 = {
+			#	modifier = { factor = 0 has_global_flag = ehof_250_taken }
+			#	set_global_flag = ehof_250_taken
+			#	if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 250 max_orientation_angle = 255 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 250 max_orientation_angle = 255 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 250 max_orientation_angle = 255 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 250 max_orientation_angle = 255 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 250 max_orientation_angle = 255 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else = {									 no_scope = { spawn_system = { min_orientation_angle = 250 max_orientation_angle = 255 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#}
+			#1 = {
+			#	modifier = { factor = 0 has_global_flag = ehof_270_taken }
+			#	set_global_flag = ehof_270_taken
+			#	if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 270 max_orientation_angle = 275 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 270 max_orientation_angle = 275 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 270 max_orientation_angle = 275 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 270 max_orientation_angle = 275 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 270 max_orientation_angle = 275 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else = {									 no_scope = { spawn_system = { min_orientation_angle = 270 max_orientation_angle = 275 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#}
+			#1 = {
+			#	modifier = { factor = 0 has_global_flag = ehof_290_taken }
+			#	set_global_flag = ehof_290_taken
+			#	if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 290 max_orientation_angle = 295 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 290 max_orientation_angle = 295 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 290 max_orientation_angle = 295 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 290 max_orientation_angle = 295 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 290 max_orientation_angle = 295 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#	else = {									 no_scope = { spawn_system = { min_orientation_angle = 290 max_orientation_angle = 295 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			#}
+			1 = {
+				modifier = { factor = 0 has_global_flag = ehof_310_taken }
+				set_global_flag = ehof_310_taken
+				if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 310 max_orientation_angle = 315 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 310 max_orientation_angle = 315 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 310 max_orientation_angle = 315 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 310 max_orientation_angle = 315 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 310 max_orientation_angle = 315 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else = {									 no_scope = { spawn_system = { min_orientation_angle = 310 max_orientation_angle = 315 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			}
+			1 = {
+				modifier = { factor = 0 has_global_flag = ehof_330_taken }
+				set_global_flag = ehof_330_taken
+				if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 330 max_orientation_angle = 335 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 330 max_orientation_angle = 335 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 330 max_orientation_angle = 335 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 330 max_orientation_angle = 335 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 330 max_orientation_angle = 335 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else = {									 no_scope = { spawn_system = { min_orientation_angle = 330 max_orientation_angle = 335 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			}
+			1 = {
+				modifier = { factor = 0 has_global_flag = ehof_350_taken }
+				set_global_flag = ehof_350_taken
+				if = {		limit = { galaxy_size = huge }   no_scope = { spawn_system = { min_orientation_angle = 350 max_orientation_angle = 355 min_distance >= 480 max_distance <= 500 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = large }  no_scope = { spawn_system = { min_orientation_angle = 350 max_orientation_angle = 355 min_distance >= 465 max_distance <= 475 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = medium } no_scope = { spawn_system = { min_orientation_angle = 350 max_orientation_angle = 355 min_distance >= 440 max_distance <= 450 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = small }  no_scope = { spawn_system = { min_orientation_angle = 350 max_orientation_angle = 355 min_distance >= 340 max_distance <= 350 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else_if = {	limit = { galaxy_size = tiny }   no_scope = { spawn_system = { min_orientation_angle = 350 max_orientation_angle = 355 min_distance >= 240 max_distance <= 250 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+				else = {									 no_scope = { spawn_system = { min_orientation_angle = 350 max_orientation_angle = 355 min_distance >= 520 max_distance <= 530 hyperlane = no initializer = "ehof_origin_cohesive_cluster" } } }
+			}
+		}
+
+		country_event = { id = ehof_systems.001 }	# Generate Flags
+		#country_event = { id = ehof_systems.002 }	# Generate Weather
+		#country_event = { id = ehof_systems.006 }	# Generate Deposits
+		# disabled deposits, will use generate_home_system_resources instead
+
+		last_created_system = {
+			log = "Scoping to last_created_system"
+
+			# Create PGate
+			if = {
+				limit = { NOT = { root = { has_country_flag = first_ehof_system_spawned } } }
+				root = {
+					set_country_flag = first_ehof_system_spawned
+					set_timed_country_flag = { flag = ehof_recently_spawned_guardian years = 720 } # delay leviathans
+				}
+				if = {
+					limit = { any_megastructure = { is_megastructure_type = ehof_pgate_gateway } }
+					spawn_megastructure = {
+						type = "ehof_pgate_gateway"
+						orbit_angle = 110
+						orbit_distance = 35
+						owner = root
+					}
+				}
+				else = {
+					spawn_megastructure = {
+						type = "ehof_pgate_unknown"
+						orbit_angle = 110
+						orbit_distance = 35
+						owner = root
+					}
+				}
+			}
+			save_global_event_target_as = ehofo_new_system
+		}
+	}
+}
+
+# Generate neighbouring blackhole system
+country_event = {
+	id = ehof_incohesive.4
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_origin = origin_incohesive
+	}
+
+	immediate = {
+		# Set current system creator
+		if = {
+			limit = { exists = event_target:current_system_creator }
+			clear_global_event_target = current_system_creator
+		}
+		save_global_event_target_as = current_system_creator
+
+		event_target:ehofo_new_system = {
+			spawn_system = { min_distance >= 20 max_distance <= 30 hyperlane = no initializer = "special_init_01" }
+		}
+
+		last_created_system = {
+			system_star = {
+				#prevent_anomaly = yes
+				set_planet_flag = has_megastructure
+				clear_deposits = yes
+				giga_field_debris = yes
+			}
+			
+			save_event_target_as = ehof_color_system_name
+			set_star_flag = empire_cluster
+			add_hyperlane = {
+				from = event_target:ehofo_new_system
+				to = this
+			}
+
+			set_star_flag = ruined_ehof_system
+			spawn_megastructure = { 
+				type = "ehof_megastructure_ruined_origin"
+			}
+			giga_field_system_debris = yes
+		}
+
+		country_event = { id = ehof_systems.001 }	# Generate Flags
+		country_event = { id = ehof_systems.002 }	# Generate Weather
+		
+		#country_event = { id = ehof_systems.004 }	# Generate Megastructures
+		country_event = { id = ehof_systems.006 }	# Generate Deposits
+		#country_event = { id = ehof_systems.007 }	# Generate Hostiles
+
+		country_event = { id = ehof_systems.005 }	# Generate System Color
+	}
+}
+
+# Set homeworld
+country_event = {
+	id = ehof_incohesive.5
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_origin = origin_incohesive
+	}
+
+	immediate = {
+		random_owned_planet = {
+			limit = {
+				is_planet_class = pc_ll_temperate
+			}
+			save_global_event_target_as = ehof_origin_species_homeworld_fix
+		}
+		species = {
+			set_species_homeworld = event_target:ehof_origin_species_homeworld_fix
+		}
+		every_owned_pop_species = { set_species_homeworld = event_target:ehof_origin_species_homeworld_fix }
+		clear_global_event_target = ehof_origin_species_homeworld_fix
+	}
+}
+
+# FIX - Stop connecting to galaxy
+country_event = {
+	id = ehof_incohesive.6
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_origin = origin_incohesive
+	}
+
+	immediate = {
+		set_spawn_system_batch = begin
+		every_system = {
+			limit = {
+				has_star_flag = cohesive_system
+				any_system = {
+					has_hyperlane_to = prev
+					NOT = {
+						has_star_flag = cohesive_system
+					}
+				}
+			}
+			every_system = {
+				limit = {
+					has_hyperlane_to = prev
+					NOT = {
+						has_star_flag = cohesive_system
+					}
+				}
+				remove_hyperlane = {
+					to = this
+					from = prev
+				}
+			}
+		}
+		set_spawn_system_batch = end
+	}
+}
+
+# FIX - Remove survey data
+system_event = {
+	id = ehof_incohesive.7
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		every_playable_country = {
+			prev = {
+				set_surveyed = {
+					surveyed = no
+					surveyor = prev
+				}
+			}
+		}
+	}
+}
