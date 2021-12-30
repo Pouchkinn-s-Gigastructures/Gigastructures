@@ -1,0 +1,551 @@
+war_moon_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_war_moon_2 }
+
+	build_time = 1800
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 5000
+			influence = 100
+		}
+		upkeep = { energy = 5 }
+	}
+
+	potential = {
+		has_technology = giga_tech_war_moon_2
+		NOT = { has_global_flag = warmoon_disabled }
+		OR = {
+			check_variable = { which = giga_warmoon_cap value = 0 }						# No Cap
+			check_variable = { which = giga_current_warmoon value < giga_warmoon_cap }
+		}
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					check_variable = { which = giga_warmoon_cap value = 0 }						# No Cap
+					check_variable = { which = giga_current_warmoon value < giga_warmoon_cap }
+				}
+			}
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = {
+				fail_text = "must_build_size_567"
+				OR = {
+					AND = {
+						planet_size >= 5
+						planet_size <= 7
+						NOT = { is_planet_class = pc_core_mined }
+					}
+					AND = {
+						planet_size >= 1
+						planet_size <= 4
+						is_planet_class = pc_core_mined
+					}
+				}
+			}
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+			custom_tooltip = { fail_text = "requires_not_asteroid"				is_asteroid = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+			custom_tooltip = {
+				fail_text = "must_build_around_molten_barren_stripmined"
+				OR = {
+					is_planet_class = pc_molten
+					is_planet_class = pc_barren
+					is_planet_class = pc_barren_cold
+					is_planet_class = pc_frozen
+					#is_planet_class = pc_disco_moon #Nooooooo :(
+					is_planet_class = pc_core_mined
+				}
+			}
+		}
+	}
+
+	ai_weight = {
+		weight = 100	# Default = 100
+
+		# Can we afford the upkeep
+		modifier = { factor = 1.00	chk_afford_energy_10 = yes }
+		modifier = { factor = 0.90	chk_afford_energy_09 = yes }
+		modifier = { factor = 0.80	chk_afford_energy_08 = yes }
+		modifier = { factor = 0.70	chk_afford_energy_07 = yes }
+		modifier = { factor = 0.60	chk_afford_energy_06 = yes }
+		modifier = { factor = 0.50	chk_afford_energy_05 = yes }
+		modifier = { factor = 0.40	chk_afford_energy_04 = yes }
+		modifier = { factor = 0.30	chk_afford_energy_03 = yes }
+		modifier = { factor = 0.20	chk_afford_energy_25 = yes }
+		modifier = { factor = 0.10	chk_afford_energy_02 = yes }
+		modifier = { factor = 0.00	chk_afford_energy_15 = yes }
+
+		modifier = { factor = 1.00	chk_afford_alloys_10 = yes }
+		modifier = { factor = 0.90	chk_afford_alloys_09 = yes }
+		modifier = { factor = 0.80	chk_afford_alloys_08 = yes }
+		modifier = { factor = 0.70	chk_afford_alloys_07 = yes }
+		modifier = { factor = 0.60	chk_afford_alloys_06 = yes }
+		modifier = { factor = 0.50	chk_afford_alloys_05 = yes }
+		modifier = { factor = 0.40	chk_afford_alloys_04 = yes }
+		modifier = { factor = 0.30	chk_afford_alloys_03 = yes }
+		modifier = { factor = 0.20	chk_afford_alloys_25 = yes }
+		modifier = { factor = 0.10	chk_afford_alloys_02 = yes }
+		modifier = { factor = 0.00	chk_afford_alloys_15 = yes }
+
+		# Do we want the production
+
+		# Is this system a good location?
+		modifier = { factor = 0.75	any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } }
+
+		# Do we lean towards this from federation/ethic/civic?
+		modifier = { factor = 10	from = { has_country_flag = pangalactic_defense_league } }
+		modifier = { factor = 2		from = { has_federation = yes federation = { has_federation_type = military_federation } } }
+		modifier = { factor = 3		from = { has_ethic = ethic_fanatic_militarist } }
+		modifier = { factor = 1.5	from = { has_ethic = ethic_militarist } }
+		modifier = { factor = 1.5	from = { has_civic = civic_machine_terminator } }
+		modifier = { factor = 1.5	from = { has_civic = civic_fanatic_purifiers } }
+		modifier = { factor = 1.5	from = { has_civic = civic_hive_devouring_swarm } }
+		modifier = { factor = 2		from = { is_at_war = yes } }
+
+		# How many of this megastructure can the AI build?
+		modifier = { factor = 0.00 from = { has_country_flag = has_recently_built_war_moon } }
+		modifier = {
+			factor = 0
+			from = {
+				OR = {
+					has_megastructure = war_moon_0
+					has_megastructure = war_moon_1
+				}
+			}
+		}
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_war_moon years = 5 }
+			country_event = { id = giga_dialog.2601 }	# Notification
+			change_variable = { which = giga_current_warmoon value = 1 }
+		}
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			set_planet_flag = megastructure			# Vanilla uses to check if a megastrucure can be built here
+			set_planet_flag = has_megastructure		# Vanilla uses to check if an orbital station can be built here
+			set_planet_size = 6
+		}
+	}
+}
+
+war_moon_1 = {
+	entity = "war_moon_phase_01_entity"
+	construction_entity = "war_moon_phase_02_construction_entity"
+	portrait = "GFX_megastructure_moon"
+	upgrade_from = { war_moon_0 }
+
+	build_time = 1800
+	resources = {
+		category = megastructures
+		cost = { alloys = 7000 }
+		upkeep = {
+			energy = 40
+			alloys = 15
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
+	possible = { from = { has_technology = giga_tech_war_moon_2 } }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.2602 } }	# Notification
+	}
+}
+
+war_moon_2 = {
+	entity = ""
+	construction_entity = "war_moon_phase_03_construction_entity"
+	portrait = "GFX_megastructure_moon"
+	upgrade_from = { war_moon_1 }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 11000 }
+		upkeep = {
+			energy = 40
+			alloys = 15
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
+	possible = { from = { has_technology = giga_tech_war_moon_2 } }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = {
+			country_event = { id = giga_dialog.2603 }				# Notification
+			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_73
+					}
+				}
+				set_country_flag = giga_achievement_73
+				set_timed_country_flag = { flag = giga_achievement_73_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+
+		if = {	
+			limit = { 
+				fromfrom.planet = { 
+					exists = THIS
+				}
+			}
+			from = { giga_war_moon = yes } 
+		}
+
+		last_created_fleet = { set_location = fromfrom.planet }
+		fromfrom.planet = { remove_planet = yes }
+		remove_megastructure = fromfrom
+	}
+}
+
+###DEBRIS###
+
+war_moon_debris_cold_barren = {	entity = "giga_moon_cold_barren_debris_entity"	portrait = "GFX_megastructure_moon" place_entity_on_planet_plane = no potential = { always = no } }
+war_moon_debris_barren = {		entity = "giga_moon_barren_debris_entity"		portrait = "GFX_megastructure_moon" place_entity_on_planet_plane = no potential = { always = no } }
+war_moon_debris_frozen = {		entity = "giga_moon_frozen_debris_entity"		portrait = "GFX_megastructure_moon" place_entity_on_planet_plane = no potential = { always = no } }
+war_moon_debris_molten = {		entity = "giga_moon_molten_debris_entity"		portrait = "GFX_megastructure_moon" place_entity_on_planet_plane = no potential = { always = no } }
+war_moon_debris_disco = {		entity = "giga_moon_disco_debris_entity"		portrait = "GFX_megastructure_moon" place_entity_on_planet_plane = no potential = { always = no } }
+war_moon_debris_luna = {		entity = "giga_moon_luna_debris_entity"			portrait = "GFX_megastructure_moon" place_entity_on_planet_plane = no potential = { always = no } }
+
+
+war_moon_scrap = {
+	entity = ""
+	construction_entity = ""
+	show_galactic_map_icon = yes #change
+	place_entity_on_planet_plane = no
+	portrait = "GFX_megastructure_construction_background"
+	construction_blocked_by_others = no
+	construction_blocks_others = no
+	potential = {
+		is_ai = no
+	}
+
+	build_time = 2000
+
+	upgrade_from = {
+		war_moon_debris_cold_barren
+	}
+
+	possible = {
+		from = { has_technology = tech_mega_engineering }
+	}
+
+	resources = {
+		category = megastructures
+		cost = {
+			energy = 10000
+		}
+	}
+
+	on_build_complete = {
+		from = {
+			country_event = { id = giga_wrecked_ships.1043 }	# Notification
+		}
+		remove_megastructure = fromfrom
+	}
+}
+
+war_moon_restored_cold_barren = {
+	entity = ""
+	portrait = "GFX_megastructure_moon"
+	place_entity_on_planet_plane = no
+	upgrade_from = { war_moon_debris_cold_barren }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 11000 }
+		upkeep = {
+			energy = 40
+			alloys = 15
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
+	possible = {
+		exists = from
+		from = { has_technology = giga_tech_war_moon_2 }
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		from = {
+			country_event = { id = giga_mega.602 }				# Notification
+			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
+			giga_war_moon = yes
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_73
+					}
+				}
+				set_country_flag = giga_achievement_73
+				set_timed_country_flag = { flag = giga_achievement_73_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+		last_created_fleet = { set_location = fromfrom }
+		remove_megastructure = fromfrom
+	}
+}
+
+war_moon_restored_barren = {
+	entity = ""
+	portrait = "GFX_megastructure_moon"
+	place_entity_on_planet_plane = no
+	upgrade_from = { war_moon_debris_barren }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 11000 }
+		upkeep = {
+			energy = 40
+			alloys = 15
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
+	possible = {
+		exists = from
+		from = { has_technology = giga_tech_war_moon_2 }
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		from = {
+			country_event = { id = giga_mega.602 }				# Notification
+			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
+			giga_war_moon = yes
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_73
+					}
+				}
+				set_country_flag = giga_achievement_73
+				set_timed_country_flag = { flag = giga_achievement_73_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+		last_created_fleet = { set_location = fromfrom }
+		remove_megastructure = fromfrom
+	}
+}
+
+war_moon_restored_frozen = {
+	entity = ""
+	portrait = "GFX_megastructure_moon"
+	place_entity_on_planet_plane = no
+	upgrade_from = { war_moon_debris_frozen }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 11000 }
+		upkeep = {
+			energy = 40
+			alloys = 15
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
+	possible = {
+		exists = from
+		from = { has_technology = giga_tech_war_moon_2 }
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		from = {
+			country_event = { id = giga_mega.602 }				# Notification
+			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
+			giga_war_moon = yes
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_73
+					}
+				}
+				set_country_flag = giga_achievement_73
+				set_timed_country_flag = { flag = giga_achievement_73_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+		last_created_fleet = { set_location = fromfrom }
+		remove_megastructure = fromfrom
+	}
+}
+
+war_moon_restored_disco = {
+	entity = ""
+	portrait = "GFX_megastructure_moon"
+	place_entity_on_planet_plane = no
+	upgrade_from = { war_moon_debris_disco }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 11000 }
+		upkeep = {
+			energy = 40
+			alloys = 15
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
+	possible = {
+		exists = from
+		from = { has_technology = giga_tech_war_moon_1 }
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		from = {
+			country_event = { id = giga_mega.602 }				# Notification
+			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
+			giga_war_moon = yes
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_73
+					}
+				}
+				set_country_flag = giga_achievement_73
+				set_timed_country_flag = { flag = giga_achievement_73_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+		last_created_fleet = { set_location = fromfrom }
+		remove_megastructure = fromfrom
+	}
+}
+
+war_moon_restored_luna = {
+	entity = ""
+	portrait = "GFX_megastructure_moon"
+	place_entity_on_planet_plane = no
+	upgrade_from = { war_moon_debris_luna }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 11000 }
+		upkeep = {
+			energy = 40
+			alloys = 15
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
+	possible = {
+		exists = from
+		from = { has_technology = giga_tech_war_moon_1 }
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		from = {
+			country_event = { id = giga_mega.602 }				# Notification
+			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
+			giga_war_moon = yes
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_73
+					}
+				}
+				set_country_flag = giga_achievement_73
+				set_timed_country_flag = { flag = giga_achievement_73_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+		last_created_fleet = { set_location = fromfrom }
+		remove_megastructure = fromfrom
+	}
+}
+
+war_moon_restored_molten = {
+	entity = ""
+	portrait = "GFX_megastructure_moon"
+	place_entity_on_planet_plane = no
+	upgrade_from = { war_moon_debris_molten }
+
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = { alloys = 11000 }
+		upkeep = {
+			energy = 40
+			alloys = 15
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
+	possible = {
+		exists = from
+		from = { has_technology = giga_tech_war_moon_1 }
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		from = {
+			country_event = { id = giga_mega.602 }				# Notification
+			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
+			giga_war_moon = yes
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_73
+					}
+				}
+				set_country_flag = giga_achievement_73
+				set_timed_country_flag = { flag = giga_achievement_73_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+		last_created_fleet = { set_location = fromfrom }
+		remove_megastructure = fromfrom
+	}
+}
