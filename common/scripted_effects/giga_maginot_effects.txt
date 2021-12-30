@@ -1,0 +1,346 @@
+# Stolen from the asteroid artillery script (with permission)
+# This scripted effect gives every Maginot World in the system a very specific ID that can be used to "connect" 
+# a ship with the corresponding ID to the planet (as in, when a ship with an ID of "1" is destroyed, we know 
+# we have to alter the planet with the ID of "1")
+# * call from system scope (with Maginot Worlds in it)
+assign_giga_maginot_id = {
+	if = {
+		limit = {
+			NOT = { any_system_planet = { has_planet_flag = has_giga_maginot_id } }
+		}
+		set_variable = {
+			which = current_giga_maginot_id
+			value = 1
+		}
+	}
+	every_system_planet = {
+		limit = {
+			OR = {
+				has_planet_flag = giga_maginot_world
+				is_giga_maginot_world = yes
+			}
+			NOT = { has_planet_flag = has_giga_maginot_id }
+		}
+		set_planet_flag = doesnt_have_giga_maginot_id
+	}
+	while = {
+		limit = {
+			any_system_planet = {
+				has_planet_flag = doesnt_have_giga_maginot_id
+			}
+		}
+		random_system_planet = {
+			limit = {
+				OR = {
+					has_planet_flag = giga_maginot_world
+					is_giga_maginot_world = yes
+				}
+				has_planet_flag = doesnt_have_giga_maginot_id
+			}
+			set_variable = {
+				which = giga_maginot_id
+				value = THIS.solar_system.current_giga_maginot_id
+			}
+			set_planet_flag = has_giga_maginot_id
+			remove_planet_flag = doesnt_have_giga_maginot_id
+		}
+		change_variable = {
+			which = current_giga_maginot_id
+			value = 1
+		}
+	}
+}
+
+# Checks Maginot World for possible upgrade points by checking actively worked jobs (building districts is not enough),
+# and then checks how many are used by orbiting defences (SD Platforms cost 2 offensive points each)
+# * call from planet scope (a Maginot World specifically)
+maginot_check_upgrade_points = {
+	save_event_target_as = maginot_world_location
+	## max points
+	# offensive
+	if = {
+		limit = { planet_owner = { is_regular_empire = yes } }
+		export_trigger_value_to_variable = {
+			trigger = num_assigned_jobs
+			parameters = { job = maginot_planetary_cannon_operator }
+			variable = maginot_offensive_upgrade_points_max
+			#rounded = yes
+		}
+	}
+	if = {
+		limit = { planet_owner = { is_gestalt = yes } }
+		export_trigger_value_to_variable = {
+			trigger = num_assigned_jobs
+			parameters = { job = maginot_planetary_cannon_operator_gestalt }
+			variable = maginot_offensive_upgrade_points_max
+			#rounded = yes
+		}
+	}
+
+	# defensive
+	if = {
+		limit = { planet_owner = { is_regular_empire = yes } }
+		export_trigger_value_to_variable = {
+			trigger = num_assigned_jobs
+			parameters = { job = maginot_shield_generator_operator }
+			variable = maginot_defensive_upgrade_points_max
+			#rounded = yes
+		}
+	}
+	if = {
+		limit = { planet_owner = { is_gestalt = yes } }
+		export_trigger_value_to_variable = {
+			trigger = num_assigned_jobs
+			parameters = { job = maginot_shield_generator_operator_gestalt }
+			variable = maginot_defensive_upgrade_points_max
+			#rounded = yes
+		}
+	}
+
+	## used points
+	# secondary platforms can die, so check how many there are
+	if = {
+		limit = { has_planet_flag = maginot_has_orbital_defence }
+		solar_system = {
+			random_fleet_in_system = {
+				limit = {
+					has_fleet_flag = maginot_orbital_defence
+					check_variable = {
+						which = giga_maginot_fleet_id
+						value = prevprev.giga_maginot_id
+					}
+				}
+				event_target:maginot_world_location = {
+					set_variable = {
+						which = giga_maginot_current_SD_platform_count
+						value = 0
+					}	
+				}
+				every_owned_ship = {
+					limit = { is_ship_size = asteroid_artillery }
+					# should run this code once per ship
+					event_target:maginot_world_location = {
+						change_variable = {
+							which = giga_maginot_current_SD_platform_count
+							value = 1
+						}
+					}
+				}
+			}
+		}
+		set_variable = {
+			which = current_SD_platform_point_use
+			value = 0
+		}
+		set_variable = {
+			which = current_SD_platform_point_use
+			value = giga_maginot_current_SD_platform_count
+		}
+		multiply_variable = {
+			which = current_SD_platform_point_use
+			value = 2
+		}
+		# add up all types of offensive upgrades
+		set_variable = {
+			which = maginot_offensive_upgrade_points_used
+			value = maginot_orbital_defence_atk_upgrades
+		}
+		change_variable = {
+			which = maginot_offensive_upgrade_points_used
+			value = current_SD_platform_point_use
+		}
+		# clear_variable = current_SD_platform_point_use
+		# causes an error to log, thanks paradox
+	}
+	# other variable values should be fine
+
+	## available points
+	set_variable = {
+		which = maginot_offensive_upgrade_points_current
+		value = maginot_offensive_upgrade_points_max
+	}
+	subtract_variable = {
+		which = maginot_offensive_upgrade_points_current
+		value = maginot_offensive_upgrade_points_used
+	}
+	set_variable = {
+		which = maginot_defensive_upgrade_points_current
+		value = maginot_defensive_upgrade_points_max
+	}
+	subtract_variable = {
+		which = maginot_defensive_upgrade_points_current
+		value = maginot_defensive_upgrade_points_used
+	}
+
+	## available resources
+	set_variable = {
+		which = giga_current_alloy_stockpile
+		value = 0
+	}
+	planet_owner = {
+		export_resource_stockpile_to_variable = {
+			resource = alloys
+			variable = giga_current_alloy_stockpile
+		}
+	}
+	set_variable = {
+		which = giga_current_alloy_stockpile
+		value = planet_owner.giga_current_alloy_stockpile
+	}
+	round_variable = giga_current_alloy_stockpile
+}
+
+# Reapplies modifiers according to current upgrades bought on the Maginot World
+# to the orbiting defence fleet
+# * call from planet scope (a Maginot World specifically)
+maginot_reapply_upgrades = {
+	save_event_target_as = maginot_world_location
+	solar_system = {
+		random_fleet_in_system = {
+			limit = {
+				has_fleet_flag = maginot_orbital_defence
+				check_variable = {
+					which = giga_maginot_fleet_id
+					value = event_target:maginot_world_location.giga_maginot_id
+				}
+			}
+			# count for number of upgrades to apply
+			# hp
+			set_variable = {
+				which = giga_maginot_orbital_defence_hp
+				value = event_target:maginot_world_location.maginot_orbital_defence_hp_upgrades
+			}
+			# atk
+			set_variable = {
+				which = giga_maginot_orbital_defence_atk
+				value = event_target:maginot_world_location.maginot_orbital_defence_atk_upgrades
+			}
+			# trg
+			set_variable = {
+				which = giga_maginot_orbital_defence_trg
+				value = event_target:maginot_world_location.maginot_orbital_defence_trg_upgrades
+			}
+			# apply to the ships in fleet
+			every_owned_ship = {
+				# hp
+				# clear previously applied modifier
+				if = {
+					limit = { has_modifier = giga_maginot_orbital_defence_hp }
+					remove_modifier = giga_maginot_orbital_defence_hp
+				}
+				# apply
+				add_modifier = {
+					modifier = giga_maginot_orbital_defence_hp
+					multiplier = prev.giga_maginot_orbital_defence_hp
+				}
+				# atk
+				# clear previously applied modifier
+				if = {
+					limit = { has_modifier = giga_maginot_orbital_defence_atk }
+					remove_modifier = giga_maginot_orbital_defence_atk
+				}
+				# apply
+				add_modifier = {
+					modifier = giga_maginot_orbital_defence_atk
+					multiplier = prev.giga_maginot_orbital_defence_atk
+				}
+				# trg
+				# clear previously applied modifier
+				if = {
+					limit = { has_modifier = giga_maginot_orbital_defence_trg }
+					remove_modifier = giga_maginot_orbital_defence_trg
+				}
+				# apply
+				add_modifier = {
+					modifier = giga_maginot_orbital_defence_trg
+					multiplier = prev.giga_maginot_orbital_defence_trg
+				}
+				## tech buffs
+				# firepower
+				if = {
+					limit = { has_modifier = giga_maginot_firepower_1 }
+					remove_modifier = giga_maginot_firepower_1
+				}
+				if = {
+					limit = { event_target:maginot_world_location.owner = { has_technology = giga_tech_maginot_firepower_1 } }
+					add_modifier = {
+						modifier = giga_maginot_firepower_1
+						days = -1
+					}
+				}
+				# pl*netcraft upgrade
+				if = {
+					limit = { has_modifier = giga_maginot_planetcraft_upgrade }
+					remove_modifier = giga_maginot_planetcraft_upgrade
+				}
+				if = {
+					limit = { event_target:maginot_world_location.owner = { has_technology = giga_tech_maginot_planetcraft_upgrade } }
+					add_modifier = {
+						modifier = giga_maginot_planetcraft_upgrade
+						days = -1
+					}
+				}
+				# systemcraft upgrade
+				if = {
+					limit = { has_modifier = giga_maginot_systemcraft_upgrade }
+					remove_modifier = giga_maginot_systemcraft_upgrade
+				}
+				if = {
+					limit = { event_target:maginot_world_location.owner = { has_technology = giga_tech_maginot_systemcraft_upgrade } }
+					add_modifier = {
+						modifier = giga_maginot_systemcraft_upgrade
+						days = -1
+					}
+				}
+			}
+		}
+	}
+}
+
+maginot_refresh_ground_armies = {
+	if = {
+		limit = { exists = planet_owner }
+		every_planet_army = {
+			limit = {
+				army_type = "maginot_artillery_army" 
+			}
+			remove_army = yes
+		}
+		export_trigger_value_to_variable = {
+			trigger = num_districts
+			parameters = { type = district_maginot_world_planetary_cannons }
+			variable = maginot_artillery_army_count
+		}
+		while = { count = maginot_artillery_army_count	create_army = { name = "Planetary Artillery"	owner = planet_owner type = "maginot_artillery_army" } }
+	}
+	if = {
+		limit = { exists = planet_owner }
+		every_planet_army = {
+			limit = {
+				army_type = "maginot_shield_army" 
+			}
+			remove_army = yes
+		}
+		export_trigger_value_to_variable = {
+			trigger = num_districts
+			parameters = { type = district_maginot_world_shield_generators }
+			variable = maginot_shield_army_count
+		}
+		while = { count = maginot_shield_army_count	create_army = { name = "Shield Battery"	owner = planet_owner type = "maginot_shield_army" } }
+	}
+	if = {
+		limit = { exists = planet_owner }
+		every_planet_army = {
+			limit = {
+				army_type = "maginot_bunker_army" 
+			}
+			remove_army = yes
+		}
+		export_trigger_value_to_variable = {
+			trigger = num_districts
+			parameters = { type = district_maginot_world_bunkers }
+			variable = maginot_bunker_army_count
+		}
+		while = { count = maginot_bunker_army_count	create_army = { name = "Fortification Network"	owner = planet_owner type = "maginot_bunker_army" } }
+	}
+}
