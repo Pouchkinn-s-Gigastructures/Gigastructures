@@ -1,2 +1,0 @@
-# Gigastructures
-Spaget
