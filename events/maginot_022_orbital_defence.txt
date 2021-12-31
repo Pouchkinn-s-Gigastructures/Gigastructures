@@ -10,7 +10,10 @@ country_event = {
 	hide_window = yes
 
 	trigger = {
-		from = { has_fleet_flag = maginot_orbital_defence }
+		from = { 
+			has_fleet_flag = maginot_orbital_defence
+			NOT = { has_fleet_flag = maginot_intentional_delete }
+		}
 	}
 
 	immediate = {
@@ -25,35 +28,7 @@ country_event = {
 				}
 				save_event_target_as = maginot_world_location
 				# can't disband "part" of the Maginot World so respawn it
-				create_fleet = {
-					name = "Planetary Defence Command"
-					settings = { spawn_debris = no }
-					effect = {
-						set_formation_scale = 4 # keep distance between platforms
-						set_owner = event_target:maginot_world_location.planet_owner
-						create_ship = {
-							name = "Strategic Defence Command"
-							random_existing_design = strategic_defence_command_platform
-						}
-						while = {
-							count = event_target:maginot_world_location.giga_maginot_current_SD_platform_count
-							create_ship = {
-								name = "Secondary SD Platform [event_target:maginot_world_location.giga_maginot_current_SD_platform_count]"
-								random_existing_design = asteroid_artillery
-							}
-						}
-						set_location = {
-							target = event_target:maginot_world_location
-							distance = 0.60
-							angle = 0
-						}
-						set_fleet_flag = maginot_orbital_defence
-						set_variable = {
-							which = giga_maginot_fleet_id
-							value = event_target:maginot_world_location.giga_maginot_id
-						}
-					}
-				}
+				maginot_create_orbital_defence_fleet = yes
 				maginot_reapply_upgrades = yes # get back modifiers
 			}
 		}
@@ -73,7 +48,10 @@ country_event = {
 	hide_window = yes
 
 	trigger = {
-		fromfrom = { has_fleet_flag = maginot_orbital_defence }
+		fromfrom = { 
+			has_fleet_flag = maginot_orbital_defence
+			NOT = { has_fleet_flag = maginot_intentional_delete }
+		}
 	}
 
 	immediate = {
@@ -114,7 +92,10 @@ country_event = {
 
 	trigger = {
 		fromfrom = {
-			fleet = { has_fleet_flag = maginot_orbital_defence }
+			fleet = { 
+				has_fleet_flag = maginot_orbital_defence
+				NOT = { has_fleet_flag = maginot_intentional_delete }
+			}
 			is_ship_size = strategic_defence_command_platform
 		}
 	}
@@ -158,11 +139,6 @@ country_event = {
 	picture = GFX_evt_large_explosion
 
 	is_triggered_only = yes
-
-	# unnecessary filtering
-	#trigger = {
-	#	event_target:maginot_orbital_defence_fleet = { has_fleet_flag = maginot_orbital_defence }
-	#}
 
 	immediate = {
 		event_target:maginot_world_location = {	
@@ -219,35 +195,7 @@ planet_event = {
 			assign_giga_maginot_id = yes	
 		}
 		set_planet_flag = maginot_has_orbital_defence
-		create_fleet = {
-			name = "Planetary Defence Command"
-			settings = { spawn_debris = no }
-			effect = {
-				set_formation_scale = 4 # keep distance between platforms
-				set_owner = event_target:maginot_world_location.planet_owner
-				create_ship = {
-					name = "Strategic Defence Command"
-					random_existing_design = strategic_defence_command_platform
-				}
-				while = {
-					count = event_target:maginot_world_location.giga_maginot_current_SD_platform_count
-					create_ship = {
-						name = "Secondary SD Platform [event_target:maginot_world_location.giga_maginot_current_SD_platform_count]"
-						random_existing_design = asteroid_artillery
-					}
-				}
-				set_location = {
-					target = event_target:maginot_world_location
-					distance = 0.60
-					angle = 0
-				}
-				set_fleet_flag = maginot_orbital_defence
-				set_variable = {
-					which = giga_maginot_fleet_id
-					value = event_target:maginot_world_location.giga_maginot_id
-				}
-			}
-		}
+		maginot_create_orbital_defence_fleet = yes
 		maginot_reapply_upgrades = yes
 		# notify owner
 		planet_owner = { country_event = { id = maginot_orbital_defence.1006 } }
@@ -288,6 +236,7 @@ planet_event = {
 				limit = { 
 					any_fleet_in_system = {
 						has_fleet_flag = maginot_orbital_defence
+						NOT = { has_fleet_flag = maginot_intentional_delete }
 						check_variable = {
 							which = giga_maginot_fleet_id
 							value = event_target:maginot_world_location.giga_maginot_id
@@ -336,7 +285,10 @@ country_event = {
 
 	trigger = {
 		fromfrom = {
-			fleet = { has_fleet_flag = maginot_orbital_defence }
+			fleet = { 
+				has_fleet_flag = maginot_orbital_defence
+				NOT = { has_fleet_flag = maginot_intentional_delete }
+			}
 			is_ship_size = asteroid_artillery
 		}
 	}
@@ -463,10 +415,6 @@ planet_event = {
 
 	immediate = {
 		save_event_target_as = maginot_world_location
-		change_variable = {
-			which = giga_maginot_current_SD_platform_count
-			value = 1
-		}
 		solar_system = {
 			random_fleet_in_system = {
 				limit = {
@@ -476,49 +424,13 @@ planet_event = {
 						value = event_target:maginot_world_location.giga_maginot_id
 					}
 				}
+				set_fleet_flag = maginot_intentional_delete
 				# workaround to space ships out
 				delete_fleet = this
 			}
-			# make new, spaced out fleet (yes, you have to do this)
-			create_fleet = {
-				name = "Planetary Defence Command"
-				settings = { spawn_debris = no }
-				effect = {
-					set_formation_scale = 4 # keep distance between platforms
-					set_owner = event_target:maginot_world_location.planet_owner
-					create_ship = {
-						name = "Strategic Defence Command"
-						random_existing_design = strategic_defence_command_platform
-					}
-					while = {
-						count = event_target:maginot_world_location.giga_maginot_current_SD_platform_count
-						create_ship = {
-							name = "Secondary SD Platform [event_target:maginot_world_location.giga_maginot_current_SD_platform_count]"
-							random_existing_design = asteroid_artillery
-						}
-					}
-					set_location = {
-						target = event_target:maginot_world_location
-						distance = 0.60
-						angle = 0
-					}
-					set_fleet_flag = maginot_orbital_defence
-					set_variable = {
-						which = giga_maginot_fleet_id
-						value = event_target:maginot_world_location.giga_maginot_id
-					}
-				}
-			}
 		}
-		# manage variables, 2 points spent
-		subtract_variable = {
-			which = maginot_offensive_upgrade_points_current
-			value = 2
-		}
-		change_variable = {
-			which = maginot_offensive_upgrade_points_used
-			value = 2
-		}
+		# make new, spaced out fleet (yes, you have to do this)
+		maginot_create_orbital_defence_fleet = yes
 		maginot_reapply_upgrades = yes # get back modifiers
 		maginot_check_upgrade_points = yes # update variables on the planet
 	}

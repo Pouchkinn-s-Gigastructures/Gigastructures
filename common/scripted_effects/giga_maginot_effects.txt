@@ -1,3 +1,146 @@
+# Initial Maginot set up - sets variables
+# * call from planet scope (a Maginot World specifically)
+init_giga_maginot_variables = {
+	# set up platform count variable
+	set_variable = {
+		which = giga_maginot_current_SD_platform_count
+		value = 0
+	}
+	# log complains if this isn't set here for some reason
+	set_variable = {
+		which = current_SD_platform_point_use
+		value = 0
+	}
+	# set up upgrade variables
+	set_variable = {
+		which = maginot_offensive_upgrade_points_max
+		value = 0
+	}
+	set_variable = {
+		which = maginot_offensive_upgrade_points_current
+		value = 0
+	}
+	set_variable = {
+		which = maginot_offensive_upgrade_points_used
+		value = 0
+	}
+	set_variable = {
+		which = maginot_defensive_upgrade_points_max
+		value = 0
+	}
+	set_variable = {
+		which = maginot_defensive_upgrade_points_current
+		value = 0
+	}
+	set_variable = {
+		which = maginot_defensive_upgrade_points_used
+		value = 0
+	}
+	# special cap for tracking modifier
+	set_variable = {
+		which = maginot_targetting_upgrade_points_max
+		value = 5
+	}
+	# current upgrades applied
+	set_variable = {
+		which = maginot_orbital_defence_hp_upgrades
+		value = 0
+	}
+	set_variable = {
+		which = maginot_orbital_defence_atk_upgrades
+		value = 0
+	}
+	set_variable = {
+		which = maginot_orbital_defence_trg_upgrades
+		value = 0
+	}
+	# costs
+	set_variable = {
+		which = maginot_orbital_defence_hp_cost
+		value = 1000
+	}
+	set_variable = {
+		which = maginot_orbital_defence_atk_cost
+		value = 1000
+	}
+	set_variable = {
+		which = maginot_orbital_defence_trg_cost
+		value = 1000
+	}
+	# set up alloy value storage
+	set_variable = {
+		which = giga_current_alloy_stockpile
+		value = 0
+	}
+	planet_owner = {
+		export_resource_stockpile_to_variable = {
+			resource = alloys
+			variable = giga_current_alloy_stockpile
+		}
+	}
+	set_variable = {
+		which = giga_current_alloy_stockpile
+		value = planet_owner.giga_current_alloy_stockpile
+	}
+	# display values
+	set_variable = {
+		which = maginot_orbital_defence_hp_display
+		value = 0
+	}
+	set_variable = {
+		which = maginot_orbital_defence_hp_regen_display
+		value = 0
+	}
+	set_variable = {
+		which = maginot_orbital_defence_atk_display
+		value = 0
+	}
+	# targetting has 2 different values
+	set_variable = {
+		which = maginot_orbital_defence_range_display
+		value = 0
+	}
+	set_variable = {
+		which = maginot_orbital_defence_tracking_display
+		value = 0
+	}
+}
+
+# Creates defence fleet with appropriate number of platforms
+# * call from planet scope (a Maginot World specifically)
+maginot_create_orbital_defence_fleet = {
+	save_event_target_as = maginot_world_location
+	create_fleet = {
+		name = "Planetary Defence Command"
+		settings = { spawn_debris = no }
+		effect = {
+			set_formation_scale = 4 # keep distance between platforms
+			set_owner = event_target:maginot_world_location.planet_owner
+			create_ship = {
+				name = "Strategic Defence Command"
+				random_existing_design = strategic_defence_command_platform
+			}
+			while = {
+				count = event_target:maginot_world_location.giga_maginot_current_SD_platform_count
+				create_ship = {
+					name = "Secondary SD Platform"
+					random_existing_design = asteroid_artillery
+				}
+			}
+			set_location = {
+				target = event_target:maginot_world_location
+				distance = 0.60
+				angle = 0
+			}
+			set_fleet_flag = maginot_orbital_defence
+			set_variable = {
+				which = giga_maginot_fleet_id
+				value = event_target:maginot_world_location.giga_maginot_id
+			}
+		}
+	}
+}
+
 # Stolen from the asteroid artillery script (with permission)
 # This scripted effect gives every Maginot World in the system a very specific ID that can be used to "connect" 
 # a ship with the corresponding ID to the planet (as in, when a ship with an ID of "1" is destroyed, we know 
@@ -101,33 +244,34 @@ maginot_check_upgrade_points = {
 	# secondary platforms can die, so check how many there are
 	if = {
 		limit = { has_planet_flag = maginot_has_orbital_defence }
-		solar_system = {
-			random_fleet_in_system = {
-				limit = {
-					has_fleet_flag = maginot_orbital_defence
-					check_variable = {
-						which = giga_maginot_fleet_id
-						value = prevprev.giga_maginot_id
-					}
-				}
-				event_target:maginot_world_location = {
-					set_variable = {
-						which = giga_maginot_current_SD_platform_count
-						value = 0
-					}	
-				}
-				every_owned_ship = {
-					limit = { is_ship_size = asteroid_artillery }
-					# should run this code once per ship
-					event_target:maginot_world_location = {
-						change_variable = {
-							which = giga_maginot_current_SD_platform_count
-							value = 1
-						}
-					}
-				}
-			}
-		}
+		# this doesnt work, for some reason
+		# solar_system = {
+		# 	random_fleet_in_system = {
+		# 		limit = {
+		# 			has_fleet_flag = maginot_orbital_defence
+		# 			check_variable = {
+		# 				which = giga_maginot_fleet_id
+		# 				value = prevprev.giga_maginot_id
+		# 			}
+		# 		}
+		# 		event_target:maginot_world_location = {
+		# 			set_variable = {
+		# 				which = giga_maginot_current_SD_platform_count
+		# 				value = 0
+		# 			}	
+		# 		}
+		# 		every_owned_ship = {
+		# 			limit = { is_ship_size = asteroid_artillery }
+		# 			# should run this code once per ship
+		# 			event_target:maginot_world_location = {
+		# 				change_variable = {
+		# 					which = giga_maginot_current_SD_platform_count
+		# 					value = 1
+		# 				}
+		# 			}
+		# 		}
+		# 	}
+		# }
 		set_variable = {
 			which = current_SD_platform_point_use
 			value = 0
@@ -297,6 +441,8 @@ maginot_reapply_upgrades = {
 	}
 }
 
+# Counts and spawns proper number of armies for Maginot
+# * call from planet scope (a Maginot World specifically)
 maginot_refresh_ground_armies = {
 	if = {
 		limit = { exists = planet_owner }
