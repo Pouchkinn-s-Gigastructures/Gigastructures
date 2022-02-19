@@ -1621,6 +1621,7 @@ create_solakia = {
 					exile_leader_as = dofusmoving
 				}
 				set_leader = dofusmoving
+				event_target:dofus = { set_dofus_real_portrait = yes }
 			}
 			set_country_flag = solakia
 			save_global_event_target_as = solakia
@@ -2080,9 +2081,9 @@ create_katzen_splinter_state = {
 		every_system_within_border = { #claim all katzen fleets in borders
 			every_fleet_in_system = {
 				limit = {
-					owner = {
-						is_country_type = katzenartig_imperium
-					}
+					owner = { is_country_type = katzenartig_imperium }
+					NOT = { has_fleet_flag = kaiser_moon_fleet }
+					NOT = { has_fleet_flag = katzen_submarine_fleet }
 				}
 				set_owner = event_target:katzen_splinter_country
 			}
@@ -2200,4 +2201,141 @@ katzen_submarine_unsubmerge = {
 		}
 	}
 	delete_fleet = ROOT
+}
+
+#NEW SPAWN SCRIPT
+spawn_katzen_warforge_fleet = {
+	create_fleet = {
+		settings = {
+			spawn_debris = no
+			can_upgrade = no
+			uses_naval_capacity = no
+		}
+		effect = {
+			set_variable = { #How many ships we can build
+				which = kaiser_warforge_build_capacity
+				value = event_target:flusion_primitives_country.kaiser_warforge_build_capacity
+			}
+			set_owner = event_target:flusion_primitives_country
+			while = {
+				limit = {
+					check_variable = { #Built all ships it can
+						which = kaiser_warforge_build_capacity
+						value > 0
+					}
+					event_target:flusion_primitives_country = { #Can't even afford 1 Panzer in upkeep or cost
+						check_variable = {
+							which = kaiser_resource_stockpile
+							value > min_kaiser_ship_cost
+						}
+						check_variable = {
+							which = kaiser_resource_balance
+							value > min_kaiser_ship_upkeep
+						}
+					}
+				}
+				random_list = {
+					4 = {
+						create_ship = {
+							name = random
+							design = "Katzchen"
+							prefix = no
+						}
+						subtract_variable = {
+							which = kaiser_warforge_build_capacity
+							value = 1
+						}
+						event_target:flusion_primitives_country = {
+							subtract_variable = {
+								which = kaiser_resource_stockpile
+								value = kaiser_panzer_cost
+							}
+						}
+					}
+					2 = {
+						create_ship = {
+							name = random
+							design = "Douclaw"
+							prefix = no
+						}
+						subtract_variable = {
+							which = kaiser_warforge_build_capacity
+							value = 2
+						}
+						event_target:flusion_primitives_country = {
+							subtract_variable = {
+								which = kaiser_resource_stockpile
+								value = kaiser_bomber_cost
+							}
+						}
+						modifier = {
+							factor = 0
+							OR = {
+								check_variable = {
+									which = kaiser_warforge_build_capacity
+									value < 2
+								}
+								event_target:flusion_primitives_country = {
+									OR = {
+										check_variable = {
+											which = kaiser_resource_stockpile
+											value < kaiser_bomber_cost
+										}
+										check_variable = {
+											which = kaiser_resource_balance
+											value < kaiser_bomber_upkeep
+										}
+									}
+								}
+							}
+						}
+					}
+					1 = {
+						create_ship = {
+							name = random
+							design = "Neu-Clermeowth"
+							prefix = no
+						}
+						subtract_variable = {
+							which = kaiser_warforge_build_capacity
+							value = 4
+						}
+						event_target:flusion_primitives_country = {
+							subtract_variable = {
+								which = kaiser_resource_stockpile
+								value = kaiser_cruiser_cost
+							}
+						}
+						modifier = {
+							factor = 0
+							OR = {
+								check_variable = {
+									which = kaiser_warforge_build_capacity
+									value < 4
+								}
+								event_target:flusion_primitives_country = {
+									OR = {
+										check_variable = {
+											which = kaiser_resource_stockpile
+											value < kaiser_cruiser_cost
+										}
+										check_variable = {
+											which = kaiser_resource_balance
+											value < kaiser_cruiser_upkeep
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			assign_leader = last_created_leader
+			set_location = {
+				target = ROOT
+				distance = 10
+				angle = random
+			}
+		}
+	}
 }
