@@ -56,6 +56,11 @@ maginot_world_0 = {
 					}
 					# you can't stop the habitable gas giant maginot
 					is_planet_class = pc_habitable_gas_giant
+					# and there shall be maginot rings
+					AND = {
+						is_ringworld = yes
+						NOT = { is_planet_class = pc_shattered_ring_habitable }
+					}
 				}
 			}
 			# double check not building a maginot world on a maginot world, that makes no sense
@@ -81,7 +86,7 @@ maginot_world_0 = {
 
 			# needs a specific building built in preparation
 			custom_tooltip = {
-				fail_text = "requires_maginot_stronghold_built"					
+				fail_text = "requires_maginot_stronghold_built"			
 				has_building = building_giga_maginot_stronghold
 			}
 		}
@@ -151,6 +156,9 @@ maginot_world_0 = {
 					has_megastructure = maginot_world_0
 					has_megastructure = maginot_world_1
 					has_megastructure = maginot_world_2
+					has_megastructure = maginot_world_ringworld_0
+					has_megastructure = maginot_world_ringworld_1
+					has_megastructure = maginot_world_ringworld_2
 				}
 			}
 		}
@@ -168,9 +176,18 @@ maginot_world_0 = {
 			set_planet_flag = has_planet_mw_mega			# Has the construction site
 			add_deposit = d_maginot_construction_blocker 	# Deposit blocker for ongoing construction, stops arcology project
 		}
+		# if ringworld switch to alternate construction
+		if = {
+			limit = { fromfrom.planet = { is_ringworld = yes } }
+			spawn_megastructure = { type = "maginot_world_ringworld_0" owner = from coords_from = fromfrom.planet planet = event_target:giga_planet }
+			remove_megastructure = fromfrom
+		}
+		# else send normal dialog event
+		else = {
+			from = { country_event = { id = giga_dialog.5001 } } # Notification, normal world
+		}
 		from = {
 			set_timed_country_flag = { flag = has_recently_built_maginot years = 10 }
-			country_event = { id = giga_dialog.5001 }	# Notification
 			change_variable = { which = giga_current_maginot value = 1 }
 		}
 	}
@@ -266,6 +283,210 @@ maginot_world_2 = {
 			else = {
 				change_pc = pc_giga_maginot_world
 			}
+
+			# attached deposit
+			add_deposit = d_maginot_command
+			# remove the construction one
+			remove_deposit = d_maginot_construction_blocker
+			#add_modifier = { modifier = "giga_maginot_world" days = -1 }
+
+			# "upgrade" attached building
+			remove_building = building_giga_maginot_stronghold
+			add_building = building_giga_maginot_global_bunker
+			
+			# add armies
+			if = {
+				limit = { exists = planet_owner }
+				# create some armies since they can't be from the deposit
+				if = {
+					limit = { planet_owner = { is_machine_empire = no } }
+					while = { count = 5	create_army = { name = "Heavy Defence Unit"	owner = planet.owner species = planet.owner.species type = "heavy_defender" } }
+				}
+				else_if = {
+					limit = { planet_owner = { is_machine_empire = yes } }
+					while = { count = 5	create_army = { name = "Heavy Defence Unit"	owner = planet.owner species = planet.owner.species type = "machine_heavy_defender" } }
+				}
+			}
+
+			# add orbital defence
+			set_planet_flag = maginot_has_orbital_defence
+			solar_system = {
+				assign_giga_maginot_id = yes
+			}
+			init_giga_maginot_variables = yes
+			# start watchdog event for the orbital fleet
+			planet_event = {
+				id = maginot_orbital_defence.1007
+				days = 30
+			}
+			if = {
+				limit = { ROOT.from = { has_active_tradition = tr_gigabulwark_happy_defenses } }
+				add_modifier = {
+					modifier = giga_bulwark_trad_stability_maginot
+					days = -1
+				}
+			}
+		}
+		create_fleet = {
+			name = "Planetary Defence Command"
+			settings = { spawn_debris = no }
+			effect = {
+				set_owner = event_target:maginot_world_owner
+				create_ship = {
+					name = "Strategic Defence Command"
+					random_existing_design = strategic_defence_command_platform
+				}
+				set_location = {
+					target = event_target:giga_planet
+					distance = 0.60
+					angle = 0
+				}
+				set_fleet_flag = maginot_orbital_defence
+				set_variable = {
+					which = giga_maginot_fleet_id
+					value = event_target:giga_planet.giga_maginot_id
+				}
+				# tech upgrades
+				if = {
+					limit = { event_target:maginot_world_owner = { has_technology = giga_tech_maginot_firepower_1 } }
+					add_modifier = {
+						modifier = giga_maginot_firepower_1
+						days = -1
+					}
+				}
+				if = {
+					limit = { event_target:maginot_world_owner = { has_technology = giga_tech_maginot_planetcraft_upgrade } }
+					add_modifier = {
+						modifier = giga_maginot_planetcraft_upgrade
+						days = -1
+					}
+				}
+				if = {
+					limit = { event_target:maginot_world_owner = { has_technology = giga_tech_maginot_systemcraft_upgrade } }
+					add_modifier = {
+						modifier = giga_maginot_systemcraft_upgrade
+						days = -1
+					}
+				}
+			}
+		}
+		# last, remove megastructure, everything from here is done by planet
+		remove_megastructure = fromfrom
+	}
+}
+
+### Ringworld Branch ###
+maginot_world_ringworld_0 = {
+	entity = "giga_consite_5_5_entity"
+	construction_entity = "giga_consite_5_5_entity"
+	portrait = "GFX_megastructure_construction_background"
+
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_maginot_world }
+
+	build_time = 1
+	resources = {
+		category = megastructures
+		cost = { alloys = 1 }
+		upkeep = { energy = 5 alloys = 5 }
+	}
+
+	potential = { always = no }
+
+	ai_weight = { factor = 0 } # this is a dummy
+	
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.5004 } }	# Notification
+	}
+}
+
+
+maginot_world_ringworld_1 = {
+	entity = "pc_giga_maginot_world_main_features_entity"
+	construction_entity = "pc_giga_maginot_world_main_features_entity"
+	portrait = "GFX_spaceport_background"
+	upgrade_from = { maginot_world_ringworld_0 }
+
+	build_time = 2500
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 15000		# bunkers and guns
+			minerals = 5000		# misc planet construction
+		}
+		upkeep = {
+			energy = 50			# keeping rings and stuff suspended
+			alloys = 10
+		}
+	}
+
+	potential = { NOT = { has_global_flag = maginot_disabled } }
+	possible = { from = { has_technology = giga_tech_maginot_world } }
+
+	ai_weight = { factor = 10000 } # If we can build it, we will finish it
+	on_build_start = { apply_giga_bulwark_trad_build_speed = yes }
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_dialog.5005 } }	# Notification
+	}
+}
+
+maginot_world_ringworld_2 = {
+	entity = ""
+	construction_entity = "pc_giga_maginot_world_full_features_entity"
+	portrait = "GFX_spaceport_background"
+	upgrade_from = { maginot_world_ringworld_1 }
+
+	build_time = 4700
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 30000	 	# bunkers and guns
+			minerals = 20000 	# terraforming and excavation
+			energy = 10000	 	# "antimatter" representation
+		}
+	}
+
+	potential = { NOT = { has_global_flag = maginot_disabled } }
+	possible = { from = { has_technology = giga_tech_maginot_world } }
+
+	ai_weight = { factor = 10000 } # If we can build it, we will finish it
+	on_build_start = { apply_giga_bulwark_trad_build_speed = yes }
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = {
+			country_event = { id = giga_dialog.5006 }				# Notification
+			set_country_flag = has_built_or_repaired_gigastructure	# Allows Gigastructural Constructs
+			change_variable = { which = maginot_world value = 1 }
+			save_event_target_as = maginot_world_owner
+			# if = {
+			# 	limit = {
+			# 		NOR = {
+			# 			has_global_flag = giga_achievements_disabled
+			# 			has_country_flag = giga_achievement_77
+			# 		}
+			# 	}
+			# 	set_country_flag = giga_achievement_77 # CHANGE THIS it triggers PCC achievement right now
+			# 	set_timed_country_flag = { flag = giga_achievement_77_notification days = 30 }
+			# 	giga_achievement_sound = yes
+			# }
+		}
+		fromfrom.planet = {
+			# clean flags
+			#remove_planet_flag = has_megastructure
+			#remove_planet_flag = megastructure
+			remove_planet_flag = has_planet_mw_mega
+			
+			# set flags
+			set_planet_flag = giga_maginot_world
+			set_planet_flag = colony_event # avoids subterranean civilization
+		    
+			# change the planet class to ringworld
+			change_pc = pc_giga_maginot_ringworld
 
 			# attached deposit
 			add_deposit = d_maginot_command
