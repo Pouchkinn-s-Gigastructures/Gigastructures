@@ -29,7 +29,7 @@ giga_frameworld_outpost_unity_output = {
 
 # strategic resources
 giga_frameworld_outpost_rare_output = {
-	weight = value:giga_frameworld_outpost_output|JOB|$JOB$|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|BASE|1|SCALE|100|
+	weight = value:giga_frameworld_outpost_output|JOB|$JOB$|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|BASE|3|SCALE|33|
 }
 
 ##############################################################################################################
@@ -130,11 +130,9 @@ giga_frameworld_outpost_output = {
 	}
 
 	# multiply by the number of "jobs"
-	mult = value:giga_frameworld_outpost_$RESOURCE$_jobs
+	mult = value:giga_frameworld_outpost_total_jobs|RESOURCE|$RESOURCE$|SCALE|$SCALE$|
 
-	# adjust to a more sensible value
-	mult = $SCALE$
-	mult = 0.01
+	# round it out so we don't start with fractional output as base
 	round = yes
 
 	# apply multiply modifiers
@@ -212,6 +210,18 @@ giga_frameworld_outpost_size_mult = {
 
 # the frameworld_outpost_planet_has_multiplier trigger can be found over in common/scripted_triggers/giga_frameworld_triggers.txt
 
+# total jobs for a resource - the "basic" types with scale applied, and planet type special overrides without
+giga_frameworld_outpost_total_jobs = {
+	base = 0
+
+	add = value:giga_frameworld_outpost_$RESOURCE$_jobs
+
+	mult = $SCALE$
+	mult = 0.01
+
+	add = value:giga_frameworld_outpost_special|SCALE|$SCALE$|RESOURCE|$RESOURCE$|
+}
+
 ########################################################################
 # DEPOSIT JOBS
 
@@ -244,32 +254,6 @@ giga_frameworld_outpost_energy_jobs = {
 			modifier = district_generator_max
 		}
 		mode = add
-	}
-
-	# 50% of machine worlds, scale 2
-	modifier = {
-		planet = { is_planet_class = pc_machine }
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|100|
-	}
-
-	# 25% of hive worlds, scale 2
-	modifier = {
-		planet = { is_planet_class = pc_hive }
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|50|
-	}
-
-	# 25% of ringworlds, scale 5
-	modifier = {
-		planet = { is_planet_class = pc_ringworld_habitable }
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|125|
-	}
-
-	# 25% of ringworlds if no farming, scale 5
-	modifier = {
-		exists = owner
-		owner = { country_uses_food = no }
-		planet = { is_planet_class = pc_ringworld_habitable }
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|125|
 	}
 
 	# betharian power plant
@@ -307,26 +291,6 @@ giga_frameworld_outpost_minerals_jobs = {
 		}
 		mode = add
 	}
-
-	# 25% of machine worlds, scale 2
-	modifier = {
-		planet = { is_planet_class = pc_machine }
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|50|
-	}
-
-	# 50% of hive worlds, scale 2
-	modifier = {
-		planet = { is_planet_class = pc_hive }
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|100|
-	}
-
-	# 25% of hive worlds if no farming, scale 2
-	modifier = {
-		exists = owner
-		owner = { country_uses_food = no }
-		planet = { is_planet_class = pc_hive }
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|50|
-	}
 }
 
 ########################################################################
@@ -340,22 +304,6 @@ giga_frameworld_outpost_food_jobs = {
 		exists = owner
 		owner = { country_uses_food = yes }
 		add = value:giga_frameworld_outpost_food_districts
-	}
-
-	# 25% of ringworlds if farming, scale 5
-	modifier = {
-		exists = owner
-		owner = { country_uses_food = yes }
-		planet = { is_planet_class = pc_ringworld_habitable }
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|125|
-	}
-
-	# 25% of hive worlds if farming, scale 2
-	modifier = {
-		exists = owner
-		owner = { country_uses_food = yes }
-		planet = { is_planet_class = pc_hive }
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|50|
 	}
 }
 
@@ -387,26 +335,6 @@ giga_frameworld_outpost_alloys_jobs = {
 			RESOURCE = alloys
 		}
 		add = 1
-	}
-
-	# 25% of machine worlds, scale 2
-	modifier = {
-		planet = { is_planet_class = pc_machine }
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|50|
-	}
-
-	# 75% of ecus, scale 4
-	modifier = {
-		exists = owner
-		planet = { is_planet_class = pc_city }
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|300|
-	}
-
-	# 75% of ecu ring, scale 8
-	modifier = {
-		exists = owner
-		planet = { is_planet_class = pc_ringworld_city }
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|600|
 	}
 
 	# odd factory
@@ -454,24 +382,6 @@ giga_frameworld_outpost_physics_research_jobs = {
 		add = 1
 	}
 
-	# 50% of ringworlds, scale 5
-	modifier = {
-		planet = { is_planet_class = pc_ringworld_habitable	}
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|250|
-	}
-
-	# 50% of PCC, scale 4
-	modifier = {
-		planet = { is_planet_class = pc_giga_planetary_computer	}
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|200|
-	}
-
-	# flat number on relic worlds, for the spire
-	modifier = {
-		planet = { is_planet_class = pc_relic }
-		add = 8
-	}
-
 	# space-time anomaly
 	modifier = {
 		planet = { has_deposit = d_space_time_anomaly }
@@ -506,24 +416,6 @@ giga_frameworld_outpost_society_research_jobs = {
 		add = 1
 	}
 
-	# 50% of ringworlds, scale 5
-	modifier = {
-		planet = { is_planet_class = pc_ringworld_habitable	}
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|250|
-	}
-
-	# 50% of PCC, scale 4
-	modifier = {
-		planet = { is_planet_class = pc_giga_planetary_computer	}
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|200|
-	}
-
-	# flat number on relic worlds, for the spire
-	modifier = {
-		planet = { is_planet_class = pc_relic }
-		add = 8
-	}
-
 	# isolated valley
 	modifier = {
 		exists = owner
@@ -554,18 +446,6 @@ giga_frameworld_outpost_engineering_research_jobs = {
 		add = 1
 	}
 
-	# 50% of ringworlds, scale 5
-	modifier = {
-		planet = { is_planet_class = pc_ringworld_habitable	}
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|250|
-	}
-
-	# 50% of PCC, scale 4
-	modifier = {
-		planet = { is_planet_class = pc_giga_planetary_computer	}
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|200|
-	}
-
 	# flat number on relic worlds, for the spire
 	modifier = {
 		planet = { is_planet_class = pc_relic }
@@ -587,26 +467,6 @@ giga_frameworld_outpost_unity_jobs = {
 			RESOURCE = unity
 		}
 		add = 1
-	}
-
-	# 50% of PCC, scale 4
-	modifier = {
-		planet = { is_planet_class = pc_giga_planetary_computer	}
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|200|
-	}
-
-	# 25% of ecus, scale 4
-	modifier = {
-		exists = owner
-		planet = { is_planet_class = pc_city }
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|100|
-	}
-
-	# 25% of ecu ring, scale 8
-	modifier = {
-		exists = owner
-		planet = { is_planet_class = pc_ringworld_city }
-		add = value:giga_frameworld_outpost_size_fraction|FRACTION|200|
 	}
 
 	# isolated valley
@@ -731,3 +591,45 @@ giga_frameworld_outpost_sr_living_metal_jobs = {
 giga_frameworld_outpost_nanites_jobs = {
 	base = 0
 }
+
+##############################################################################################################
+# SPECIAL PLANET TYPES
+
+# overrides for special types of planet
+
+########################################################################
+# functions
+
+# apply job count from matching category if the planet is of the right class
+# has an optional redirect to another planet class
+giga_frameworld_outpost_planet_jobs = {
+	base = 0
+
+	modifier = {
+		planet = { is_planet_class = $PLANET$ }
+
+		[[!USE] weight = value:giga_frameworld_outpost_planet_jobs_$PLANET$|$RESOURCE$|yes|SCALE|$SCALE$| ]
+
+		[[USE] weight = value:giga_frameworld_outpost_planet_jobs_$USE$|$RESOURCE$|yes|SCALE|$SCALE$| ]
+	}
+
+	[[MULT] mult = $MULT$ ]
+}
+
+# apply job count from matching category if the planet uses this district set
+# has optional redirect to another district set
+giga_frameworld_outpost_district_set_jobs = {
+	base = 0
+
+	modifier = {
+		planet = { uses_district_set = $SET$ }
+
+		[[!USE] weight = value:giga_frameworld_outpost_district_set_jobs_$SET$|$RESOURCE$|yes|SCALE|$SCALE$| ]
+
+		[[USE] weight = value:giga_frameworld_outpost_district_set_jobs_$USE$|$RESOURCE$|yes|SCALE|$SCALE$| ]
+	}
+
+	[[MULT] mult = $MULT$ ]
+}
+
+# see common/script_values/giga_frameworld_outpost_special_planets.txt for the actual special planet list and stats
