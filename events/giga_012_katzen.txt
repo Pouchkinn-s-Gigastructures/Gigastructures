@@ -6522,6 +6522,7 @@ country_event = {
 	hide_window = yes
 
 	trigger = {
+		exists = event_target:sonya_leader
 		any_owned_leader = {
 			is_same_value = event_target:sonya_leader
 		}
@@ -8033,6 +8034,7 @@ planet_event = { #Every 6 months, warforges will randomly create a fleet
 	hide_window = yes
 
 	trigger = {
+		has_planet_flag = has_katzen_warform
 		any_country = {
 			is_country_type = katzenartig_imperium
 		}
@@ -8040,76 +8042,74 @@ planet_event = { #Every 6 months, warforges will randomly create a fleet
 
 	immediate = {
 		save_event_target_as = katzen_war_forge
-		solar_system = {
-			event_target:flusion_primitives_country = {
-				if = {
-					limit = {
-						check_variable = {
-							which = kaiser_resource_stockpile
-							value > min_kaiser_ship_cost
-						}
-						check_variable = {
-							which = kaiser_resource_balance
-							value > min_kaiser_ship_upkeep
+		if = {
+			limit = {
+				event_target:flusion_primitives_country = {
+					check_variable = {
+						which = kaiser_resource_stockpile
+						value > min_kaiser_ship_cost
+					}
+					check_variable = {
+						which = kaiser_resource_balance
+						value > min_kaiser_ship_upkeep
+					}
+				}
+			}
+			change_planet_size = -1
+			if = {
+				limit = { planet_size < 2 }
+				solar_system = {
+					random_system_megastructure = {
+						limit = { is_megastructure_type = katzen_forge_1 }
+						remove_megastructure = THIS
+					}
+					random_fleet_in_system = {
+						limit = { has_fleet_flag = warforge_platform }
+						destroy_fleet = THIS
+					}
+					random_system_planet = {
+						limit = { has_planet_flag = has_katzen_warform }
+						remove_planet_flag = has_katzen_warform
+					}
+				}
+				giga_remove_planet = yes
+			}
+			random_list = {
+				60 = {
+					spawn_katzen_warforge_fleet = yes
+				}
+				10 = {
+					spawn_katzen_troop_fleet = yes
+					subtract_variable = {
+						which = kaiser_resource_stockpile
+						value = 10
+					}
+					modifier = {
+						factor = 0
+						event_target:flusion_primitives_country = { 
+							check_variable = {
+								which = kaiser_resource_stockpile
+								value < 10
+							} 
 						}
 					}
-					change_planet_size = -1
-					if = {
-						limit = { planet_size < 2 }
-						solar_system = {
-							random_system_megastructure = {
-								limit = { is_megastructure_type = katzen_forge_1 }
-								remove_megastructure = THIS
-							}
-							random_fleet_in_system = {
-								limit = { has_fleet_flag = warforge_platform }
-								destroy_fleet = THIS
-							}
-							random_system_planet = {
-								limit = { has_planet_flag = has_katzen_warform }
-								remove_planet_flag = has_katzen_warform
-							}
-						}
-						remove_planet = yes
+				}
+				0 = {
+					spawn_katzen_submarine_fleet = yes
+					subtract_variable = {
+						which = kaiser_resource_stockpile
+						value = 15
 					}
-					random_list = {
-						60 = {
-							spawn_katzen_warforge_fleet = yes
-						}
-						10 = {
-							spawn_katzen_troop_fleet = yes
-							subtract_variable = {
+					modifier = {
+						add = 5
+						event_target:flusion_primitives_country = { has_country_flag = katzen_submarines_deployed }
+					}
+					modifier = {
+						factor = 0
+						event_target:flusion_primitives_country = { 
+							check_variable = {
 								which = kaiser_resource_stockpile
-								value = 10
-							}
-							modifier = {
-								factor = 0
-								event_target:flusion_primitives_country = { 
-									check_variable = {
-										which = kaiser_resource_stockpile
-										value < 10
-									} 
-								}
-							}
-						}
-						0 = {
-							spawn_katzen_submarine_fleet = yes
-							subtract_variable = {
-								which = kaiser_resource_stockpile
-								value = 15
-							}
-							modifier = {
-								add = 5
-								event_target:flusion_primitives_country = { has_country_flag = katzen_submarines_deployed }
-							}
-							modifier = {
-								factor = 0
-								event_target:flusion_primitives_country = { 
-									check_variable = {
-										which = kaiser_resource_stockpile
-										value < 15
-									}
-								}
+								value < 15
 							}
 						}
 					}
@@ -12884,8 +12884,14 @@ country_event = {
 		every_system = { #remove captured systems
 			limit = {
 				has_star_flag = katzen_already_counted
-				owner = {
-					NOT = { is_country_type = katzenartig_imperium }
+				OR = {
+					AND = {
+						exists = owner
+						owner = {
+							NOT = { is_country_type = katzenartig_imperium }
+						}
+					has_owner = no # something killed the starbase, removing the system from the kaiser
+					}
 				}
 			}
 			remove_star_flag = katzen_already_counted
