@@ -28,6 +28,7 @@ country_event = { #Fetch a transport fleet and throw it at an enemy planet in a 
 					has_planet_flag = paluushia #duh
 					has_planet_flag = corrona #2spooky
 				}
+				exists = owner # this should never not be true but, better check anyway...
 				owner = {
 					OR = {
 						is_at_war_with = event_target:flusion_primitives_country
@@ -59,55 +60,68 @@ country_event = { #Fetch a transport fleet and throw it at an enemy planet in a 
 			set_planet_flag = katzen_invasion_target
 			save_global_event_target_as = katzen_invasion_target
 		}
-		every_galaxy_planet = {
-			limit = {
-				has_planet_flag = katzen_invasion_target
-				owner = { is_country_type = katzenartig_imperium }
+		# clear flag on planets Kaiser now owns
+		event_target:flusion_primitives_country = {
+			every_owned_planet = {
+				limit = {
+					has_planet_flag = katzen_invasion_target
+				}
+				remove_planet_flag = katzen_invasion_target
 			}
-			remove_planet_flag = katzen_invasion_target
 		}
+		# do stuff on invasion target
 		if = {
 			limit = {
 				any_galaxy_planet = { has_planet_flag = katzen_invasion_target }
 			}
 			event_target:katzen_invasion_target = {
+				# only owned planets can be invaded
 				if = {
-					limit = { #anger primitives
+					limit = { exists = owner }
+					# anger primitives
+					if = {
+						limit = {
+							owner = {
+								is_country_type = primitive
+							}
+						}
 						owner = {
-							is_country_type = primitive
+							set_faction_hostility = {
+								target = event_target:flusion_primitives_country
+								set_hostile = yes
+							}
 						}
 					}
-					owner = {
-						set_faction_hostility = {
-							target = event_target:flusion_primitives_country
-							set_hostile = yes
+					# fleet stuff
+					solar_system = {
+						closest_system = { # fetch a fleet to invade it
+							limit = {
+								any_fleet_in_system = {
+									owner = { is_country_type = katzenartig_imperium }
+									has_fleet_flag = katzen_troop_fleet
+									NOT = { has_fleet_flag = katzen_moving_to_invade }
+								}
+							}
+							min_steps = 1
+							max_steps = 15
+							random_fleet_in_system = {
+								limit = {
+									has_fleet_flag = katzen_troop_fleet
+								}
+								set_timed_fleet_flag = {
+									flag = katzen_moving_to_invade
+									days = 360
+								}
+								queue_actions = {
+									move_to = event_target:katzen_invasion_target
+								}
+							}
 						}
 					}
 				}
-				solar_system = {
-					closest_system = { #fetch a fleet to invade it
-						limit = {
-							any_fleet_in_system = {
-								owner = { is_country_type = katzenartig_imperium }
-								has_fleet_flag = katzen_troop_fleet
-								NOT = { has_fleet_flag = katzen_moving_to_invade }
-							}
-						}
-						min_steps = 1
-						max_steps = 15
-						random_fleet_in_system = {
-							limit = {
-								has_fleet_flag = katzen_troop_fleet
-							}
-							set_timed_fleet_flag = {
-								flag = katzen_moving_to_invade
-								days = 360
-							}
-							queue_actions = {
-								move_to = event_target:katzen_invasion_target
-							}
-						}
-					}
+				# if nobody owns planet clear flag, it's a dud
+				else = {
+					remove_planet_flag = katzen_invasion_target
 				}
 			}
 		}
