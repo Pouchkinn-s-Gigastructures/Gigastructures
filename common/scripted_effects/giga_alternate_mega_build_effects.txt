@@ -1,7 +1,7 @@
 
 # this = country scope
 giga_amb_apply_initial_country_modifiers = {
-	set_country_flag = giga_amb_init_done
+	set_country_flag = @giga_amb_init_flag
 
 	add_modifier = {
 		modifier = giga_amb_base
@@ -12,9 +12,13 @@ giga_amb_apply_initial_country_modifiers = {
 giga_amb_recalculate_country_modifiers = {
 
 	# remove calc modifiers
-	remove_modifier = giga_amb_cap
+	set_update_modifiers_batch = begin
+
+	#remove_modifier = giga_amb_cap
 	remove_modifier = giga_amb_flat_replacement
 	remove_modifier = giga_amb_speed
+
+	set_update_modifiers_batch = end
 
 	# read cap mod to var
 	export_modifier_to_variable = {
@@ -37,15 +41,24 @@ giga_amb_recalculate_country_modifiers = {
 	}
 
 	# add calc cap modifier
-	add_modifier = {
-		modifier = giga_amb_cap
-		multiplier = giga_amb_cap
-	}
+	# not really needed
+	#add_modifier = {
+	#	modifier = giga_amb_cap
+	#	multiplier = giga_amb_cap
+	#}
 	
-	# add calc flat replacement modifier
-	add_modifier = {
-		modifier = giga_amb_flat_replacement
-		multiplier = giga_amb_flat
+	# add calc flat replacement modifier if the value is > 0
+	if = {
+		limit = {
+			check_variable = {
+				which = giga_amb_flat
+				value > 0
+			}
+		}
+		add_modifier = {
+			modifier = giga_amb_flat_replacement
+			multiplier = giga_amb_flat
+		}
 	}
 
 	# get mega job income
@@ -66,16 +79,25 @@ giga_amb_recalculate_country_modifiers = {
 		value = value:giga_amb_total_progress_calc
 	}
 
-	# subtract drain from stockpile
-	add_resource = {
-		giga_amb_megaconstruction = -1
-		mult = giga_amb_stockpile
-	}
-
 	# count all building megas
 	set_variable = {
 		which = giga_amb_building_megas
 		value = value:giga_amb_building_megas_calc
+	}
+
+	# subtract drain from stockpile if there's at least one running project
+	if = {
+		limit = {
+			check_variable = {
+				which = giga_amb_building_megas
+				value > 0
+			}
+		}
+
+		add_resource = {
+			giga_amb_megaconstruction = -1
+			mult = giga_amb_stockpile
+		}
 	}
 
 	# calc progress per mega
