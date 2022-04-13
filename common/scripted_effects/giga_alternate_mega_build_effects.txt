@@ -3,10 +3,22 @@
 giga_amb_apply_initial_country_modifiers = {
 	set_country_flag = @giga_amb_init_flag
 
+	# apply base modifier
 	add_modifier = {
 		modifier = giga_amb_base
 	}
 
+	# set AI limit variable so that we don't get logged errors for checking it
+	set_variable = {
+		which = giga_amb_ai_limit
+		value = 0
+	}
+	set_variable = {
+		which = giga_amb_ai_limit_modifier
+		value = 0
+	}
+
+	# sets raio variable for use in tooltips because you can't read scripted variables it seems...
 	set_variable = {
 		which = giga_amb_ratio
 		value = @giga_amb_ratio
@@ -26,6 +38,15 @@ giga_amb_apply_initial_country_modifiers = {
 			add_deposit = d_giga_amb_start_bonus
 		}
 		add_research_option = giga_tech_amb_supertensiles
+	}
+
+	# set up the actual limit if we're AI
+	# this is also calculated on yearly pulse, but might as well just to be sure
+	if = {
+		limit = {
+			is_ai = yes
+		}
+		giga_amb_recalculate_ai_limit = yes
 	}
 }
 
@@ -57,9 +78,15 @@ giga_amb_recalculate_country_modifiers = {
 		modifier = country_megastructure_build_cap_add
 		variable = giga_amb_cap
 	}
+	# base is 1000 so subtract 999
 	change_variable = {
 		which = giga_amb_cap
 		value = -999
+	}
+	# add back the AI sensible limit offset, which is 0 for humans
+	change_variable = {
+		which = giga_amb_cap
+		value = giga_amb_ai_limit
 	}
 
 	# read base speed to var
@@ -88,7 +115,7 @@ giga_amb_recalculate_country_modifiers = {
 
 	# get mega job income
 	export_resource_income_to_variable = {
-		resource = giga_amb_megaconstruction
+		resource = giga_sr_amb_megaconstruction
 		variable = giga_amb_income
 	}
 
@@ -137,7 +164,7 @@ giga_amb_recalculate_country_modifiers_and_consume = {
 		}
 
 		add_resource = {
-			giga_amb_megaconstruction = -1
+			giga_sr_amb_megaconstruction = -1
 			mult = giga_amb_stockpile
 		}
 	}
@@ -168,4 +195,30 @@ giga_amb_recalculate_split = {
 
 	# debug event firing
 	#country_event = { id = giga_frameworld_origin.001 }
+}
+
+# recalculate the reduction in AI build limit to match their income
+# so they don't do dumb stuff like repairing 10 pieces of onion ringworld
+# with a build speed of only 1.4...
+giga_amb_recalculate_ai_limit = {
+	remove_modifier = giga_amb_ai_limit
+
+	set_variable = {
+		which = giga_amb_ai_limit
+		value = value:giga_amb_ai_limit_calc
+	}
+
+	set_variable = {
+		which = giga_amb_ai_limit_modifier
+		value = 1000
+	}
+	subtract_variable = {
+		which = giga_amb_ai_limit_modifier
+		value = giga_amb_ai_limit
+	}
+
+	add_modifier = {
+		modifier = giga_amb_ai_limit
+		multiplier = giga_amb_ai_limit_modifier
+	}
 }
