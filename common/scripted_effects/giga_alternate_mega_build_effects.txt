@@ -1,3 +1,15 @@
+# run on every country when settings are confirmed
+# needs to check country type or funny kaiser man gets rekt for no supertensiles
+giga_amb_country_setup_from_menu = {
+	if = {
+		limit = {
+			is_country_type = default
+		}
+		giga_amb_apply_initial_country_modifiers = yes
+		# calculate as if monthly here, we need the variables processed for display, and first month income is zero anyway
+		giga_amb_recalculate_country_modifiers_and_consume = yes
+	}
+}
 
 # this = country scope
 giga_amb_apply_initial_country_modifiers = {
@@ -15,6 +27,20 @@ giga_amb_apply_initial_country_modifiers = {
 	}
 	set_variable = {
 		which = giga_amb_ai_limit_modifier
+		value = 0
+	}
+
+	# set first month variables to 0 for the sake of error log
+	set_variable = {
+		which = giga_amb_stockpile_drain
+		value = 0
+	}
+	set_variable = {
+		which = giga_amb_total_income
+		value = 0
+	}
+	set_variable = {
+		which = giga_amb_total_progress
 		value = 0
 	}
 
@@ -113,18 +139,6 @@ giga_amb_recalculate_country_modifiers = {
 		}
 	}
 
-	# get mega job income
-	export_resource_income_to_variable = {
-		resource = giga_sr_amb_megaconstruction
-		variable = giga_amb_income
-	}
-
-	# get stockpile drain
-	set_variable = {
-		which = giga_amb_stockpile
-		value = value:giga_amb_stockpile_calc
-	}
-
 	# calculate total progress
 	set_variable = {
 		which = giga_amb_total_progress
@@ -152,6 +166,41 @@ giga_amb_recalculate_country_modifiers = {
 
 giga_amb_recalculate_country_modifiers_and_consume = {
 
+	# get mega job income
+	export_resource_income_to_variable = {
+		resource = giga_sr_amb_megaconstruction
+		variable = giga_amb_income
+	}
+
+	# get stockpile drain
+	set_variable = {
+		which = giga_amb_stockpile_drain
+		value = value:giga_amb_stockpile_calc
+	}
+
+	# get total income - either the amount we drained from the stockpile
+	# or the raw income, whichever is larger. This allows income over our
+	# total storage to still be valid.
+	if = {
+		limit = {
+			check_variable = {
+				which = giga_amb_income
+				value > giga_amb_stockpile_drain
+			}
+		}
+		set_variable = {
+			which = giga_amb_total_income
+			value = giga_amb_income
+		}
+	}
+	else = { 
+		set_variable = {
+			which = giga_amb_total_income
+			value = giga_amb_stockpile_drain
+		}
+	}
+
+	# do the rest of the calculations which can happen any time
 	giga_amb_recalculate_country_modifiers = yes
 
 	# subtract drain from stockpile if there's at least one running project
@@ -163,9 +212,10 @@ giga_amb_recalculate_country_modifiers_and_consume = {
 			}
 		}
 
+		# drain total income, because we just gained our income at the start
 		add_resource = {
 			giga_sr_amb_megaconstruction = -1
-			mult = giga_amb_stockpile
+			mult = giga_amb_stockpile_drain
 		}
 	}
 }
