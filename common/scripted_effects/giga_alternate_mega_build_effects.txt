@@ -57,6 +57,10 @@ giga_amb_apply_initial_country_modifiers = {
 	# sets raio variable for use in tooltips because you can't read scripted variables it seems...
 	set_variable = {
 		which = giga_amb_ratio
+		value = 1
+	}
+	divide_variable = {
+		which = giga_amb_ratio
 		value = @giga_amb_ratio
 	}
 
@@ -80,6 +84,65 @@ giga_amb_apply_initial_country_modifiers = {
 		}
 		giga_amb_recalculate_ai_limit = yes
 	}
+
+	# count up the megas we start with which have supertensiles upkeep and offset that upkeep
+	set_variable = {
+		which = giga_amb_initial_megas
+		value = 0
+	}
+	every_owned_megastructure = {
+		if = {
+			limit = {
+				nor = { 
+					is_ruined_mega = yes 
+					is_technical_mega = yes
+				}
+			}
+
+			if = {
+				limit = {
+					is_kilostructure = yes
+				}
+				prev = {
+					change_variable = {
+						which = giga_amb_initial_megas
+						value = @giga_amb_kilostructure_upkeep
+					}
+				}
+			}
+			else_if = {
+				limit = { 
+					is_gigastructure = yes
+				}
+				prev = {
+					change_variable = {
+						which = giga_amb_initial_megas
+						value = @giga_amb_gigastructure_upkeep
+					}
+				}
+			}
+			else = {
+				prev = {
+					change_variable = {
+						which = giga_amb_initial_megas
+						value = @giga_amb_megastructure_upkeep
+					}
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			check_variable = {
+				which = giga_amb_initial_megas
+				value > 0
+			}
+		}
+		add_modifier = {
+			modifier = giga_amb_starting_megas_upkeep_offset
+			multiplier = giga_amb_initial_megas
+		}
+	}
 }
 
 # this = country scope
@@ -91,8 +154,14 @@ giga_amb_recalculate_country_modifiers = {
 	remove_modifier = giga_amb_flat_replacement
 	remove_modifier = giga_amb_speed
 	remove_modifier = giga_amb_storage_capacity
+	remove_modifier = giga_amb_empire_size_penalty
 
 	set_update_modifiers_batch = end # this forces a recalculation of modifers so the next part reads the modifier values without these modifiers
+
+	add_modifier = {
+		modifier = giga_amb_empire_size_penalty
+		multiplier = value:giga_empire_size_mult
+	}
 
 	# read resource capacity mod to var
 	export_modifier_to_variable = {
@@ -143,6 +212,20 @@ giga_amb_recalculate_country_modifiers = {
 			modifier = giga_amb_flat_replacement
 			multiplier = giga_amb_flat
 		}
+	}
+	
+	# calculate ratio of income to progress
+	set_variable = {
+		which = giga_amb_ratio
+		value = 1
+	}
+	set_variable = {
+		which = giga_amb_progress_divisor
+		value = value:giga_amb_progress_divisor_calc
+	}
+	divide_variable = {
+		which = giga_amb_ratio
+		value = giga_amb_progress_divisor
 	}
 
 	# calculate total progress
