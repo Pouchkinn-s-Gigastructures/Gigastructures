@@ -1,0 +1,118 @@
+# AI savings account!
+# This system should help the AI to build larger, and more important megas
+# instead of just spamming the little ones...
+# The general idea is that they use a decision to set aside some resources into savings
+# and the cost of various megas are reduced by those savings
+
+################################################################################################
+# Utility
+
+giga_ai_savings_init = {
+	if = {
+		limit = {
+			not = {
+				has_country_flag = giga_ai_savings_init
+			}
+		}
+		set_country_flag = giga_ai_savings_init
+
+		giga_ai_savings_resource_init = { RESOURCE = alloys }
+		giga_ai_savings_resource_init = { RESOURCE = unity }
+
+		set_variable = { which = giga_ai_savings_important_fraction value = @giga_ai_savings_important_fraction }
+		set_variable = { which = giga_ai_savings_resource_fraction  value = @giga_ai_savings_resource_fraction }
+		set_variable = { which = giga_ai_savings_utility_fraction   value = @giga_ai_savings_utility_fraction }
+		set_variable = { which = giga_ai_savings_military_fraction  value = @giga_ai_savings_military_fraction }
+	}
+}
+
+giga_ai_savings_resource_init = {
+	giga_ai_savings_set_category = { CATEGORY = important 	RESOURCE = $RESOURCE$ }
+	giga_ai_savings_set_category = { CATEGORY = resource 	RESOURCE = $RESOURCE$ }
+	giga_ai_savings_set_category = { CATEGORY = utility 	RESOURCE = $RESOURCE$ }
+	giga_ai_savings_set_category = { CATEGORY = military 	RESOURCE = $RESOURCE$ }
+}
+
+giga_ai_savings_set_category = {
+	set_variable = {
+		which = giga_ai_savings_$CATEGORY$_$RESOURCE$
+		value = $VALUE|0$
+	}
+}
+giga_ai_savings_change_category = {
+	change_variable = {
+		which = giga_ai_savings_$CATEGORY$_$RESOURCE$
+		value = $VALUE|0$
+	}
+}
+
+################################################################################################
+# Invest
+
+# the process goes like this:
+# 1. divide each value by its fraction
+# 2. save the largest value out of the categories
+# 3. multiply that value by each category multiplier
+# 4. subtract the current balance from each
+# 5. divide result by the total across all categories
+# This is the fraction for each category for investment up to the total in step 5
+# after that threshold, use the normal category multipliers
+
+giga_ai_savings_invest = {
+	giga_ai_savings_init = yes
+
+	set_variable = {
+		which = giga_ai_savings_investment_$RESOURCE$
+		value = $AMOUNT$
+	}
+
+	# set giga_ai_savings_max to the largest value out of each category divided by its ratio
+	set_variable = 	{ which = giga_ai_savings_max value = value:giga_ai_savings_balance_divided_by_fraction|CATEGORY|important|RESOURCE|$RESOURCE$| }
+
+	set_variable = 	{ which = giga_ai_savings_max_vs value = value:giga_ai_savings_balance_divided_by_fraction|CATEGORY|resource|RESOURCE|$RESOURCE$| }
+	if = { limit = { check_variable = { which = giga_ai_savings_max_vs value > giga_ai_savings_max } } set_variable = { which = giga_ai_savings_max value = giga_ai_savings_max_vs } }
+
+	set_variable = 	{ which = giga_ai_savings_max_vs value = value:giga_ai_savings_balance_divided_by_fraction|CATEGORY|utility|RESOURCE|$RESOURCE$| }
+	if = { limit = { check_variable = { which = giga_ai_savings_max_vs value > giga_ai_savings_max } } set_variable = { which = giga_ai_savings_max value = giga_ai_savings_max_vs } }
+
+	set_variable = 	{ which = giga_ai_savings_max_vs value = value:giga_ai_savings_balance_divided_by_fraction|CATEGORY|military|RESOURCE|$RESOURCE$| }
+	if = { limit = { check_variable = { which = giga_ai_savings_max_vs value > giga_ai_savings_max } } set_variable = { which = giga_ai_savings_max value = giga_ai_savings_max_vs } }
+
+	# calculate investment targets for each category
+	set_variable = { which = giga_ai_savings_split_target_important_$RESOURCE$  value = value:giga_ai_savings_split_target|CATEGORY|important|RESOURCE|$RESOURCE$| }
+	set_variable = { which = giga_ai_savings_split_target_resource_$RESOURCE$ 	value = value:giga_ai_savings_split_target|CATEGORY|resource|RESOURCE|$RESOURCE$| }
+	set_variable = { which = giga_ai_savings_split_target_utility_$RESOURCE$ 	value = value:giga_ai_savings_split_target|CATEGORY|utility|RESOURCE|$RESOURCE$| }
+	set_variable = { which = giga_ai_savings_split_target_military_$RESOURCE$ 	value = value:giga_ai_savings_split_target|CATEGORY|military|RESOURCE|$RESOURCE$| }
+
+	# count up the total
+	set_variable = 	  { which = giga_ai_savings_split_total_$RESOURCE$ value = giga_ai_savings_split_target_important_$RESOURCE$ }
+	change_variable = { which = giga_ai_savings_split_total_$RESOURCE$ value = giga_ai_savings_split_target_resource_$RESOURCE$ }
+	change_variable = { which = giga_ai_savings_split_total_$RESOURCE$ value = giga_ai_savings_split_target_utility_$RESOURCE$ }
+	change_variable = { which = giga_ai_savings_split_total_$RESOURCE$ value = giga_ai_savings_split_target_military_$RESOURCE$ }
+
+	# apply the invested resources up to the split total
+	change_variable = {	which = giga_ai_savings_important_$RESOURCE$ value = value:giga_ai_savings_invest_dynamic|CATEGORY|important|RESOURCE|$RESOURCE$| }
+	change_variable = {	which = giga_ai_savings_resource_$RESOURCE$  value = value:giga_ai_savings_invest_dynamic|CATEGORY|resource|RESOURCE|$RESOURCE$| }
+	change_variable = {	which = giga_ai_savings_utility_$RESOURCE$   value = value:giga_ai_savings_invest_dynamic|CATEGORY|utility|RESOURCE|$RESOURCE$| }
+	change_variable = {	which = giga_ai_savings_military_$RESOURCE$  value = value:giga_ai_savings_invest_dynamic|CATEGORY|military|RESOURCE|$RESOURCE$| }
+
+	# if we are investing more than the split total, invest the rest according to the base fractions
+	if = {
+		limit = {
+			check_variable = {
+				which = giga_ai_savings_investment_$RESOURCE$
+				value > giga_ai_savings_split_total_$RESOURCE$
+			}
+		}
+
+		subtract_variable = {
+			which = giga_ai_savings_investment_$RESOURCE$
+			value = giga_ai_savings_split_total_$RESOURCE$
+		}
+
+		change_variable = {	which = giga_ai_savings_important_$RESOURCE$ value = value:giga_ai_savings_invest_fixed|CATEGORY|important|RESOURCE|$RESOURCE$| }
+		change_variable = {	which = giga_ai_savings_resource_$RESOURCE$  value = value:giga_ai_savings_invest_fixed|CATEGORY|resource|RESOURCE|$RESOURCE$| }
+		change_variable = {	which = giga_ai_savings_utility_$RESOURCE$   value = value:giga_ai_savings_invest_fixed|CATEGORY|utility|RESOURCE|$RESOURCE$| }
+		change_variable = {	which = giga_ai_savings_military_$RESOURCE$  value = value:giga_ai_savings_invest_fixed|CATEGORY|military|RESOURCE|$RESOURCE$| }
+	}
+}
