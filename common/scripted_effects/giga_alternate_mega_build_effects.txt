@@ -3,11 +3,21 @@
 giga_amb_country_setup_from_menu = {
 	if = {
 		limit = {
-			is_country_type = default
+			giga_is_playable_country = yes
 		}
 		giga_amb_apply_initial_country_modifiers = yes
 		# calculate as if monthly here, we need the variables processed for display, and first month income is zero anyway
 		giga_amb_recalculate_country_modifiers_and_consume = yes
+	}
+}
+
+# this = country scope
+giga_amb_apply_initial_country_modifiers_if_needed = {
+	if = {
+		limit = {
+			not = { has_country_flag = @giga_amb_init_flag }
+		}
+		giga_amb_apply_initial_country_modifiers = yes
 	}
 }
 
@@ -47,17 +57,17 @@ giga_amb_apply_initial_country_modifiers = {
 	# sets raio variable for use in tooltips because you can't read scripted variables it seems...
 	set_variable = {
 		which = giga_amb_ratio
+		value = 1
+	}
+	divide_variable = {
+		which = giga_amb_ratio
 		value = @giga_amb_ratio
 	}
 
 	# assign the bonus to empires which rely a lot on mega build speed in early game
 	if = {
 		limit = {
-			or = {
-				has_origin = origin_void_dwellers
-				has_origin = origin_frameworld
-				has_origin = origin_incohesive
-			}
+			giga_has_amb_important_origin = yes
 		}
 
 		capital_scope = {
@@ -74,6 +84,65 @@ giga_amb_apply_initial_country_modifiers = {
 		}
 		giga_amb_recalculate_ai_limit = yes
 	}
+
+	# count up the megas we start with which have supertensiles upkeep and offset that upkeep
+	set_variable = {
+		which = giga_amb_initial_megas
+		value = 0
+	}
+	every_owned_megastructure = {
+		if = {
+			limit = {
+				nor = { 
+					is_ruined_mega = yes 
+					is_technical_mega = yes
+				}
+			}
+
+			if = {
+				limit = {
+					is_kilostructure = yes
+				}
+				prev = {
+					change_variable = {
+						which = giga_amb_initial_megas
+						value = @giga_amb_kilostructure_upkeep
+					}
+				}
+			}
+			else_if = {
+				limit = { 
+					is_gigastructure = yes
+				}
+				prev = {
+					change_variable = {
+						which = giga_amb_initial_megas
+						value = @giga_amb_gigastructure_upkeep
+					}
+				}
+			}
+			else = {
+				prev = {
+					change_variable = {
+						which = giga_amb_initial_megas
+						value = @giga_amb_megastructure_upkeep
+					}
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			check_variable = {
+				which = giga_amb_initial_megas
+				value > 0
+			}
+		}
+		add_modifier = {
+			modifier = giga_amb_starting_megas_upkeep_offset
+			multiplier = giga_amb_initial_megas
+		}
+	}
 }
 
 # this = country scope
@@ -85,8 +154,14 @@ giga_amb_recalculate_country_modifiers = {
 	remove_modifier = giga_amb_flat_replacement
 	remove_modifier = giga_amb_speed
 	remove_modifier = giga_amb_storage_capacity
+	remove_modifier = giga_amb_empire_size_penalty
 
 	set_update_modifiers_batch = end # this forces a recalculation of modifers so the next part reads the modifier values without these modifiers
+
+	add_modifier = {
+		modifier = giga_amb_empire_size_penalty
+		multiplier = value:giga_empire_size_mult
+	}
 
 	# read resource capacity mod to var
 	export_modifier_to_variable = {
@@ -137,6 +212,20 @@ giga_amb_recalculate_country_modifiers = {
 			modifier = giga_amb_flat_replacement
 			multiplier = giga_amb_flat
 		}
+	}
+	
+	# calculate ratio of income to progress
+	set_variable = {
+		which = giga_amb_ratio
+		value = 1
+	}
+	set_variable = {
+		which = giga_amb_progress_divisor
+		value = value:giga_amb_progress_divisor_calc
+	}
+	divide_variable = {
+		which = giga_amb_ratio
+		value = giga_amb_progress_divisor
 	}
 
 	# calculate total progress
@@ -223,52 +312,61 @@ giga_amb_recalculate_country_modifiers_and_consume = {
 # just recalculate the speed modifier based on number of megas
 # for triggering on start/end build
 giga_amb_recalculate_split = {
-	remove_modifier = giga_amb_speed
+	if = {
+		limit = {
+			has_country_flag = @giga_amb_init_flag
+		}
 
-	# count all building megas
-	set_variable = {
-		which = giga_amb_building_megas
-		value = value:giga_amb_building_megas_calc
+		remove_modifier = giga_amb_speed
+
+		# count all building megas
+		set_variable = {
+			which = giga_amb_building_megas
+			value = value:giga_amb_building_megas_calc
+		}
+
+		# calc progress per mega
+		set_variable = {
+			which = giga_amb_progress
+			value = value:giga_amb_progress_calc
+		}
+
+		# add the final progress modifier
+		add_modifier = {
+			modifier = giga_amb_speed
+			multiplier = giga_amb_progress
+		}
 	}
-
-	# calc progress per mega
-	set_variable = {
-		which = giga_amb_progress
-		value = value:giga_amb_progress_calc
-	}
-
-	# add the final progress modifier
-	add_modifier = {
-		modifier = giga_amb_speed
-		multiplier = giga_amb_progress
-	}
-
-	# debug event firing
-	#country_event = { id = giga_frameworld_origin.001 }
 }
 
 # recalculate the reduction in AI build limit to match their income
 # so they don't do dumb stuff like repairing 10 pieces of onion ringworld
 # with a build speed of only 1.4...
 giga_amb_recalculate_ai_limit = {
-	remove_modifier = giga_amb_ai_limit
+	if = {
+		limit = {
+			has_country_flag = @giga_amb_init_flag
+		}
+		
+		remove_modifier = giga_amb_ai_limit
 
-	set_variable = {
-		which = giga_amb_ai_limit
-		value = value:giga_amb_ai_limit_calc
-	}
+		set_variable = {
+			which = giga_amb_ai_limit
+			value = value:giga_amb_ai_limit_calc
+		}
 
-	set_variable = {
-		which = giga_amb_ai_limit_modifier
-		value = 1000
-	}
-	subtract_variable = {
-		which = giga_amb_ai_limit_modifier
-		value = giga_amb_ai_limit
-	}
+		set_variable = {
+			which = giga_amb_ai_limit_modifier
+			value = 1000
+		}
+		subtract_variable = {
+			which = giga_amb_ai_limit_modifier
+			value = giga_amb_ai_limit
+		}
 
-	add_modifier = {
-		modifier = giga_amb_ai_limit
-		multiplier = giga_amb_ai_limit_modifier
+		add_modifier = {
+			modifier = giga_amb_ai_limit
+			multiplier = giga_amb_ai_limit_modifier
+		}
 	}
 }
