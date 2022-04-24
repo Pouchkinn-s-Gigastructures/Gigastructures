@@ -1351,7 +1351,7 @@ country_event = {
 	}
 }
 
-#Flusion Textures
+#Pre-FTL Flusion Health
 event = {
 	id = giga_flusion.100
 	hide_window = yes
@@ -1362,9 +1362,10 @@ event = {
 			has_global_flag = katzenartig_imperium_happened #Won't happen if Katzenartig got to space
 		}
 		exists = event_target:gigaflusion
-		any_galaxy_planet = {
+		event_target:gigaflusion = {
 			AND = {
 				has_planet_flag = gigaflusion
+				exists = owner
 				owner = {
 					NOT = {
 						has_country_flag = flusion_primitives #Not owned by primitives anymore
@@ -1380,19 +1381,65 @@ event = {
 	immediate = {
 		event_target:gigaflusion = {
 			remove_planet_flag = kaiser_wc
-		}
-		every_galaxy_planet = {
-			limit = {
-				has_modifier = katzen_orbital_bombardment_shield
+			if = {
+				limit = {
+					has_modifier = katzen_orbital_bombardment_shield
+				}
+				remove_modifier = katzen_orbital_bombardment_shield
 			}
-			remove_modifier = katzen_orbital_bombardment_shield
-		}
-		every_galaxy_planet = { #No more project
-			limit = {
-				has_planet_flag = muno_project_event
+
+			solar_system = {
+				every_system_planet = {
+					limit = {
+						has_planet_flag = muno_project_event
+					}
+					remove_planet_flag = muno_project_event
+				}
+
+				if = {
+					limit = { #Flusion got nuked
+						event_target:gigaflusion = {
+							has_planet_flag = gigaflusion
+							is_planet_class = pc_nuked
+						}
+					}
+					every_megastructure = { #Destroy the project
+						limit = {
+							is_megastructure_type = flusion_attack_moon_0
+						}
+						delete_megastructure = THIS
+					}
+				}
+				else_if = { #Flusion got invaded and Katzens nuked it
+					limit = {
+						event_target:gigaflusion = {
+							has_planet_flag = gigaflusion
+							is_planet_class = pc_katzenland
+						}
+					}
+					event_target:gigaflusion = { set_planet_flag = flusion_nuked }
+					remove_modifier = culture_shock_machine_age
+					remove_modifier = culture_shock_atomic_age
+					remove_modifier = culture_shock_early_space_age
+					every_megastructure = { #Destroy the project
+						limit = {
+							is_megastructure_type = flusion_attack_moon_0
+						}
+						delete_megastructure = THIS
+					}
+				}
+				else = { # Flusion got destroyed but is none of the above
+					event_target:gigaflusion = { set_planet_flag = flusion_nuked }
+					every_megastructure = { #Destroy the project
+						limit = {
+							is_megastructure_type = flusion_attack_moon_0
+						}
+						delete_megastructure = THIS
+					}
+				}
 			}
-			remove_planet_flag = muno_project_event
 		}
+
 		every_country = { #Remove the invasion modifier
 			limit = {
 				has_modifier = planning_flusionian_invasion
@@ -1405,38 +1452,6 @@ event = {
 			}
 			remove_country_flag = planning_flusionfall
 			country_event = { id = giga_flusion.333 }
-		}
-		if = {
-			limit = { #Flusion got nuked
-				any_galaxy_planet = {
-					has_planet_flag = gigaflusion
-					is_planet_class = pc_nuked
-				}
-			}
-			random_megastructure = { #Destroy the project
-				limit = {
-					is_megastructure_type = flusion_attack_moon_0
-				}
-				delete_megastructure = THIS
-			}
-		}
-		else_if = { #Flusion got invaded and Katzens nuked it
-			limit = {
-				any_galaxy_planet = {
-					has_planet_flag = gigaflusion
-					is_planet_class = pc_katzenland
-				}
-			}
-			remove_modifier = culture_shock_machine_age
-			remove_modifier = culture_shock_atomic_age
-			remove_modifier = culture_shock_early_space_age
-			set_planet_flag = flusion_nuked
-			random_megastructure = { #Destroy the project
-				limit = {
-					is_megastructure_type = flusion_attack_moon_0
-				}
-				delete_megastructure = THIS
-			}
 		}
 	}
 }
@@ -2132,17 +2147,17 @@ country_event = {
 			event_target:flusion_primitives_country = {
 				set_country_flag = kaiser_dead #:(
 			}
-			random_megastructure = { #Destroy the project
-				limit = {
-					is_megastructure_type = flusion_attack_moon_0
+			event_target:gigaflusion = {
+				solar_system = {
+					every_megastructure = { #Destroy the project
+						limit = { is_megastructure_type = flusion_attack_moon_0 }
+						delete_megastructure = THIS
+					}
+					every_system_planet = {
+						limit = { has_planet_flag = muno_project_event }
+						remove_planet_flag = muno_project_event
+					}
 				}
-				delete_megastructure = THIS
-			}
-			every_galaxy_planet = { #No more project
-				limit = {
-					has_planet_flag = muno_project_event
-				}
-				remove_planet_flag = muno_project_event
 			}
 		}
 	}
@@ -2627,17 +2642,17 @@ country_event = { #Invasion successful!
 	is_triggered_only = yes
 
 	immediate = {
-		random_megastructure = { #Destroy the project
-			limit = {
-				is_megastructure_type = flusion_attack_moon_0
+		event_target:gigaflusion = {
+			if = {
+				limit = { has_modifier = katzen_orbital_bombardment_shield }
+				remove_modifier = katzen_orbital_bombardment_shield
 			}
-			delete_megastructure = THIS
-		}
-		every_galaxy_planet = {
-			limit = {
-				has_modifier = katzen_orbital_bombardment_shield
+			solar_system = {
+				every_megastructure = { # destroy the project
+					limit = { is_megastructure_type = flusion_attack_moon_0 }
+					delete_megastructure = THIS
+				}
 			}
-			remove_modifier = katzen_orbital_bombardment_shield
 		}
 	}
 
