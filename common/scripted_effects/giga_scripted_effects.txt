@@ -2076,3 +2076,43 @@ clear_giga_mega_balance_modifiers = {
 		remove_modifier = giga_mega_output_balance
 	}
 }
+
+# start a colony for the AI on this planet if the system is friendly and clear of hostiles
+# for mega completion where the AI is kinda bad at getting things colonised, like ring worlds
+#
+# use in mega on_complete blocks
+# this = planet
+# from = owner
+giga_start_ai_colony_if_safe = {
+	if = {
+		limit = {
+			# make sure this is an AI and not a "one planet" play style
+			from = {
+				is_ai = yes
+				not = { is_giga_one_planet_origin = yes }
+			}
+			# check that the solar system is controlled by the same empire
+			# and that this mega isn't in a system owned by someone else somehow
+			solar_system = {
+				exists = owner
+				exists = starbase
+				exists = starbase.controller
+				starbase.controller = {
+					is_same_empire = owner
+					is_same_empire = from
+				}
+				# prevent if hostiles are around
+				not = {
+					any_fleet_in_system = {
+						owner = {
+							is_hostile_to = from
+						}
+					}
+				}
+			}
+		}
+		start_colony = {
+			owner = from
+		}
+	}
+}
