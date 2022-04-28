@@ -1718,29 +1718,75 @@ giga_ndb_target_beam_system = { create_ambient_object = { type = "nicoll_target_
 ### Planet Effects ##############
 #################################
 giga_reroll_lifeless = {
+	# just in case
+	if = { limit = { has_orbital_station = yes } orbital_station = { dismantle = yes } }
+
+	# mineral and energy multipliers
+	set_variable = { which = giga_lifeless_minerals value = value:giga_count_resource|resource|minerals| }
+	multiply_variable = { which = giga_lifeless_minerals value = 0.2 }
+	change_variable = { which = giga_lifeless_minerals value = 1 }
+
+	set_variable = { which = giga_lifeless_energy value = value:giga_count_resource|resource|energy| }
+	multiply_variable = { which = giga_lifeless_energy value = 0.2 }
+	change_variable = { which = giga_lifeless_energy value = 1 }
+
+	# count up rare resources on the planet
+	set_variable = { which = giga_lifeless_volatile_motes value = value:giga_count_resource|resource|volatile_motes| }
+	set_variable = { which = giga_lifeless_rare_crystals value = value:giga_count_resource|resource|rare_crystals| }
+	set_variable = { which = giga_lifeless_exotic_gases value = value:giga_count_resource|resource|exotic_gases| }
+
+	set_variable = { which = giga_lifeless_zro value = value:giga_count_resource|resource|sr_zro| }
+	set_variable = { which = giga_lifeless_dark_matter value = value:giga_count_resource|resource|sr_dark_matter| }
+	set_variable = { which = giga_lifeless_living_metal value = value:giga_count_resource|resource|sr_living_metal| }
+	set_variable = { which = giga_lifeless_nanites value = value:giga_count_resource|resource|nanites| }
+	set_variable = { which = giga_lifeless_supertensiles value = value:giga_count_resource|resource|giga_sr_amb_megaconstruction| }
+
+	# generate random deposits
+
 	clear_deposits = yes
 	while = {
 		count = 14
 		random_list = {
 			50 = {}
-			20 = { add_deposit = d_geothermal_vent }	# Energy
+			20 = { 
+				add_deposit = d_geothermal_vent 		# Energy
+				modifier = { factor = giga_lifeless_energy always = yes }
+			}	
 			20 = {
 				add_deposit = d_underwater_vent			# Energy
 				modifier = { factor = 0 is_planet_class = pc_ll_torrid }
 				modifier = { factor = 0 is_planet_class = pc_ll_foggy }
+				modifier = { factor = giga_lifeless_energy always = yes }
 			}
 			20 = {
 				add_deposit = d_tempestous_mountain		# Energy
 				modifier = { factor = 0 is_planet_class = pc_ll_torrid }
+				modifier = { factor = giga_lifeless_energy always = yes }
 			}
-			10 = { add_deposit = d_veiny_cliffs }		# Minerals
-			10 = { add_deposit = d_mineral_fields }		# Minerals
-			10 = { add_deposit = d_prosperous_mesa }	# Minerals
-			10 = { add_deposit = d_ore_rich_caverns }	# Minerals
-			10 = { add_deposit = d_rich_mountain }		# Minerals
+			10 = { 
+				add_deposit = d_veiny_cliffs 			# Minerals
+				modifier = { factor = giga_lifeless_minerals always = yes }
+			}		
+			10 = { 
+				add_deposit = d_mineral_fields 			# Minerals
+				modifier = { factor = giga_lifeless_minerals always = yes }
+			}
+			10 = { 
+				add_deposit = d_prosperous_mesa 		# Minerals
+				modifier = { factor = giga_lifeless_minerals always = yes }
+			}
+			10 = { 
+				add_deposit = d_ore_rich_caverns 		# Minerals
+				modifier = { factor = giga_lifeless_minerals always = yes }
+			}
+			10 = { 
+				add_deposit = d_rich_mountain 			# Minerals
+				modifier = { factor = giga_lifeless_minerals always = yes }
+			}
 			10 = {
 				add_deposit = d_submerged_ore_veins		# Minerals
 				modifier = { factor = 0 is_planet_class = pc_ll_torrid }
+				modifier = { factor = giga_lifeless_minerals always = yes }
 			}
 			5 = {
 				add_deposit = d_forgiving_tundra		# Food
@@ -1761,43 +1807,113 @@ giga_reroll_lifeless = {
 			##########################
 			### Rare #################
 			##########################
-			5 = {
+			2 = {
+				modifier = { factor = 0 is_planet_class = pc_ll_temperate }
+				modifier = { factor = 0 is_planet_class = pc_ll_foggy }
+
+				random_list = {
+					1 = { add_deposit = d_dust_caverns }
+					1 = { add_deposit = d_dust_desert }
+				}
+			}
+			2 = {
+				modifier = { factor = 0 is_planet_class = pc_ll_temperate }
+				modifier = { factor = 0 is_planet_class = pc_ll_torrid }
+				
+				random_list = {
+					1 = { add_deposit = d_bubbling_swamp }
+					1 = { add_deposit = d_fuming_bog }
+				}
+			}
+			2 = {
+				modifier = { factor = 0 is_planet_class = pc_ll_foggy }
+				modifier = { factor = 0 is_planet_class = pc_ll_torrid }
+				
+				random_list = {
+					1 = { add_deposit = d_crystalline_caverns }
+					1 = { add_deposit = d_crystal_forest }
+					1 = { add_deposit = d_crystal_reef }
+				}
+			}
+
+			2 = {
+				add_deposit = d_betharian_deposit
+				modifier = { factor = giga_lifeless_energy always = yes }
+			}
+		}
+	}
+
+	# generate deposits for the rare space resources
+
+	# motes
+	while = { limit = { check_variable = { which = giga_lifeless_volatile_motes value >= 1 } } 
+		random_list = {
+			1 = { 
 				add_deposit = d_dust_caverns
-				modifier = { factor = 0 is_planet_class = pc_ll_temperate }
-				modifier = { factor = 0 is_planet_class = pc_ll_foggy }
+				change_variable = { which = giga_lifeless_volatile_motes value = -1 }
 			}
-			5 = {
+			1 = {
 				add_deposit = d_dust_desert
-				modifier = { factor = 0 is_planet_class = pc_ll_temperate }
-				modifier = { factor = 0 is_planet_class = pc_ll_foggy }
+				change_variable = { which = giga_lifeless_volatile_motes value = -2 }
+				modifier = { factor = 0 check_variable = { which = giga_lifeless_volatile_motes value < 2 } }
 			}
-			5 = {
-				add_deposit = d_bubbling_swamp
-				modifier = { factor = 0 is_planet_class = pc_ll_temperate }
-				modifier = { factor = 0 is_planet_class = pc_ll_torrid }
-			}
-			5 = {
-				add_deposit = d_fuming_bog
-				modifier = { factor = 0 is_planet_class = pc_ll_temperate }
-				modifier = { factor = 0 is_planet_class = pc_ll_torrid }
-			}
-			5 = {
+		}
+	}
+
+	# crystals
+	while = { limit = { check_variable = { which = giga_lifeless_rare_crystals value >= 1 } } 
+		random_list = {
+			1 = { 
 				add_deposit = d_crystalline_caverns
-				modifier = { factor = 0 is_planet_class = pc_ll_foggy }
-				modifier = { factor = 0 is_planet_class = pc_ll_torrid }
+				change_variable = { which = giga_lifeless_rare_crystals value = -1 }
 			}
-			5 = {
+			1 = {
 				add_deposit = d_crystal_forest
-				modifier = { factor = 0 is_planet_class = pc_ll_foggy }
-				modifier = { factor = 0 is_planet_class = pc_ll_torrid }
+				change_variable = { which = giga_lifeless_rare_crystals value = -2 }
+				modifier = { factor = 0 check_variable = { which = giga_lifeless_rare_crystals value < 2 } }
 			}
-			5 = {
+			1 = {
 				add_deposit = d_crystal_reef
-				modifier = { factor = 0 is_planet_class = pc_ll_foggy }
+				change_variable = { which = giga_lifeless_rare_crystals value = -2 }
+				modifier = { factor = 0 check_variable = { which = giga_lifeless_rare_crystals value < 2 } }
 				modifier = { factor = 0 is_planet_class = pc_ll_torrid }
 			}
 		}
 	}
+
+	# gases
+	while = { limit = { check_variable = { which = giga_lifeless_exotic_gases value >= 1 } } 
+		random_list = {
+			1 = { 
+				add_deposit = d_bubbling_swamp
+				change_variable = { which = giga_lifeless_exotic_gases value = -1 }
+			}
+			1 = {
+				add_deposit = d_fuming_bog
+				change_variable = { which = giga_lifeless_exotic_gases value = -2 }
+				modifier = { factor = 0 check_variable = { which = giga_lifeless_exotic_gases value < 2 } }
+			}
+		}
+	}
+
+	# other assorted rare resources
+	while = { count = giga_lifeless_zro 			add_deposit = d_giga_lifeless_zro_1 }
+	while = { count = giga_lifeless_dark_matter 	add_deposit = d_giga_lifeless_dark_matter_1 }
+	while = { count = giga_lifeless_living_metal 	add_deposit = d_giga_lifeless_living_metal_1 }
+	while = { count = giga_lifeless_nanites 		add_deposit = d_giga_lifeless_nanites_1 }
+	while = { count = giga_lifeless_supertensiles 	add_deposit = d_giga_lifeless_supertensiles_1 }
+
+	# clean up
+	clear_variable = giga_lifeless_minerals
+	clear_variable = giga_lifeless_energy
+	clear_variable = giga_lifeless_volatile_motes
+	clear_variable = giga_lifeless_rare_crystals
+	clear_variable = giga_lifeless_exotic_gases
+	clear_variable = giga_lifeless_zro
+	clear_variable = giga_lifeless_dark_matter
+	clear_variable = giga_lifeless_living_metal
+	clear_variable = giga_lifeless_nanites
+	clear_variable = giga_lifeless_supertensiles
 }
 
 giga_calculate_allowed_habitats = {
