@@ -2529,6 +2529,8 @@ country_event = {
 				giga_remove_system_debris = yes
 				every_fleet_in_system = { destroy_fleet = this }
 				star = { change_pc = pc_neutron_star }
+
+				# remove planets and change types
 				every_system_planet = {
 					limit = { is_star = no }
 					if = {
@@ -2540,11 +2542,12 @@ country_event = {
 								is_planet_class = pc_flat_world
 							}
 						}
-						remove_planet = yes
+						giga_remove_planet = yes
 					}
-					if = { limit = { is_planet_class = pc_gas_giant }	set_planet_size = 5 change_pc = pc_molten }
-					if = { limit = { planet_size <= 10 }				change_planet_size = -5 change_pc = pc_asteroid }
-					if = { limit = { planet_size > 10 } 				change_planet_size = -5 }
+					if = { limit = { is_planet_class = pc_gas_giant }		set_planet_size = 5 change_pc = pc_molten }
+					else_if = { limit = { planet_size <7 }						set_planet_size = 2 change_pc = pc_asteroid }
+					else_if = { limit = { planet_size <= 10 planet_size >= 7 }	change_planet_size = -5 change_pc = pc_asteroid }
+					else_if = { limit = { planet_size > 10 } 					change_planet_size = -5 }
 					if = {
 						limit = {
 							NOR = {
@@ -2557,9 +2560,74 @@ country_event = {
 						}
 						change_pc = pc_molten
 					}
-					set_deposit = d_iodizium_deposit
 				}
 
+				# set deposits
+				every_system_planet = {
+					limit = { is_star = no }
+					clear_deposits = yes
+
+					random_list = {
+						5 = {}
+						4 = {
+							add_deposit = d_physics_2
+						}
+						3 = {
+							add_deposit = d_energy_1
+						}
+						4 = {
+							add_deposit = d_energy_2
+						}
+						2 = {
+							add_deposit = d_energy_3
+						}
+						1 = {
+							add_deposit = d_iodizium_deposit_1
+						}
+						1 = {
+							add_deposit = d_iodizium_deposit_1
+							add_deposit = d_iodizium_deposit_1
+						}
+					}
+				}
+
+				# make sure at least one planet is receptive to iodizium
+				if = {
+					limit = {
+						# if every prospective planet has a science deposit
+						not = {
+							any_system_planet = {
+								is_star = no
+								not = {
+									has_deposit_for = shipclass_research_station
+								}
+							}
+						}
+					}
+					# pick one of them and clear it to make way
+					random_system_planet = {
+						limit = {
+							is_star = no
+						}
+						clear_deposits = yes
+					}
+				}
+
+				# seed the non-random iodizium
+				while = {
+					count = 3
+					random_system_planet = {
+						limit = {
+							is_star = no
+							not = {
+								has_deposit_for = shipclass_research_station
+							}
+						}
+						add_deposit = d_iodizium_deposit_1
+					}
+				}
+
+				# kaboom!
 				create_ambient_object = {
 					type = "explosion_particle_object"
 					location = star
