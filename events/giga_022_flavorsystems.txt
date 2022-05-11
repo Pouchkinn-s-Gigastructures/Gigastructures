@@ -187,6 +187,7 @@ planet_event = {
 		add_deposit = d_giga_rogue_ai_corrupt_code
 		add_deposit = d_giga_rogue_ai_corrupt_code
 		add_deposit = d_giga_rogue_ai_corrupt_code
+		hidden_effect = { giga_update_rogue_ai_computer_build_speed = yes }
 	}
 
 	option = {
@@ -203,6 +204,7 @@ planet_event = {
 		add_deposit = d_giga_rogue_ai_corrupt_code
 		add_deposit = d_giga_rogue_ai_corrupt_code
 		add_deposit = d_giga_rogue_ai_corrupt_code
+		hidden_effect = { giga_update_rogue_ai_computer_build_speed = yes }
 	}
 }
 
@@ -226,6 +228,7 @@ planet_event = {
 				value = 4
 			}
 		}
+		hidden_effect = { giga_update_rogue_ai_computer_build_speed = yes }
 	}
 }
 
@@ -246,6 +249,21 @@ planet_event = {
 					has_deposit = d_giga_rogue_ai_relay_servers
 				}
 			}
+			# clean up if the attack was interrupted
+			if = {
+				limit = {
+					exists = controller
+					controller = {
+						has_country_flag = giga_rogue_ai_pcc_army_country
+					}
+				}
+				every_planet_army = {
+					limit = { army_type = pcc_rogue_ai_army }
+					remove_army = yes
+				}
+				set_controller = owner
+			}
+			# resume checks
 			planet_event = { id = giga_flavor_systems.1106 days = 30 }
 		}
 		if = {
@@ -368,9 +386,40 @@ country_event = {
             set_controller = ROOT
             add_deposit = d_giga_rogue_ai_corrupt_code
             add_deposit = d_giga_rogue_ai_relay_servers
+			hidden_effect = { giga_update_rogue_ai_computer_build_speed = yes }
             add_planet_devastation = 75
         }
     }
+}
+
+# PCC blocker cleared
+planet_event = {
+	id = giga_flavor_systems.1107
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_modifier = giga_rogue_ai_computer
+	}
+
+	immediate = {
+		# firing another event to hopefully calculate *after* the blocker is removed
+		planet_event = {
+			id = giga_flavor_systems.1108
+			days = 1
+		}
+	}
+}
+
+# PCC blocker cleared 2
+planet_event = {
+	id = giga_flavor_systems.1108
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		giga_update_rogue_ai_computer_build_speed = yes
+	}
 }
 
 namespace = giga_wrecked_ships
