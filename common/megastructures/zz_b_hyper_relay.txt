@@ -1,0 +1,192 @@
+hyper_relay = {
+	entity = "hyper_relay_entity"
+	construction_entity = "hyper_relay_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	build_outside_gravity_well = yes
+	show_galactic_map_icon = no
+	build_time = 360
+	resources = {
+		category = megastructures_hyper_relay
+		cost = {
+			alloys = 500
+			rare_crystals = 100
+			influence = 25
+		}
+
+		upkeep = {
+			energy = 2
+		}
+	}
+	construction_blocks_and_blocked_by = self_type
+
+	potential = {
+		has_technology = tech_hyper_relays
+	}
+
+	possible = {
+		exists = starbase
+		custom_tooltip = {
+			fail_text = "requires_inside_border_or_subject"
+			OR = {
+				is_inside_border = from
+				AND = {
+					exists = owner
+					owner = {
+						is_subject = yes
+						overlord = { is_same_value = from }
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_surveyed_system" # or is in my subject's territory
+			OR = {
+				NOT = {
+					any_system_planet = {
+						is_surveyed = {
+							who = prev.from
+							status = no
+						}
+					}
+				}
+				AND = {
+					exists = owner
+					owner = {
+						is_subject = yes
+						overlord = { is_same_value = from }
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_existing_hyper_relay"
+			NOR = {
+				has_megastructure = hyper_relay
+				has_megastructure = hyper_relay_ruined
+				has_megastructure = hyper_relay_restored
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_technology_hyper_relays"
+			from = { has_technology = tech_hyper_relays }
+		}
+	}
+
+	placement_rules = {			# those would be ignored since the hyper relay is being "free-placed" between the inner and outer radius of the system
+	}
+
+	# root = system
+	# from = country
+	ai_weight = {
+		factor = 5
+
+		modifier = {
+			factor = 3
+			is_capital_system = yes
+		}
+
+		modifier = {
+			factor = 1.5
+			any_neighbor_system = {
+				OR = {
+					has_megastructure = hyper_relay
+					has_megastructure = hyper_relay_restored
+				}
+			}
+		}
+
+		modifier = {
+			factor = 1.5
+			any_system_planet = {
+				is_colony = yes
+			}
+		}
+
+		# non-gestalt empires will prefer building along trade routes, since those connect colonies to the capital
+		# this may occasionally catch other empire's trade routes that clip our territory, but pirates will eventually appear there so it's fine
+		modifier = {
+			factor = 0.2
+			from = {
+				is_gestalt = no
+			}
+			is_capital_system = no
+			has_trade_route = no
+		}
+	}
+
+	bypass_type = relay_bypass
+	on_build_start = {}
+	on_build_cancel = {}
+	on_build_complete = {
+		from = {
+			country_event = { id = tutorial.2131 }
+		}
+	}
+}
+
+# Ruined Hyper Relay
+hyper_relay_ruined = {
+	entity = "hyper_relay_01_destroyed_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	build_outside_gravity_well = yes
+	# not a valid bypass. bypass_type = relay_bypass
+	show_galactic_map_icon = no
+	construction_blocks_and_blocked_by = self_type
+	potential = {
+		always = no
+	}
+}
+
+# Restored Hyper Relay
+hyper_relay_restored = {
+	entity = "hyper_relay_entity"
+	construction_entity = "hyper_relay_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	# build_outside_gravity_well = yes
+	show_galactic_map_icon = no
+	bypass_type = relay_bypass
+
+	potential = {
+		has_technology = tech_hyper_relays
+	}
+
+	possible = {
+		custom_tooltip = {
+			fail_text = "requires_tech_hyper_drive_2"
+			from = { has_technology = tech_hyper_drive_2 }
+		}
+	}
+	upgrade_from = {
+		hyper_relay_ruined
+	}
+	build_time = 180
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 500
+			rare_crystals = 100
+			energy = 500
+		}
+
+		upkeep = {
+			energy = 2
+		}
+	}
+	construction_blocks_and_blocked_by = self_type
+	on_build_start = {
+		fromfrom = {
+			set_graphical_culture = root.from
+		}
+	}
+	on_build_complete = {
+		if = {
+			limit = { exists = from } #does not always exist when upgraded from script via "finish_upgrade = yes"
+			from = {
+				country_event = { id = tutorial.2131 }
+			}
+		}
+	}
+}

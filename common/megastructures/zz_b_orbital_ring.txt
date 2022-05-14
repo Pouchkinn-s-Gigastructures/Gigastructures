@@ -1,0 +1,272 @@
+orbital_ring = {
+	entity = ""
+	construction_entity = "orbital_ring_construction_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = yes
+	entity_offset = { x = 0 y = 0 }
+	scales_with_planet = yes
+	build_time = 720
+
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 1000
+			influence = 50
+		}
+	}
+	construction_blocks_and_blocked_by = none
+
+	potential = { has_technology = tech_orbital_ring_tier_1 }
+
+	possible = {
+		exists = starbase
+		custom_tooltip = {
+			fail_text = "requires_inside_border"
+			is_inside_border = from
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = {
+				fail_text = "requires_surveyed_planet"
+				is_surveyed = { # prevent leaking habitability information
+					who = prev.from
+					status = yes
+				}
+			}
+			custom_tooltip = {
+				fail_text = "requires_no_anomaly"
+				NOT = { has_anomaly = yes }
+			}
+			custom_tooltip = {
+				fail_text = "requires_colonized_planet_orbital_ring"
+				is_colony = yes
+				exists = owner
+				exists = controller
+				controller = { is_same_value = prev.owner }
+			}
+			custom_tooltip = {
+				fail_text = "requires_not_hostile_or_primitive"
+				NOR = {
+					planet_is_hostile_or_crisis = yes
+					AND = {
+						exists = owner
+						owner = {
+							is_country_type = primitive
+						}
+					}
+				}
+			}
+			custom_tooltip = {
+				fail_text = "requires_no_existing_megastructure"
+				#can_build_megastructure_on_planet = yes
+				NOR = {
+					has_planet_flag = megastructure
+					has_planet_flag = has_megastructure
+					solar_system = {
+						has_star_flag = ring_world_built
+					}
+					is_planet_class = pc_ringworld_habitable
+					is_planet_class = pc_ringworld_habitable_damaged
+					is_planet_class = pc_ringworld_tech
+					is_planet_class = pc_ringworld_tech_damaged
+					is_planet_class = pc_ringworld_seam
+					is_planet_class = pc_ringworld_seam_damaged
+					is_planet_class = pc_habitat
+				}
+			}
+		}
+	}
+
+	# root = system
+	# from = country
+	ai_weight = {
+		factor = 5
+
+		modifier = {
+			factor = 0
+			starbase = { NOT = { has_starbase_size >= starbase_starport } }
+		}
+
+		modifier = {
+			factor = 0
+			any_system_planet = {
+				is_planet_class = pc_habitat
+				is_colony = no
+			}
+		}
+
+		modifier = {
+			factor = 3
+			solar_system = {
+				exists = owner
+				is_same_value = owner.capital_scope.solar_system
+			}
+		}
+		modifier = {
+			factor = 2
+			any_neighbor_system = {
+				exists = owner
+				is_same_value = owner.capital_scope.solar_system
+			}
+		}
+
+		modifier = {
+			factor = 0.1
+			any_neighbor_system = {
+				exists = owner
+				owner = { NOT = { is_same_value = from } }
+			}
+		}
+	}
+
+	on_build_start = {}
+	on_build_cancel = {}
+
+	on_build_complete = {
+		fromfrom.planet = {
+			set_planet_flag = has_megastructure
+			save_event_target_as = orbital_ring_planet
+
+			if = {
+				limit = { has_orbital_station = yes }
+				orbital_station = {
+					dismantle = yes
+				}
+			}
+			create_starbase = {
+				size = orbital_ring_tier_1
+				owner = FROM
+				#module = <starbase_module>
+				#building = <starbase_building>
+				effect = { }
+			}
+		}
+		remove_megastructure = fromfrom
+		from = {
+			country_event = { id = tutorial.2121 }
+		}
+	}
+}
+
+orbital_ring_ruined = {
+    entity = "orbital_ring_01_destroyed_entity"
+	construction_entity = "orbital_ring_construction_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = yes
+	entity_offset = { x = 0 y = 0 }
+	scales_with_planet = yes
+
+	potential = { always = no }
+	is_ruined_orbital_ring = yes
+}
+
+orbital_ring_restored = {
+	entity = ""
+	construction_entity = "orbital_ring_construction_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = yes
+	entity_offset = { x = 0 y = 0 }
+	scales_with_planet = yes
+	build_time = 720
+
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 500
+			influence = 50
+		}
+	}
+
+	upgrade_from = { orbital_ring_ruined }
+
+	possible = {
+		from = { has_technology = tech_orbital_ring_tier_1 }
+		exists = starbase
+		custom_tooltip = {
+			fail_text = "requires_inside_border"
+			is_inside_border = from
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_anomaly"
+			any_system_planet = {
+				has_planet_flag = ruined_orbital_ring_planet
+				NOT = { has_anomaly = yes }
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_colonized_planet_orbital_ring"
+			any_system_planet = {
+				has_planet_flag = ruined_orbital_ring_planet
+				is_colony = yes
+				exists = owner
+				exists = controller
+				owner = { is_same_value = from }
+				controller = { is_same_value = from }
+			}
+		}
+		#custom_tooltip = {
+		#	fail_text = "requires_no_existing_megastructure"
+		#	#can_build_megastructure_on_planet = yes
+		#	NOR = {
+		#		has_planet_flag = megastructure
+		#		has_planet_flag = has_megastructure
+		#		solar_system = {
+		#			has_star_flag = ring_world_built
+		#		}
+		#		is_planet_class = pc_ringworld_habitable
+		#		is_planet_class = pc_ringworld_habitable_damaged
+		#		is_planet_class = pc_ringworld_tech
+		#		is_planet_class = pc_ringworld_tech_damaged
+		#		is_planet_class = pc_ringworld_seam
+		#		is_planet_class = pc_ringworld_seam_damaged
+		#		is_planet_class = pc_habitat
+		#	}
+		#}
+	}
+
+	on_build_start = {}
+	on_build_cancel = {}
+
+	on_build_complete = {
+		random_system_planet = {
+			limit = { has_planet_flag = ruined_orbital_ring_planet }
+			set_planet_flag = has_megastructure
+			save_event_target_as = orbital_ring_planet
+
+			if = {
+				limit = { has_orbital_station = yes }
+				orbital_station = {
+					dismantle = yes
+				}
+			}
+
+			create_starbase = {
+				size = orbital_ring_tier_1
+				owner = FROM
+				#module = <starbase_module>
+				#building = <starbase_building>
+				effect = { }
+			}
+		}
+		every_system_ambient_object = {
+			limit = {
+				OR = {
+					is_ambient_object_type = medium_debris_01_object
+					is_ambient_object_type = medium_debris_02_object
+				}
+				distance = {
+					source = fromfrom
+					max_distance <= 100
+					same_solar_system = yes
+				}
+			}
+			destroy_ambient_object = this
+		}
+		remove_megastructure = fromfrom
+		from = {
+			country_event = { id = tutorial.2121 }
+		}
+	}
+}
