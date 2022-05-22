@@ -4,6 +4,16 @@ giga_frameworld_init_variables = {
 		value = 0
 	}
 	set_variable = {
+		which = giga_frameworld_structure_expansions
+		value = 0
+	}
+
+	giga_frameworld_reset_variables = yes
+}
+
+giga_frameworld_reset_variables = {
+	
+	set_variable = {
 		which = giga_frameworld_expansion_cost_multiplier
 		value = 1
 	}
@@ -114,8 +124,8 @@ giga_frameworld_recalculate_exponent = {
 
 # planet scope
 giga_frameworld_recalculate_variables = {
-	# reset expansions to 0 and cost mult to 1
-	giga_frameworld_init_variables = yes
+	# cost mult to 1
+	giga_frameworld_reset_variables = yes
 	
 	# recalculate the exponent
 	giga_frameworld_recalculate_exponent = yes
@@ -151,22 +161,15 @@ giga_frameworld_recalculate_variables = {
 			value = @giga_frameworld_expansion_cost_habitat_3
 		}
 	}
-	
-	
-	# for each expansion deposit, update count and cost
-	every_deposit = {
+
+	# recalculate multiplier from expansion count
+	if = {
 		limit = {
-			is_deposit_type = d_frameworld_structure_expansion
+			is_variable_set = giga_frameworld_structure_expansions
 		}
-		
-		prev = {
-			# add 1 to expansion count
-			change_variable = {
-				which = giga_frameworld_expansions
-				value = 1
-			}
-			
-			# multiply cost by our scaling factor
+		while = {
+			count = giga_frameworld_structure_expansions
+
 			multiply_variable = {
 				which = giga_frameworld_expansion_cost_multiplier
 				value = giga_frameworld_expansion_cost_exponent
@@ -254,6 +257,35 @@ giga_frameworld_recalculate_variables = {
 	# recalculate maginot district cap
 	giga_frameworld_update_maginot_deposits = yes
 }
+
+# planet scope
+giga_frameworld_expand_deposit = {
+	hidden_effect = {
+		if = {
+			limit = {
+				has_deposit = $DEPOSIT$
+			}
+
+			change_variable = {
+				which = $VAR$
+				value = $COUNT|1$
+			}
+		}
+		else = {
+			add_deposit = $DEPOSIT$
+
+			set_variable = {
+				which = $VAR$
+				value = $COUNT|1$
+			}
+		}
+	}
+	tooltip = {
+		add_deposit = $DEPOSIT$_tooltip
+	}
+}
+
+###############################################################################################################
 
 # country scope
 giga_frameworld_recalculate_outpost_bonus = {
@@ -702,10 +734,25 @@ giga_frameworld_start_ai_build_cooldown = {
 ###############################################################################################################
 
 giga_frameworld_apply_expanded_maintenance_modifier = {
-	remove_modifier = frameworld_expanded_maintenance_protocol
-	add_modifier = {
-		modifier = frameworld_expanded_maintenance_protocol
-		multiplier = value:giga_frameworld_expanded_maintenance_multiplier
+	if = {
+		limit = {
+			not = {
+				has_modifier = frameworld_expanded_maintenance_protocol
+			}
+		}
+		add_modifier = {
+			modifier = frameworld_expanded_maintenance_protocol
+		}
+	}
+	hidden_effect = {
+		if = {
+			limit = {
+				not = {
+					has_deposit = d_frameworld_expanded_maintenance_protocol
+				}
+			}
+			add_deposit = d_frameworld_expanded_maintenance_protocol
+		}
 	}
 }
 
