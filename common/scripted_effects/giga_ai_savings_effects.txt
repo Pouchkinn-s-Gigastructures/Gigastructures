@@ -7,22 +7,16 @@
 ################################################################################################
 # Utility
 
-giga_ai_savings_init = {
-	if = {
-		limit = {
-			not = {
-				has_country_flag = giga_ai_savings_init
-			}
-		}
-		set_country_flag = giga_ai_savings_init
-
-		giga_ai_savings_resource_init = { RESOURCE = alloys }
-		giga_ai_savings_resource_init = { RESOURCE = unity }
-
-		set_variable = { which = giga_ai_savings_important_fraction value = @giga_ai_savings_important_fraction }
-		set_variable = { which = giga_ai_savings_resource_fraction  value = @giga_ai_savings_resource_fraction }
-		set_variable = { which = giga_ai_savings_utility_fraction   value = @giga_ai_savings_utility_fraction }
-		set_variable = { which = giga_ai_savings_military_fraction  value = @giga_ai_savings_military_fraction }
+giga_ai_savings_set_category = {
+	set_variable = {
+		which = giga_ai_savings_$CATEGORY$_$RESOURCE$
+		value = $VALUE|0$
+	}
+}
+giga_ai_savings_change_category = {
+	change_variable = {
+		which = giga_ai_savings_$CATEGORY$_$RESOURCE$
+		value = $VALUE|0$
 	}
 }
 
@@ -35,16 +29,42 @@ giga_ai_savings_resource_init = {
 	set_variable = { which = giga_ai_savings_split_total_$RESOURCE$ value = 1 } # no division by zero warnings thanks
 }
 
-giga_ai_savings_set_category = {
-	set_variable = {
-		which = giga_ai_savings_$CATEGORY$_$RESOURCE$
-		value = $VALUE|0$
-	}
-}
-giga_ai_savings_change_category = {
-	change_variable = {
-		which = giga_ai_savings_$CATEGORY$_$RESOURCE$
-		value = $VALUE|0$
+giga_ai_savings_init = {
+	if = {
+		limit = {
+			not = {
+				has_country_flag = giga_ai_savings_init
+			}
+		}
+		set_country_flag = giga_ai_savings_init
+
+		# ok fine I'll flatten it then, for fuck's sake
+
+		#giga_ai_savings_resource_init = { RESOURCE = alloys }
+		#giga_ai_savings_resource_init = { RESOURCE = unity }
+
+		# flattened version of those two lines above
+
+		set_variable = { which = giga_ai_savings_important_alloys 	value = 0 }
+		set_variable = { which = giga_ai_savings_resource_alloys 	value = 0 }
+		set_variable = { which = giga_ai_savings_utility_alloys 	value = 0 }
+		set_variable = { which = giga_ai_savings_military_alloys 	value = 0 }
+
+		set_variable = { which = giga_ai_savings_split_total_alloys value = 1 }
+
+		set_variable = { which = giga_ai_savings_important_unity 	value = 0 }
+		set_variable = { which = giga_ai_savings_resource_unity 	value = 0 }
+		set_variable = { which = giga_ai_savings_utility_unity 		value = 0 }
+		set_variable = { which = giga_ai_savings_military_unity 	value = 0 }
+
+		set_variable = { which = giga_ai_savings_split_total_unity 	value = 1 }
+
+		# end of flattening
+
+		set_variable = { which = giga_ai_savings_important_fraction value = @giga_ai_savings_important_fraction }
+		set_variable = { which = giga_ai_savings_resource_fraction  value = @giga_ai_savings_resource_fraction }
+		set_variable = { which = giga_ai_savings_utility_fraction   value = @giga_ai_savings_utility_fraction }
+		set_variable = { which = giga_ai_savings_military_fraction  value = @giga_ai_savings_military_fraction }
 	}
 }
 
@@ -177,7 +197,14 @@ giga_ai_savings_invest_fixed = {
 
 # scope = mega start
 giga_ai_savings_withdraw = {
-	giga_ai_savings_init = yes
+	if = {
+		limit = {
+			exists = from
+		}
+		from = {
+			giga_ai_savings_init = yes
+		}
+	}
 
 	if = {
 		limit = {
@@ -205,7 +232,14 @@ giga_ai_savings_withdraw = {
 
 # scope = mega cancel
 giga_ai_savings_refund = {
-	giga_ai_savings_init = yes
+	if = {
+		limit = {
+			exists = from
+		}
+		from = {
+			giga_ai_savings_init = yes
+		}
+	}
 
 	if = {
 		limit = {
@@ -349,4 +383,46 @@ giga_ai_savings_update_modifiers = {
 	# }
 
 	# set_update_modifiers_batch = end
+}
+
+giga_hide_relic = {
+	#log_error = "HIDE RELIC: START"
+	if = {
+		limit = {
+			has_relic = $RELIC$
+		}
+		set_country_flag = giga_hidden_relic_$RELIC$
+		remove_relic = $RELIC$
+		#log_error = "HIDE RELIC: HIDDEN"
+	}
+}
+
+giga_restore_relic = {
+	#log_error = "RESTORE RELIC: START"
+	if = {
+		limit = {
+			has_country_flag = giga_hidden_relic_$RELIC$
+		}
+		remove_country_flag = giga_hidden_relic_$RELIC$
+		#log_error = "RESTORE RELIC: HAS FLAG"
+		if = {
+			limit = {
+				not = {
+					has_relic = $RELIC$
+				}
+			}
+			add_relic = $RELIC$
+			#log_error = "RESTORE RELIC: RESTORED"
+		}
+	}
+}
+
+giga_hide_unstealable_relics = {
+	#log_error = "HIDE UNSTEALABLE RELICS"
+	giga_hide_relic = { RELIC = r_giga_ai_savings }
+}
+
+giga_restore_unstealable_relics = {
+	#log_error = "RESTORE UNSTEALABLE RELICS"
+	giga_restore_relic = { RELIC = r_giga_ai_savings }
 }
