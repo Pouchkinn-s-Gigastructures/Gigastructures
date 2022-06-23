@@ -242,6 +242,11 @@ giga_amb_recalculate_country_modifiers = {
 		modifier = giga_amb_speed
 		multiplier = giga_amb_progress
 	}
+
+	# reapply constant speed modifier to megas which need it
+	every_owned_megastructure = {
+		giga_amb_update_constant_speed = yes
+	}
 }
 
 giga_amb_recalculate_building_mega_counts = {
@@ -273,6 +278,29 @@ giga_amb_recalculate_building_mega_counts = {
 	set_variable = {
 		which = giga_amb_progress
 		value = value:giga_amb_progress_calc
+	}
+	# apply diminishing returns above threshold
+	if = {
+		limit = {
+			check_variable = {
+				which = giga_amb_progress
+				value > @giga_amb_dr_offset
+			}
+		}
+		set_variable = {
+			which = giga_amb_progress
+			value = value:giga_amb_progress_dr
+		}
+	}
+
+	# calculate offset as 1-progress for constant speed megas
+	set_variable = {
+		which = giga_amb_progress_offset
+		value = 1
+	}
+	subtract_variable = {
+		which = giga_amb_progress_offset
+		value = giga_amb_progress
 	}
 }
 
@@ -331,6 +359,21 @@ giga_amb_recalculate_country_modifiers_and_consume = {
 			giga_sr_amb_megaconstruction = -1
 			mult = giga_amb_stockpile_drain
 		}
+
+		# since we're building things, if we don't have the tech as an option or researched, add it
+		if = {
+			limit = {
+				nor = {
+					has_technology = giga_tech_amb_supertensiles
+					has_tech_option = giga_tech_amb_supertensiles
+				}
+			}
+
+			# event which gives supertensiles tech option
+			country_event = {
+				id = giga_amb.1001
+			}
+		}
 	}
 }
 
@@ -351,6 +394,11 @@ giga_amb_recalculate_split = {
 		add_modifier = {
 			modifier = giga_amb_speed
 			multiplier = giga_amb_progress
+		}
+
+		# reapply constant speed modifier to megas which need it
+		every_owned_megastructure = {
+			giga_amb_update_constant_speed = yes
 		}
 	}
 }
@@ -384,5 +432,32 @@ giga_amb_recalculate_ai_limit = {
 			modifier = giga_amb_ai_limit
 			multiplier = giga_amb_ai_limit_modifier
 		}
+	}
+}
+
+giga_amb_update_constant_speed = {
+	#log_error = "CONSTANT SPEED: evaluate \\[this.GetName]"
+	if = {
+		limit = {
+			has_modifier = giga_amb_speed
+		}
+		remove_modifier = giga_amb_speed
+		#log_error = "CONSTANT SPEED: removed from \\[this.GetName]"
+	}
+
+	if = {
+		limit = {
+			exists = owner
+			owner = {
+				is_variable_set = giga_amb_progress_offset
+			}
+			mega_requires_constant_build_speed = yes
+		}
+
+		add_modifier = {
+			modifier = giga_amb_speed
+			multiplier = owner.giga_amb_progress_offset
+		}
+		#log_error = "CONSTANT SPEED: added to \\[this.GetName]"
 	}
 }
