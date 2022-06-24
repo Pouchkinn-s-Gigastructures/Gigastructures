@@ -2547,7 +2547,14 @@ country_event = {
 planet_event = {
 	id = giga_blokkat.1023
 	title = "giga_blokkat.1023.name"
-	desc = "giga_blokkat.1023.desc"
+	desc = {
+		text = "giga_blokkat.1023.desc"
+		trigger = { exists = owner owner = { NOT = { has_country_flag = blokkat_willingness_active } } }
+	}
+	desc = {
+		text = "giga_blokkat.1023.desc.willingness"
+		trigger = { exists = owner owner = { has_country_flag = blokkat_willingness_active } }
+	}
 	is_triggered_only = yes
 	show_sound = event_screams
 	picture = GFX_evt_exploding_planet
@@ -2570,11 +2577,35 @@ planet_event = {
 			which = blokkat_pop_inquietude
 			value = blokkat_planet_pop_count
 		}
+
+		#Willingness
+		set_variable = {
+			which = blokkat_pop_willingness
+			value = blokkat_planet_pop_count
+		}
+
+		#1 pop eaten --> 0.05 willingness so 20 pops --> -1% willingness. Simple.
+		multiply_variable = { #This is how much willingness will be acquired (ungood)
+			which = blokkat_pop_willingness
+			value = 0.05
+		}
+
+		set_variable = { #the effects can be halved provided enough influence. Each pop adds 2 influence to the cost.
+			which = blokkat_pop_willingness_halved
+			value = blokkat_pop_willingness
+		}
+		
+		multiply_variable = { #This is how much inquietude will be acquired (ungood)
+			which = blokkat_pop_willingness_halved
+			value = 0.5
+		}
+
 		#1 pop eaten --> 0.02 inquietude so 50 pops --> 1 inquietude. Simple.
 		multiply_variable = { #This is how much inquietude will be acquired (ungood)
 			which = blokkat_pop_inquietude
 			value = 0.02
 		}
+
 
 		set_variable = { #the effects can be halved provided enough influence. Each pop adds 1 influence to the cost.
 			which = blokkat_pop_influence_cost
@@ -2616,6 +2647,18 @@ planet_event = {
 					value = ROOT.blokkat_pop_inquietude
 				}
 				update_blokkat_inquietude_display = yes
+				if = {
+					limit = { has_country_flag = blokkat_willingness_active }
+					subtract_variable = {
+						which = blokkat_willingness_government_value
+						value = ROOT.blokkat_pop_willingness
+					}
+					subtract_variable = {
+						which = blokkat_willingness_population_value
+						value = ROOT.blokkat_pop_willingness
+					}
+					update_blokkat_willingness_value = yes
+				}
 			}
 			ROOT = { giga_remove_planet = yes }
 		}
@@ -2647,6 +2690,18 @@ planet_event = {
 					mult = blokkat_pop_influence_cost_active
 				}
 				update_blokkat_inquietude_display = yes
+				if = {
+					limit = { has_country_flag = blokkat_willingness_active }
+					subtract_variable = {
+						which = blokkat_willingness_government_value
+						value = ROOT.blokkat_pop_willingness_halved
+					}
+					subtract_variable = {
+						which = blokkat_willingness_population_value
+						value = ROOT.blokkat_pop_willingness_halved
+					}
+					update_blokkat_willingness_value = yes
+				}
 			}
 			ROOT = { giga_remove_planet = yes }
 		}
@@ -3445,6 +3500,56 @@ country_event = {
 				event_chain = blokkat_chain
 				counter = ships_lost_to_blokkats
 				amount = 1
+			}
+		}
+		if = {
+			limit = { ROOT = { has_country_flag = blokkat_willingness_active } }
+			if = {
+				limit = { FromFrom = { is_ship_size = giga_massive_planet } }
+				ROOT = {
+					subtract_variable = {
+						which = blokkat_willingness_military_value
+						value = 0.1
+					}
+					update_blokkat_willingness_value = yes
+				}
+			}
+			if = {
+				limit = { 
+					FromFrom = { 
+						OR = { 
+							is_ship_size = giga_planet_behemoth
+							is_ship_size = giga_aeternum_planetcraft
+						}
+					 }
+				}
+				ROOT = {
+					subtract_variable = {
+						which = blokkat_willingness_military_value
+						value = 0.5
+					}
+					update_blokkat_willingness_value = yes
+				}
+			}
+			if = {
+				limit = { FromFrom = { is_ship_size = giga_systemcraft } }
+				ROOT = {
+					subtract_variable = {
+						which = blokkat_willingness_military_value
+						value = 2
+					}
+					update_blokkat_willingness_value = yes
+				}
+			}
+			if = {
+				limit = { FromFrom = { is_ship_size = precursor_colossus } }
+				ROOT = {
+					subtract_variable = {
+						which = blokkat_willingness_military_value
+						value = 5
+					}
+					update_blokkat_willingness_value = yes
+				}
 			}
 		}
 	}
@@ -4366,6 +4471,7 @@ country_event = {
 		custom_gui = blokkat_bureau_option
 		trigger = {
 			has_country_flag = blokkat_shield_researched
+			has_country_flag = giga_decided_to_fight_blokkats
 			NOT = { has_country_flag = blokkat_mega_stage_0_researched }
 			NOT = { has_global_flag = blokkat_crisis_defeated }
 		}
@@ -4396,7 +4502,233 @@ country_event = {
 			}
 		}
 	}
+
+	option = { #ASCEND
+		name = "giga_blokkat.3000.joinblokkats6"
+		custom_tooltip = "giga_blokkat.3000.joinblokkats6.tooltip"
+		custom_gui = blokkat_bureau_option
+		trigger = {
+			has_country_flag = giga_decided_to_join_blokkats
+			has_country_flag = blokkat_joinblokkats_stage_5_researched
+			NOT = { has_country_flag = blokkat_joinblokkats_stage_6_researched }
+			NOT = { has_global_flag = blokkat_crisis_defeated }
+		}
+		hidden_effect = {
+			country_event = { id = giga_blokkat_join.2999 }
+			add_resource = {
+				energy = -1
+				mult = blokkat_ascension_cost
+			}
+		}
+		allow = {
+			resource_stockpile_compare = {
+				resource = energy
+				value > 1
+				mult = blokkat_ascension_cost
+			}
+			custom_tooltip = {
+				fail_text = "blokkat_requires_60_knowledge"
+				hidden_trigger = {
+					check_variable = {
+						which = blokkat_knowledge_value
+						value >= 60
+					}
+				}
+			}
+			custom_tooltip = {
+				fail_text = blokkat_project_already_underway
+				hidden_trigger = {
+					NOT = { has_country_flag = blokkat_project_underway }
+				}
+			}
+		}
+	}
+
+	option = { #build gigarelay
+		name = "giga_blokkat.3000.joinblokkats5"
+		custom_tooltip = "giga_blokkat.3000.joinblokkats5.tooltip"
+		custom_gui = blokkat_bureau_option
+		trigger = {
+			has_country_flag = giga_decided_to_join_blokkats
+			has_country_flag = blokkat_joinblokkats_stage_4_researched
+			NOT = { has_country_flag = blokkat_joinblokkats_stage_5_researched }
+			NOT = { has_global_flag = blokkat_crisis_defeated }
+		}
+		hidden_effect = {
+			country_event = { id = giga_blokkat_join.2040 }
+		}
+		allow = {
+			custom_tooltip = {
+				fail_text = "blokkat_requires_50_knowledge"
+				hidden_trigger = {
+					check_variable = {
+						which = blokkat_knowledge_value
+						value >= 50
+					}
+				}
+			}
+			custom_tooltip = {
+				fail_text = blokkat_project_already_underway
+				hidden_trigger = {
+					NOT = { has_country_flag = blokkat_project_underway }
+				}
+			}
+		}
+	}
+
+	option = { #build network
+		name = "giga_blokkat.3000.joinblokkats4"
+		custom_tooltip = "giga_blokkat.3000.joinblokkats4.tooltip"
+		custom_gui = blokkat_bureau_option
+		trigger = {
+			has_country_flag = giga_decided_to_join_blokkats
+			has_country_flag = blokkat_joinblokkats_stage_3_researched
+			NOT = { has_country_flag = blokkat_joinblokkats_stage_4_researched }
+			NOT = { has_global_flag = blokkat_crisis_defeated }
+		}
+		hidden_effect = {
+			country_event = { id = giga_blokkat_join.2030 }
+		}
+		allow = {
+			custom_tooltip = {
+				fail_text = "blokkat_requires_40_knowledge"
+				hidden_trigger = {
+					check_variable = {
+						which = blokkat_knowledge_value
+						value >= 40
+					}
+				}
+			}
+			custom_tooltip = {
+				fail_text = blokkat_project_already_underway
+				hidden_trigger = {
+					NOT = { has_country_flag = blokkat_project_underway }
+				}
+			}
+		}
+	}
+
+	option = { #do math
+		name = "giga_blokkat.3000.joinblokkats3"
+		custom_tooltip = "giga_blokkat.3000.joinblokkats3.tooltip"
+		custom_gui = blokkat_bureau_option
+		trigger = {
+			has_country_flag = giga_decided_to_join_blokkats
+			has_country_flag = blokkat_joinblokkats_stage_2_researched
+			NOT = { has_country_flag = blokkat_joinblokkats_stage_3_researched }
+			NOT = { has_global_flag = blokkat_crisis_defeated }
+		}
+		hidden_effect = {
+			country_event = { id = giga_blokkat_join.2020 }
+		}
+		allow = {
+			custom_tooltip = {
+				fail_text = "needs_engineering_blokkat_project"
+				hidden_trigger = {
+					has_country_flag = blokkat_engineering_researched
+				}
+			}
+			custom_tooltip = {
+				fail_text = "blokkat_requires_30_knowledge"
+				hidden_trigger = {
+					check_variable = {
+						which = blokkat_knowledge_value
+						value >= 30
+					}
+				}
+			}
+			custom_tooltip = {
+				fail_text = blokkat_project_already_underway
+				hidden_trigger = {
+					NOT = { has_country_flag = blokkat_project_underway }
+				}
+			}
+		}
+	}
+
+	option = { #text the blokkats
+		name = "giga_blokkat.3000.joinblokkats2"
+		custom_tooltip = "giga_blokkat.3000.joinblokkats2.tooltip"
+		custom_gui = blokkat_bureau_option
+		trigger = {
+			has_country_flag = giga_decided_to_join_blokkats
+			has_country_flag = blokkat_joinblokkats_stage_1_researched
+			NOT = { has_country_flag = blokkat_joinblokkats_stage_2_researched }
+			NOT = { has_global_flag = blokkat_crisis_defeated }
+		}
+		hidden_effect = {
+			country_event = { id = giga_blokkat_join.2010 }
+			add_resource = {
+				energy = -200000
+			}
+		}
+		allow = {
+			resource_stockpile_compare = {
+				resource = energy
+				value > 200000
+			}
+			custom_tooltip = {
+				fail_text = "needs_physics_blokkat_project"
+				hidden_trigger = {
+					has_country_flag = blokkat_physics_researched
+				}
+			}
+			custom_tooltip = {
+				fail_text = "blokkat_requires_20_knowledge"
+				hidden_trigger = {
+					check_variable = {
+						which = blokkat_knowledge_value
+						value >= 20
+					}
+				}
+			}
+			custom_tooltip = {
+				fail_text = blokkat_project_already_underway
+				hidden_trigger = {
+					NOT = { has_country_flag = blokkat_project_underway }
+				}
+			}
+		}
+	}
 	
+	option = { #translate blokkat language
+		name = "giga_blokkat.3000.joinblokkats1"
+		custom_tooltip = "giga_blokkat.3000.joinblokkats1.tooltip"
+		custom_gui = blokkat_bureau_option
+		trigger = {
+			has_country_flag = blokkat_shield_researched
+			has_country_flag = giga_decided_to_join_blokkats
+			NOT = { has_country_flag = blokkat_joinblokkats_stage_1_researched }
+			NOT = { has_global_flag = blokkat_crisis_defeated }
+		}
+		hidden_effect = {
+			country_event = { id = giga_blokkat_join.2000 }
+		}
+		allow = {
+			custom_tooltip = {
+				fail_text = "needs_society_blokkat_project"
+				hidden_trigger = {
+					has_country_flag = blokkat_society_researched
+				}
+			}
+			custom_tooltip = {
+				fail_text = "blokkat_requires_10_knowledge"
+				hidden_trigger = {
+					check_variable = {
+						which = blokkat_knowledge_value
+						value >= 10
+					}
+				}
+			}
+			custom_tooltip = {
+				fail_text = blokkat_project_already_underway
+				hidden_trigger = {
+					NOT = { has_country_flag = blokkat_project_underway }
+				}
+			}
+		}
+	}
+
 	option = { #fix stuff
 		name = "giga_blokkat.3000.fixblokkatstars"
 		custom_tooltip = "giga_blokkat.3000.fixblokkatstars.tooltip"
@@ -4843,6 +5175,14 @@ country_event = {
 				which = blokkat_scrap_value
 				value = 1
 			}
+			if = {
+				limit = { has_country_flag = blokkat_willingness_active }
+				change_variable = {
+					which = blokkat_willingness_military_value
+					value = 0.02
+				}
+				update_blokkat_willingness_value = yes
+			}
 		}
 		if = {
 			limit = {
@@ -4854,6 +5194,14 @@ country_event = {
 			change_variable = {
 				which = blokkat_scrap_value
 				value = 7
+			}
+			if = {
+				limit = { has_country_flag = blokkat_willingness_active }
+				change_variable = {
+					which = blokkat_willingness_military_value
+					value = 0.06
+				}
+				update_blokkat_willingness_value = yes
 			}
 		}
 		if = {
@@ -4867,6 +5215,14 @@ country_event = {
 				which = blokkat_scrap_value
 				value = 40
 			}
+			if = {
+				limit = { has_country_flag = blokkat_willingness_active }
+				change_variable = {
+					which = blokkat_willingness_military_value
+					value = 10
+				}
+				update_blokkat_willingness_value = yes
+			}
 		}
 		if = {
 			limit = {
@@ -4878,6 +5234,14 @@ country_event = {
 			change_variable = {
 				which = blokkat_scrap_value
 				value = 75
+			}
+			if = {
+				limit = { has_country_flag = blokkat_willingness_active }
+				change_variable = {
+					which = blokkat_willingness_military_value
+					value = 20
+				}
+				update_blokkat_willingness_value = yes
 			}
 		}
 		if = {
@@ -7105,6 +7469,14 @@ country_event = {
 			which = blokkat_knowledge_earned_by_repeatables
 			value = 0.5
 		}
+		if = {
+			limit = { has_country_flag = blokkat_willingness_active }
+			change_variable = {
+				which = blokkat_willingness_military_value
+				value = 2.5
+			}
+			update_blokkat_willingness_value = yes
+		}
 	}
 }
 
@@ -7306,6 +7678,10 @@ country_event = {
 					#Small Breach: Spend energy & alloys to fix
 					2 = {
 						modifier = {
+							factor = 4
+							has_megastructure_flag = catastrophic_blokkat
+						}
+						modifier = {
 							factor = 1.5
 							has_megastructure_flag = speed_freak_blokkat
 						}
@@ -7368,7 +7744,11 @@ country_event = {
 	}
 
 	desc = {
-		trigger = { event_target:blokkat_prison_with_breach = { has_megastructure_flag = angry_blokkat } }
+		trigger = {
+			event_target:blokkat_prison_with_breach = {
+				OR = { has_megastructure_flag = angry_blokkat has_megastructure_flag = catastrophic_blokkat }
+			}
+		}
 		text = "giga_blokkat.3220.desc.displeased"
 	}
 
@@ -7435,7 +7815,6 @@ country_event = {
 		hidden_effect = { country_event = { id = giga_blokkat.3221 } } #They fly off into space
 	}
 
-
 	option = { #indifferent
 		name = "giga_blokkat.3220.c"
 		custom_tooltip = "giga_blokkat.3220.c.tooltip"
@@ -7451,11 +7830,17 @@ country_event = {
 	option = { #hostile
 		name = "giga_blokkat.3220.d"
 		custom_tooltip = "giga_blokkat.3220.d.tooltip"
-		trigger = { event_target:blokkat_prison_with_breach = { has_megastructure_flag = angry_blokkat } }
+		trigger = { event_target:blokkat_prison_with_breach = { has_megastructure_flag = angry_blokkat has_megastructure_flag = catastrophic_blokkat } }
 		hidden_effect = {
 			random_list = {
 				1 = { country_event = { id = giga_blokkat.3225 } } #They become hostile
-				3 = { country_event = { id = giga_blokkat.3223 } } #They become VERY hostile
+				3 = { #They become VERY hostile
+					country_event = { id = giga_blokkat.3223 } 
+					modifier = {
+						add = 10
+						event_target:blokkat_prison_with_breach = { has_megastructure_flag = catastrophic_blokkat }
+					}
+				}
 			}
 		}
 	}
@@ -7574,7 +7959,10 @@ country_event = {
 			}
 			solar_system = {
 				create_fleet = { #Spawn some Escort ships
-					name = "[blokkat_prison_breacher.GetName]"
+					set_name = {
+						key = "NAME_Giga_Blokkat_Prison_Breacher"
+						variable_string = "[blokkat_prison_breacher.GetName]"
+					}
 					settings = {
 						spawn_debris = no
 						can_upgrade = no
@@ -7721,7 +8109,10 @@ country_event = {
 		event_target:blokkat_prison_with_breach = {
 			solar_system = {
 				create_fleet = { #Spawn some Escort ships
-					name = "[blokkat_prison_breacher.GetName]"
+					set_name = {
+						key = "NAME_Giga_Blokkat_Prison_Breacher"
+						variable_string = "[blokkat_prison_breacher.GetName]"
+					}
 					settings = {
 						spawn_debris = no
 						can_upgrade = no
@@ -8002,6 +8393,14 @@ country_event = {
 	}
 
 	immediate = {
+		if = {
+			limit = { has_country_flag = blokkat_willingness_active }
+			change_variable = {
+				which = blokkat_willingness_military_value
+				value = 3.5
+			}
+			update_blokkat_willingness_value = yes
+		}
 		remove_country_flag = currently_fighting_blokkat
 		fromfrom = { remove_planet_flag = planet_fighting_blokkat }
 		random_owned_megastructure = {
@@ -8035,6 +8434,16 @@ country_event = {
 						effect = {
 							set_leader_flag = blokkat_is_governor
 							set_leader_flag = blokkat_leader
+							random_list = {
+								10 = { 
+									set_leader_flag = blokkitae_leader
+									modifier = { #Only 1 Blokkitae
+										factor = 0
+										any_country = { any_owned_leader = { has_leader_flag = blokkitae_leader } }
+									}
+								}
+								90 = {}
+							}
 						}
 					}
 				}
@@ -8075,7 +8484,7 @@ country_event = {
 						}
 					}
 				}
-				1 = {
+				1000 = {
 					create_leader = {
 						class = admiral
 						set_age = 46546
@@ -8098,6 +8507,20 @@ country_event = {
 									modifier = { #Only 1 Blokkshield
 										factor = 0
 										any_country = { any_owned_leader = { has_leader_flag = blokkshield_leader } }
+									}
+								}
+								10 = { 
+									set_leader_flag = blokksauna_leader
+									modifier = { #Only 1 Blokksauna
+										factor = 0
+										any_country = { any_owned_leader = { has_leader_flag = blokksauna_leader } }
+									}
+								}
+								1000 = { 
+									set_leader_flag = blokkazoi_leader
+									modifier = { #Only 1 Blokkazoi (thank god lmao)
+										factor = 0
+										any_country = { any_owned_leader = { has_leader_flag = blokkazoi_leader } }
 									}
 								}
 								90 = {}
@@ -8171,6 +8594,16 @@ country_event = {
 						set_leader_flag = blokkat_is_combative
 						add_trait = trait_blokkat_combative
 					}
+					0 = {
+						set_leader_flag = blokkat_is_blokkazoi
+						add_trait = trait_blokkat_blokkazoi
+						modifier = { add = 1000 has_leader_flag = blokkazoi_leader }
+					}
+					0 = {
+						set_leader_flag = blokkat_is_omnitae
+						add_trait = trait_blokkat_omnitae
+						modifier = { add = 1000 has_leader_flag = blokkitae_leader }
+					}
 					1 = {
 						set_leader_flag = blokkat_is_speed_freak
 						add_trait = trait_blokkat_speed_freak
@@ -8181,20 +8614,30 @@ country_event = {
 						add_trait = trait_blokkat_primitive_enthusiast
 						modifier = { add = 1000 has_leader_flag = blokkiana_leader }
 					}
+					1 = {
+						set_leader_flag = blokkat_is_catgirl
+						add_trait = trait_blokkat_catgirl
+						modifier = { add = 1000 has_leader_flag = blokksauna_leader }
+					}
 				}
 				#Behavior
 				random_list = {
-					3 = {
+					1 = {
+						set_leader_flag = blokkat_is_catastrophic
+						modifier = { add = 1000 has_leader_flag = blokkazoi_leader }
+					}
+					6 = {
 						set_leader_flag = blokkat_is_angry
 						modifier = { add = 1000 has_leader_flag = blokkmo_leader }
 						modifier = { add = 1000 has_leader_flag = blokkshield_leader }
 					}
-					2 = {
+					4 = {
 						set_leader_flag = blokkat_is_indifferent
 						modifier = { add = 1000 has_leader_flag = blokkiana_leader }
 					}
-					2 = {
+					4 = {
 						set_leader_flag = blokkat_is_cooperative
+						modifier = { add = 1000 has_leader_flag = blokksauna_leader }
 					}
 				}
 				save_event_target_as = newest_blokkat_prisoner
@@ -8212,6 +8655,10 @@ country_event = {
 			if = {
 				limit = { last_created_leader = { has_leader_flag = blokkat_is_keen } }
 				set_megastructure_flag = bold_blokkat
+			}
+			if = {
+				limit = { last_created_leader = { has_leader_flag = blokkat_is_catastrophic } }
+				set_megastructure_flag = catastrophic_blokkat
 			}
 			if = {
 				limit = { last_created_leader = { has_leader_flag = blokkat_is_angry } }
@@ -8232,6 +8679,18 @@ country_event = {
 			if = {
 				limit = { last_created_leader = { has_leader_flag = blokkat_is_primitive_enthusiast } }
 				set_megastructure_flag = primitive_enthusiast_blokkat
+			}
+			if = {
+				limit = { last_created_leader = { has_leader_flag = blokkat_is_catgirl } }
+				set_megastructure_flag = catgirl_blokkat
+			}
+			if = {
+				limit = { last_created_leader = { has_leader_flag = blokkat_is_omnitae } }
+				set_megastructure_flag = blokkitae_blokkat
+			}
+			if = {
+				limit = { last_created_leader = { has_leader_flag = blokkat_is_blokkazoi } }
+				set_megastructure_flag = blokkazoi_blokkat
 			}
 			set_megastructure_flag = prison_has_blokkat
 			save_event_target_as = newest_blokkat_prison
@@ -8447,6 +8906,13 @@ country_event = {
 			}
 		}
 		if = {
+			limit = { event_target:blokkat_prison_being_managed = { has_megastructure_flag = catastrophic_blokkat } }
+			enable_special_project = {
+				name = "REPROGRAM_CATASTROPHIC_BLOKKAT"
+				owner = root
+			}
+		}
+		if = {
 			limit = { event_target:blokkat_prison_being_managed = { has_megastructure_flag = angry_blokkat } }
 			enable_special_project = {
 				name = "REPROGRAM_DISPLEASED_BLOKKAT"
@@ -8498,6 +8964,14 @@ country_event = {
 	}
 
 	immediate = {
+		if = {
+			limit = { has_country_flag = blokkat_willingness_active }
+			change_variable = {
+				which = blokkat_willingness_science_value
+				value = 2
+			}
+			update_blokkat_willingness_value = yes
+		}
 		set_global_flag = managing_blokkat_prison
 		random_megastructure = {
 			limit = {
@@ -8520,8 +8994,16 @@ country_event = {
 					limit = { has_leader_flag = blokkat_is_angry }
 					remove_leader_flag = blokkat_is_angry
 				}
+				if = {
+					limit = { has_leader_flag = blokkat_is_catastrophic }
+					remove_leader_flag = blokkat_is_catastrophic
+				}
 				save_global_event_target_as = reprogrammed_blokkat
 				exile_leader_as = reprogrammed_blokkat
+				if = {
+					limit = { has_leader_flag = blokkazoi_leader }
+					ROOT = { set_country_flag = acquired_blokkazoi }
+				}
 			}
 		}
 		ruler = { save_event_target_as = blokkat_current_ruler }
@@ -8535,6 +9017,40 @@ country_event = {
 					type = blokkat_prison_1_empty
 					planet = event_target:reprogrammed_blokkat_prison.planet
 					owner = space_owner
+				}
+				if = {
+					limit = { ROOT = { has_country_flag = acquired_blokkazoi } }
+					create_fleet = { #Spawn B L O K K A Z O I
+						name = "Blokkazoi"
+						settings = {
+							spawn_debris = no
+							can_upgrade = no
+							uses_naval_capacity = no
+							can_change_composition = no
+							is_boss = no
+							can_change_leader = no
+							can_disband = no
+						}
+						effect = {
+							set_owner = ROOT
+							while = {
+								count = 1
+								create_ship = {
+									name = "Blokkazoi"
+									design = "Blokkazoi"
+									prefix = no
+								}
+							}
+							set_location = {
+								target = PREV.star
+								distance = 0
+								angle = random
+							}
+							set_formation_scale = 1
+							assign_leader = event_target:reprogrammed_blokkat
+						}
+					}
+					ROOT = { remove_country_flag = acquired_blokkazoi }
 				}
 			}
 			remove_megastructure = THIS
@@ -8621,6 +9137,14 @@ country_event = {
 			change_variable = {
 				which = blokkat_knowledge_earned_by_capture
 				value = 1
+			}
+			if = {
+				limit = { has_country_flag = blokkat_willingness_active }
+				change_variable = {
+					which = blokkat_willingness_science_value
+					value = 2
+				}
+				update_blokkat_willingness_value = yes
 			}
 		}
 	}
@@ -8830,6 +9354,37 @@ country_event = {
 			}
 		}
 	}
+
+	option = { #Reprogram (Totally ethical trust me theyre the ones eating the galaxy)
+		name = "giga_blokkat.3210.reprogram.catastrophic" #catastrophic
+		trigger = { 
+			NOT = { event_target:blokkat_prison_being_managed = { has_megastructure_flag = blokkat_prison_has_breach } }
+			NOT = { event_target:blokkat_prison_being_managed = { has_megastructure_flag = blokkat_being_reprogramed } }
+			event_target:blokkat_prison_being_managed = { has_megastructure_flag = catastrophic_blokkat }
+		}
+		hidden_effect = {
+			country_event = { id = giga_blokkat.3233 }
+		}
+		allow = {
+			custom_tooltip = {
+				fail_text = "only_1_reprogram"
+				NOT = { has_country_flag = currently_reprogramming_blokkat }
+			}
+			custom_tooltip = {
+				fail_text = "cant_reprogram_if_experiment"
+				NOT = { event_target:blokkat_prison_being_managed = { has_megastructure_flag = undertaking_blokkat_experiment } }
+			}
+			custom_tooltip = {
+				fail_text = "blokkat_requires_55_knowledge_and_project"
+				has_technology = giga_tech_blokkat_reprogram
+				check_variable = {
+					which = blokkat_knowledge_value
+					value >= 55
+				}
+			}
+		}
+	}
+
 
 	option = { #Physics
 		name = "giga_blokkat.3210.physics"
@@ -9596,7 +10151,7 @@ country_event = {
 		name = "giga_blokkat.3021.a"
 		custom_tooltip = "giga_blokkat.3021.a.tooltip"
 		hidden_effect = {
-			country_event = { id = giga_blokkat.3200 days = 30 } #BLOKKAT CAPTURE EVENT, CHANGE
+			country_event = { id = giga_blokkat.3200 days = 180 } #BLOKKAT CAPTURE EVENT, CHANGE
 			set_country_flag = blokkat_society_researched
 			remove_country_flag = blokkat_project_underway
 			change_variable = {
@@ -9800,6 +10355,9 @@ country_event = {
 	option = { #kk
 		name = "giga_blokkat.3011.a"
 		custom_tooltip = "giga_blokkat.3011.a.tooltip"
+		hidden_effect = {
+			country_event = { id = giga_blokkat_join.1000 }
+		}
 	}
 }
 
@@ -10762,12 +11320,7 @@ system_event = {
 		blokkat_increment_system_ships = yes
 		every_fleet_in_system = {
 			limit = {
-				owner = {
-					NOR = { 
-						is_country_type = blokkat_stripminers
-						has_country_flag = giga_ascended_blokkat_country 
-					} 
-				}
+				owner = { NOT = { is_country_type = blokkat_stripminers } }
 			}
 			destroy_fleet = THIS
 		}
@@ -11887,12 +12440,12 @@ planet_event = {
 				blokkat_increment_system_ships = yes
 				every_fleet_in_system = {
 					limit = {
-						owner = {
-							NOR = { 
+						owner = { 
+							NOR = {
 								is_country_type = blokkat_stripminers
-								has_country_flag = giga_ascended_blokkat_country 
-							} 
-						}
+								is_country_type = blokkat_stripminers_ascended_country
+							}
+						 }
 					}
 					destroy_fleet = THIS
 				}
@@ -11932,7 +12485,12 @@ system_event = {
 		blokkat_increment_system_ships = yes
 		every_fleet_in_system = {
 			limit = {
-				owner = { NOT = { is_country_type = blokkat_stripminers } }
+				owner = {
+					NOR = {
+						is_country_type = blokkat_stripminers
+						has_country_flag = blokkat_stripminers_ascended_country
+					}
+				}
 			}
 			destroy_fleet = THIS
 		}
@@ -12303,6 +12861,31 @@ event = {
 		every_country = {
 			country_event = { id = giga_blokkat.1001 } #Initial popup
 			country_event = { id = giga_blokkat.1002 days = 10 }
+		}
+	}
+}
+
+country_event = {
+	id = blokkat_debug.1001
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		change_country_flag = {
+			icon={
+				category="Blokkat"
+				file="Blokkat_flag.dds"
+			}
+			background={
+				category="backgrounds"
+				file="triangle_split.dds"
+			}
+			colors={
+				"red"
+				"red"
+				"null"
+				"null"
+			}
 		}
 	}
 }
