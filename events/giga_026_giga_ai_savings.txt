@@ -33,17 +33,26 @@ country_event = {
 				value = value:giga_ai_savings_stockpile_fraction|RESOURCE|alloys|PERCENT|5|
 			}
 
-			add_resource = {
-				alloys = -1
-				mult = giga_ai_savings_stockpile_investment
-			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_ai_savings_stockpile_investment
+						value > 0
+					}
+				}
 
-			multiply_variable = {
-				which = giga_ai_savings_stockpile_investment
-				value = value:giga_ai_savings_multiplier|RESOURCE|alloys|
-			}
+				add_resource = {
+					alloys = -1
+					mult = giga_ai_savings_stockpile_investment
+				}
 
-			giga_ai_savings_invest = { RESOURCE = alloys AMOUNT = giga_ai_savings_stockpile_investment }
+				multiply_variable = {
+					which = giga_ai_savings_stockpile_investment
+					value = value:giga_ai_savings_multiplier|RESOURCE|alloys|
+				}
+
+				giga_ai_savings_invest = { RESOURCE = alloys AMOUNT = giga_ai_savings_stockpile_investment }
+			}
 		}
 
 		# invest 5% of alloy and unity income if it's above 100 and we have some in stock
@@ -64,17 +73,26 @@ country_event = {
 				value = value:giga_ai_savings_income_fraction|RESOURCE|alloys|PERCENT|5|
 			}
 
-			add_resource = {
-				alloys = -1
-				mult = giga_ai_savings_income_investment
-			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_ai_savings_income_investment
+						value > 0
+					}
+				}
 
-			multiply_variable = {
-				which = giga_ai_savings_income_investment
-				value = value:giga_ai_savings_multiplier|RESOURCE|alloys|
-			}
+				add_resource = {
+					alloys = -1
+					mult = giga_ai_savings_income_investment
+				}
 
-			giga_ai_savings_invest = { RESOURCE = alloys AMOUNT = giga_ai_savings_income_investment }
+				multiply_variable = {
+					which = giga_ai_savings_income_investment
+					value = value:giga_ai_savings_multiplier|RESOURCE|alloys|
+				}
+
+				giga_ai_savings_invest = { RESOURCE = alloys AMOUNT = giga_ai_savings_income_investment }
+			}
 		}
 
 		if = {
@@ -94,19 +112,127 @@ country_event = {
 				value = value:giga_ai_savings_income_fraction|RESOURCE|unity|PERCENT|2|
 			}
 
-			add_resource = {
-				unity = -1
-				mult = giga_ai_savings_income_investment
-			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_ai_savings_income_investment
+						value > 0
+					}
+				}
 
-			multiply_variable = {
-				which = giga_ai_savings_income_investment
-				value = value:giga_ai_savings_multiplier|RESOURCE|unity|
-			}
+				add_resource = {
+					unity = -1
+					mult = giga_ai_savings_income_investment
+				}
 
-			giga_ai_savings_invest = { RESOURCE = unity AMOUNT = giga_ai_savings_income_investment }
+				multiply_variable = {
+					which = giga_ai_savings_income_investment
+					value = value:giga_ai_savings_multiplier|RESOURCE|unity|
+				}
+
+				giga_ai_savings_invest = { RESOURCE = unity AMOUNT = giga_ai_savings_income_investment }
+			}
 		}
 		
 		giga_ai_savings_update_modifiers = yes # these might just be too much to deal with
+	}
+}
+
+# sequester non-stealable relics before capital planet capture
+country_event = {
+	id = giga_ai_savings.100
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		From = {
+			is_country_type = default
+		}
+		FromFrom = { is_capital = yes }
+		any_war = {
+			any_attacker = { is_same_value = root }
+			any_defender = { is_same_value = from }
+			NOT = {
+				using_war_goal = {
+					type = wg_take_galatron
+					owner = attacker
+				}
+			}
+		}
+	}
+
+	immediate = {
+		from = {
+			giga_hide_unstealable_relics = yes
+		}
+	}
+}
+
+# fire return event on delay after capital planet capture
+country_event = {
+	id = giga_ai_savings.101
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		From = {
+			is_country_type = default
+		}
+		FromFrom = { is_capital = yes }
+		any_war = {
+			any_attacker = { is_same_value = root }
+			any_defender = { is_same_value = from }
+			NOT = {
+				using_war_goal = {
+					type = wg_take_galatron
+					owner = attacker
+				}
+			}
+		}
+	}
+
+	immediate = {
+		from = {
+			# delay the restoration because the stealing event fires a second event after evaluation
+			country_event = {
+				id = giga_ai_savings.102
+				days = 5
+			}
+		}
+	}
+}
+
+# restore sequestered non-stealable relics
+country_event = {
+	id = giga_ai_savings.102
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		giga_restore_unstealable_relics = yes
+	}
+}
+
+# remove all non-stealable relics on country destruction to prevent transfer by guilli etc
+country_event = {
+	id = giga_ai_savings.103
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		giga_hide_unstealable_relics = yes
+	}
+}
+
+# remove all non-stealable relics on country integration to prevent any transfer
+country_event = {
+	id = giga_ai_savings.104
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		from = {
+			giga_hide_unstealable_relics = yes
+		}
 	}
 }

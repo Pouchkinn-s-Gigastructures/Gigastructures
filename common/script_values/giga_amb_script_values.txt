@@ -161,11 +161,27 @@ giga_amb_building_megas_calc_min = {
 	min = 1
 }
 
+# calculate progress per mega
 giga_amb_progress_calc = {
 	base = 0
 	weight = giga_amb_total_progress
 
+	# base speed per project
 	divide = value:giga_amb_building_megas_calc_min
+}
+
+# apply diminishing returns
+# sqrt(speed - offset + 0.25) - 0.5 + offset
+# the 0.25 and 0.5 come from the derivative of y = sqrt(x) as offsets to make the derivative 1 at speed = 0
+giga_amb_progress_dr = {
+	weight = giga_amb_progress
+	
+	subtract = @giga_amb_dr_offset
+	add = 0.25
+	square_root = yes
+
+	subtract = 0.5
+	add = @giga_amb_dr_offset
 }
 
 giga_amb_cap_calc = {
@@ -192,6 +208,8 @@ giga_amb_midgame_fraction = {
 	base = 0
 	weight = trigger:years_passed
 	divide = value:giga_amb_midgame_period
+
+	pow = 3 # diminish slower earlier, faster later
 }
 giga_amb_midgame_period = {
 	base = 0
@@ -217,8 +235,23 @@ giga_amb_ai_cap_progress_calc = {
 giga_amb_ai_limit_calc = {
 	base = 0
 	weight = value:giga_amb_ai_cap_progress_calc
-	divide = 0.8
+	divide = 0.9
 
 	floor = yes
 	min = 1
+}
+
+# how many FE forges need converting into ST buildings on this world?
+giga_amb_fe_conversion = {
+	complex_trigger_modifier = {
+		trigger = num_buildings
+		parameters = {
+			type = building_nano_forge
+		}
+		mode = weight
+	}
+
+	divide = 2
+	subtract = 0.1
+	ceiling = yes
 }

@@ -7,13 +7,6 @@ country_event = {
 	fire_only_once = yes
 
 	immediate = {
-		if = {
-			limit = { NOT = { has_global_flag = orbital_arcologies_disabled } }
-			every_country = {
-				limit = { is_country_type = fallen_empire }
-				country_event = { id = giga_fallen_empire.1001 days = 30 }
-			}
-		}
 		every_country = {
 			limit = {
 				is_country_type = fallen_empire
@@ -24,6 +17,14 @@ country_event = {
 			}
 			#Give FE repeatables
 			country_event = { id = giga_fallen_empire_repeatables.1 days = 15 }
+
+			# Adjust FE buildings for supertensiles if enabled
+			if = {
+				limit = {
+					has_global_flag = @giga_amb_flag
+				}
+				country_event = { id = giga_fallen_empire_misc.1047 days = 15 }
+			}
 		}
 		if = { #Generic war moons for all FEs
 			limit = { NOT = { has_global_flag = giga_fe_planetcrafts_0 } }
@@ -349,17 +350,17 @@ country_event = {
 	}
 }
 
-#Force scaling for FEs
-country_event = {
-	id = giga_fallen_empire.1001
-	hide_window = yes
-	is_triggered_only = yes
+# #Force scaling for FEs
+# country_event = {
+# 	id = giga_fallen_empire.1001
+# 	hide_window = yes
+# 	is_triggered_only = yes
 
-	immediate = {
-		country_event = { id = giga_mega.7007 days = 5 }
-		country_event = { id = giga_fallen_empire.1001 days = 60 }
-	}
-}
+# 	immediate = {
+# 		country_event = { id = giga_mega.7007 days = 5 } # this doesn't exist? look- TTFTCUTS
+# 		#country_event = { id = giga_fallen_empire.1001 days = 60 } # break existing loops
+# 	}
+# }
 
 #Rebuild megas & activate moons when awaken
 event = {
@@ -829,15 +830,15 @@ country_event = {
 					0 = {
 						country_event = { id = giga_fallen_empire_megas.1008 days = 1 }
 						modifier = {
-							factor = 0
-							has_global_flag = asteroid_artillery_disabled
-						}
-						modifier = {
 							add = 2
 							OR = {
 								capital_scope = { solar_system = { any_system_planet = { is_planet_class = pc_asteroid } } }
 								capital_scope = { solar_system = { any_system_planet = { is_planet_class = pc_ice_asteroid } } }
 							}
+						}
+						modifier = {
+							factor = 0
+							has_global_flag = asteroid_artillery_disabled
 						}
 					}
 					2 = {
@@ -5392,5 +5393,82 @@ country_event = {
 			limit = { is_megastructure_type = pouchkinn_engine_1 }
 			upgrade_megastructure_to = pouchkinn_engine_2
 		}
+	}
+}
+
+# give FEs adjusted buildings for supertensiles
+country_event = {
+	id = giga_fallen_empire_misc.1047
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		# set half of forges to foundries
+		every_owned_planet = {
+			limit = {
+				num_buildings = {
+					type = building_nano_forge
+					value > 0
+				}
+			}
+
+			while = {
+				count = value:giga_amb_fe_conversion
+
+				remove_building = building_nano_forge
+				add_building = building_giga_fe_megaworkshop
+			}
+
+			prev = { set_country_flag = fe_megaworkshop }
+		}
+
+		# if we didn't set any, try for an affluence centre
+		if = {
+			limit = {
+				not = {
+					has_country_flag = fe_megaworkshop
+				}
+			}
+
+			random_owned_planet = {
+				limit = {
+					num_buildings = {
+						type = building_affluence_center
+						value > 0
+					}
+				}
+
+				remove_building = building_affluence_center
+				add_building = building_giga_fe_megaworkshop
+
+				prev = { set_country_flag = fe_megaworkshop }
+			}
+
+			# and if that didn't work, go for a nourishment centre
+			if = {
+				limit = {
+					not = {
+						has_country_flag = fe_megaworkshop
+					}
+				}
+	
+				random_owned_planet = {
+					limit = {
+						num_buildings = {
+							type = building_nourishment_center
+							value > 0
+						}
+					}
+	
+					remove_building = building_nourishment_center
+					add_building = building_giga_fe_megaworkshop
+				}
+			}
+		}
+
+		# if those didn't work... idk lol guess they don't get any
+
+		# clean up after yourself
+		remove_country_flag = fe_megaworkshop
 	}
 }
