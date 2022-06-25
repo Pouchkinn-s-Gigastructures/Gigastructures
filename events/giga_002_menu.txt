@@ -232,7 +232,7 @@ country_event = {
 					set_global_flag = giga_blokkats_easy
 				}
 			}
-	
+
 			event_target:global_event_country = {
 				if = {
 					limit = { NOT = { has_country_flag = blokkat_spawndate_set } }
@@ -267,6 +267,41 @@ country_event = {
 				}
 				else = {
 					set_global_flag = giga_core_aeternum_1
+				}
+			}
+
+			#CHECK FOR FE DIFFICULTY
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_fe_planetcrafts_0
+						has_global_flag = giga_fe_planetcrafts_1
+						has_global_flag = giga_fe_planetcrafts_2
+						has_global_flag = giga_fe_planetcrafts_3
+						has_global_flag = giga_fe_planetcrafts_4
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_global_flag = acot_activated
+							has_global_flag = sofe_activated 
+						}
+					}
+					set_global_flag = giga_fe_planetcrafts_3
+				}
+				else_if = {
+					limit = {
+						OR = {
+							has_global_flag = nhsc_v30
+							has_global_flag = nhsc_overwrites_v30
+							has_global_flag = has_nsc_active
+						}
+					}
+					set_global_flag = giga_fe_planetcrafts_2
+				}
+				else = {
+					set_global_flag = giga_fe_planetcrafts_1
 				}
 			}
 	
@@ -546,6 +581,13 @@ country_event = {
 
 				every_country = {
 					limit = { is_ai = yes }
+
+					# init mega savings account stuff
+					giga_ai_savings_init = yes
+					add_modifier = {
+						modifier = giga_ai_savings_info
+					}
+
 					set_variable = {
 						which = giga_mega_output_ai_real
 						value = event_target:global_event_country.giga_mega_output_ai_real
@@ -1016,9 +1058,10 @@ country_event = {
 			}
 
 			###### TEMPORARY ########
-		#	set_global_flag = ehof_disabled
-		#	set_global_flag = ehof_ai_disabled
-			set_global_flag = compound_disabled
+			# set_global_flag = ehof_disabled
+			# set_global_flag = ehof_ai_disabled
+			# set_global_flag = compound_disabled
+			remove_global_flag = compound_disabled
 			#########################
 
 			# Set EHOF AI Caps
@@ -1250,10 +1293,43 @@ country_event = {
 			}
 
 
-			# Spawn FE moon/planetcrafts
+			# Spawn FE celestial warships and megas
 			if = {
-				limit = { NOT = { has_global_flag = fe_planetcrafts_disabled } }
-				country_event = { id = giga_fallen_empire.001 days = 1 }
+				limit = { NOT = { has_global_flag = giga_fe_megas_set_up } }
+				set_global_flag = giga_fe_megas_set_up
+				country_event = { id = giga_fallen_empire.1000 days = 1 }
+			}
+
+			# Spawn supertensiles deposits when activated
+			if = {
+				limit = {
+					has_global_flag = @giga_amb_flag
+				}
+
+				set_update_modifiers_batch = begin
+
+				every_galaxy_planet = {
+					limit = {
+						can_have_mineral_deposits = yes
+						has_deposit = no
+						not = { solar_system = { has_star_flag = empire_home_system } }
+					}
+					random_list = {
+						399 = {}
+						1 = {
+							modifier = {
+								factor = 3
+								is_asteroid = yes
+							}
+							random_list = {
+								1 = { set_deposit = d_giga_supertensiles_1 }
+								1 = { set_deposit = d_giga_supertensiles_2 }
+							}
+						}
+					}
+				}
+
+				set_update_modifiers_batch = end
 			}
 
 			# Set Megastructure Caps
@@ -1265,6 +1341,7 @@ country_event = {
 					giga_buildcap_2 = { add_modifier = { modifier = giga_plus_1_build_cap days = -1 } }
 					giga_buildcap_3 = { add_modifier = { modifier = giga_plus_2_build_cap days = -1 } }
 					giga_buildcap_u = { add_modifier = { modifier = giga_no_build_cap days = -1 } }
+					giga_buildcap_j = { giga_amb_country_setup_from_menu = yes }
 				}
 
 				# Count systems

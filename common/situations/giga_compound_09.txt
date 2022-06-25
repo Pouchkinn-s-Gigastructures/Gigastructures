@@ -1,0 +1,531 @@
+# if you want to change test stuff
+# console command: effect set_global_flag = compound_debugmode
+
+# Default contries get this when compound spawns,
+# Find a way to fight back
+compound_situation = {
+	picture = GFX_evt_shroudwalker_enclave
+	category = positive
+	complete_icon_frame = GFX_situation_outcome_frame_blue
+	complete_icon = GFX_situation_outcome_unknown
+
+	start_value = 0
+	progress_direction = monodirectional
+
+	monthly_progress = {
+		base = 0.84 # 10 year timer ( eq: round_to_high(100 / (12 * 10)) )
+	}
+
+	# Stage based Desc
+	desc = {
+		text = compound_situation_desc_1
+		trigger = {
+			current_stage = stage_1
+		}
+	}
+	desc = {
+		text = compound_situation_desc_2
+		trigger = {
+			current_stage = stage_2
+			NOT = { has_situation_flag = qnm1_approach_decided }
+		}
+	}
+	desc = {
+		text = compound_situation_desc_2_a
+		trigger = {
+			current_stage = stage_2
+			has_situation_flag = qnm1_approach_decided
+		}
+	}
+	desc = {
+		text = compound_situation_desc_3
+		trigger = {
+			current_stage = stage_3
+			NOR = {
+				has_situation_flag = qnm2_approach_passed
+				has_situation_flag = qnm2_approach_failed
+			}
+		}
+	}
+	desc = {
+		text = compound_situation_desc_3_a
+		trigger = {
+			current_stage = stage_3
+			has_situation_flag = qnm2_approach_passed
+		}
+	}
+	desc = {
+		text = compound_situation_desc_3_b
+		trigger = {
+			current_stage = stage_3
+			has_situation_flag = qnm2_approach_failed
+		}
+	}
+
+	stages = {
+		# Observations
+		stage_1 = {
+			icon = GFX_situation_stage_1
+			icon_background = GFX_situation_stage_frame_blue
+			end = 15 # 1 Year timer
+			custom_tooltip = compound_situation_stage_1_tooltip
+		}
+
+		# Experiments
+		stage_2 = {
+			icon = GFX_situation_stage_2
+			icon_background = GFX_situation_stage_frame_blue
+			end = 70
+			custom_tooltip = compound_situation_stage_2_tooltip
+
+			on_first_enter = {
+				remove_situation_flag = wait_approach_decided # cleanup (not used after stage 1)
+				if = { limit = { has_situation_flag = qnm1_approach_decided }
+					set_situation_approach = compound_approach_qnm2
+					owner = { country_event = { id = compound_situation.3 } }
+				} else = {
+					owner = { country_event = { id = compound_situation.2 } }
+				}
+			}
+		}
+		
+		# Deployment
+		stage_3 = {
+			icon = GFX_situation_stage_3
+			icon_background = GFX_situation_stage_frame_blue
+			end = 100
+			custom_tooltip = compound_situation_stage_3_tooltip
+
+			on_first_enter = {
+				if = {
+					limit = { owner = { has_country_flag = qnm2_approach_passed } }
+					set_situation_flag = qnm2_approach_passed
+					set_situation_approach = compound_approach_qnm3
+					owner = { country_event = { id = compound_situation.4 } }
+				} else_if = {
+					limit = { owner = { NOT = { has_country_flag = qnm1_approach_decided } } }
+					owner = { country_event = { id = compound_situation.6 } }
+				} else = {
+					set_situation_flag = qnm2_approach_failed
+					owner = { country_event = { id = compound_situation.5 } }
+				}
+			}
+		}
+	}
+
+	# Proper solution found
+	on_progress_complete = {
+		custom_tooltip = compound_situation_finisher
+		hidden_effect = {
+			remove_global_flag = compound_10_years
+			owner = {
+				every_situation = {
+					limit = {
+						is_situation_type = compound_gimmeyaships
+					}
+					destroy_situation = this
+				}
+				remove_country_flag = compound_feed_in_progress
+				remove_country_flag = qnm2_approach_passed
+				remove_country_flag = compound_situation_evt1open
+				remove_country_flag = qnm1_approach_decided
+				clear_variable = compound_protoships_eaten
+				clear_variable = compound_protoships_tobeeaten
+			}
+			destroy_situation = this
+		}
+	}
+
+	on_abort = { # clean up code and free memory
+		owner = {
+			every_situation = {
+				limit = {
+					is_situation_type = compound_gimmeyaships
+				}
+				destroy_situation = this
+			}
+			remove_country_flag = compound_feed_in_progress
+			remove_country_flag = qnm2_approach_passed
+			remove_country_flag = compound_situation_evt1open
+			remove_country_flag = qnm1_approach_decided
+			clear_variable = compound_protoships_eaten
+			clear_variable = compound_protoships_tobeeaten
+
+			if = { limit = { NOT = { has_global_flag = compound_10_years } }
+				owner = { country_event = { id = compound_situation.9 } }
+			}
+		}
+	}
+
+	abort_trigger = {
+		# something else triggered the solution
+		NOT = { has_global_flag = compound_10_years }
+	}
+	
+	# We wait (Default option)
+	approach = {
+		name = compound_approach_wait
+		icon = GFX_situation_approach_unity
+		icon_background = GFX_situation_approach_bg_green
+		default = yes
+		allow = {
+			custom_tooltip = {
+				fail_text = compound_situation_chosen_route
+				NAND = {
+					current_stage = stage_2
+					has_situation_flag = qnm1_approach_decided
+				}
+			}
+			custom_tooltip = {
+				fail_text = compound_situation_chosen_route
+				NAND = {
+					current_stage = stage_3
+					has_situation_flag = qnm2_approach_passed
+				}
+			}
+		}
+		on_select = {
+			custom_tooltip = compound_approach_wait_tooltip
+			hidden_effect = {
+				switch = {
+					trigger = current_stage
+					stage_1 = {
+						remove_situation_flag = qnm1_approach_decided
+						set_situation_flag = wait_approach_decided
+					}
+					stage_2 = {
+						# cannot be switched
+					}
+					stage_3 = {
+						# cannot be switched
+					}
+				}
+			}
+		}
+	}
+
+	# Quick QNM (Stage 1)
+	approach = {
+		name = compound_approach_qnm1
+		icon = GFX_situation_approach_balance_sheet
+		icon_background = GFX_situation_approach_bg_yellow
+		potential = {
+			current_stage = stage_1
+		}
+		allow = {
+			custom_tooltip = {
+				fail_text = compound_situation_no_qnm_tech
+				owner = {
+					if = { limit = { NOT = { has_global_flag = compound_debugmode } }
+						has_technology = tech_qnm_reactors
+					}
+				}
+			}
+		}
+		on_select = {
+			custom_tooltip = compound_approach_qnm1_tooltip
+			hidden_effect = {
+				remove_situation_flag = wait_approach_decided
+				set_situation_flag = qnm1_approach_decided
+			}
+		}
+	}
+
+	# Quick QNM (Stage 2)
+	approach = {
+		name = compound_approach_qnm2
+		icon = GFX_situation_approach_balance_sheet
+		icon_background = GFX_situation_approach_bg_yellow
+		potential = {
+			current_stage = stage_2
+		}
+		allow = {
+			custom_tooltip = {
+				fail_text = compound_situation_chosen_route
+				has_situation_flag = qnm1_approach_decided
+			}
+		}
+		on_select = {
+			custom_tooltip = compound_approach_qnm2_tooltip
+			hidden_effect = {
+				# cannot be switched
+			}
+		}
+	}
+
+	# Quick QNM (Stage 3)
+	approach = {
+		name = compound_approach_qnm3
+		icon = GFX_situation_approach_balance_sheet
+		icon_background = GFX_situation_approach_bg_yellow
+		potential = {
+			current_stage = stage_3
+		}
+		allow = {
+			custom_tooltip = {
+				fail_text = compound_situation_chosen_route
+				has_situation_flag = qnm2_approach_passed
+			}
+		}
+		on_select = {
+			custom_tooltip = compound_approach_qnm3_tooltip
+			hidden_effect = {
+				# cannot be switched
+			}
+		}
+	}
+
+	# Use Blokkat (End event)
+	approach = {
+		name = compound_approach_blokkat
+		icon = GFX_situation_approach_sword
+		icon_background = GFX_situation_approach_bg_red
+
+		allow = {
+			owner = {
+				custom_tooltip = {
+					fail_text = compound_situation_already_open
+					NOT = { has_country_flag = compound_situation_evt1open }
+				}
+			}
+		}
+		potential = {
+			owner = {
+				is_ai = no
+				if = {
+					limit = { NOT = { has_global_flag = compound_debugmode } }
+					OR = {
+						has_technology = giga_tech_blokkat_obliterator
+						has_technology = giga_tech_blokkat_emitter
+						has_technology = giga_tech_blokkat_plasma
+						has_technology = giga_tech_blokkat_laser
+						has_technology = giga_tech_blokkat_missile
+						has_technology = giga_tech_blokkat_strikecraft
+						has_technology = giga_tech_blokkat_obliterator
+					}
+				}
+			}
+		}
+		on_select = {
+			custom_tooltip = compound_approach_blokkat_tooltip
+			hidden_effect = {
+				save_event_target_as = compound_situation_evt
+				owner = { country_event = { id = compound_situation.1 } }
+			}
+		}
+	}
+
+	# DEBUG (Advance situation by 10 points)
+	approach = {
+		name = compound_approach_DEBUG
+		icon = GFX_situation_approach_this_is_fine
+		icon_background = GFX_situation_approach_bg_red
+
+		potential = {
+			if = { limit = { has_global_flag = compound_debugmode } always = yes }
+			else = { always = no }
+		}
+
+		on_select = {
+			custom_tooltip = compound_approach_DEBUG_tooltip
+
+			add_situation_progress = 10
+			switch = {
+				trigger = current_stage
+				stage_1 = {
+					if = { limit = { has_situation_flag = qnm1_approach_decided }
+						set_situation_approach = compound_approach_qnm1
+					} else = {
+						set_situation_approach = compound_approach_wait
+					}
+				}
+				stage_2 = {
+					if = { limit = { has_situation_flag = qnm1_approach_decided }
+						set_situation_approach = compound_approach_qnm2
+					} else = {
+						set_situation_approach = compound_approach_wait
+					}
+				}
+				stage_3 = {
+					if = { limit = { has_situation_flag = qnm2_approach_passed }
+					set_situation_approach = compound_approach_qnm3
+					} else = {
+						set_situation_approach = compound_approach_wait
+					}
+				}
+			}
+		}
+		ai_weight = {
+			base = 0
+		}
+	}
+}
+
+# Feed them thy ships
+compound_gimmeyaships = {
+	picture = GFX_evt_busy_spaceport
+	category = neutral
+	complete_icon_frame = GFX_situation_outcome_frame_blue
+	complete_icon = GFX_situation_outcome_positive
+
+	start_value = 0
+	progress_direction = monodirectional
+
+	monthly_progress = {
+		base = 0
+	}
+
+	stages = {
+		stage_1 = {
+			icon = GFX_situation_stage_1
+			icon_background = GFX_situation_stage_frame_blue
+			end = 100
+		}
+	}
+
+	on_progress_complete = {
+		custom_tooltip = compound_gimmeyaships_finisher
+		hidden_effect = {
+			owner = { 
+				set_country_flag = qnm2_approach_passed
+
+				remove_country_flag = compound_feed_in_progress
+				clear_variable = compound_protoships_tobeeaten
+				clear_variable = compound_protoships_eaten
+
+				every_situation = {
+					limit = {
+						is_situation_type = compound_situation
+						situation_progress < 70
+					}
+					export_trigger_value_to_variable = {
+						trigger = situation_progress
+						variable = calc
+					}
+					multiply_variable = {
+						which = calc
+						value = -1
+					}
+					add_situation_progress = calc
+					add_situation_progress = 20
+					clear_variable = calc
+				}
+
+				country_event = { id = compound_situation.10 }
+			}
+			destroy_situation = this
+		}
+	}
+
+	on_fail = {
+		owner = { 
+			set_country_flag = qnm2_approach_failed
+
+			remove_country_flag = compound_feed_in_progress
+			clear_variable = compound_protoships_tobeeaten
+			clear_variable = compound_protoships_eaten
+		}
+		destroy_situation = this
+	}
+
+	on_start = {
+		owner = {
+			set_country_flag = compound_feed_in_progress
+			set_variable = {
+				which = compound_protoships_eaten
+				value = 0
+			}
+
+			# Num of ships needed based on difficulty
+			switch = {
+				trigger = has_global_flag
+				compound_capped_1 = {
+					set_variable = {
+						which = compound_protoships_tobeeaten
+						value = 200
+					}
+				}
+				compound_capped_2 = {
+					set_variable = {
+						which = compound_protoships_tobeeaten
+						value = 400
+					}
+				}
+				compound_capped_3 = {
+					set_variable = {
+						which = compound_protoships_tobeeaten
+						value = 1000
+					}
+				}
+				compound_capped_4 = {
+					set_variable = {
+						which = compound_protoships_tobeeaten
+						value = 5000
+					}
+				}
+			}
+		}
+	}
+
+	on_monthly = {
+		events = {
+			compound_situation.8 # Porgress bar code
+		}
+	}
+
+	# Just flavor
+	approach = {
+		name = compound_gimmeyaships_approach
+		icon = GFX_situation_approach_fleet
+		icon_background = GFX_situation_approach_bg_green
+		default = yes
+		on_select = {
+			custom_tooltip = compound_gimmeyaships_approach_tooltip
+		}
+	}
+
+	# DEBUG
+	approach = {
+		name = compound_approach_DEBUG_ADD
+		icon = GFX_situation_approach_this_is_fine
+		icon_background = GFX_situation_approach_bg_red
+
+		potential = {
+			if = { limit = { has_global_flag = compound_debugmode } always = yes }
+			else = { always = no }
+		}
+
+		on_select = {
+			custom_tooltip = compound_approach_DEBUG_VAR
+			owner  = { change_variable = { which = compound_protoships_eaten value = 100 } }
+			set_situation_approach = compound_gimmeyaships_approach
+			situation_event = {	id = compound_situation.8 }
+		}
+		ai_weight = {
+			base = 0
+		}
+	}
+
+	# DEBUG
+	approach = {
+		name = compound_approach_DEBUG_SUB
+		icon = GFX_situation_approach_this_is_fine
+		icon_background = GFX_situation_approach_bg_red
+
+		potential = {
+			if = { limit = { has_global_flag = compound_debugmode } always = yes }
+			else = { always = no }
+		}
+
+		on_select = {
+			custom_tooltip = compound_approach_DEBUG_VAR
+			owner = { subtract_variable = { which = compound_protoships_eaten value = 100 } }
+			set_situation_approach = compound_gimmeyaships_approach
+			situation_event = {	id = compound_situation.8 }
+		}
+		
+		ai_weight = {
+			base = 0
+		}
+	}
+}

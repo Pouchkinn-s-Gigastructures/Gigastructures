@@ -7,40 +7,23 @@ event = {
 	is_triggered_only = yes
 
 	trigger = {
-		#########################################################################################################################
-		##################################################################### Can only spawn if ALL of the following is true:
 		has_global_flag = galactic_crisis_happened							# Vanilla crisis has spawned
 		end_game_years_passed > 0											# End game year has passed
-		#########################################################################################################################
-		##################################################################### Can only spawn if ALL of the following is NOT true:
+
 		NOR = {
 			has_global_flag = ehof_disabled									# EHOF's are disabled
 			has_global_flag = compound_disabled								# Compound is disabled
 			has_global_flag = compound_invasion_happened					# Already spawned
 		}
-		#########################################################################################################################
-		##################################################################### Can only spawn if ONE of the following is true:
 		OR = {
-			has_global_flag = compound_capped_2								# Compound + Vanilla x1 is enabled
-			has_global_flag = compound_capped_3								# Compound + Vanilla x2 is enabled
-			has_global_flag = compound_capped_4								# Compound + Vanilla x3 is enabled
-			has_global_flag = compound_capped_s								# Compound shuffle is enabled
-			AND = {															# The War in heaven has started and ended
-				has_global_flag = war_in_heaven_started
-				NOT = { has_global_flag = war_in_heaven_ongoing }
-			}
-			AND = {															# The Contingency has started and ended
-				has_global_flag = ai_invasion_happened
-				NOT = { has_global_flag = ai_invasion_ongoing }
-			}
-			AND = {															# The Unbidden has started and ended
-				has_global_flag = extradimensional_invasion_happened
-				has_global_flag = extradimensional_invasion_defeated
-			}
-			AND = {															# The Scourge has started and ended
-				has_global_flag = prethoryn_invasion_happened
-				NOT = { has_global_flag = ongoing_prethoryn_invasion }
-			}
+			has_global_flag = compound_capped_1								# Easy
+			has_global_flag = compound_capped_2								# Normal
+			has_global_flag = compound_capped_3								# Hard
+			has_global_flag = compound_capped_4								# Brutal
+			# has_global_flag = compound_capped_s							# Shuffle is an invalid option now
+		}
+		any_megastructure = {
+			is_an_active_ehof = yes
 		}
 	}
 
@@ -55,50 +38,6 @@ event = {
 
 			set_global_flag = compound_invasion_happened
 			country_event = { id = compound_spawn.001 days = 2 }			# Spawn systems
-
-			if = {
-				limit = {
-					NOR = {
-						has_global_flag = compound_capped_1					# Spawn after vanilla crisis (Dealt with in trigger)
-						has_global_flag = compound_capped_2					# Spawn with vanilla crisis  (Dealt with in trigger)
-					}
-				}
-				if = {		limit = { has_global_flag = compound_capped_4 } set_variable = { which = giga_spawn_crisis_compound value = 2 } }	# 2 additional crisis
-				else_if = {	limit = { has_global_flag = compound_capped_3 } set_variable = { which = giga_spawn_crisis_compound value = 1 } }	# 1 additional crisis
-				else_if = {
-					limit = { has_global_flag = compound_capped_s }
-					random_list = {
-						1 = { set_variable = { which = giga_spawn_crisis_compound value = 0 } remove_global_flag = compound_capped_s set_global_flag = compound_capped_2 }
-						1 = { set_variable = { which = giga_spawn_crisis_compound value = 1 } remove_global_flag = compound_capped_s set_global_flag = compound_capped_3 }
-						1 = { set_variable = { which = giga_spawn_crisis_compound value = 2 } remove_global_flag = compound_capped_s set_global_flag = compound_capped_4 }
-					}
-				}
-
-				while = {
-					limit = { check_variable = { which = giga_spawn_crisis_compound value > 0 } }
-					subtract_variable = { which = giga_spawn_crisis_compound value = 1 }
-					random_list = {
-						1 = {	### Prethoryn Scourge (Swarm)
-							modifier = { factor = 0 has_global_flag = prethoryn_invasion_happened }
-							modifier = { factor = 0 has_global_flag = giga_spawned_scourge }
-							country_event = { id = crisis.10 days = 100 random = 400 }
-							set_global_flag = giga_spawned_scourge
-						}
-						1 = {	### Unbidden (Extradimensionals)
-							modifier = { factor = 0 has_global_flag = extradimensional_invasion_happened }
-							modifier = { factor = 0 has_global_flag = giga_spawned_unbidden }
-							country_event = { id = crisis.1000 days = 100 random = 400 }
-							set_global_flag = giga_spawned_unbidden
-						}
-						1 = {	### Contingency (AI)
-							modifier = { factor = 0 has_global_flag = ai_invasion_happened }
-							modifier = { factor = 0 has_global_flag = giga_spawned_contingency }
-							country_event = { id = crisis.2005 days = 100 random = 400 }
-							set_global_flag = giga_spawned_contingency
-						}
-					}
-				}
-			}
 		}
 	}
 }
@@ -166,6 +105,7 @@ country_event = {
 			set_global_flag = compound_invasion_ongoing
 			set_graphical_culture = ehof_01
 			set_country_flag = day_0
+			giga_compound_difficulty_modern = yes
 			create_ship_design = { design = "NAME_Aegis" } add_ship_design = last_created_design
 			create_ship_design = { design = "NAME_Bulwark" } add_ship_design = last_created_design
 			create_ship_design = { design = "NAME_Bastion" } add_ship_design = last_created_design
@@ -298,7 +238,7 @@ country_event = {
 		}
 
 		every_country = {
-			add_modifier = { modifier = compound_invincible days = -1 }
+			# add_modifier = { modifier = compound_invincible days = -1 }
 			establish_communications_no_message = event_target:compound_country
 		}
 
@@ -591,7 +531,7 @@ country_event = {
 				}
 			}
 			every_system_planet = { set_planet_flag = cant_build_here set_planet_flag = cant_target_this_planet } # Prevents NDB & QSO
-			set_star_flag = compound_expand
+			# set_star_flag = compound_expand # disabled immunity event firing from expansion
 		}
 
 		every_country = {
@@ -602,6 +542,11 @@ country_event = {
 
 			# Notify everyone of the solution in 10 years, if it hasn't already happened
 			set_timed_global_flag = { flag = compound_10_years years = 10 }
+
+			start_situation = {
+				type = compound_situation
+				target = this
+			}
 
 			# Notify everyone the traders are closed
 			if = {
