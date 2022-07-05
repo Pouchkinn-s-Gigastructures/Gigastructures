@@ -3,6 +3,9 @@ namespace = compound_fleet_spawn
 #############################################################################
 #############################	SPAWN FLEETS	#############################
 #############################################################################
+
+# WARNING: Spawning too many ships with interacting Auras will cause CTD
+
 country_event = {
     id = compound_fleet_spawn.001
     hide_window = yes
@@ -32,6 +35,10 @@ country_event = {
 		set_variable = { which = compound_modded_multiplier value = 0 }
 		set_variable = { which = compound_total_ships value = 0 }
 
+		# Set base income
+		if = { limit = { check_variable = { which = compound_dark_matter_income value < 400 } }
+		set_variable = { which = compound_dark_matter_income value = 400 } }
+
 		# Calculate naval capacity
 		set_variable = { which = compound_military value = 0 }
 		set_variable = { which = count_hornets		value = compound_hornets }
@@ -58,6 +65,12 @@ country_event = {
 		change_variable = { which = compound_military value = count_apex }
 		change_variable = { which = compound_military value = count_sovereigns }
 
+		# limiter (init ships free)
+		subtract_variable = { which = compound_military value = 150 }
+		if = { limit = { check_variable = { which = compound_military value < 0 } }
+		set_variable = { which = compound_military value = 0 } }
+
+
 		# Change this to increase or decrease compound ship cap (0 being none)
 																	change_variable = { which = compound_modded_multiplier value = 1 }
 		if = { limit = { has_global_flag = acot_activated }			change_variable = { which = compound_modded_multiplier value = 0.33 } }
@@ -67,6 +80,10 @@ country_event = {
 		subtract_variable = { which = compound_dark_matter_balance value = compound_military }
 
 		change_variable = { which = compound_dark_matter_stockpile value = compound_dark_matter_balance }
+
+		# limiter (no negative stockpile)
+		if = { limit = { check_variable = { which = compound_dark_matter_stockpile value < 0 } }
+		set_variable = { which = compound_dark_matter_stockpile value = 0 } }
 
 		################################################# Begin Spawning
 		if = {
@@ -155,6 +172,10 @@ country_event = {
 				}
 			}
 		}
+
+		# limiter
+		if = { limit = { check_variable = {	which = desired_reshapers value > 100 } }
+		set_variable = { which = desired_reshapers value = 100 } }
 		
 		# How many are needed
 		set_variable = { which = needed_reshapers value = desired_reshapers }
