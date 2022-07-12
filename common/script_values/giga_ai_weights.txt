@@ -66,13 +66,17 @@ giga_ai_base_kilo = {
 	base = @kilo_base
 
 	modifier = {
-		has_technology = tech_mega_engineering
+		root.from = {
+			has_technology = tech_mega_engineering
+		}
 
 		mult = 0.5
 	}
 
 	modifier = {
-		has_ascension_perk = ap_gigastructural_constructs
+		root.from = {
+			has_ascension_perk = ap_gigastructural_constructs
+		}
 
 		mult = 0.5
 	}
@@ -82,7 +86,9 @@ giga_ai_base_mega = {
 	base = @mega_base
 
 	modifier = {
-		has_ascension_perk = ap_gigastructural_constructs
+		root.from = {
+			has_ascension_perk = ap_gigastructural_constructs
+		}
 
 		mult = 0.5
 	}
@@ -114,6 +120,7 @@ giga_ai_upkeep = {
 			resource = $RESOURCE$
 		}
 		mode = weight
+		trigger_scope = root.from
 	}
 
 	divide = $AMOUNT$
@@ -139,9 +146,11 @@ giga_ai_output = {
 	subtract = value:giga_ai_output_calc_1|RESOURCE|$RESOURCE$|AMOUNT|$AMOUNT$|MULT|$MULT|5$|
 
 	[[MIN]
-		mult = value:giga_ai_one_minus|VAL|$MIN$|
+		multiply = value:giga_ai_one_minus|VAL|$MIN$|
 		add = $MIN$
 	]
+
+	multiply = 5 # test
 }
 
 giga_ai_output_calc_1 = {
@@ -151,6 +160,7 @@ giga_ai_output_calc_1 = {
 			resource = $RESOURCE$
 		}
 		mode = weight
+		trigger_scope = root.from
 	}
 
 	subtract = $AMOUNT$
@@ -177,7 +187,7 @@ giga_ai_prevent_spam = {
 	modifier = {
 		weight = 0
 
-		owner = {
+		root.from = {
 			has_country_flag = has_recently_built_$MEGA$
 		}
 	}
@@ -194,7 +204,7 @@ giga_ai_build_low_priority = {
 	base = 1
 
 	modifier = {
-		owner = {
+		root.from = {
 			is_variable_set = giga_ai_get_build_limit
 			check_variable = {
 				which = giga_ai_get_build_limit
@@ -243,7 +253,7 @@ giga_ai_unlocks_galwonders = {
 	base = 1
 
 	modifier = {
-		owner = {
+		root.from = {
 			has_galactic_wonders = no
 			not = {
 				has_country_flag = has_built_or_repaired_megastructure
@@ -258,7 +268,7 @@ giga_ai_unlocks_gigastructures = {
 	base = 1
 
 	modifier = {
-		owner = {
+		root.from = {
 			has_galactic_wonders = yes
 			nor = {
 				has_ascension_perk = ap_gigastructural_constructs
@@ -274,7 +284,7 @@ giga_ai_unlock_low_priority = {
 	base = 1
 
 	modifier = {
-		owner = {
+		root.from = {
 			has_galactic_wonders = no
 			not = {
 				has_country_flag = has_built_or_repaired_megastructure
@@ -284,7 +294,7 @@ giga_ai_unlock_low_priority = {
 	}
 
 	modifier = {
-		owner = {
+		root.from = {
 			has_galactic_wonders = yes
 			nor = {
 				has_ascension_perk = ap_gigastructural_constructs
@@ -303,7 +313,9 @@ giga_ai_cap_availability_boost = {
 	base = 1
 
 	modifier = {
-		is_variable_set = giga_ai_get_remaining_build_limit
+		root.from = {
+			is_variable_set = giga_ai_get_remaining_build_limit
+		}
 		
 		weight = giga_ai_get_remaining_build_limit
 	}
@@ -368,6 +380,11 @@ giga_ai_strategic_location = {
 	}
 
 	modifier = {
+		has_star_flag = lcluster1 # Terminal Egress, which is not counted as a bottleneck
+		multiply = 10
+	}
+
+	modifier = {
 		any_neighbor_system = { 
 			exists = owner 
 			not = { 
@@ -416,13 +433,13 @@ giga_ai_personality_ethics = {
 	base = 1
 
 	modifier = {
-		owner = {
+		root.from = {
 			has_ethic = ethic_$ETHIC$
 		}
 		weight = 2
 	}
 	modifier = {
-		owner = {
+		root.from = {
 			has_ethic = ethic_fanatic_$ETHIC$
 		}
 		weight = 5
@@ -431,13 +448,13 @@ giga_ai_personality_ethics = {
 	[[OPPOSITE]
 
 	modifier = {
-		owner = {
+		root.from = {
 			has_ethic = ethic_$OPPOSITE$
 		}
 		weight = 0.5
 	}
 	modifier = {
-		owner = {
+		root.from = {
 			has_ethic = ethic_fanatic_$OPPOSITE$
 		}
 		weight = 0.2
@@ -474,12 +491,126 @@ giga_ai_overpopulation_boost = {
 	base = 1
 
 	modifier = {
-		owner = {
+		root.from = {
 			any_owned_planet = {
 				free_housing < 0
+				num_unemployed > 0
+				free_district_slots <= 0
 			}
 		}
 
 		weight = 10
 	}
+}
+
+##################################################################################################
+# planet size for terraforming megas
+
+# CONDITION (optional) - name of a trigger (scripted or otherwise) which should check against "= yes"
+giga_ai_planet_size = {
+	base = 0.5
+
+	modifier = {
+		any_system_planet = {
+			is_star = no
+			[[CONDITION] $CONDITION$ = yes ]
+			planet_size >= 16
+		}
+		add = 0.25
+	}
+
+	modifier = {
+		any_system_planet = {
+			is_star = no
+			[[CONDITION] $CONDITION$ = yes ]
+			planet_size >= 18
+		}
+		add = 0.25
+	}
+	
+	modifier = {
+		any_system_planet = {
+			is_star = no
+			[[CONDITION] $CONDITION$ = yes ]
+			planet_size >= 20
+		}
+		add = 0.25
+	}
+
+	modifier = {
+		any_system_planet = {
+			is_star = no
+			[[CONDITION] $CONDITION$ = yes ]
+			planet_size >= 22
+		}
+		add = 0.25
+	}
+
+	modifier = {
+		any_system_planet = {
+			is_star = no
+			[[CONDITION] $CONDITION$ = yes ]
+			planet_size > 25
+		}
+		add = 2
+	}
+
+	modifier = {
+		any_system_planet = {
+			is_star = no
+			[[CONDITION] $CONDITION$ = yes ]
+			planet_size > 30
+		}
+		add = 2
+	}
+
+	modifier = {
+		not = {
+			any_system_planet = {
+				is_star = no
+				[[CONDITION] $CONDITION$ = yes ]
+				planet_size >= 14
+			}
+		}
+		multiply = 0
+	}
+}
+
+##################################################################################################
+# gateway and relay fractions
+
+giga_ai_relay_fraction = {
+	complex_trigger_modifier = {
+		trigger = count_owned_megastructure
+		parameters = {
+			limit = {
+				or = {
+					is_megastructure_type = hyper_relay
+					is_megastructure_type = hyper_relay_restored
+				}
+			}
+		}
+
+		mode = weight
+	}
+
+	divide = trigger:controlled_systems
+}
+
+giga_ai_gateway_fraction = {
+	complex_trigger_modifier = {
+		trigger = count_owned_megastructure
+		parameters = {
+			limit = {
+				or = {
+					is_megastructure_type = gateway_final
+					is_megastructure_type = gateway_restored
+				}
+			}
+		}
+
+		mode = weight
+	}
+
+	divide = trigger:controlled_systems
 }
