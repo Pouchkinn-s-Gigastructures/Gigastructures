@@ -1,0 +1,640 @@
+##################################
+### Subspace disruption system ###
+##################################
+
+# this is a toggle for players that create new systems and want to add protection to them too - like interstellar habitats
+decision_maginot_anti_jump_on = {
+	sound = alert_construction_complete
+	icon = decision_maginot_anti_jump_on_icon
+
+	resources = {
+		category = decisions
+		cost = {
+			energy = 1000
+		}
+	}
+	
+	potential = {
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		exists = planet_owner
+		NOT = { has_modifier = maginot_anti_jump_on }
+	}
+
+	allow = {
+		custom_tooltip = {
+			fail_text = decision_maginot_anti_jump_on_must_not_already_be_active
+			# fail if system is already protected
+			# EXCEPTION: nearby system is not protected, allowing extending field protection incrementally
+			solar_system = {
+				OR = {
+					NOT = { has_star_flag = maginot_anti_jump_star }
+					if = {
+						limit = { has_star_flag = maginot_anti_jump_star }
+						any_neighbor_system = {
+							NOT = { has_star_flag = maginot_anti_jump_star }
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	effect = {
+		custom_tooltip = decision_maginot_anti_jump_on_effect
+		add_modifier = {
+			modifier = maginot_anti_jump_on
+			days = -1
+		}
+		add_deposit = d_maginot_subspace_disruptor
+		hidden_effect = {
+			planet_owner = { save_event_target_as = maginot_owner }
+			solar_system = {
+				# Prevents jump drives
+				set_star_flag = maginot_anti_jump_star
+				system_star = {
+					if = {
+						limit = { NOT = { has_modifier = maginot_anti_jump_star_modifier } }
+						add_modifier = {
+							modifier = maginot_anti_jump_star_modifier
+							days = -1
+						}
+					}
+				}
+				# Prevents NDB & QSO
+				every_system_planet = {
+					set_planet_flag = cant_build_here
+					set_planet_flag = cant_target_this_planet
+				}
+
+				# one jump away too
+				every_neighbor_system = {
+					limit = {
+						exists = space_owner
+						space_owner = { is_same_empire = event_target:maginot_owner }
+					}
+					# Prevents jump drives
+					set_star_flag = maginot_anti_jump_star
+					system_star = {
+						if = {
+							limit = { NOT = { has_modifier = maginot_anti_jump_star_modifier } }
+							add_modifier = {
+								modifier = maginot_anti_jump_star_modifier
+								days = -1
+							}
+						}
+					}
+					if = { #trad boosts it
+						limit = { ROOT.owner = { has_active_tradition = tr_gigabulwark_maginot_protocols } }
+						ROOT = { set_planet_flag = maginot_protocols_boost }
+						every_neighbor_system = {
+							limit = {
+								exists = space_owner
+								space_owner = { is_same_empire = event_target:maginot_owner }
+								NOT = { has_modifier = maginot_anti_jump_star_modifier }
+							}
+							# Prevents jump drives
+							set_star_flag = maginot_anti_jump_star
+							system_star = {
+								if = {
+									limit = { NOT = { has_modifier = maginot_anti_jump_star_modifier } }
+									add_modifier = {
+										modifier = maginot_anti_jump_star_modifier
+										days = -1
+									}
+								}
+							}
+						}
+					}
+					# Prevents NDB & QSO - nope, not in neighbours
+					#every_system_planet = {
+					#	set_planet_flag = cant_build_here
+					#	set_planet_flag = cant_target_this_planet
+					#}
+				}
+			}
+		}
+	}
+	
+	ai_weight = { # ai might as well keep the disruptor on, toggle is there for players
+		weight = 1000
+	}
+}
+
+decision_maginot_anti_jump_off = {
+	sound = deactive_builing # paradox misspelled this, blame them
+	icon = decision_maginot_anti_jump_off_icon
+
+	resources = {
+		category = decisions
+		cost = {
+			energy = 100
+		}
+	}
+	
+	potential = {
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		has_modifier = maginot_anti_jump_on
+	}
+	
+	effect = {
+		custom_tooltip = decision_maginot_anti_jump_off_effect
+		remove_modifier = maginot_anti_jump_on
+		remove_deposit = d_maginot_subspace_disruptor
+		hidden_effect = {
+			if = {
+				limit = { exists = planet_owner }
+				planet_owner = { save_event_target_as = maginot_owner }
+			}
+			solar_system = {
+				# Prevents jump drives
+				remove_star_flag = maginot_anti_jump_star
+				system_star = {
+					remove_modifier = maginot_anti_jump_star_modifier
+				}
+				# Prevents NDB & QSO
+				every_system_planet = {
+					remove_planet_flag = cant_build_here
+					remove_planet_flag = cant_target_this_planet
+				}
+
+				# one jump away too
+				every_neighbor_system = {
+					limit = {
+						exists = space_owner
+						space_owner = { is_same_empire = event_target:maginot_owner }
+					}
+					# Prevents jump drives
+					remove_star_flag = maginot_anti_jump_star
+					system_star = {
+						remove_modifier = maginot_anti_jump_star_modifier
+					}
+					if = {
+						limit = { ROOT = { has_planet_flag = maginot_protocols_boost } }
+						ROOT = { remove_planet_flag = maginot_protocols_boost }
+						every_neighbor_system = {
+							limit = {
+								exists = space_owner
+								space_owner = { is_same_empire = event_target:maginot_owner }
+							}
+							# Prevents jump drives
+							remove_star_flag = maginot_anti_jump_star
+							system_star = {
+								remove_modifier = maginot_anti_jump_star_modifier
+							}
+						}
+					}
+					# Prevents NDB & QSO
+					#every_system_planet = {
+					#	remove_planet_flag = cant_build_here
+					#	remove_planet_flag = cant_target_this_planet
+					#}
+				}
+			}
+		}
+	}
+	
+	ai_weight = { # ai shouldn't remove the protection
+		weight = 0
+	}
+}
+
+#######################
+### Army management ###
+#######################
+
+# make sure 5 armies are on the planet
+decision_maginot_basic_garrison_check = {
+	sound = maginot_army_noise_effect
+	icon = decision_martial_law
+
+	# not used to keep the custom sound effect, but player can't spam this decision or stuff breaks
+	#enactment_time = 1
+	resources = {
+		category = decisions
+		cost = {
+			energy = 10
+		}
+	}
+	
+	potential = {
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		exists = planet_owner
+		has_ground_combat = no
+		is_occupied_flag = no
+	}
+
+	allow = {
+		custom_tooltip = {
+			fail_text = maginot_wait_for_army_refresh
+			NOT = { has_planet_flag = maginot_wait_for_army_refresh }
+		}
+	}
+	
+	effect = {
+		custom_tooltip = decision_maginot_basic_garrison_check_effect
+		hidden_effect = {
+			# stop player spam
+			set_timed_planet_flag = {
+				flag = maginot_wait_for_army_refresh
+				days = 1
+			}
+			if = {
+				limit = { exists = planet_owner }
+				every_planet_army = {
+					limit = {
+						OR = {
+							army_type = "heavy_defender" 
+							army_type = "robot_heavy_defender"
+							army_type = "machine_heavy_defender"
+						}
+					}
+					remove_army = yes
+				}
+
+				spawn_giga_maginot_garrison = yes
+			}
+			maginot_refresh_ground_armies = yes
+		}
+	}
+	
+	ai_weight = { # this is for player convenience
+		weight = 0
+	}
+}
+
+# mass recruit armies button
+decision_maginot_mass_recruitment = {
+	sound = maginot_army_noise_effect
+	icon = decision_martial_law # TODO
+
+	# not used to keep the custom sound effect, but player can't spam this decision or stuff breaks
+	#enactment_time = 1
+	resources = {
+		category = decisions
+		cost = {
+			energy = 10
+		}
+	}
+	
+	potential = {
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		exists = planet_owner
+		has_ground_combat = no
+		is_occupied_flag = no
+		OR = {
+			has_district = district_maginot_world_bunkers
+			has_district = district_maginot_world_bunkers_ringworld
+		}
+		always = no # TODO, not finished
+	}
+
+	allow = {
+		custom_tooltip = {
+			fail_text = maginot_wait_for_army_recruit
+			NOT = { has_planet_flag = maginot_wait_for_army_recruit }
+		}
+	}
+	
+	effect = {
+		custom_tooltip = decision_maginot_mass_recruitment_effect
+		hidden_effect = {
+			# stop player spam
+			set_timed_planet_flag = {
+				flag = maginot_wait_for_army_recruit
+				days = 30
+			}
+			if = {
+				limit = { exists = planet_owner }
+				if = {
+					limit = { planet_owner = { is_machine_empire = no } }
+					while = { count = 5	create_army = { name = "Heavy Offence Unit"	owner = planet_owner species = planet_owner.species type = random } }
+				}
+				else_if = {
+					limit = { planet_owner = { is_machine_empire = yes } }
+					while = { count = 5	create_army = { name = "Heavy Offence Unit"	owner = planet_owner species = planet_owner.species type = random } }
+				}
+			}
+		}
+	}
+	
+	ai_weight = { # this is for player convenience
+		weight = 0
+	}
+}
+
+####################
+### SD Platforms ###
+####################
+
+decision_maginot_basic_point_check = {
+	sound = maginot_basic_point_check_noise_effect
+	icon = decision_maginot_basic_point_check
+
+	potential = {
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		exists = planet_owner
+	}
+	
+	effect = {
+		custom_tooltip = decision_maginot_basic_point_check_effect
+		hidden_effect = {
+			maginot_check_upgrade_points = yes # update variables on the planet
+			maginot_reapply_upgrades = yes # reapply upgrades just in case
+			if = {
+				limit = { planet_owner = { is_ai = yes } }
+				set_timed_planet_flag = {
+					flag = maginot_ai_checked_upgrades
+					months = 11
+				}
+			}
+		}
+		# append tech upgrades to tooltip
+		if = {
+			limit = { planet_owner = { has_technology = giga_tech_maginot_firepower_1 } }
+			custom_tooltip = maginot_display_firepower_1
+		}
+		if = {
+			limit = { planet_owner = { has_technology = giga_tech_maginot_planetcraft_upgrade } }
+			custom_tooltip = maginot_display_planetcraft_upgrade
+		}
+		if = {
+			limit = { planet_owner = { has_technology = giga_tech_maginot_systemcraft_upgrade } }
+			custom_tooltip = maginot_display_systemcraft_upgrade
+		}
+	}
+	
+	ai_weight = {
+		# ai checks every 11 months (staggers updates)
+		weight = 100
+		modifier = {
+			factor = 0
+			has_planet_flag = maginot_ai_checked_upgrades
+		}
+	}
+}
+
+decision_maginot_repair_strategic_defence_command = {
+	icon = decision_maginot_repair_strategic_defence_command
+
+	enactment_time = 1080 # 3 years
+	resources = {
+		category = decisions
+		cost = {
+			alloys = 15000
+			energy = 1000
+		}
+	}
+	
+	potential = {
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		NOT = { has_planet_flag = maginot_has_orbital_defence }
+		exists = planet_owner
+	}
+	
+	effect = {
+		custom_tooltip = decision_maginot_repair_strategic_defence_command_effect
+		hidden_effect = {
+			planet_event = { id = maginot_orbital_defence.1005 }
+		}
+	}
+	
+	ai_weight = { # AI should start this right away
+		weight = 10000
+	}
+}
+
+decision_maginot_construct_secondary_SD_platform = {
+	icon = decision_maginot_construct_secondary_SD_platform
+
+	enactment_time = 360 # 1 year
+	resources = {
+		category = decisions
+		cost = {
+			alloys = 10000 # cost for asteroid artillery mega
+			energy = 1000  # knock asteroid into orbit
+		}
+	}
+	
+	potential = {
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		has_planet_flag = maginot_has_orbital_defence
+		exists = planet_owner
+	}
+
+	allow = {
+		# check points are available for building
+		custom_tooltip = {
+			fail_text = maginot_no_offensive_upgrade_points_available
+			check_variable = {
+				which = maginot_offensive_upgrade_points_current
+				value >= 2
+			}
+		}
+	}
+
+	# change points values immediately to avoid exploit with spending points before arty finishes
+	on_queued = {
+		change_variable = {
+			which = giga_maginot_current_SD_platform_count
+			value = 1
+		}
+		# manage variables, 2 points spent
+		subtract_variable = {
+			which = maginot_offensive_upgrade_points_current
+			value = 2
+		}
+		change_variable = {
+			which = maginot_offensive_upgrade_points_used
+			value = 2
+		}
+	}
+	
+	effect = {
+		custom_tooltip = decision_maginot_construct_secondary_SD_platform_effect
+		hidden_effect = {
+			# moved to event since this effect errors inside the decision for some reason
+			planet_event = { id = maginot_orbital_defence.3001 }
+		}
+	}
+	
+	ai_weight = { # use if one of the other upgrades is not preferred
+		weight = 50
+	}
+}
+
+decision_maginot_orbital_defence_hp_upgrade = {
+	sound = maginot_hp_upgrade_noise_effect
+	icon = decision_maginot_orbital_defence_hp_upgrade
+
+	resources = {
+		category = decisions
+		cost = {
+			alloys = 1
+			multiplier = maginot_orbital_defence_hp_cost
+		}
+	}
+	
+	potential = {
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		has_planet_flag = maginot_has_orbital_defence
+		exists = planet_owner
+	}
+
+	allow = {
+		# check points are available for building
+		custom_tooltip = {
+			fail_text = maginot_no_defensive_upgrade_points_available
+			check_variable = {
+				which = maginot_defensive_upgrade_points_current
+				value >= 1
+			}
+		}
+	}
+	
+	effect = {
+		custom_tooltip = decision_maginot_orbital_defence_hp_upgrade_effect
+		hidden_effect = {
+			# moved to event since this effect errors inside the decision for some reason
+			planet_event = { id = maginot_orbital_defence.3002 }
+		}
+	}
+	
+	ai_weight = {
+		weight = 500 # use points unless
+
+		# ATK upgrades are behind
+		modifier = {
+			factor = 0
+			check_variable = {
+				which = maginot_orbital_defence_hp_upgrades
+				value > maginot_orbital_defence_atk_upgrades
+			}
+		}
+	}
+}
+
+decision_maginot_orbital_defence_atk_upgrade = {
+	sound = maginot_atk_upgrade_noise_effect
+	icon = decision_maginot_orbital_defence_atk_upgrade
+
+	resources = {
+		category = decisions
+		cost = {
+			alloys = 1
+			multiplier = maginot_orbital_defence_atk_cost
+		}
+	}
+	
+	potential = {
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		has_planet_flag = maginot_has_orbital_defence
+		exists = planet_owner
+	}
+
+	allow = {
+		# check points are available for building
+		custom_tooltip = {
+			fail_text = maginot_no_offensive_upgrade_points_available
+			check_variable = {
+				which = maginot_offensive_upgrade_points_current
+				value >= 1
+			}
+		}
+	}
+	
+	effect = {
+		custom_tooltip = decision_maginot_orbital_defence_atk_upgrade_effect
+		hidden_effect = {
+			# moved to event since this effect errors inside the decision for some reason
+			planet_event = { id = maginot_orbital_defence.3003 }
+		}
+	}
+	
+	ai_weight = {
+		weight = 500 # use points unless
+
+		# HP upgrades are behind
+		modifier = {
+			factor = 0
+			check_variable = {
+				which = maginot_orbital_defence_atk_upgrades
+				value > maginot_orbital_defence_hp_upgrades
+			}
+		}
+		# SD platforms are behind
+		modifier = {
+			factor = 0
+			check_variable = {
+				which = maginot_orbital_defence_atk_upgrades
+				value > giga_maginot_current_SD_platform_count
+			}
+		}
+	}
+}
+
+decision_maginot_orbital_defence_trg_upgrade = {
+	sound = maginot_trg_upgrade_noise_effect
+	icon = decision_maginot_orbital_defence_trg_upgrade
+
+	resources = {
+		category = decisions
+		cost = {
+			alloys = 1
+			multiplier = maginot_orbital_defence_trg_cost
+		}
+	}
+	
+	potential = {
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		has_planet_flag = maginot_has_orbital_defence
+		exists = planet_owner
+	}
+
+	allow = {
+		# check points are available for building
+		custom_tooltip = {
+			fail_text = maginot_no_defensive_upgrade_points_available
+			check_variable = {
+				which = maginot_defensive_upgrade_points_current
+				value >= 1
+			}
+		}
+		# this one has a hard cap too
+		custom_tooltip = {
+			fail_text = maginot_targetting_upgrade_hard_cap
+			check_variable = {
+				which = maginot_orbital_defence_trg_upgrades
+				value < maginot_targetting_upgrade_points_max
+			}
+		}
+	}
+	
+	effect = {
+		custom_tooltip = decision_maginot_orbital_defence_trg_upgrade_effect
+		hidden_effect = {
+			# moved to event since this effect errors inside the decision for some reason
+			planet_event = { id = maginot_orbital_defence.3004 }
+		}
+	}
+	
+	ai_weight = {
+		weight = 550 # fill this one up to hard cap
+		modifier = {
+			factor = 0
+			check_variable = {
+				which = maginot_orbital_defence_trg_upgrades
+				value >= 5
+			}
+		}
+	}
+}

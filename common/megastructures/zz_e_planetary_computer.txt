@@ -1,18 +1,31 @@
 planetary_computer_0 = {
 	entity = "giga_consite_5_5_entity"
 	construction_entity = "giga_consite_5_5_entity"
+	construction_blocks_and_blocked_by = none
 	portrait = "GFX_megastructure_construction_background"
 	place_entity_on_planet_plane = no
 	prerequisites = { giga_tech_planetary_computer }
 
 	build_time = 1800
 	resources = {
-		category = megastructures
+		category = giga_planetary_computer
 		cost = {
 			alloys = 2500
-			influence = 75
+			influence = 150
+			unity = @giga_mega_unity_cost
 		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|alloys|AMOUNT|2500| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
 		upkeep = { energy = 5 }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = alloys AMOUNT = 2500 }
+		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = unity  AMOUNT = @giga_mega_unity_cost }
+	}
+	on_build_cancel = {
+		giga_ai_savings_refund = { CATEGORY = resource RESOURCE = alloys }
+		giga_ai_savings_refund = { CATEGORY = resource RESOURCE = unity }
 	}
 
 	potential = {
@@ -74,7 +87,7 @@ planetary_computer_0 = {
 	}
 
 	ai_weight = {
-		weight = 300	# Default = 100
+		weight = 100	# Default = 100
 
 		# Can we afford the upkeep
 
@@ -171,15 +184,23 @@ planetary_computer_1 = {
 
 	build_time = 2500
 	resources = {
-		category = megastructures
+		category = giga_megastructures
 		cost = {
 			alloys = 5000
 			energy = 5000
+			unity = @giga_mega_unity_cost
 		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|alloys|AMOUNT|5000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
 		upkeep = {
 			energy = 10
 			alloys = 10
 		}
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = alloys AMOUNT = 5000 }
+		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = unity  AMOUNT = @giga_mega_unity_cost }
 	}
 
 	potential = { NOT = { has_global_flag = planetary_computer_disabled } }
@@ -188,7 +209,7 @@ planetary_computer_1 = {
 	ai_weight = { factor = 10 } # If we can build it, we will build it
 	on_build_complete = {
 		save_event_target_as = giga_system
-		fromfrom.planet = { save_event_target_as = giga_planet }
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		from = { country_event = { id = giga_dialog.1302 } }	# Notification
 	}
 }
@@ -200,11 +221,19 @@ planetary_computer_2 = {
 
 	build_time = 4700
 	resources = {
-		category = megastructures
+		category = giga_megastructures
 		cost = {
 			alloys = 20000
 			energy = 20000
+			unity = @giga_mega_unity_cost
 		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|alloys|AMOUNT|20000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = alloys AMOUNT = 20000 }
+		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = unity  AMOUNT = @giga_mega_unity_cost }
 	}
 
 	potential = { NOT = { has_global_flag = planetary_computer_disabled } }
@@ -213,7 +242,7 @@ planetary_computer_2 = {
 	ai_weight = { factor = 10 } # If we can build it, we will build it
 	on_build_complete = {
 		save_event_target_as = giga_system
-		fromfrom.planet = { save_event_target_as = giga_planet }
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		from = {
 			country_event = { id = giga_dialog.1303 }				# Notification
 			set_country_flag = has_built_or_repaired_gigastructure	# Triggers Gigastructural Constructs
@@ -236,6 +265,13 @@ planetary_computer_2 = {
 			set_planet_flag = giga_planetary_computer
 		    change_pc = pc_giga_planetary_computer
 			add_modifier = { modifier = "giga_planetary_computer" days = -1 }
+
+			if = {
+				limit = {
+					is_colony = no
+				}
+				giga_start_ai_colony_if_safe = yes
+			}
 		}
 		remove_megastructure = fromfrom
 	}

@@ -1,0 +1,428 @@
+# AI savings account!
+# This system should help the AI to build larger, and more important megas
+# instead of just spamming the little ones...
+# The general idea is that they use a decision to set aside some resources into savings
+# and the cost of various megas are reduced by those savings
+
+################################################################################################
+# Utility
+
+giga_ai_savings_set_category = {
+	set_variable = {
+		which = giga_ai_savings_$CATEGORY$_$RESOURCE$
+		value = $VALUE|0$
+	}
+}
+giga_ai_savings_change_category = {
+	change_variable = {
+		which = giga_ai_savings_$CATEGORY$_$RESOURCE$
+		value = $VALUE|0$
+	}
+}
+
+giga_ai_savings_resource_init = {
+	giga_ai_savings_set_category = { CATEGORY = important RESOURCE = $RESOURCE$ }
+	giga_ai_savings_set_category = { CATEGORY = resource  RESOURCE = $RESOURCE$ }
+	giga_ai_savings_set_category = { CATEGORY = utility   RESOURCE = $RESOURCE$ }
+	giga_ai_savings_set_category = { CATEGORY = military  RESOURCE = $RESOURCE$ }
+
+	set_variable = { which = giga_ai_savings_split_total_$RESOURCE$ value = 1 } # no division by zero warnings thanks
+}
+
+giga_ai_savings_init = {
+	if = {
+		limit = {
+			not = {
+				has_country_flag = giga_ai_savings_init
+			}
+		}
+		set_country_flag = giga_ai_savings_init
+
+		# ok fine I'll flatten it then, for fuck's sake
+
+		#giga_ai_savings_resource_init = { RESOURCE = alloys }
+		#giga_ai_savings_resource_init = { RESOURCE = unity }
+
+		# flattened version of those two lines above
+
+		set_variable = { which = giga_ai_savings_important_alloys 	value = 0 }
+		set_variable = { which = giga_ai_savings_resource_alloys 	value = 0 }
+		set_variable = { which = giga_ai_savings_utility_alloys 	value = 0 }
+		set_variable = { which = giga_ai_savings_military_alloys 	value = 0 }
+
+		set_variable = { which = giga_ai_savings_split_total_alloys value = 1 }
+
+		set_variable = { which = giga_ai_savings_important_unity 	value = 0 }
+		set_variable = { which = giga_ai_savings_resource_unity 	value = 0 }
+		set_variable = { which = giga_ai_savings_utility_unity 		value = 0 }
+		set_variable = { which = giga_ai_savings_military_unity 	value = 0 }
+
+		set_variable = { which = giga_ai_savings_split_total_unity 	value = 1 }
+
+		# end of flattening
+
+		set_variable = { which = giga_ai_savings_important_fraction value = @giga_ai_savings_important_fraction }
+		set_variable = { which = giga_ai_savings_resource_fraction  value = @giga_ai_savings_resource_fraction }
+		set_variable = { which = giga_ai_savings_utility_fraction   value = @giga_ai_savings_utility_fraction }
+		set_variable = { which = giga_ai_savings_military_fraction  value = @giga_ai_savings_military_fraction }
+	}
+}
+
+################################################################################################
+# Invest
+
+# the process goes like this:
+# 1. divide each value by its fraction
+# 2. save the largest value out of the categories
+# 3. multiply that value by each category multiplier
+# 4. subtract the current balance from each
+# 5. divide result by the total across all categories
+# This is the fraction for each category for investment up to the total in step 5
+# after that threshold, use the normal category multipliers
+
+giga_ai_savings_invest = {
+	giga_ai_savings_init = yes
+
+	# 80% is assigned based on need to stabilise categories
+	set_variable = { which = giga_ai_savings_investment_dynamic value = $AMOUNT$ }
+	multiply_variable = { which = giga_ai_savings_investment_dynamic value = 0.8 }
+	giga_ai_savings_invest_dynamic = { RESOURCE = $RESOURCE$ AMOUNT = giga_ai_savings_investment_dynamic }
+
+	# 20% is assigned by the base ratios so other categories always grow
+	set_variable = { which = giga_ai_savings_investment_fixed value = $AMOUNT$ }
+	multiply_variable = { which = giga_ai_savings_investment_fixed value = 0.2 }
+	giga_ai_savings_invest_fixed = { RESOURCE = $RESOURCE$ AMOUNT = giga_ai_savings_investment_fixed }
+}
+
+giga_ai_savings_invest_dynamic = {
+	set_variable = {
+		which = giga_ai_savings_investment
+		value = $AMOUNT$
+	}
+
+	if = {
+		limit = {
+			check_variable = {
+				which = giga_ai_savings_investment
+				value > 0
+			}
+		}
+
+		giga_ai_savings_init = yes
+
+		# set giga_ai_savings_max to the largest value out of each category divided by its ratio
+		set_variable = 	{ which = giga_ai_savings_max value = value:giga_ai_savings_balance_divided_by_fraction|CATEGORY|important|RESOURCE|$RESOURCE$| }
+
+		set_variable = 	{ which = giga_ai_savings_max_vs value = value:giga_ai_savings_balance_divided_by_fraction|CATEGORY|resource|RESOURCE|$RESOURCE$| }
+		if = { limit = { check_variable = { which = giga_ai_savings_max_vs value > giga_ai_savings_max } } set_variable = { which = giga_ai_savings_max value = giga_ai_savings_max_vs } }
+
+		set_variable = 	{ which = giga_ai_savings_max_vs value = value:giga_ai_savings_balance_divided_by_fraction|CATEGORY|utility|RESOURCE|$RESOURCE$| }
+		if = { limit = { check_variable = { which = giga_ai_savings_max_vs value > giga_ai_savings_max } } set_variable = { which = giga_ai_savings_max value = giga_ai_savings_max_vs } }
+
+		set_variable = 	{ which = giga_ai_savings_max_vs value = value:giga_ai_savings_balance_divided_by_fraction|CATEGORY|military|RESOURCE|$RESOURCE$| }
+		if = { limit = { check_variable = { which = giga_ai_savings_max_vs value > giga_ai_savings_max } } set_variable = { which = giga_ai_savings_max value = giga_ai_savings_max_vs } }
+
+		# calculate investment targets for each category
+		set_variable = { which = giga_ai_savings_split_target_important_$RESOURCE$ value = value:giga_ai_savings_split_target|CATEGORY|important|RESOURCE|$RESOURCE$| }
+		set_variable = { which = giga_ai_savings_split_target_resource_$RESOURCE$  value = value:giga_ai_savings_split_target|CATEGORY|resource|RESOURCE|$RESOURCE$| }
+		set_variable = { which = giga_ai_savings_split_target_utility_$RESOURCE$   value = value:giga_ai_savings_split_target|CATEGORY|utility|RESOURCE|$RESOURCE$| }
+		set_variable = { which = giga_ai_savings_split_target_military_$RESOURCE$  value = value:giga_ai_savings_split_target|CATEGORY|military|RESOURCE|$RESOURCE$| }
+
+		# count up the total
+		set_variable = 	  { which = giga_ai_savings_split_total_$RESOURCE$ value = giga_ai_savings_split_target_important_$RESOURCE$ }
+		change_variable = { which = giga_ai_savings_split_total_$RESOURCE$ value = giga_ai_savings_split_target_resource_$RESOURCE$ }
+		change_variable = { which = giga_ai_savings_split_total_$RESOURCE$ value = giga_ai_savings_split_target_utility_$RESOURCE$ }
+		change_variable = { which = giga_ai_savings_split_total_$RESOURCE$ value = giga_ai_savings_split_target_military_$RESOURCE$ }
+
+		if = {
+			limit = {
+				check_variable = {
+					which = giga_ai_savings_split_total_$RESOURCE$
+					value > 0
+				}
+			}
+
+			# apply the invested resources up to the split total
+			change_variable = { which = giga_ai_savings_important_$RESOURCE$ value = value:giga_ai_savings_invest_dynamic_calc|CATEGORY|important|RESOURCE|$RESOURCE$| }
+			change_variable = { which = giga_ai_savings_resource_$RESOURCE$  value = value:giga_ai_savings_invest_dynamic_calc|CATEGORY|resource|RESOURCE|$RESOURCE$| }
+			change_variable = { which = giga_ai_savings_utility_$RESOURCE$   value = value:giga_ai_savings_invest_dynamic_calc|CATEGORY|utility|RESOURCE|$RESOURCE$| }
+			change_variable = { which = giga_ai_savings_military_$RESOURCE$  value = value:giga_ai_savings_invest_dynamic_calc|CATEGORY|military|RESOURCE|$RESOURCE$| }
+
+			# if we are investing more than the split total, invest the rest according to the base fractions
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_ai_savings_investment
+						value > giga_ai_savings_split_total_$RESOURCE$
+					}
+				}
+
+				subtract_variable = {
+					which = giga_ai_savings_investment
+					value = giga_ai_savings_split_total_$RESOURCE$
+				}
+
+				giga_ai_savings_invest_fixed = { RESOURCE = $RESOURCE$ AMOUNT = giga_ai_savings_investment }
+			}
+		}
+	}
+}
+
+giga_ai_savings_invest_fixed = {
+	set_variable = {
+		which = giga_ai_savings_investment
+		value = $AMOUNT$
+	}
+
+	if = {
+		limit = {
+			check_variable = {
+				which = giga_ai_savings_investment
+				value > 0
+			}
+		}
+
+		giga_ai_savings_init = yes
+
+		change_variable = { which = giga_ai_savings_important_$RESOURCE$ value = value:giga_ai_savings_invest_fixed_calc|CATEGORY|important| }
+		change_variable = { which = giga_ai_savings_resource_$RESOURCE$  value = value:giga_ai_savings_invest_fixed_calc|CATEGORY|resource| }
+		change_variable = { which = giga_ai_savings_utility_$RESOURCE$   value = value:giga_ai_savings_invest_fixed_calc|CATEGORY|utility| }
+		change_variable = { which = giga_ai_savings_military_$RESOURCE$  value = value:giga_ai_savings_invest_fixed_calc|CATEGORY|military| }
+
+	}
+}
+
+################################################################################################
+# Withdraw and refund
+
+# scope = mega start
+giga_ai_savings_withdraw = {
+	if = {
+		limit = {
+			exists = from
+		}
+		from = {
+			giga_ai_savings_init = yes
+		}
+	}
+
+	if = {
+		limit = {
+			exists = from
+			from = {
+				is_ai = yes
+				has_country_flag = @giga_ai_savings_init
+			}
+		}
+		set_variable = {
+			which = giga_ai_savings_refund_$RESOURCE$@from
+			value = from.value:giga_ai_savings_cost|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|AMOUNT|$AMOUNT$|
+		}
+
+		from = {
+			subtract_variable = {
+				which = giga_ai_savings_$CATEGORY$_$RESOURCE$
+				value = root.giga_ai_savings_refund_$RESOURCE$@from
+			}
+
+			giga_ai_savings_update_modifiers = yes
+		}
+	}
+}
+
+# scope = mega cancel
+giga_ai_savings_refund = {
+	if = {
+		limit = {
+			exists = from
+		}
+		from = {
+			giga_ai_savings_init = yes
+		}
+	}
+
+	if = {
+		limit = {
+			exists = from
+			from = {
+				is_ai = yes
+				has_country_flag = @giga_ai_savings_init
+			}
+		}
+		from = {
+			if = {
+				limit = {
+					root = {
+						is_variable_set = giga_ai_savings_refund_$RESOURCE$@from
+					}
+				}
+				change_variable = {
+					which = giga_ai_savings_$CATEGORY$_$RESOURCE$
+					value = root.giga_ai_savings_refund_$RESOURCE$@from
+				}
+				clear_variable = root.giga_ai_savings_refund_$RESOURCE$@from
+
+				giga_ai_savings_update_modifiers = yes
+			}
+		}
+	}
+}
+
+################################################################################################
+# Apply modifiers
+
+# this is horrible. absolutely foul. BUT! triggered cost blocks just straight up don't work on megastructures built from ship
+# and megastructure costs can go negative
+# so unfortunately, it has to be every single one, individually
+
+giga_ai_savings_update_modifiers = {
+	# giga_ai_savings_init = yes
+
+	# set_update_modifiers_batch = begin
+
+	# megas
+	remove_modifier = giga_ai_savings_attack_moon_alloys
+	remove_modifier = giga_ai_savings_crystal_megabore_alloys
+	remove_modifier = giga_ai_savings_dyson_sphere_alloys
+	remove_modifier = giga_ai_savings_equatorial_shipyard_alloys
+	remove_modifier = giga_ai_savings_maginot_world_alloys
+	remove_modifier = giga_ai_savings_matter_decompressor_alloys
+	remove_modifier = giga_ai_savings_mega_art_installation_alloys
+	remove_modifier = giga_ai_savings_mega_shipyard_alloys
+	remove_modifier = giga_ai_savings_neutronium_gigaforge_alloys
+	remove_modifier = giga_ai_savings_planetary_computer_alloys
+	remove_modifier = giga_ai_savings_science_nexus_alloys
+	remove_modifier = giga_ai_savings_sentry_array_alloys
+	remove_modifier = giga_ai_savings_star_lifter_alloys
+	remove_modifier = giga_ai_savings_strategic_coordination_alloys
+	remove_modifier = giga_ai_savings_succ_alloys
+	remove_modifier = giga_ai_savings_yggdrasil_orchid_alloys
+
+	remove_modifier = giga_ai_savings_attack_moon_unity
+	remove_modifier = giga_ai_savings_crystal_megabore_unity
+	remove_modifier = giga_ai_savings_dyson_sphere_unity
+	remove_modifier = giga_ai_savings_equatorial_shipyard_unity
+	remove_modifier = giga_ai_savings_maginot_world_unity
+	remove_modifier = giga_ai_savings_matter_decompressor_unity
+	remove_modifier = giga_ai_savings_mega_art_installation_unity
+	remove_modifier = giga_ai_savings_mega_shipyard_unity
+	remove_modifier = giga_ai_savings_neutronium_gigaforge_unity
+	remove_modifier = giga_ai_savings_planetary_computer_unity
+	remove_modifier = giga_ai_savings_science_nexus_unity
+	remove_modifier = giga_ai_savings_sentry_array_unity
+	remove_modifier = giga_ai_savings_star_lifter_unity
+	remove_modifier = giga_ai_savings_strategic_coordination_unity
+	remove_modifier = giga_ai_savings_succ_unity
+	remove_modifier = giga_ai_savings_yggdrasil_orchid_unity
+
+	# gigas
+	remove_modifier = giga_ai_savings_hrae_mc_alloys	
+	remove_modifier = giga_ai_savings_hyperstructural_ass_alloys 
+	remove_modifier = giga_ai_savings_lunar_macroreplicator_alloys
+	remove_modifier = giga_ai_savings_matrioshka_brain_alloys 
+	remove_modifier = giga_ai_savings_nidavellir_forge_alloys 
+
+	remove_modifier = giga_ai_savings_hrae_mc_unity	
+	remove_modifier = giga_ai_savings_hyperstructural_ass_unity
+	remove_modifier = giga_ai_savings_lunar_macroreplicator_unity
+	remove_modifier = giga_ai_savings_matrioshka_brain_unity 
+	remove_modifier = giga_ai_savings_nidavellir_forge_unity
+
+	# if = {
+	# 	limit = {
+	# 		is_ai = yes
+	# 	}
+
+	# 	# megas
+	# 	add_modifier = { modifier = giga_ai_savings_attack_moon_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|5000| }
+	# 	add_modifier = { modifier = giga_ai_savings_crystal_megabore_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|alloys|AMOUNT|5000| } 
+	# 	add_modifier = { modifier = giga_ai_savings_dyson_sphere_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|5000| }
+	# 	add_modifier = { modifier = giga_ai_savings_equatorial_shipyard_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|alloys|AMOUNT|2500| }
+	# 	add_modifier = { modifier = giga_ai_savings_maginot_world_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|5000| }
+	# 	add_modifier = { modifier = giga_ai_savings_matter_decompressor_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|5000| }
+	# 	add_modifier = { modifier = giga_ai_savings_mega_art_installation_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|alloys|AMOUNT|5000| }
+	# 	add_modifier = { modifier = giga_ai_savings_mega_shipyard_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|alloys|AMOUNT|3000| }
+	# 	add_modifier = { modifier = giga_ai_savings_neutronium_gigaforge_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|3500| } 
+	# 	add_modifier = { modifier = giga_ai_savings_planetary_computer_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|alloys|AMOUNT|2500| }
+	# 	add_modifier = { modifier = giga_ai_savings_science_nexus_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|5000| }
+	# 	add_modifier = { modifier = giga_ai_savings_sentry_array_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|alloys|AMOUNT|5000| }
+	# 	add_modifier = { modifier = giga_ai_savings_star_lifter_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|3500| }
+	# 	add_modifier = { modifier = giga_ai_savings_strategic_coordination_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|alloys|AMOUNT|5000| }
+	# 	add_modifier = { modifier = giga_ai_savings_succ_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|5000| }
+	# 	add_modifier = { modifier = giga_ai_savings_yggdrasil_orchid_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|alloys|AMOUNT|5000| }
+
+	# 	add_modifier = { modifier = giga_ai_savings_attack_moon_unity multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_crystal_megabore_unity multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|unity|AMOUNT|@giga_small_mega_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_dyson_sphere_unity multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@giga_big_mega_start_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_equatorial_shipyard_unity multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_maginot_world_unity multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_big_mega_start_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_matter_decompressor_unity multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@giga_big_mega_start_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_mega_art_installation_unity multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_mega_shipyard_unity multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_neutronium_gigaforge_unity multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_planetary_computer_unity multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_science_nexus_unity multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@giga_big_mega_start_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_sentry_array_unity multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_star_lifter_unity multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@giga_big_mega_start_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_strategic_coordination_unity multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_succ_unity multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@giga_small_mega_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_yggdrasil_orchid_unity multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+
+	# 	# gigas
+	# 	add_modifier = { modifier = giga_ai_savings_hrae_mc_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|5000| }	
+	# 	add_modifier = { modifier = giga_ai_savings_hyperstructural_ass_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|alloys|AMOUNT|4000| } 
+	# 	add_modifier = { modifier = giga_ai_savings_lunar_macroreplicator_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|5000| }
+	# 	add_modifier = { modifier = giga_ai_savings_matrioshka_brain_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|10000| } 
+	# 	add_modifier = { modifier = giga_ai_savings_nidavellir_forge_alloys multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|3500| } 
+
+	# 	add_modifier = { modifier = giga_ai_savings_hrae_mc_unity multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@giga_giga_unity_cost| }	
+	# 	add_modifier = { modifier = giga_ai_savings_hyperstructural_ass_unity multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|unity|AMOUNT|@giga_giga_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_lunar_macroreplicator_unity multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_giga_unity_cost| }
+	# 	add_modifier = { modifier = giga_ai_savings_matrioshka_brain_unity multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@giga_giga_unity_cost| } 
+	# 	add_modifier = { modifier = giga_ai_savings_nidavellir_forge_unity multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@giga_giga_unity_cost| }
+	# }
+
+	# set_update_modifiers_batch = end
+}
+
+giga_hide_relic = {
+	#log_error = "HIDE RELIC: START"
+	if = {
+		limit = {
+			has_relic = $RELIC$
+		}
+		set_country_flag = giga_hidden_relic_$RELIC$
+		remove_relic = $RELIC$
+		#log_error = "HIDE RELIC: HIDDEN"
+	}
+}
+
+giga_restore_relic = {
+	#log_error = "RESTORE RELIC: START"
+	if = {
+		limit = {
+			has_country_flag = giga_hidden_relic_$RELIC$
+		}
+		remove_country_flag = giga_hidden_relic_$RELIC$
+		#log_error = "RESTORE RELIC: HAS FLAG"
+		if = {
+			limit = {
+				not = {
+					has_relic = $RELIC$
+				}
+			}
+			add_relic = $RELIC$
+			#log_error = "RESTORE RELIC: RESTORED"
+		}
+	}
+}
+
+giga_hide_unstealable_relics = {
+	#log_error = "HIDE UNSTEALABLE RELICS"
+	giga_hide_relic = { RELIC = r_giga_ai_savings }
+}
+
+giga_restore_unstealable_relics = {
+	#log_error = "RESTORE UNSTEALABLE RELICS"
+	giga_restore_relic = { RELIC = r_giga_ai_savings }
+}

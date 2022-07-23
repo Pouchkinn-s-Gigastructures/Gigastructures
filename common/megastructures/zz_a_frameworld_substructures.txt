@@ -1,0 +1,798 @@
+frameworld_outpost_0 = {
+	entity = "giga_frameworld_outpost_entity"
+	construction_entity = "giga_frameworld_outpost_entity"
+	construction_blocks_and_blocked_by = none
+	portrait = "GFX_megastructure_construction_background"
+	show_galactic_map_icon = no
+	place_entity_on_planet_plane = no
+	construction_blocks_and_blocked_by = none
+	
+
+	build_time = 720
+	resources = {
+		category = frameworld_outposts
+		cost = {
+			alloys = 400 # machine colony ship cost
+			influence = 50 # actually less because they struggle # 50% more than a colony ship because no influence cost on frame expansion
+		}
+		upkeep = { 
+			energy = 5 
+		}
+
+		# oh boy this is... a lot, you can find all the math behind this over in
+		# common/scipt_values/giga_frameworld_outpost_values.txt
+		# but beware, there's a LOT going on in there to generate these numbers!
+		produces = { minerals = 1 				multiplier = value:giga_frameworld_outpost_raw_output|JOB|miners|CATEGORY|worker|RESOURCE|minerals| }
+		produces = { energy = 1					multiplier = value:giga_frameworld_outpost_raw_output|JOB|technicians|CATEGORY|worker|RESOURCE|energy| }
+		produces = { food = 1 					multiplier = value:giga_frameworld_outpost_raw_output|JOB|farmers|CATEGORY|worker|RESOURCE|food| }
+		
+		produces = { alloys = 1					multiplier = value:giga_frameworld_outpost_advanced_output|JOB|metallurgists|CATEGORY|specialist|RESOURCE|alloys| }
+		produces = { consumer_goods = 1 		multiplier = value:giga_frameworld_outpost_advanced_output|JOB|artisans|CATEGORY|specialist|RESOURCE|consumer_goods| }
+
+		produces = { physics_research = 1 		multiplier = value:giga_frameworld_outpost_science_output|JOB|researchers|CATEGORY|specialist|RESOURCE|physics_research| }
+		produces = { society_research = 1 		multiplier = value:giga_frameworld_outpost_science_output|JOB|researchers|CATEGORY|specialist|RESOURCE|society_research| }
+		produces = { engineering_research = 1 	multiplier = value:giga_frameworld_outpost_science_output|JOB|researchers|CATEGORY|specialist|RESOURCE|engineering_research| }
+
+		produces = { unity = 1 					multiplier = value:giga_frameworld_outpost_unity_output|JOB|administrators|CATEGORY|specialist|RESOURCE|unity| }
+
+		produces = { exotic_gases = 1 			multiplier = value:giga_frameworld_outpost_rare_output|JOB|planet_sr_miners|CATEGORY|worker|RESOURCE|exotic_gases| }
+		produces = { volatile_motes = 1 		multiplier = value:giga_frameworld_outpost_rare_output|JOB|planet_sr_miners|CATEGORY|worker|RESOURCE|volatile_motes| }
+		produces = { rare_crystals = 1 			multiplier = value:giga_frameworld_outpost_rare_output|JOB|planet_sr_miners|CATEGORY|worker|RESOURCE|rare_crystals| }
+
+		produces = { sr_dark_matter = 1 		multiplier = value:giga_frameworld_outpost_rare_output|JOB|planet_sr_miners|CATEGORY|specialist|RESOURCE|sr_dark_matter| }
+		produces = { sr_zro = 1 				multiplier = value:giga_frameworld_outpost_rare_output|JOB|planet_sr_miners|CATEGORY|specialist|RESOURCE|sr_zro| }
+		produces = { sr_living_metal = 1 		multiplier = value:giga_frameworld_outpost_rare_output|JOB|planet_sr_miners|CATEGORY|specialist|RESOURCE|sr_living_metal| }
+		produces = { nanites = 1 				multiplier = value:giga_frameworld_outpost_rare_output|JOB|planet_sr_miners|CATEGORY|specialist|RESOURCE|nanites| }
+	}
+
+	potential = {
+		has_origin = origin_frameworld
+	}
+
+	possible = { exists = starbase		custom_tooltip = { fail_text = "requires_inside_border" is_inside_border = from } }
+
+	placement_rules = {
+		planet_possible = {
+			can_have_frameworld_outpost = yes
+		}
+	}
+
+	ai_weight = {
+    	weight = 100000 # VERY important, we should always build if possible
+	}
+
+	on_build_complete = {
+		from = {
+			save_event_target_as = outpost_owner
+		}
+
+    	fromfrom.planet = {
+			# new outpost pops effect
+			if = {
+				limit = {
+					event_target:outpost_owner = { has_origin = origin_frameworld } # minor sanity check
+					not = { has_planet_flag = giga_frameworld_outpost_pops }
+				}
+
+				set_planet_flag = giga_frameworld_outpost_pops
+
+				# add pops to home equal to bonus pops for colonies
+				event_target:outpost_owner = {
+					random_owned_planet = {
+						limit = {
+							has_planet_flag = giga_frameworld@event_target:outpost_owner
+						}
+						save_event_target_as = giga_frameworld
+
+						# add pops equal to colony pop bonus
+						set_update_modifiers_batch = begin
+						while = {
+							count = value:giga_frameworld_outpost_pops|WHO|event_target:outpost_owner|WHERE|fromfrom.planet|
+
+							create_pop = {
+								species = event_target:outpost_owner
+							}
+						}
+						set_update_modifiers_batch = end
+					}
+				}
+			}
+			# end pops
+
+			giga_frameworld_set_outpost_flags = yes
+
+			giga_frameworld_create_outpost_holder_colony = yes
+		}
+		from = {
+			giga_frameworld_recalculate_outpost_bonus = yes
+
+			# if this is our first outpost, fire off a notification event
+			if = {
+				limit = {
+					not = { has_country_flag = first_colony }
+				}
+				set_country_flag = first_colony
+				country_event = {
+					id = giga_frameworld_origin.107
+					scopes = {
+						from = fromfrom.planet
+					}
+				}
+			}
+
+			# send notification if pops were spawned
+			# takes a lot of scopes from right here so don't use elsewhere
+			giga_frameworld_outpost_message = yes
+		}
+		fromfrom.solar_system = {
+			giga_frameworld_update_system_icon = yes
+		}
+	}
+}
+
+frameworld_outpost_marked_0 = {
+	entity = "giga_frameworld_outpost_entity"
+	construction_entity = "giga_frameworld_outpost_entity"
+	portrait = "GFX_megastructure_construction_background"
+	show_galactic_map_icon = no
+	place_entity_on_planet_plane = no
+	construction_blocks_and_blocked_by = none
+	
+
+	# this is incredibly silly but might just be silly enough to work...
+	bypass_type = giga_frameworld_outpost_icon
+
+	build_time = 720
+	resources = {
+		category = frameworld_outposts
+		cost = {
+			alloys = 400 # machine colony ship cost
+			influence = 50 # actually less because they struggle # 50% more than a colony ship because no influence cost on frame expansion
+		}
+		upkeep = { 
+			energy = 5 
+		}
+
+		# oh boy this is... a lot, you can find all the math behind this over in
+		# common/scipt_values/giga_frameworld_outpost_values.txt
+		# but beware, there's a LOT going on in there to generate these numbers!
+		produces = { minerals = 1 				multiplier = value:giga_frameworld_outpost_raw_output|JOB|miners|CATEGORY|worker|RESOURCE|minerals| }
+		produces = { energy = 1					multiplier = value:giga_frameworld_outpost_raw_output|JOB|technicians|CATEGORY|worker|RESOURCE|energy| }
+		produces = { food = 1 					multiplier = value:giga_frameworld_outpost_raw_output|JOB|farmers|CATEGORY|worker|RESOURCE|food| }
+		
+		produces = { alloys = 1					multiplier = value:giga_frameworld_outpost_advanced_output|JOB|metallurgists|CATEGORY|specialist|RESOURCE|alloys| }
+		produces = { consumer_goods = 1 		multiplier = value:giga_frameworld_outpost_advanced_output|JOB|artisans|CATEGORY|specialist|RESOURCE|consumer_goods| }
+
+		produces = { physics_research = 1 		multiplier = value:giga_frameworld_outpost_science_output|JOB|researchers|CATEGORY|specialist|RESOURCE|physics_research| }
+		produces = { society_research = 1 		multiplier = value:giga_frameworld_outpost_science_output|JOB|researchers|CATEGORY|specialist|RESOURCE|society_research| }
+		produces = { engineering_research = 1 	multiplier = value:giga_frameworld_outpost_science_output|JOB|researchers|CATEGORY|specialist|RESOURCE|engineering_research| }
+
+		produces = { unity = 1 					multiplier = value:giga_frameworld_outpost_unity_output|JOB|administrators|CATEGORY|specialist|RESOURCE|unity| }
+
+		produces = { exotic_gases = 1 			multiplier = value:giga_frameworld_outpost_rare_output|JOB|planet_sr_miners|CATEGORY|worker|RESOURCE|exotic_gases| }
+		produces = { volatile_motes = 1 		multiplier = value:giga_frameworld_outpost_rare_output|JOB|planet_sr_miners|CATEGORY|worker|RESOURCE|volatile_motes| }
+		produces = { rare_crystals = 1 			multiplier = value:giga_frameworld_outpost_rare_output|JOB|planet_sr_miners|CATEGORY|worker|RESOURCE|rare_crystals| }
+
+		produces = { sr_dark_matter = 1 		multiplier = value:giga_frameworld_outpost_rare_output|JOB|planet_sr_miners|CATEGORY|specialist|RESOURCE|sr_dark_matter| }
+		produces = { sr_zro = 1 				multiplier = value:giga_frameworld_outpost_rare_output|JOB|planet_sr_miners|CATEGORY|specialist|RESOURCE|sr_zro| }
+		produces = { sr_living_metal = 1 		multiplier = value:giga_frameworld_outpost_rare_output|JOB|planet_sr_miners|CATEGORY|specialist|RESOURCE|sr_living_metal| }
+		produces = { nanites = 1 				multiplier = value:giga_frameworld_outpost_rare_output|JOB|planet_sr_miners|CATEGORY|specialist|RESOURCE|nanites| }
+	}
+
+	potential = {
+		always = no # special version with marker, updated by event
+	}
+
+	possible = { exists = starbase		custom_tooltip = { fail_text = "requires_inside_border" is_inside_border = from } }
+
+	placement_rules = {
+		planet_possible = {
+			can_have_frameworld_outpost = yes
+		}
+	}
+
+	ai_weight = {
+    	weight = 0
+	}
+}
+
+frameworld_outpost_wreck_0 = {
+	entity = "giga_frameworld_outpost_destroyed_entity"
+	portrait = "GFX_megastructure_construction_background"
+	show_galactic_map_icon = no
+	place_entity_on_planet_plane = no
+	construction_blocks_and_blocked_by = none
+	
+
+	build_time = 0
+
+	upgrade_from = {
+		frameworld_outpost_0
+		frameworld_outpost_marked_0
+	}
+	upgrade_desc = hide
+
+	potential = {
+		#not = {
+		#	and = {
+		#		exists = owner
+		#		owner = { has_origin = origin_frameworld }
+		#	}
+		#}
+		always = no
+	}
+	
+	ai_weight = {
+		weight = 0
+	}
+}
+
+frameworld_outpost_wreck_1 = {
+	entity = "giga_frameworld_outpost_entity"
+	construction_entity = "giga_frameworld_outpost_entity"
+	portrait = "GFX_megastructure_construction_background"
+	show_galactic_map_icon = no
+	place_entity_on_planet_plane = no
+	construction_blocks_and_blocked_by = none
+	
+
+	build_time = 180
+	resources = {
+		category = frameworld_outposts
+		cost = {
+			alloys = 100
+		}
+		upkeep = { 
+			energy = 5 
+		}
+	}
+
+	potential = {
+		has_origin = origin_frameworld
+	}
+
+	upgrade_from = {
+		frameworld_outpost_wreck_0
+	}
+	upgrade_desc = hide
+
+	ai_weight = {
+    	weight = 100000 # VERY important, we should always repair if possible
+	}
+
+	on_build_complete = {
+		if = { limit = { from = { has_origin = origin_frameworld } }  
+
+			fromfrom = {
+				planet = {
+					giga_frameworld_create_outpost = { WHO = fromfrom.owner } # replace with a proper outpost on completion
+				}
+
+				# wreck removal dealt with in the create outpost effect
+				#delete_megastructure = this
+			}
+
+			from = {
+				giga_frameworld_recalculate_outpost_bonus = yes
+			}
+
+		}
+		else = {
+			fromfrom = {
+				upgrade_megastructure_to = frameworld_outpost_wreck_0
+			}
+		}
+	}
+}
+
+frameworld_harvest_0 = {
+	entity = ""
+	construction_entity = ""
+	portrait = "GFX_megastructure_construction_background"
+	show_galactic_map_icon = no
+	place_entity_on_planet_plane = yes
+	construction_blocks_and_blocked_by = none
+	
+	
+	build_time = 360
+	resources = {
+		category = deposit_blockers_frameworld
+		cost = {
+			energy = 1000
+			influence = 25 # might remove this
+		}
+	}
+	
+	potential = {
+    	has_origin = origin_frameworld
+		#always = yes
+	}
+	
+	possible = { exists = starbase		custom_tooltip = { fail_text = "requires_inside_border" is_inside_border = from } }
+	
+	placement_rules = {
+		planet_possible = {
+			frameworld_can_harvest_asteroid = yes
+
+			# don't let the AI harvest asteroids this way if they have deposits, or only rare deposits post midgame
+			hidden_trigger = {
+				OR = {
+					space_owner = {
+						is_ai = no
+					}
+					AND = {
+						space_owner = {
+							is_ai = yes
+						}
+						OR = {
+							has_deposit = no
+							AND = {
+								mid_game_years_passed > 0
+								frameworld_asteroid_has_rare_resource = no
+							}
+						}
+					}
+				}	
+			}
+		}
+	}
+	
+	ai_weight = {
+    	weight = 10 # baseline
+
+		# increased chance if we've got multiple idle constructors and plenty of resources
+		modifier = {
+			factor = 10
+			FROM = {
+				has_resource = {
+					type = influence
+					amount > 200
+				}
+				has_resource = {
+					type = energy
+					amount > 5000
+				}
+				has_monthly_income = {
+					resource = energy
+					value > 30
+				}
+				count_owned_fleet = {
+					count > 1
+					limit = {
+						is_ship_class = shipclass_constructor
+						is_fleet_idle = yes
+					}
+				}
+			}
+		}
+
+		# reduced chance if we have lots of free space at home
+		modifier = {
+			factor = 0.1
+			FROM = {
+				exists = capital_scope
+				capital_scope = {
+					free_district_slots > 8
+				}
+			}
+		}
+
+		# reduced even further if we have LOTS of free space at home
+		modifier = {
+			factor = 0.25
+			FROM = {
+				exists = capital_scope
+				capital_scope = {
+					free_district_slots > 16
+				}
+			}
+		}
+
+		# massively increased chance if we're having problems
+		modifier = {
+			factor = 100
+			FROM = {
+				exists = capital_scope
+				capital_scope = {
+					OR = {
+						free_district_slots < 1
+						free_housing < -5
+					}
+				}
+			}
+		}
+	}
+	
+	on_build_complete = {
+		from = {
+			random_owned_planet = {
+				limit = {
+					has_planet_flag = giga_frameworld@prev
+				}
+
+				giga_frameworld_expand_deposit = { 
+					DEPOSIT = d_frameworld_asteroid
+					VAR = giga_frameworld_asteroids
+				}
+				giga_frameworld_expand_deposit = { 
+					DEPOSIT = d_frameworld_expansion 
+					VAR = giga_frameworld_expansions
+				}
+				change_planet_size = 1
+				giga_frameworld_update_entity_with_fallback = yes
+				frameworld_conduct_audit_check_ai = yes
+
+				# if we successfully expanded, remove the harvested object
+				fromfrom.planet = { giga_frameworld_remove_asteroid = yes }
+			}
+		}
+		remove_megastructure = fromfrom
+		
+		# # deal with the asteroid
+    	# fromfrom.planet = {
+		# 	giga_frameworld_remove_asteroid = yes
+		# }
+    
+    	# # remove the structure since this is a process instead
+    	# remove_megastructure = fromfrom
+    
+    
+		# from = {
+		# 	# country_event =  { id = utopia.61 } # placeholder, this is the habitat complete event
+			
+		# 	# using this until I can be sure event targets work how I want
+		# 	capital_scope = {
+        # 		add_deposit = d_frameworld_asteroid
+        # 		add_deposit = d_frameworld_expansion
+		# 		change_planet_size = 1
+		# 		giga_frameworld_update_entity_with_fallback = yes
+		# 		frameworld_conduct_audit_check_ai = yes
+		# 	}
+		# }
+	}
+}
+
+frameworld_salvage_habitat_0 = {
+	entity = ""
+	construction_entity = ""
+	portrait = "GFX_megastructure_construction_background"
+	show_galactic_map_icon = no
+	place_entity_on_planet_plane = yes
+	construction_blocks_and_blocked_by = none
+	
+	
+	build_time = 720
+	resources = {
+		category = deposit_blockers_frameworld
+		cost = {
+			energy = 2500
+			influence = 50
+		}
+	}
+	
+	potential = {
+    	has_origin = origin_frameworld
+		has_technology = tech_habitat_1
+	}
+	
+	possible = { exists = starbase		custom_tooltip = { fail_text = "requires_inside_border" is_inside_border = from } }
+	
+	placement_rules = {
+		planet_possible = {
+			frameworld_can_salvage_habitat = yes
+		}
+	}
+	
+	ai_weight = {
+    	weight = 10 # baseline
+
+		# increased chance if we've got multiple idle constructors and plenty of resources
+		modifier = {
+			factor = 20
+			FROM = {
+				has_resource = {
+					type = influence
+					amount > 200
+				}
+				has_resource = {
+					type = energy
+					amount > 5000
+				}
+				has_monthly_income = {
+					resource = energy
+					value > 30
+				}
+				count_owned_fleet = {
+					count > 1
+					limit = {
+						is_ship_class = shipclass_constructor
+						is_fleet_idle = yes
+					}
+				}
+			}
+		}
+
+		# reduced chance if we have lots of free space at home
+		modifier = {
+			factor = 0.1
+			FROM = {
+				exists = capital_scope
+				capital_scope = {
+					free_district_slots > 8
+				}
+			}
+		}
+
+		# reduced even further if we have LOTS of free space at home
+		modifier = {
+			factor = 0.25
+			FROM = {
+				exists = capital_scope
+				capital_scope = {
+					free_district_slots > 16
+				}
+			}
+		}
+
+		# massively increased chance if we're having problems
+		modifier = {
+			factor = 100
+			FROM = {
+				exists = capital_scope
+				capital_scope = {
+					OR = {
+						free_district_slots < 1
+						free_housing < -5
+					}
+				}
+			}
+		}
+	}
+	
+	on_build_complete = {
+		from = {
+			random_owned_planet = {
+				limit = {
+					has_planet_flag = giga_frameworld@prev
+				}
+
+				giga_frameworld_expand_deposit = { 
+					DEPOSIT = d_frameworld_habitat
+					VAR = giga_frameworld_habitats
+					COUNT = fromfrom.planet.trigger:planet_size
+				}
+				giga_frameworld_expand_deposit = { 
+					DEPOSIT = d_frameworld_expansion 
+					VAR = giga_frameworld_expansions
+					COUNT = fromfrom.planet.trigger:planet_size
+				}
+				change_planet_size = fromfrom.planet.trigger:planet_size
+				giga_frameworld_update_entity_with_fallback = yes
+				frameworld_conduct_audit_check_ai = yes
+
+				# if we successfully expanded, remove the harvested object
+				fromfrom.planet = { giga_frameworld_remove_asteroid = yes }
+			}
+		}
+		remove_megastructure = fromfrom
+
+		# # clean up the habitat
+		# fromfrom.planet = {
+		# 	giga_frameworld_remove_asteroid = yes
+		# }
+
+    	# # remove the structure since this is a process instead
+    	# remove_megastructure = fromfrom
+    
+    	# from = {
+		# 	# country_event =  { id = utopia.61 } # placeholder, this is the habitat complete event
+			
+		# 	# using this until I can be sure event targets work how I want
+		# 	capital_scope = {
+		# 		while = {
+		# 			count = fromfrom.planet.trigger:planet_size
+
+		# 			add_deposit = d_frameworld_habitat
+        # 			add_deposit = d_frameworld_expansion
+		# 			change_planet_size = 1
+		# 		}
+		# 		giga_frameworld_update_entity_with_fallback = yes
+		# 		frameworld_conduct_audit_check_ai = yes
+		# 	}
+		# }
+	}
+}
+
+### Penrose sphere upgrade
+
+frameworld_penrose_0 = {
+	entity = "giga_frameworld_penrose_0_entity"
+	portrait = "GFX_megastructure_construction_background"
+
+	potential = { always = no }
+}
+
+frameworld_penrose_1 = {
+	entity = "giga_frameworld_penrose_1_entity"
+	construction_entity = "giga_frameworld_penrose_1_entity"
+	portrait = "GFX_megastructure_construction_background"
+
+	upgrade_from = { frameworld_penrose_0 }
+
+	build_time = 2700
+	resources = {
+		category = megastructures
+		cost = { alloys = 5000 }
+		upkeep = { energy = 10 }
+	}
+
+	potential = { NOT = { has_global_flag = penrose_sphere_disabled } }
+	possible = { from = { has_technology = giga_tech_penrose_sphere_2 } }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_frameworld_origin.002 } }	# Notification
+	}
+}
+
+frameworld_penrose_2 = {
+	entity = "giga_frameworld_penrose_2_entity"
+	construction_entity = "giga_frameworld_penrose_2_entity"
+	portrait = "GFX_megastructure_construction_background"
+
+	upgrade_from = { frameworld_penrose_1 }
+
+	build_time = 2700
+	resources = {
+		category = megastructures
+		cost = { alloys = 7500 }
+		upkeep = { energy = 25 }
+	}
+
+	potential = { NOT = { has_global_flag = penrose_sphere_disabled } }
+	possible = { from = { has_technology = giga_tech_penrose_sphere_2 } }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { 
+			set_country_flag = has_built_or_repaired_megastructure
+			set_country_flag = has_built_or_repaired_gigastructure
+			country_event = { id = giga_frameworld_origin.003 } # Notification
+		}	
+
+		create_ambient_object = {
+			type = giga_frameworld_penrose
+			location = fromfrom.planet
+			use_3d_location = yes
+			entity_face_object = fromfrom.planet
+		}
+
+		remove_megastructure = fromfrom
+
+		random_system_planet = {
+			limit = {
+				is_planet_class = pc_giga_frameworld
+			}
+			add_deposit = d_frameworld_penrose
+			validate_planet_buildings_and_districts = yes
+			remove_planet_flag = frameworld_upgrade
+			
+			if = {
+				limit = {
+					has_deposit = d_frameworld_decompressor
+				}
+				fromfrom.planet = {
+					create_ambient_object = {
+						type = giga_frameworld_penrose_decompressor_combo
+						location = fromfrom.planet
+						use_3d_location = yes
+						entity_face_object = fromfrom.planet
+					}
+				}
+			}
+		}
+
+		star = {
+			set_planet_entity = { entity = black_hole_giga_entity } # get rid of the accretion disk
+		}
+	}
+}
+
+### Matter decompressor upgrade
+
+frameworld_decompressor_0 = {
+	entity = "giga_frameworld_decompressor_0_entity"
+	portrait = "GFX_megastructure_construction_background"
+
+	potential = { always = no }
+}
+
+frameworld_decompressor_1 = {
+	entity = "giga_frameworld_decompressor_1_entity"
+	construction_entity = "giga_frameworld_decompressor_1_entity"
+	portrait = "GFX_megastructure_construction_background"
+
+	upgrade_from = { frameworld_decompressor_0 }
+
+	build_time = 2700
+	resources = {
+		category = megastructures
+		cost = { alloys = 5000 }
+		upkeep = { energy = 10 }
+	}
+
+	potential = { NOT = { has_global_flag = vanilla_matter_disabled } }
+	possible = { from = { has_technology = tech_matter_decompressor } }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { country_event = { id = giga_frameworld_origin.005 } }	# Notification
+	}
+}
+
+frameworld_decompressor_2 = {
+	entity = "giga_frameworld_decompressor_2_entity"
+	construction_entity = "giga_frameworld_decompressor_2_entity"
+	portrait = "GFX_megastructure_construction_background"
+
+	upgrade_from = { frameworld_decompressor_1 }
+
+	build_time = 2700
+	resources = {
+		category = megastructures
+		cost = { alloys = 7500 }
+		upkeep = { energy = 25 }
+	}
+
+	potential = { NOT = { has_global_flag = vanilla_matter_disabled } }
+	possible = { from = { has_technology = tech_matter_decompressor } }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { save_event_target_as = giga_planet }
+		from = { 
+			set_country_flag = has_built_or_repaired_megastructure
+			set_country_flag = has_built_or_repaired_gigastructure
+			country_event = { id = giga_frameworld_origin.006 } # Notification
+		}	
+
+		create_ambient_object = {
+			type = giga_frameworld_decompressor
+			location = fromfrom.planet
+			use_3d_location = yes
+			entity_face_object = fromfrom.planet
+		}
+
+		remove_megastructure = fromfrom
+
+		random_system_planet = {
+			limit = {
+				is_planet_class = pc_giga_frameworld
+			}
+			add_deposit = d_frameworld_decompressor
+			validate_planet_buildings_and_districts = yes
+			remove_planet_flag = frameworld_upgrade
+
+			if = {
+				limit = {
+					has_deposit = d_frameworld_penrose
+				}
+				fromfrom.planet = {
+					create_ambient_object = {
+						type = giga_frameworld_penrose_decompressor_combo
+						location = fromfrom.planet
+						use_3d_location = yes
+						entity_face_object = fromfrom.planet
+					}
+				}
+			}
+		}
+	}
+}

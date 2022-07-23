@@ -1,0 +1,238 @@
+namespace = giga_ai_savings
+
+# monthly modifier update
+country_event = {
+	id = giga_ai_savings.001
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		is_ai = yes
+		has_country_flag = @giga_ai_savings_init
+		giga_is_playable_country = yes
+	}
+
+	immediate = {
+		set_variable = {
+			which = giga_ai_savings_stockpile_cap
+			value = value:giga_ai_savings_stockpile_threshold|RESOURCE|alloys|BASE|15000|
+		}
+
+		# invest 5% of total alloys if above 90% cap
+		if = {
+			limit = {
+				resource_stockpile_compare = {
+					resource = alloys
+					value > 1
+					mult = giga_ai_savings_stockpile_cap
+				}
+			}
+
+			set_variable = {
+				which = giga_ai_savings_stockpile_investment
+				value = value:giga_ai_savings_stockpile_fraction|RESOURCE|alloys|PERCENT|5|
+			}
+
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_ai_savings_stockpile_investment
+						value > 0
+					}
+				}
+
+				add_resource = {
+					alloys = -1
+					mult = giga_ai_savings_stockpile_investment
+				}
+
+				multiply_variable = {
+					which = giga_ai_savings_stockpile_investment
+					value = value:giga_ai_savings_multiplier|RESOURCE|alloys|
+				}
+
+				giga_ai_savings_invest = { RESOURCE = alloys AMOUNT = giga_ai_savings_stockpile_investment }
+			}
+		}
+
+		# invest 5% of alloy and unity income if it's above 100 and we have some in stock
+		if = {
+			limit = {
+				resource_income_compare = {
+					resource = alloys
+					value > 100
+				}
+				resource_stockpile_compare = {
+					resource = alloys
+					value > 2000
+				}
+			}
+
+			set_variable = {
+				which = giga_ai_savings_income_investment
+				value = value:giga_ai_savings_income_fraction|RESOURCE|alloys|PERCENT|5|
+			}
+
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_ai_savings_income_investment
+						value > 0
+					}
+				}
+
+				add_resource = {
+					alloys = -1
+					mult = giga_ai_savings_income_investment
+				}
+
+				multiply_variable = {
+					which = giga_ai_savings_income_investment
+					value = value:giga_ai_savings_multiplier|RESOURCE|alloys|
+				}
+
+				giga_ai_savings_invest = { RESOURCE = alloys AMOUNT = giga_ai_savings_income_investment }
+			}
+		}
+
+		if = {
+			limit = {
+				resource_income_compare = {
+					resource = unity
+					value > 100
+				}
+				resource_stockpile_compare = {
+					resource = unity
+					value > 100
+				}
+			}
+
+			set_variable = {
+				which = giga_ai_savings_income_investment
+				value = value:giga_ai_savings_income_fraction|RESOURCE|unity|PERCENT|2|
+			}
+
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_ai_savings_income_investment
+						value > 0
+					}
+				}
+
+				add_resource = {
+					unity = -1
+					mult = giga_ai_savings_income_investment
+				}
+
+				multiply_variable = {
+					which = giga_ai_savings_income_investment
+					value = value:giga_ai_savings_multiplier|RESOURCE|unity|
+				}
+
+				giga_ai_savings_invest = { RESOURCE = unity AMOUNT = giga_ai_savings_income_investment }
+			}
+		}
+		
+		giga_ai_savings_update_modifiers = yes # these might just be too much to deal with
+	}
+}
+
+# sequester non-stealable relics before capital planet capture
+country_event = {
+	id = giga_ai_savings.100
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		From = {
+			is_country_type = default
+		}
+		FromFrom = { is_capital = yes }
+		any_war = {
+			any_attacker = { is_same_value = root }
+			any_defender = { is_same_value = from }
+			NOT = {
+				using_war_goal = {
+					type = wg_take_galatron
+					owner = attacker
+				}
+			}
+		}
+	}
+
+	immediate = {
+		from = {
+			giga_hide_unstealable_relics = yes
+		}
+	}
+}
+
+# fire return event on delay after capital planet capture
+country_event = {
+	id = giga_ai_savings.101
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		From = {
+			is_country_type = default
+		}
+		FromFrom = { is_capital = yes }
+		any_war = {
+			any_attacker = { is_same_value = root }
+			any_defender = { is_same_value = from }
+			NOT = {
+				using_war_goal = {
+					type = wg_take_galatron
+					owner = attacker
+				}
+			}
+		}
+	}
+
+	immediate = {
+		from = {
+			# delay the restoration because the stealing event fires a second event after evaluation
+			country_event = {
+				id = giga_ai_savings.102
+				days = 5
+			}
+		}
+	}
+}
+
+# restore sequestered non-stealable relics
+country_event = {
+	id = giga_ai_savings.102
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		giga_restore_unstealable_relics = yes
+	}
+}
+
+# remove all non-stealable relics on country destruction to prevent transfer by guilli etc
+country_event = {
+	id = giga_ai_savings.103
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		giga_hide_unstealable_relics = yes
+	}
+}
+
+# remove all non-stealable relics on country integration to prevent any transfer
+country_event = {
+	id = giga_ai_savings.104
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		from = {
+			giga_hide_unstealable_relics = yes
+		}
+	}
+}

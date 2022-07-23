@@ -1,0 +1,322 @@
+has_frameworld_build_cooldown = {
+	owner = {
+		has_modifier = frameworld_ai_build_cooldown
+	}
+}
+
+# this one is mostly for encouraging extra production later in the game
+frameworld_want_industrial = {
+	exists = owner
+	owner = {
+		is_ai = yes
+	}
+	mid_game_years_passed > 0
+	has_building_construction = no
+	free_jobs <= 0
+
+	free_amenities > 5
+
+	check_variable = {
+		which = frameworld_industrial_districts
+		value <= frameworld_science_districts
+	}
+
+	NOR = {
+		has_available_jobs = foundry
+		has_available_jobs = catalytic_technician
+
+		has_available_jobs = fabricator
+		has_available_jobs = alloy_drone
+		has_available_jobs = catalytic_drone
+	}
+
+	owner = {
+		has_monthly_income = {
+			resource = energy
+			value > 50
+		}
+		has_monthly_income = {
+			resource = minerals
+			value > 100
+		}
+	}
+
+	or = {
+		not = { has_deposit = d_frameworld_advanced_industrial }
+		owner = {
+			has_monthly_income = {
+				resource = volatile_motes
+				value >= 1
+			}
+		}
+	}
+}
+
+frameworld_want_anticrime = {
+	exists = owner
+	owner = {
+		is_ai = yes
+	}
+	has_building_construction = no
+	# allow if we have crime, no free crime jobs, and some motes
+	NOR = {
+		has_available_jobs = patrol_drone
+		has_available_jobs = enforcer
+	}
+	planet_crime > 50
+	owner = {
+		has_monthly_income = {
+			resource = volatile_motes
+			value > -1 # we can buy in if it dips a little
+		}
+		has_monthly_income = {
+			resource = energy
+			value > 10
+		}
+	}
+}
+
+frameworld_want_refinery = {
+	exists = owner
+	owner = {
+		is_ai = yes
+	}
+	has_building_construction = no
+	# check if we want any of the particular resources
+	OR = {
+		# gases
+		AND = {
+			owner = {
+        		has_technology = "tech_exotic_gases"
+				has_monthly_income = {
+					resource = exotic_gases
+					value < 1
+				}
+			}
+			NOR = {
+				has_available_jobs = gas_refiner
+				has_available_jobs = gas_refiner_drone
+			}
+		}
+
+		# crystals
+		AND = {
+			owner = {
+				has_technology = "tech_rare_crystals"
+				has_monthly_income = {
+					resource = rare_crystals
+					value < 1
+				}
+			}
+			NOR = {
+				has_available_jobs = translucer
+				has_available_jobs = translucer_drone
+			}
+		}
+
+		# motes
+		AND = {
+			owner = {
+				has_technology = "tech_volatile_motes"
+				has_monthly_income = {
+					resource = volatile_motes
+					value < 1
+				}
+			}
+			NOR = {
+				has_available_jobs = chemist
+				has_available_jobs = chemist_drone
+			}
+		}
+	}
+
+	# check incomes
+	owner = {
+		has_monthly_income = {
+			resource = minerals
+			value > 100
+		}
+		has_monthly_income = {
+			resource = energy
+			value > 30
+		}
+	}
+}
+
+frameworld_want_science = {
+	exists = owner
+	owner = {
+		is_ai = yes
+	}
+	has_building_construction = no
+
+	check_variable = {
+		which = frameworld_science_districts
+		value < frameworld_industrial_districts
+	}
+
+	# allow if we have spare gases and energy
+	NOR = {
+		has_available_jobs = researcher
+		has_available_jobs = brain_drone
+		has_available_jobs = calculator
+	}
+	free_amenities > 10
+	free_jobs <= 0
+
+	# only do this if we don't have labs to convert over
+	nor = {
+		has_building = building_research_lab_2
+		has_building = building_research_lab_3
+	}
+
+	owner = {
+		has_monthly_income = {
+			resource = exotic_gases
+			value > 2
+		}
+		has_monthly_income = {
+			resource = energy
+			value > 60
+		}
+		has_monthly_income = {
+			resource = alloys
+			value > 30
+		}
+	}
+}
+
+frameworld_want_fortress = {
+	exists = owner
+	owner = {
+		is_ai = yes
+		used_naval_capacity_percent >= 1.0
+	}
+
+	has_building_construction = no
+	NOR = {
+		has_available_jobs = soldier
+		has_available_jobs = warrior_drone
+	}
+	free_district_slots > 1
+	num_districts = {
+		type = district_giga_frameworld_fortress
+		value < value:giga_frameworld_max_stronghold_districts
+	}
+
+	owner = {
+		has_monthly_income = {
+			resource = volatile_motes
+			value >= 1
+		}
+		has_monthly_income = {
+			resource = energy
+			value > 60
+		}
+		has_monthly_income = {
+			resource = alloys
+			value > 30
+		}
+	}
+}
+
+# do we want to build a sanctuary before we have the districts
+frameworld_want_sanctuary_building = {
+	exists = owner
+	owner = {
+		is_ai = yes
+		has_valid_civic = civic_machine_servitor
+		not = {
+			has_technology = tech_paradise_dome # if we don't have sanctuary districts yet
+		}
+	}
+
+	has_building_construction = no
+	not = { has_available_jobs = bio_trophy }
+	or = {
+		free_building_slots > 0
+		has_building = building_drone_storage
+		has_building = building_drone_megastorage
+	}
+
+	is_variable_set = giga_biotrophy_unemployed_count
+	check_variable = {
+		which = giga_biotrophy_unemployed_count
+		value > 0
+	}
+}
+
+frameworld_want_sanctuary = {
+	exists = owner
+	owner = {
+		is_ai = yes
+		has_valid_civic = civic_machine_servitor
+		has_technology = tech_paradise_dome # if we DO have sanctuary districts
+	}
+
+	has_building_construction = no
+	not = { has_available_jobs = bio_trophy }
+
+	is_variable_set = giga_biotrophy_unemployed_count
+	check_variable = {
+		which = giga_biotrophy_unemployed_count
+		value > 0
+	}
+
+	owner = {
+		has_monthly_income = {
+			resource = exotic_gases
+			value >= 1
+		}
+	}
+}
+
+frameworld_want_decompressor_district = {
+	has_deposit = d_frameworld_decompressor
+
+	exists = owner
+	owner = {
+		is_ai = yes
+		resource_income_compare = {
+			resource = minerals
+			value < 0
+		}
+	}
+
+	has_building_construction = no
+	nor = { 
+		has_available_jobs = miner
+		has_available_jobs = mining_drone
+	}
+
+	is_variable_set = giga_frameworld_unemployed
+	check_variable = {
+		which = giga_frameworld_unemployed
+		value > 0
+	}
+}
+
+frameworld_want_penrose_district = {
+	has_deposit = d_frameworld_penrose
+
+	exists = owner
+	owner = {
+		is_ai = yes
+		resource_income_compare = {
+			resource = energy
+			value < 0
+		}
+	}
+
+	has_building_construction = no
+	nor = { 
+		has_available_jobs = technician
+		has_available_jobs = technician_drone
+	}
+
+	is_variable_set = giga_frameworld_unemployed
+	check_variable = {
+		which = giga_frameworld_unemployed
+		value > 0
+	}
+}

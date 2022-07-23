@@ -1,0 +1,1597 @@
+giga_frameworld_init_variables = {
+	set_variable = {
+		which = giga_frameworld_expansions
+		value = 0
+	}
+	set_variable = {
+		which = giga_frameworld_structure_expansions
+		value = 0
+	}
+
+	giga_frameworld_reset_variables = yes
+}
+
+giga_frameworld_reset_variables = {
+	
+	set_variable = {
+		which = giga_frameworld_expansion_cost_multiplier
+		value = 1
+	}
+	set_variable = {
+		which = giga_frameworld_expansion_bulk_5_cost_multiplier
+		value = 1
+	}
+	set_variable = {
+		which = giga_frameworld_expansion_bulk_10_cost_multiplier
+		value = 1
+	}
+	set_variable = {
+		which = giga_frameworld_expansion_cost_buffer
+		value = 0
+	}
+	
+	set_variable = {
+		which = frameworld_science_districts
+		value = 0
+	}
+	set_variable = {
+		which = frameworld_industrial_districts
+		value = 0
+	}
+	set_variable = {
+		which = frameworld_advanced_industrial_districts
+		value = 0
+	}
+	set_variable = {
+		which = frameworld_simulation_districts
+		value = 0
+	}
+
+	set_variable = {
+		which = frameworld_unemployed
+		value = 0
+	}
+}
+
+# planet scope
+giga_frameworld_recalculate_buffer = {
+	set_variable = {
+		which = giga_frameworld_expansion_cost_buffer
+		value = @giga_frameworld_expansion_cost_base
+	}
+	multiply_variable = {
+		which = giga_frameworld_expansion_cost_buffer
+		value = giga_frameworld_expansion_cost_multiplier
+	}
+	multiply_variable = {
+		which = giga_frameworld_expansion_cost_buffer
+		value = 5
+	}
+}
+
+# planet scope
+giga_frameworld_recalculate_exponent = {
+	# set to the base level
+	set_variable = {
+		which = giga_frameworld_expansion_cost_exponent
+		value = @giga_frameworld_expansion_cost_exponent
+	}
+	
+	if = {
+		limit = {
+			exists = owner
+		}
+		
+		owner = {
+			if = {
+				limit = {
+					has_technology = tech_habitat_1
+				}
+				prev = {
+					change_variable = {
+						which = giga_frameworld_expansion_cost_exponent
+						value = @giga_frameworld_expansion_exponent_habitat
+					}
+				}
+			}
+			
+			if = {
+				limit = {
+					has_ascension_perk = ap_voidborn
+				}
+				prev = {
+					change_variable = {
+						which = giga_frameworld_expansion_cost_exponent
+						value = @giga_frameworld_expansion_exponent_voidborne
+					}
+				}
+			}
+			
+			if = {
+				limit = {
+					has_technology = tech_ring_world
+				}
+				prev = {
+					change_variable = {
+						which = giga_frameworld_expansion_cost_exponent
+						value = @giga_frameworld_expansion_exponent_ringworld
+					}
+				}
+			}
+		}
+	}
+}
+
+# planet scope
+giga_frameworld_recalculate_variables = {
+	# cost mult to 1
+	giga_frameworld_reset_variables = yes
+	
+	# recalculate the exponent
+	giga_frameworld_recalculate_exponent = yes
+	
+	# deal with calculating base cost
+	set_variable = { 
+		which = giga_frameworld_expansion_cost_base
+		value = @giga_frameworld_expansion_cost_base
+	}
+	
+	if = {
+		limit = {
+			exists = owner
+			owner = {
+				has_technology = tech_habitat_2
+			}
+		}
+		change_variable = {
+			which = giga_frameworld_expansion_cost_base
+			value = @giga_frameworld_expansion_cost_habitat_2
+		}
+	}
+	
+	if = {
+		limit = {
+			exists = owner
+			owner = {
+				has_technology = tech_habitat_3
+			}
+		}
+		change_variable = {
+			which = giga_frameworld_expansion_cost_base
+			value = @giga_frameworld_expansion_cost_habitat_3
+		}
+	}
+
+	# recalculate multiplier from expansion count
+	if = {
+		limit = {
+			is_variable_set = giga_frameworld_structure_expansions
+		}
+		while = {
+			count = giga_frameworld_structure_expansions
+
+			multiply_variable = {
+				which = giga_frameworld_expansion_cost_multiplier
+				value = giga_frameworld_expansion_cost_exponent
+			}
+		}
+	}
+	
+	# set up the bulk buy options
+	set_variable = { 
+		# temp value for our mult
+		which = giga_frameworld_expansion_multiplier_bulk
+		value = giga_frameworld_expansion_cost_multiplier
+	}
+	set_variable = {
+		# +5 starts with the +1 cost
+		which = giga_frameworld_expansion_bulk_5_cost_multiplier
+		value = giga_frameworld_expansion_cost_multiplier
+	}
+	
+	while = {
+		count = 4 # the current mult is for +1 so for +5 we need 4 more
+		multiply_variable = { 
+			# increase our temp multiplier
+			which = giga_frameworld_expansion_multiplier_bulk
+			value = giga_frameworld_expansion_cost_exponent
+		}
+		change_variable = { 
+			# add the cost to our bulk cost
+			which = giga_frameworld_expansion_bulk_5_cost_multiplier
+			value = giga_frameworld_expansion_multiplier_bulk
+		}
+	}
+	
+	set_variable = { 
+		# +10 starts with the +5 cost
+		which = giga_frameworld_expansion_bulk_10_cost_multiplier
+		value = giga_frameworld_expansion_bulk_5_cost_multiplier
+	}
+	
+	while = {
+		count = 5 # increment 5 more times to get to +10
+		multiply_variable = { 
+			# increase temp multiplier
+			which = giga_frameworld_expansion_multiplier_bulk
+			value = giga_frameworld_expansion_cost_exponent
+		}
+		change_variable = { 
+			# add to bulk cost
+			which = giga_frameworld_expansion_bulk_10_cost_multiplier
+			value = giga_frameworld_expansion_multiplier_bulk
+		}
+	}
+	
+	# tooltip variables
+	set_variable = {
+		which = giga_frameworld_expansion_cost_multiplier_tooltip
+		value = giga_frameworld_expansion_cost_multiplier
+	}
+	round_variable_to_closest = {
+		which = giga_frameworld_expansion_cost_multiplier_tooltip
+		value = 0.01
+	}
+	
+	set_variable = {
+		which = giga_frameworld_expansion_bulk_5_cost_multiplier_tooltip
+		value = giga_frameworld_expansion_bulk_5_cost_multiplier
+	}
+	round_variable_to_closest = {
+		which = giga_frameworld_expansion_bulk_5_cost_multiplier_tooltip
+		value = 0.01
+	}
+	
+	set_variable = {
+		which = giga_frameworld_expansion_bulk_10_cost_multiplier_tooltip
+		value = giga_frameworld_expansion_bulk_10_cost_multiplier
+	}
+	round_variable_to_closest = {
+		which = giga_frameworld_expansion_bulk_10_cost_multiplier_tooltip
+		value = 0.01
+	}
+	
+	# recalculate "we have lots of alloys AI buffer"
+	giga_frameworld_recalculate_buffer = yes
+
+	# recalculate maginot district cap
+	giga_frameworld_update_maginot_deposits = yes
+}
+
+# planet scope
+giga_frameworld_expand_deposit = {
+	hidden_effect = {
+		if = {
+			limit = {
+				has_deposit = $DEPOSIT$
+			}
+
+			change_variable = {
+				which = $VAR$
+				value = $COUNT|1$
+			}
+		}
+		else = {
+			add_deposit = $DEPOSIT$
+
+			set_variable = {
+				which = $VAR$
+				value = $COUNT|1$
+			}
+		}
+	}
+	tooltip = {
+		add_deposit = $DEPOSIT$_tooltip
+	}
+}
+
+###############################################################################################################
+
+# country scope
+giga_frameworld_recalculate_outpost_bonus = {
+	if = {
+		limit = {
+			has_origin = origin_frameworld # check here for situations like systems changing hands so we don't need to know which side is frameworld
+		}
+		
+		# move value to old value
+		if = {
+			limit = {
+				is_variable_set = giga_frameworld_outpost_count
+			}
+			set_variable = {
+				which = giga_frameworld_outpost_count_old
+				value = giga_frameworld_outpost_count
+			}
+		}
+		# or set it to 0 if it wasn't set before
+		else = {
+			set_variable = {
+				which = giga_frameworld_outpost_count_old
+				value = 0
+			}
+		}
+		
+		# count up our number of outposts - shame we don't seem to be able to export this
+		set_variable = {
+			which = giga_frameworld_outpost_count
+			value = 0
+		}
+		every_owned_megastructure = {
+			limit = {
+				is_active_frameworld_outpost = yes
+			}
+			prev = {
+				change_variable = {
+					which = giga_frameworld_outpost_count
+					value = 1
+				}
+			}
+		}
+		
+		# if the new and old numbers don't match, change things
+		if = {
+			limit = {
+				not = {
+					check_variable = {
+						which = giga_frameworld_outpost_count
+						value = giga_frameworld_outpost_count_old
+					}
+				}
+			}
+			
+			# remove the modifier if we already have it
+			if = {
+				limit = {
+					has_modifier = frameworld_outpost_bonus
+				}
+				remove_modifier = frameworld_outpost_bonus
+			}
+			
+			# set the modifier if we have more than 0 outposts
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_frameworld_outpost_count
+						value > 0
+					}
+				}
+				
+				add_modifier = {
+					modifier = frameworld_outpost_bonus
+					multiplier = giga_frameworld_outpost_count
+				}
+			}
+			
+			# update outpost score
+			
+			# set temp variable to -50 * old outposts
+			set_variable = {
+				which = frameworld_outpost_score
+				value = giga_frameworld_outpost_count_old
+			}
+			multiply_variable = {
+				which = frameworld_outpost_score
+				value = -50
+			}
+			
+			# subtract old score
+			add_victory_score = {
+				source = giga_frameworld_outpost_score
+				score = frameworld_outpost_score
+			}
+			
+			# set temp variable to 50 * current outposts
+			set_variable = {
+				which = frameworld_outpost_score
+				value = giga_frameworld_outpost_count
+			}
+			multiply_variable = {
+				which = frameworld_outpost_score
+				value = 50
+			}
+			
+			# add new score
+			add_victory_score = {
+				source = giga_frameworld_outpost_score
+				score = frameworld_outpost_score
+			}
+		}
+		
+	}
+}
+
+###############################################################################################################
+
+giga_frameworld_set_outpost_flags = {
+	set_planet_flag = giga_frameworld_outpost
+}
+
+giga_frameworld_remove_outpost_wrecks = {
+	solar_system = {
+		every_system_megastructure = { 
+			limit = {
+				exists = planet
+				planet = {
+					is_same_value = prevprevprev
+				}
+				
+				OR = {
+					is_megastructure_type = frameworld_outpost_wreck_0
+					is_megastructure_type = frameworld_outpost_wreck_1
+				}
+			}
+			delete_megastructure = this
+		}
+	}
+}
+
+# this = megastructure
+giga_frameworld_wreck_outpost = {
+	[[WHO] set_owner = $WHO$ ]
+	upgrade_megastructure_to = frameworld_outpost_wreck_0
+	[[CULTURE] set_graphical_culture = $CULTURE$ ]
+	
+	[[!NOCOLONY]
+	planet = {
+		remove_all_buildings = yes
+		destroy_colony = yes
+	}
+	]
+}
+
+# this = planet
+giga_frameworld_create_outpost = {
+	[[WHO] if = { limit = { $WHO$ = { has_origin = origin_frameworld } } ]
+
+	giga_frameworld_set_outpost_flags = yes
+	giga_frameworld_remove_outpost_wrecks = yes
+	
+	solar_system = {
+		# create fresh outpost
+		spawn_megastructure = {
+			type = frameworld_outpost_0
+			owner = $WHO$
+			planet = prev
+			graphical_culture = $WHO$
+		}
+		
+		# promote or demote to do system icons
+		giga_frameworld_update_system_icon = yes
+	}
+	
+	giga_frameworld_create_outpost_holder_colony = yes
+
+	[[WHO] } ]
+}
+
+# this = planet
+giga_frameworld_create_outpost_holder_colony = {
+	giga_frameworld_create_outpost_country = yes
+	
+	# god damn this bug where it eats the sector sucks, save whether we have a sector and a governor
+	if = { 
+		limit = {
+			exists = space_owner.capital_scope
+		}
+		
+		space_owner.capital_scope = {
+			if = {
+				limit = {
+					exists = sector
+					exists = prev.sector
+					sector = {
+						is_same_value = prevprev.sector
+					}
+				}
+				set_planet_flag = frameworld_reassign_sector
+				
+				if = {
+					limit = {
+						exists = sector.leader
+					}
+					sector.leader = {
+						save_event_target_as = frameworld_leader
+					}
+					set_planet_flag = frameworld_reassign_leader
+				}
+			}
+		}
+	}
+	
+	# do the actual colony lol
+	create_colony = {
+		owner = space_owner
+	}
+
+	# fire colonised actions for the frameworld nation
+	fire_on_action = {
+		on_action = on_colonized
+	}
+
+	set_owner = event_target:frameworld_outpost_country
+	remove_all_buildings = yes
+	add_building = building_frameworld_outpost
+	every_owned_pop = {
+		kill_pop = yes
+	}
+
+	# fire colony started event for the OUTPOST nation, for compat stuff
+	fire_on_action = {
+		on_action = on_colonization_started
+	}
+	
+	# fix the sector if it would've collapsed - most of this damn effect is working around the bug
+	if = { 
+		limit = {
+			exists = space_owner.capital_scope
+		}
+		
+		space_owner.capital_scope = {
+			if = {
+				limit = {
+					has_planet_flag = frameworld_reassign_sector
+				}
+				set_sector_capital = yes
+				remove_planet_flag = frameworld_reassign_sector
+				
+				if = {
+					limit = {
+						has_planet_flag = frameworld_reassign_leader
+					}
+					sector = {
+						assign_leader = event_target:frameworld_leader
+					}
+					remove_planet_flag = frameworld_reassign_leader
+				}
+			}
+		}
+	}
+}
+
+giga_frameworld_create_outpost_country = {
+	if = {
+		limit = {
+			not = {
+				exists = event_target:frameworld_outpost_country
+			}
+		}
+		
+		create_country = {
+			type = frameworld_outpost_country_type
+			
+			name = "NAME_frameworld_outpost_country"
+
+			flag = {
+				icon = {
+					category = "special"
+					file = "frameworld_outpost.dds"
+				}
+				background= {
+					category = "backgrounds"
+					file = "circle.dds"
+				}
+				colors={
+					"grey"
+					"dark_grey"
+					"null"
+					"null"
+				}
+			}
+			
+			effect = {
+				save_global_event_target_as = frameworld_outpost_country
+
+				create_leader = {
+					name = "Outpost Leader"
+					class = ruler
+					species = this
+					skill = 1
+					immortal = yes
+					traits = {
+						trait = leader_trait_ruler_hive_mind # just one which doesn't affect output
+					} 
+				}
+
+				set_leader = last_created_leader
+
+				set_faction_hostility = {
+					set_friendly = yes
+				}
+			}
+		}
+	}
+}
+
+# hand over any planetary outposts to the system's owner
+# scope = system
+giga_frameworld_change_outposts_ownership = {
+	every_system_megastructure = {
+		limit = {
+			is_frameworld_outpost = yes
+			exists = owner
+			owner = {
+				not = {
+					is_same_value = prevprev.owner
+				}
+			}
+		}
+		
+		set_owner = prev.owner
+	}
+}
+
+# hand over ANY megas owned by the outpost country to system owner
+# scope = system
+giga_frameworld_fix_outpost_country_megas = {
+	if = {
+		limit = {
+			exists = owner
+		}
+		
+		every_system_megastructure = {
+			limit = {
+				exists = owner
+				owner = {
+					is_same_empire = event_target:frameworld_outpost_country
+				}
+			}
+			
+			set_owner = solar_system.owner
+		}
+	}
+}
+
+# promote or demote outposts to have the system icon so there's exactly one in system
+# scope = system
+giga_frameworld_update_system_icon = {
+	# need to promote
+	if = {
+		limit = {
+			any_system_megastructure = {
+				is_megastructure_type = frameworld_outpost_0
+			}
+			not = {
+				any_system_megastructure = {
+					is_megastructure_type = frameworld_outpost_marked_0
+				}
+			}
+		}
+		# replace one normal with marked
+		random_system_megastructure = {
+			limit = {
+				is_megastructure_type = frameworld_outpost_0
+			}
+			
+			solar_system = {
+				spawn_megastructure = { 
+					type = frameworld_outpost_marked_0
+					owner = prev.owner
+					graphical_culture = prev
+					planet = prev.planet
+				}
+			}
+			delete_megastructure = this
+		}
+	}
+	# need to demote
+	while = {
+		limit = {
+			count_system_megastructure = {
+				count >= 2
+				limit = {
+					is_megastructure_type = frameworld_outpost_marked_0
+				}
+			}
+		}
+		
+		# replace one marked with normal
+		random_system_megastructure = {
+			limit = {
+				is_megastructure_type = frameworld_outpost_marked_0
+			}
+			
+			solar_system = {
+				spawn_megastructure = { 
+					type = frameworld_outpost_0
+					owner = prev.owner
+					graphical_culture = prev
+					planet = prev.planet
+				}
+			}
+			delete_megastructure = this
+		}
+	}
+}
+
+###############################################################################################################
+
+giga_frameworld_remove_asteroid = {
+	# remove mining stations etc
+	if = { limit = { has_orbital_station = yes } orbital_station = { dismantle = yes } }
+	
+	# clear colony
+	if = { limit = { is_colony = yes } destroy_colony = yes }
+
+	#remove_planet = yes # seems removing here causes a crash, let's mark it unusable and change class instead
+	set_planet_flag = megastructure
+	set_planet_flag = has_megastructure
+	change_pc = pc_giga_empty_space_asteroid
+	clear_planet_modifiers = yes
+	clear_deposits = yes
+	set_name = "pc_giga_empty_space"
+}
+
+giga_frameworld_start_ai_build_cooldown = {
+	owner = {
+		add_modifier = {
+			modifier = frameworld_ai_build_cooldown
+			days = 33
+		}
+	}
+}
+
+###############################################################################################################
+
+giga_frameworld_apply_expanded_maintenance_modifier = {
+	if = {
+		limit = {
+			not = {
+				has_modifier = frameworld_expanded_maintenance_protocol
+			}
+		}
+		add_modifier = {
+			modifier = frameworld_expanded_maintenance_protocol
+		}
+	}
+	hidden_effect = {
+		if = {
+			limit = {
+				not = {
+					has_deposit = d_frameworld_expanded_maintenance_protocol
+				}
+			}
+			add_deposit = d_frameworld_expanded_maintenance_protocol
+		}
+	}
+}
+
+giga_frameworld_apply_ai_artisan_modifier = {
+	
+	# adjust up and down once per month
+	if = {
+		limit = {
+			planet_resource_compare = {
+				resource = consumer_goods
+				value > 100
+			}
+		}
+		change_variable = {
+			which = frameworld_ai_artisan_modifier
+			value = 1
+		}
+	}
+	else_if = {
+		limit = {
+			planet_resource_compare = {
+				resource = consumer_goods
+				value < 0
+			}
+		}
+		change_variable = {
+			which = frameworld_ai_artisan_modifier
+			value = -1
+		}
+	}
+	
+	# make sure we don't send the variable negative by being in deficit
+	if = {
+		limit = {
+			check_variable = {
+				which = frameworld_ai_artisan_modifier
+				value < 0
+			}
+		}
+		set_variable = {
+			which = frameworld_ai_artisan_modifier
+			value = 0
+		}
+	}
+	
+	# apply the modifier
+	remove_modifier = frameworld_ai_artisans
+	if = {
+		limit = {
+			check_variable = {
+				which = frameworld_ai_artisan_modifier
+				value > 0
+			}
+		}
+		
+		add_modifier = {
+			modifier = frameworld_ai_artisans
+			multiplier = this.frameworld_ai_artisan_modifier
+		}
+	}
+}
+
+###############################################################################################################
+
+giga_frameworld_outpost_message = {
+	fromfrom.planet = {
+		set_variable = {
+			which = giga_frameworld_outpost_pops
+			value = value:giga_frameworld_outpost_pops|WHO|event_target:outpost_owner|WHERE|this|
+		}
+	}
+
+	if = {
+		limit = {
+			exists = event_target:giga_frameworld
+			fromfrom.planet = {
+				check_variable = {
+					which = giga_frameworld_outpost_pops
+					value > 0
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				fromfrom.planet = {
+					check_variable = {
+						which = giga_frameworld_outpost_pops
+						value = 1
+					}
+				}
+			}
+
+			# SINGULAR
+
+			create_message = {
+				type = GIGA_FRAMEWORLD_MESSAGE_TYPE_OUTPOST_POPS
+				localization = GIGA_FRAMEWORLD_MESSAGE_OUTPOST_POPS
+				days = 30
+				target = fromfrom.planet
+	
+				variable = {
+					type = name
+					localization = PLANET
+					scope = fromfrom.planet
+				}
+				variable = {
+					type = name
+					localization = FRAME
+					scope = event_target:giga_frameworld
+				}
+				variable = {
+					type = name
+					localization = SPECIES
+					scope = event_target:outpost_owner.species
+				}
+			}
+		}
+		else = {
+			# PLURAL
+
+			create_message = {
+				type = GIGA_FRAMEWORLD_MESSAGE_TYPE_OUTPOST_POPS
+				localization = GIGA_FRAMEWORLD_MESSAGE_OUTPOST_POPS_PLURAL
+				days = 30
+				target = fromfrom.planet
+	
+				variable = {
+					type = name
+					localization = PLANET
+					scope = fromfrom.planet
+				}
+				variable = {
+					type = name
+					localization = FRAME
+					scope = event_target:giga_frameworld
+				}
+				variable = {
+					type = name
+					localization = SPECIES
+					scope = event_target:outpost_owner.species
+				}
+				variable = {
+					type = variable
+					varname = giga_frameworld_outpost_pops
+					localization = COUNT
+					scope = fromfrom.planet
+				}
+			}
+		}
+	}
+}
+
+giga_frameworld_update_maginot_deposits = {
+	set_update_modifiers_batch = begin
+
+	# SHIELD DEPOSITS ######################################################
+	while = {
+		count = value:giga_frameworld_remove_max_maginot_shield_districts
+		remove_deposit = d_frameworld_maginot_max_shields
+	}
+	while = {
+		count = value:giga_frameworld_add_max_maginot_shield_districts
+		add_deposit = d_frameworld_maginot_max_shields
+	}
+
+	# GUN DEPOSITS ######################################################
+	while = {
+		count = value:giga_frameworld_remove_max_maginot_gun_districts
+		remove_deposit = d_frameworld_maginot_max_guns
+	}
+	while = {
+		count = value:giga_frameworld_add_max_maginot_gun_districts
+		add_deposit = d_frameworld_maginot_max_guns
+	}
+
+	set_update_modifiers_batch = end
+}
+giga_frameworld_start_maginot_shield = {
+	change_variable = {
+		which = frameworld_building_maginot_shield
+		value = 1
+	}
+	giga_frameworld_update_maginot_deposits = yes
+}
+giga_frameworld_stop_maginot_shield = {
+	change_variable = {
+		which = frameworld_building_maginot_shield
+		value = -1
+	}
+	giga_frameworld_update_maginot_deposits = yes
+}
+giga_frameworld_start_maginot_gun = {
+	change_variable = {
+		which = frameworld_building_maginot_gun
+		value = 1
+	}
+	giga_frameworld_update_maginot_deposits = yes
+}
+giga_frameworld_stop_maginot_gun = {
+	change_variable = {
+		which = frameworld_building_maginot_gun
+		value = -1
+	}
+	giga_frameworld_update_maginot_deposits = yes
+}
+
+# update frameworld entity with graphical culture fallback
+giga_frameworld_update_entity_with_fallback = {
+	[[WHO] $WHO$ = { save_event_target_as = giga_frame_country } ]
+	[[!WHO] owner = { save_event_target_as = giga_frame_country } ]
+
+	if = {
+		limit = {
+			# cwtools please, be reasonable here
+			#$WHO|owner$ = {
+			event_target:giga_frame_country = {
+				NOR = {
+					graphical_culture = aquatic_01
+					graphical_culture = arthropoid_01
+					graphical_culture = avian_01
+					graphical_culture = fungoid_01
+					graphical_culture = humanoid_01
+					graphical_culture = mammalian_01
+					graphical_culture = molluscoid_01
+					graphical_culture = nemesis_01
+					graphical_culture = plantoid_01
+					graphical_culture = reptilian_01
+					graphical_culture = lithoid_01
+					graphical_culture = necroid_01
+				}
+			}
+		}
+		giga_frameworld_update_entity = { CULTURE = mammalian_01 }
+	}
+	else = {
+		giga_frameworld_update_entity = { CULTURE = event_target:giga_frame_country }
+	}
+}
+
+###############################################################################################################
+###############################################################################################################
+#          AUDIT
+###############################################################################################################
+###############################################################################################################
+
+frameworld_conduct_audit_check_ai = {
+	if = {
+		limit = {
+			exists = owner
+			owner = {
+				is_ai = yes
+			}
+		}
+		frameworld_conduct_audit = yes
+	}
+}
+
+frameworld_conduct_audit = {
+	# update megastructure cost variable
+	hidden_effect = {
+		if = {
+			limit = {
+				exists = owner
+			}
+			owner = {
+				# start with 1 for our multiplier
+				set_variable = {
+					which = giga_frameworld_megastructure_cost
+					value = 1
+				}
+				set_variable = {
+					which = giga_frameworld_megastructure_cost_mod
+					value = 0
+				}
+				# get the base megas cost mult
+				export_modifier_to_variable = {
+					modifier = megastructures_cost_mult
+					variable = giga_frameworld_megastructure_cost_mod
+				}
+				change_variable = {
+					which = giga_frameworld_megastructure_cost
+					value = giga_frameworld_megastructure_cost_mod
+				}
+			}
+		}
+	}
+	
+	### buildings
+	if = { limit = { frameworld_audit_foundry1 = yes } frameworld_audit_foundry1_effect = yes }
+	else_if = { limit = { frameworld_audit_foundry2 = yes } frameworld_audit_foundry2_effect = yes }
+	
+	else_if = { limit = { frameworld_audit_energygrid1 = yes } frameworld_audit_energygrid1_effect = yes }
+	else_if = { limit = { frameworld_audit_mineralhub1 = yes } frameworld_audit_mineralhub1_effect = yes }
+	else_if = { limit = { frameworld_audit_energygrid2 = yes } frameworld_audit_energygrid2_effect = yes }
+	else_if = { limit = { frameworld_audit_mineralhub2 = yes } frameworld_audit_mineralhub2_effect = yes }
+	
+	else_if = { limit = { frameworld_audit_crime = yes } frameworld_audit_crime_effect = yes }
+	
+	else_if = { limit = { frameworld_audit_sanctuary1 = yes } frameworld_audit_sanctuary1_effect = yes }
+	else_if = { limit = { frameworld_audit_sanctuary2 = yes } frameworld_audit_sanctuary2_effect = yes }
+	else_if = { limit = { frameworld_audit_sanctuary3 = yes } frameworld_audit_sanctuary3_effect = yes }
+	
+	else_if = { limit = { frameworld_audit_supercomputer = yes } frameworld_audit_supercomputer_effect = yes }
+	
+	else_if = { limit = { frameworld_audit_refinery = yes } frameworld_audit_refinery_effect = yes }
+	
+	else_if = { limit = { frameworld_audit_science2 = yes } frameworld_audit_science2_effect = yes }
+	else_if = { limit = { frameworld_audit_science3 = yes } frameworld_audit_science3_effect = yes }
+	else_if = { limit = { frameworld_audit_science1 = yes } frameworld_audit_science1_effect = yes } # 1 after 2 and 3 because it costs gas upkeep
+	
+	else_if = { limit = { frameworld_audit_unity2 = yes } frameworld_audit_unity2_effect = yes }
+	else_if = { limit = { frameworld_audit_unity3 = yes } frameworld_audit_unity3_effect = yes }
+	else_if = { limit = { frameworld_audit_unity1 = yes } frameworld_audit_unity1_effect = yes } # 1 after 2 and 3 because it costs crystal upkeep
+	
+	else_if = { limit = { frameworld_audit_hydroponics = yes } frameworld_audit_hydroponics_effect = yes }
+	
+	### upgrades
+	if = { limit = { frameworld_audit_upgrade_advanced_city  = yes } frameworld_audit_upgrade_advanced_city_effect = yes }
+	else_if = { limit = { frameworld_audit_upgrade_advanced_industrial = yes } frameworld_audit_upgrade_advanced_industrial_effect = yes }
+	else_if = { limit = { frameworld_audit_upgrade_advanced_sanctuary  = yes } frameworld_audit_upgrade_advanced_sanctuary_effect = yes }
+	
+	else_if = { limit = { frameworld_audit_upgrade_gaia  = yes } frameworld_audit_upgrade_gaia_effect = yes }
+	
+	else_if = { limit = { frameworld_audit_upgrade_penrose = yes } frameworld_audit_upgrade_penrose_effect = yes }
+	else_if = { limit = { frameworld_audit_upgrade_decompressor  = yes } frameworld_audit_upgrade_decompressor_effect = yes }
+	
+	else_if = { limit = { frameworld_audit_upgrade_expanded_infrastructure  = yes } frameworld_audit_upgrade_expanded_infrastructure_effect = yes }
+	else_if = { limit = { frameworld_audit_upgrade_computing_complex  = yes } frameworld_audit_upgrade_computing_complex_effect = yes }
+	else_if = { limit = { frameworld_audit_upgrade_maginot  = yes } frameworld_audit_upgrade_maginot = yes }
+	
+	### count up industrial districts
+	# hidden_effect = {
+	# 	export_trigger_value_to_variable = {
+	# 		trigger = num_districts
+	# 		parameters = {
+	# 			type = district_giga_frameworld_industrial
+	# 		}
+	# 		variable = frameworld_industrial_districts
+	# 	}
+	# 	export_trigger_value_to_variable = {
+	# 		trigger = num_districts
+	# 		parameters = {
+	# 			type = district_giga_frameworld_industrial_advanced
+	# 		}
+	# 		variable = frameworld_advanced_industrial_districts
+	# 	}
+	# 	change_variable = {
+	# 		which = frameworld_industrial_districts
+	# 		value = frameworld_advanced_industrial_districts
+	# 	}
+		
+	# 	### count up sceince districts
+	# 	export_trigger_value_to_variable = {
+	# 		trigger = num_districts
+	# 		parameters = {
+	# 			type = district_giga_frameworld_science
+	# 		}
+	# 		variable = frameworld_science_districts
+	# 	}
+		
+	# 	### count up unity districts
+	# 	export_trigger_value_to_variable = {
+	# 		trigger = num_districts
+	# 		parameters = {
+	# 			type = district_giga_frameworld_simulation
+	# 		}
+	# 		variable = frameworld_simulation_districts
+	# 	}
+	# }
+}
+
+###############################################################################################################
+### buildings
+
+frameworld_audit_foundry1_effect = {
+	owner = {
+		add_resource = {
+			minerals = -600
+			volatile_motes = -100
+		}
+	}
+	
+	remove_building = building_foundry_1
+	add_building = building_foundry_2
+}
+
+frameworld_audit_foundry2_effect = {
+	owner = {
+		add_resource = {
+			minerals = -800
+			volatile_motes = -200
+		}
+	}
+	
+	remove_building = building_foundry_2
+	add_building = building_foundry_3
+}
+
+frameworld_audit_crime_effect = {
+	remove_building = building_sentinel_posts
+	remove_building = building_sentinel_posts
+	add_district = district_giga_frameworld_anticrime
+}
+
+frameworld_audit_science1_effect = {
+	owner = {
+		add_resource = {
+			exotic_gases = -50
+		}
+	}
+	
+	remove_building = building_research_lab_1
+	remove_building = building_research_lab_1
+	add_district = district_giga_frameworld_science
+}
+
+frameworld_audit_science2_effect = {
+	remove_building = building_research_lab_2
+	add_district = district_giga_frameworld_science
+}
+
+frameworld_audit_science3_effect = {
+	remove_building = building_research_lab_3
+	add_district = district_giga_frameworld_science
+	add_district = district_giga_frameworld_science
+}
+
+frameworld_audit_unity1_effect = {
+	owner = {
+		add_resource = {
+			rare_crystals = -50
+		}
+	}
+	
+	remove_building = building_uplink_node
+	remove_building = building_uplink_node
+	add_district = district_giga_frameworld_simulation
+}
+
+frameworld_audit_unity2_effect = {
+	remove_building = building_network_junction
+	add_district = district_giga_frameworld_simulation
+}
+
+frameworld_audit_unity3_effect = {
+	remove_building = building_system_conflux
+	add_district = district_giga_frameworld_simulation
+	add_district = district_giga_frameworld_simulation
+}
+
+frameworld_audit_energygrid1_effect = {
+	owner = {
+		add_resource = {
+			minerals = -300
+			alloys = -100
+		}
+	}
+	
+	frameworld_audit_remove_drone_storage = yes
+	add_building = building_energy_grid
+}
+
+frameworld_audit_energygrid2_effect = {
+	owner = {
+		add_resource = {
+			minerals = -900
+			alloys = -150
+			exotic_gases = -50
+		}
+	}
+	
+	remove_building = building_energy_grid
+	add_building = building_energy_nexus
+}
+
+frameworld_audit_mineralhub1_effect = {
+	owner = {
+		add_resource = {
+			minerals = -300
+			alloys = -100
+		}
+	}
+	
+	frameworld_audit_remove_drone_storage = yes
+	add_building = building_mineral_purification_plant
+}
+
+frameworld_audit_mineralhub2_effect = {
+	owner = {
+		add_resource = {
+			minerals = -900
+			alloys = -150
+			volatile_motes = -50
+		}
+	}
+	
+	remove_building = building_mineral_purification_plant
+	add_building = building_mineral_purification_hub
+}
+
+frameworld_audit_supercomputer_effect = {
+	owner = {
+		add_resource = {
+			minerals = -600
+		}
+	}
+	
+	frameworld_audit_remove_drone_storage = yes
+	add_building = building_supercomputer
+}
+
+frameworld_audit_hydroponics_effect = {
+	remove_building = building_hydroponics_farm
+	add_district = district_giga_frameworld_farming
+}
+
+frameworld_audit_refinery_effect = {
+	remove_building = building_refinery
+	remove_building = building_chemical_plant
+	remove_building = building_crystal_plant
+	add_district = district_giga_frameworld_refinery
+}
+
+frameworld_audit_sanctuary1_effect = {
+	if = {
+		limit = {
+			has_deposit = d_frameworld_advanced_sanctuary
+		}
+		
+		remove_building = building_organic_sanctuary
+		remove_building = building_organic_sanctuary
+		remove_building = building_organic_sanctuary
+		remove_building = building_organic_sanctuary
+		add_district = district_giga_frameworld_sanctuary_advanced
+	}
+	else = {
+		remove_building = building_organic_sanctuary
+		remove_building = building_organic_sanctuary
+		add_district = district_giga_frameworld_sanctuary
+	}
+}
+
+frameworld_audit_sanctuary2_effect = {
+	if = {
+		limit = {
+			has_deposit = d_frameworld_advanced_sanctuary
+		}
+		
+		remove_building = building_organic_paradise
+		remove_building = building_organic_paradise
+		add_district = district_giga_frameworld_sanctuary_advanced
+	}
+	else = {
+		remove_building = building_organic_paradise
+		add_district = district_giga_frameworld_sanctuary
+	}
+}
+
+frameworld_audit_sanctuary3_effect = {
+	hidden_effect = {
+		export_trigger_value_to_variable = {
+			trigger = num_buildings
+			variable = frameworld_organic_sanctuary_jobs
+			parameters = {
+				type = building_organic_sanctuary
+			}
+		}
+		
+		multiply_variable = {
+			which = frameworld_organic_sanctuary_jobs
+			value = 10
+		}
+		
+		export_trigger_value_to_variable = {
+			trigger = num_buildings
+			variable = frameworld_organic_paradise_jobs
+			parameters = {
+				type = building_organic_paradise
+			}
+		}
+		
+		multiply_variable = {
+			which = frameworld_organic_paradise_jobs
+			value = 20
+		}
+		
+		export_trigger_value_to_variable = {
+			trigger = num_districts
+			variable = frameworld_sanctuary_district_jobs
+			parameters = {
+				type = district_giga_frameworld_sanctuary
+			}
+		}
+		
+		multiply_variable = {
+			which = frameworld_sanctuary_district_jobs
+			value = 20
+		}
+		
+		export_trigger_value_to_variable = {
+			trigger = num_districts
+			variable = frameworld_advanced_sanctuary_district_jobs
+			parameters = {
+				type = district_giga_frameworld_sanctuary_advanced
+			}
+		}
+		
+		multiply_variable = {
+			which = frameworld_advanced_sanctuary_district_jobs
+			value = 40
+		}
+		
+		set_variable = {
+			which = frameworld_biotrophy_jobs 
+			value = frameworld_organic_sanctuary_jobs
+		}
+		change_variable = {
+			which = frameworld_biotrophy_jobs 
+			value = frameworld_organic_paradise_jobs
+		}
+		change_variable = {
+			which = frameworld_biotrophy_jobs 
+			value = frameworld_sanctuary_district_jobs
+		}
+		change_variable = {
+			which = frameworld_biotrophy_jobs 
+			value = frameworld_advanced_sanctuary_district_jobs
+		}
+	}
+	
+	if = {
+		limit = {
+			has_building = building_organic_paradise
+			check_variable_arithmetic = {
+				which = frameworld_biotrophy_jobs
+				subtract = 30
+				value > giga_biotrophy_count
+			}
+		}
+		remove_building = building_organic_paradise
+	}
+	else_if = {
+		limit = {
+			has_building = building_organic_sanctuary
+			check_variable_arithmetic = {
+				which = frameworld_biotrophy_jobs
+				subtract = 20
+				value > giga_biotrophy_count
+			}
+		}
+		remove_building = building_organic_sanctuary
+	}
+}
+
+###############################################################################################################
+### clearing
+
+frameworld_audit_remove_drone_storage = {
+	if = {
+		limit = {
+			free_building_slots = 0
+		}
+		if = {
+			limit = {
+				has_building = building_drone_storage
+			}
+			remove_building = building_drone_storage
+		}
+		else = {
+			if = {
+				limit = {
+					has_building = building_drone_megastorage
+				}
+				remove_building = building_drone_megastorage
+			}
+		}
+	}
+}
+
+###############################################################################################################
+### upgrades
+
+frameworld_audit_upgrade_penrose_effect = {
+	owner = {
+		add_resource = {
+			alloys = -2500
+			influence = -150
+			mult = giga_frameworld_megastructure_cost
+		}
+	}
+	
+	set_planet_flag = frameworld_upgrade
+	set_planet_flag = frameworld_penrose
+	
+	solar_system = {
+		spawn_megastructure = {
+			type = frameworld_penrose_0
+			owner = owner
+			planet = star
+		}
+	}
+}
+
+frameworld_audit_upgrade_decompressor_effect = {
+	owner = {
+		add_resource = {
+			alloys = -2500
+			influence = -150
+			mult = giga_frameworld_megastructure_cost
+		}
+	}
+	
+	set_planet_flag = frameworld_upgrade
+	set_planet_flag = frameworld_decompressor
+	
+	solar_system = {
+		spawn_megastructure = {
+			type = frameworld_decompressor_0
+			owner = owner
+			planet = star
+		}
+	}
+}
+
+frameworld_audit_upgrade_advanced_city_effect = {
+	owner = {
+		add_resource = {
+			minerals = -10000
+		}
+	}
+	
+	add_deposit = d_frameworld_advanced_city
+	validate_planet_buildings_and_districts = yes
+	set_timed_planet_flag = {
+		flag = frameworld_ai_upgrade_cooldown
+		days = 2000
+	}
+}
+
+frameworld_audit_upgrade_advanced_industrial_effect = {
+	owner = {
+		add_resource = {
+			minerals = -10000
+		}
+	}
+	
+	add_deposit = d_frameworld_advanced_industrial
+	validate_planet_buildings_and_districts = yes
+	set_timed_planet_flag = {
+		flag = frameworld_ai_upgrade_cooldown
+		days = 2000
+	}
+}
+
+frameworld_audit_upgrade_advanced_sanctuary_effect = {
+	owner = {
+		add_resource = {
+			minerals = -10000
+		}
+	}
+	
+	add_deposit = d_frameworld_advanced_sanctuary
+	validate_planet_buildings_and_districts = yes
+	set_timed_planet_flag = {
+		flag = frameworld_ai_upgrade_cooldown
+		days = 2000
+	}
+}
+
+frameworld_audit_upgrade_gaia_effect = {
+	owner = {
+		add_resource = {
+			minerals = -5000
+			energy = -20000
+			exotic_gases = -1000
+		}
+	}
+	
+	add_deposit = d_frameworld_gaia
+	set_timed_planet_flag = {
+		flag = frameworld_ai_upgrade_cooldown
+		days = 3000
+	}
+}
+
+frameworld_audit_upgrade_computing_complex_effect = {
+	owner = {
+		add_resource = {
+			alloys = -25000
+			rare_crystals = -1000
+			mult = giga_frameworld_megastructure_cost
+		}
+	}
+	
+	add_deposit = d_frameworld_computing_complex
+	set_timed_planet_flag = {
+		flag = frameworld_ai_upgrade_cooldown
+		days = 3000
+	}
+}
+
+frameworld_audit_upgrade_expanded_infrastructure_effect = {
+	owner = {
+		add_resource = {
+			alloys = -15000
+			mult = giga_frameworld_megastructure_cost
+		}
+	}
+	
+	add_deposit = d_frameworld_expanded_infrastructure
+	set_timed_planet_flag = {
+		flag = frameworld_ai_upgrade_cooldown
+		days = 3000
+	}
+}
+
+frameworld_audit_upgrade_maginot = {
+	owner = {
+		add_resource = {
+			alloys = -25000
+			mult = giga_frameworld_megastructure_cost
+		}
+	}
+
+	# replaces effects below to avoid recursive depth warning
+	planet_event = {
+		id = giga_frameworld_origin.1002
+	}
+
+	# add_deposit = d_frameworld_maginot
+	# giga_frameworld_spawn_maginot_defensive_stations = {
+	# 	WHO = owner
+	# }
+	# init_giga_maginot = yes
+	# giga_frameworld_update_maginot_deposits = yes
+
+	set_timed_planet_flag = {
+		flag = frameworld_ai_upgrade_cooldown
+		days = 3000
+	}
+}

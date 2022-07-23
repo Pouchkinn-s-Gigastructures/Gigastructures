@@ -1,7 +1,8 @@
 # Overwritten to add isolated systems
 can_enter_system_by_jump = {
 	custom_tooltip = {
-		success_text = "debug: can jump"
+		#success_text = "debug: can jump"
+		# is commented out in vanilla, doesn't seem to do anything either way
 		fail_text = cannot_jump_to_system
 
 		# Sealed system
@@ -22,6 +23,8 @@ can_enter_system_by_jump = {
 			urmazin_system = yes
 			everchanging_system = yes
 			katzen_jump_blocked_system = yes
+			has_star_flag = maginot_anti_jump_star # Maginot World subspace disruption
+			has_star_flag = siegfried_anti_jump_star # Katzen version
 		}
 	}
 }
@@ -34,6 +37,7 @@ can_orbitable_repair_ships = {
 			OR = {
 				has_starbase_size >= starbase_starport
 				has_starbase_size = juggernaut
+				has_starbase_size = enclave_mercenary_station
 			}
 			fleet = {
 				is_disabled = no
@@ -58,13 +62,13 @@ can_orbitable_repair_ships = {
 can_orbital_bombard = {
 	exists = from.owner
 	NOT = {
-		any_owned_ship = {
+		any_controlled_ship = {
 			is_ship_size = colossus
 		}
 	}
 	OR = {
 		AND = {
-			ROOT.OWNER = {
+			ROOT.CONTROLLER = {
 				NOT = { has_communications = FROM.OWNER }
 			}
 			FROM.OWNER = {
@@ -72,7 +76,7 @@ can_orbital_bombard = {
 			}
 		}
 		AND = {
-			ROOT.OWNER = {
+			ROOT.CONTROLLER = {
 				NOR = {
 					has_policy_flag = interference_passive
 					has_policy_flag = interference_active
@@ -80,7 +84,7 @@ can_orbital_bombard = {
 			}
 			FROM.OWNER = { is_country_type = primitive }
 		}
-		ROOT.OWNER = { is_at_war_with = FROM.CONTROLLER }
+		ROOT.CONTROLLER = { is_at_war_with = FROM.CONTROLLER }
 		FROM = { is_planet_class = pc_infested }
 		FROM.CONTROLLER = {
 			OR = {
@@ -92,9 +96,13 @@ can_orbital_bombard = {
 				is_country_type = void_lifeforms_1
 				is_country_type = void_lifeforms_2
 				is_country_type = katzenartig_imperium
+				AND = {
+					is_country_type = awakened_marauders
+					ROOT.CONTROLLER = { is_hostile = prev }
+				}
 			}
 		}
-		ROOT.OWNER = {
+		ROOT.CONTROLLER = {
 			OR = {
 				is_country_type = extradimensional
 				is_country_type = extradimensional_2
@@ -115,22 +123,17 @@ can_orbital_bombard = {
 				is_country_type = katzenartig_imperium
 				AND = {
 					is_country_type = awakened_marauders
-					FROM.CONTROLLER = {
-						NAND = {
-							is_subject_type = satrapy
-							NOT = { has_country_flag = rebelling_satrapy }
-						}
-					}
+					FROM.CONTROLLER = { is_hostile = prev }
 				}
 			}
 		}
 		AND = {
     	    from.controller = {
     	        is_country_type = faction
-    	        NOT = { is_same_value = root.owner }
+    	        NOT = { is_same_value = root.controller }
     	    }
     	    from.owner = {
-    	        is_same_value = root.owner
+    	        is_same_value = root.controller
     	    }
 		}
 	}
@@ -192,6 +195,28 @@ ai_should_restrict_system = {
 					is_country_type = guardian_fortress
 				}
 			}
+		}
+	}
+}
+
+#Check if it is possible to build orbital stations on this planet
+# overwritten to stop the AI spamming paluushia with observation posts
+#this: planet
+#root: country
+can_planet_support_orbital_station = {
+	custom_tooltip = {
+		fail_text = "ORBITAL_STATION_ALREADY_EXISTS"
+		has_any_megastructure = no
+		NOT = { has_planet_flag = has_megastructure }
+	}
+	custom_tooltip = {
+		fail_text = "paluushia_no_ai_observation"
+		or = {
+			and = {
+				exists = root
+				root = { is_ai = no }
+			}
+			not = { has_planet_flag = paluushia }
 		}
 	}
 }

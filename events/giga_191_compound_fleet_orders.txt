@@ -155,12 +155,12 @@ ship_event = {
 					}
 				}
 				create_research_station = { owner = event_target:compound_country }
-				if = { limit = { has_deposit = d_dark_matter_deposit_1  } root.owner = { change_variable = { which = compound_dark_matter value = 1 } } }
-				if = { limit = { has_deposit = d_dark_matter_deposit_2  } root.owner = { change_variable = { which = compound_dark_matter value = 2 } } }
-				if = { limit = { has_deposit = d_dark_matter_deposit_3  } root.owner = { change_variable = { which = compound_dark_matter value = 3 } } }
-				if = { limit = { has_deposit = d_dark_matter_deposit_4  } root.owner = { change_variable = { which = compound_dark_matter value = 4 } } }
-				if = { limit = { has_deposit = d_dark_matter_deposit_5  } root.owner = { change_variable = { which = compound_dark_matter value = 5 } } }
-				if = { limit = { has_deposit = d_dark_matter_deposit_10 } root.owner = { change_variable = { which = compound_dark_matter value = 10 } } }
+				if = { limit = { has_deposit = d_dark_matter_deposit_1  } root.controller = { change_variable = { which = compound_dark_matter value = 1 } } }
+				if = { limit = { has_deposit = d_dark_matter_deposit_2  } root.controller = { change_variable = { which = compound_dark_matter value = 2 } } }
+				if = { limit = { has_deposit = d_dark_matter_deposit_3  } root.controller = { change_variable = { which = compound_dark_matter value = 3 } } }
+				if = { limit = { has_deposit = d_dark_matter_deposit_4  } root.controller = { change_variable = { which = compound_dark_matter value = 4 } } }
+				if = { limit = { has_deposit = d_dark_matter_deposit_5  } root.controller = { change_variable = { which = compound_dark_matter value = 5 } } }
+				if = { limit = { has_deposit = d_dark_matter_deposit_10 } root.controller = { change_variable = { which = compound_dark_matter value = 10 } } }
 			}
 
 			### Set system and planets flags that are eligible for reshaping
@@ -363,7 +363,7 @@ fleet_event = {
 	hide_window = yes
 
 	trigger = {
-		owner = {
+		controller = {
 			NOR = {
 				is_country_type = compound_empire
 				is_country_type = creators
@@ -378,9 +378,9 @@ fleet_event = {
 			limit = { exists = event_target:ehof_annihilator }
 			set_global_flag = annihilator_shroud
 			destroy_annihilator = yes
-			owner = { country_event = { id = annihilator.006 days = @annihilator_shroud_time } } # Takes 1 month before going into shroud ftl
+			controller = { country_event = { id = annihilator.006 days = @annihilator_shroud_time } } # Takes 1 month before going into shroud ftl
 		}
-		owner = { country_event = { id = compound_dialog.10 } }
+		controller = { country_event = { id = compound_dialog.10 } }
 	}
 }
 
@@ -1146,5 +1146,47 @@ planet_event = {
 		}
 
 		remove_global_flag = compound_count_darkmatter
+	}
+}
+
+# compound immunity
+event = {
+	id = compound_fleet_orders.020
+	hide_window = yes
+
+	mean_time_to_happen = {
+		months = 1
+	}
+
+	trigger = {
+		has_global_flag = compound_invasion_happened
+		NOT = { has_global_flag = compound_destroyed }
+	}
+
+	immediate = {
+		every_galaxy_planet = {
+			limit = {
+				is_star = yes
+			}
+			solar_system = {
+				if = {
+					limit = {
+						any_fleet_in_system = {
+							is_controlled_by = event_target:compound_country
+						}
+					}
+					if = { limit = { NOT = { has_modifier = giga_compound_immunity } }
+						add_modifier = {
+							modifier = giga_compound_immunity
+							days = -1
+						}
+					}
+				} else = {
+					if = { limit = { has_modifier = giga_compound_immunity }
+						remove_modifier = giga_compound_immunity
+					}
+				}
+			}
+		}
 	}
 }

@@ -1,0 +1,262 @@
+frameworld_planet_maintenance_drone_jobs = {
+	base = 0
+
+	add = value:frameworld_nexus_maintenance_jobs
+
+	add = value:frameworld_advanced_nexus_maintenance_jobs
+
+	add = value:frameworld_maintenance_district_jobs
+}
+
+frameworld_maintenance_district_jobs = {
+	base = 8
+	modifier = {
+		add = 2
+		exists = owner
+		owner = { has_technology = tech_housing_2 }
+	}
+
+	# maintenance overseer swap
+	modifier = {
+		subtract = 2
+		has_deposit = d_frameworld_advanced_city
+	}
+
+	complex_trigger_modifier = {
+		trigger = num_districts
+		parameters = {
+			type = district_giga_frameworld_amenities_gestalt
+		}
+		mode = mult
+	}
+}
+
+frameworld_nexus_maintenance_jobs = {
+	base = 3
+	modifier = {
+		add = 1
+		exists = owner
+		owner = { has_technology = tech_housing_2 }
+	}
+
+	complex_trigger_modifier = {
+		trigger = num_districts
+		parameters = {
+			type = district_giga_frameworld_nexus
+		}
+		mode = mult
+	}
+}
+
+frameworld_advanced_nexus_maintenance_jobs = {
+	base = 6
+	modifier = {
+		add = 2
+		exists = owner
+		owner = { has_technology = tech_housing_2 }
+	}
+
+	complex_trigger_modifier = {
+		trigger = num_districts
+		parameters = {
+			type = district_giga_frameworld_nexus_advanced
+		}
+		mode = mult
+	}
+}
+
+giga_frameworld_expanded_maintenance_multiplier = {
+	base = 0
+	
+	complex_trigger_modifier = {
+		trigger = count_owned_pop
+		parameters = {
+			limit = {
+				is_unemployed = yes
+				not = {
+					has_living_standard = { type = living_standard_organic_trophy }
+				}
+			}
+		}
+		mode = add
+	}
+
+	complex_trigger_modifier = {
+		trigger = num_assigned_jobs
+		parameters = {
+			job = frame_maintenance_drone
+		}
+		mode = add
+	}
+
+	subtract = 5
+
+	min = 0
+}
+
+giga_frameworld_max_stronghold_districts = {
+	base = 0
+
+	# 5% of max districts
+	add = value:giga_frameworld_outpost_size_fraction|FRACTION|5|
+
+	# minimum of 1
+	min = 1
+}
+
+# number of pops resettled per month to the frameworld
+# 5% or 4, whichever is more. Breakpoint is 4 / 0.05 = 80
+giga_frameworld_resettlement_count = {
+	weight = trigger:num_pops
+	mult = 0.05
+	round = yes
+	min = 4
+}
+
+# number of pops which should be created on 
+# the home frameworld when a new outpost is built
+giga_frameworld_outpost_pops = {
+	base = 0
+	
+	complex_trigger_modifier = {
+		trigger = check_modifier_value
+		trigger_scope = $WHO$
+		parameters = {
+			modifier = colony_start_num_pops_add
+		}
+		mode = add
+	}
+
+	# Guilli's precursor ruins +4 pops modifier
+	modifier = {
+		add = 4
+
+		$WHERE$ = {
+			has_modifier = gpm_precursor_ruins
+		}
+	}
+}
+
+# calculate the maximum number of shield districts that we can build
+giga_frameworld_get_max_maginot_shield_districts = {
+	# 1/5 of planet size
+	weight = trigger:planet_size
+	mult = 0.2
+	round = yes
+
+	# minus the number of *GUN* districts
+	complex_trigger_modifier = {
+		trigger = num_districts
+		parameters = {
+			type = district_giga_frameworld_maginot_planetary_cannons
+		}
+		mode = subtract
+	}
+
+	# minus queued *GUN* districts
+	subtract = frameworld_building_maginot_gun
+
+	min = 0
+
+	# nothing if we're not maginot though
+	modifier = {
+		is_giga_maginot_frameworld = no
+		weight = 0
+	}
+}
+giga_frameworld_add_max_maginot_shield_districts = {
+	base = 0
+
+	weight = value:giga_frameworld_get_max_maginot_shield_districts
+
+	complex_trigger_modifier = {
+		trigger = count_deposit
+		parameters = {
+			limit = {
+				is_deposit_type = d_frameworld_maginot_max_shields
+			}
+		}
+		mode = subtract
+	}
+
+	min = 0
+}
+giga_frameworld_remove_max_maginot_shield_districts = {
+	base = 0
+
+	complex_trigger_modifier = {
+		trigger = count_deposit
+		parameters = {
+			limit = {
+				is_deposit_type = d_frameworld_maginot_max_shields
+			}
+		}
+		mode = weight
+	}
+
+	subtract = value:giga_frameworld_get_max_maginot_shield_districts
+
+	min = 0
+}
+
+# calculate the maximum number of gun districts that we can build
+giga_frameworld_get_max_maginot_gun_districts = {
+	# 1/5 of planet size
+	weight = trigger:planet_size
+	mult = 0.2
+	round = yes
+
+	# minus the number of *SHIELD* districts
+	complex_trigger_modifier = {
+		trigger = num_districts
+		parameters = {
+			type = district_giga_frameworld_maginot_shield_generators
+		}
+		mode = subtract
+	}
+
+	# minus queued *SHIELD* districts
+	subtract = frameworld_building_maginot_shield
+
+	min = 0
+
+	# nothing if we're not maginot though
+	modifier = {
+		is_giga_maginot_frameworld = no
+		weight = 0
+	}
+}
+giga_frameworld_add_max_maginot_gun_districts = {
+	base = 0
+
+	weight = value:giga_frameworld_get_max_maginot_gun_districts
+
+	complex_trigger_modifier = {
+		trigger = count_deposit
+		parameters = {
+			limit = {
+				is_deposit_type = d_frameworld_maginot_max_guns
+			}
+		}
+		mode = subtract
+	}
+
+	min = 0
+}
+giga_frameworld_remove_max_maginot_gun_districts = {
+	base = 0
+
+	complex_trigger_modifier = {
+		trigger = count_deposit
+		parameters = {
+			limit = {
+				is_deposit_type = d_frameworld_maginot_max_guns
+			}
+		}
+		mode = weight
+	}
+
+	subtract = value:giga_frameworld_get_max_maginot_gun_districts
+
+	min = 0
+}

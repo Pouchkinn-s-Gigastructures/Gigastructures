@@ -1,0 +1,241 @@
+### Maginot initialization functions, see also giga_maginot_effects for other functions
+
+## Set planet_class conditionally for Maginot World variants
+# * call from planet scope (which changes class and wipes districts)
+set_giga_maginot_planet_class = {
+	if = {
+		limit = { is_maginotable_ringworld = yes }
+		set_giga_maginot_ringworld = yes
+	}
+	else_if = {
+		limit = { is_maginotable_gas_giant = yes }
+		set_giga_maginot_gas_giant = yes
+	}
+	# incompatible planets are filtered by megastructure, not here
+	else = {
+		set_giga_maginot_normal = yes
+	}
+}
+
+# Set planet_class to Maginot ringworld, apply correct entity conditionally
+# * call from compatible ringworld planet scope
+set_giga_maginot_ringworld = {
+	change_pc = pc_giga_maginot_ringworld
+	# change entity for bigger rings
+	if = {
+		limit = { 
+			has_planet_flag = giga_ringworld_tit # titanic ring
+			# don't ask me why the bigger ones have the flags too...
+			NOR = {
+				has_planet_flag = giga_ringworld_beh
+				has_planet_flag = giga_ringworld_gar
+			}
+		}
+		set_planet_entity = {
+			entity = "pc_giga_maginot_titanic_ringworld_01_entity"
+		}
+	}
+	else_if = {
+		limit = {
+			has_planet_flag = giga_ringworld_beh # behemoth ring
+			# don't ask me why the bigger ones have the flags too...
+			NOR = {
+				has_planet_flag = giga_ringworld_gar
+			}
+		}
+		set_planet_entity = {
+			entity = "pc_giga_maginot_behemoth_ringworld_01_entity"
+		}
+	}
+	else_if = {
+		limit = {
+			has_planet_flag = giga_ringworld_gar # gargantuan ring
+		}
+		set_planet_entity = {
+			entity = "pc_giga_maginot_gargantuan_ringworld_01_entity"
+		}
+	}
+	#else_if = penrose?
+	# any other type of ring (including normal) gets normal entity
+	else = {
+		set_planet_entity = {
+			entity = "pc_giga_maginot_ringworld_01_entity"
+			#graphical_culture = owner
+		}
+	}
+}
+
+# Set planet_class to gas giant version
+# * call from compatible gas giant planet scope
+set_giga_maginot_gas_giant = {
+	change_pc = pc_giga_maginot_gas_giant
+}
+
+# Set planet_class to standard maginot
+# * call from generic habitable planet scope
+set_giga_maginot_normal = {
+	change_pc = pc_giga_maginot_world
+}
+
+
+## Compiles all the other init effects
+# * call from planet scope (planet to be turned into Maginot world or equivalent)
+init_giga_maginot = {
+	init_giga_maginot_setup = yes
+	spawn_giga_maginot_garrison = yes
+	init_giga_maginot_defences = yes
+}
+
+# Setup flags, deposit, and building
+# * call from planet scope (planet to be turned into Maginot world or equivalent)
+init_giga_maginot_setup = {
+	# clean flags
+	#remove_planet_flag = has_megastructure
+	#remove_planet_flag = megastructure
+	remove_planet_flag = has_planet_mw_mega
+	
+	# set flags
+	set_planet_flag = giga_maginot_world
+	set_planet_flag = colony_event # avoids subterranean civilization
+
+	# attached deposit
+	add_deposit = d_maginot_command
+	# remove the construction one
+	remove_deposit = d_maginot_construction_blocker
+	#add_modifier = { modifier = "giga_maginot_world" days = -1 }
+
+	# "upgrade" attached building
+	remove_building = building_giga_maginot_stronghold
+	add_building = building_giga_maginot_global_bunker
+}
+
+# Create starting garrison (5 armies)
+# * call from planet scope (planet to be turned into Maginot world or equivalent)
+spawn_giga_maginot_garrison = {
+	# create some armies since they can't be from the deposit
+	if = {
+		limit = { exists = planet_owner planet_owner = { is_machine_empire = no } }
+		while = { count = 5	create_army = { name = "Heavy Defence Unit"	owner = planet.owner species = planet.owner.species type = "heavy_defender" } }
+	}
+	else_if = {
+		limit = { exists = planet_owner planet_owner = { is_machine_empire = yes } }
+		while = { count = 5	create_army = { name = "Heavy Defence Unit"	owner = planet.owner species = planet.owner.species type = "machine_heavy_defender" } }
+	}
+}
+
+# Handle attached orbital platform stuff
+# * call from planet scope (planet to be turned into Maginot world or equivalent)
+init_giga_maginot_defences = {
+	set_planet_flag = maginot_has_orbital_defence
+	solar_system = {
+		assign_giga_maginot_id = yes # see other file
+	}
+	init_giga_maginot_variables = yes
+	# start watchdog event for the orbital fleet
+	planet_event = {
+		id = maginot_orbital_defence.1007
+		days = 30
+	}
+	if = {
+		limit = { ROOT.from = { has_active_tradition = tr_gigabulwark_happy_defenses } }
+		add_modifier = {
+			modifier = giga_bulwark_trad_stability_maginot
+			days = -1
+		}
+	}
+
+	maginot_create_orbital_defence_fleet = yes # see other file
+}
+
+# Variable set up (for orbital defence)
+# * call from planet scope (a Maginot World specifically)
+init_giga_maginot_variables = {
+	# set up platform count variable
+	set_variable = {
+		which = giga_maginot_current_SD_platform_count
+		value = 0
+	}
+	# log complains if this isn't set here for some reason
+	set_variable = {
+		which = current_SD_platform_point_use
+		value = 0
+	}
+	# set up upgrade variables
+	set_variable = {
+		which = maginot_offensive_upgrade_points_max
+		value = 0
+	}
+	set_variable = {
+		which = maginot_offensive_upgrade_points_current
+		value = 0
+	}
+	set_variable = {
+		which = maginot_offensive_upgrade_points_used
+		value = 0
+	}
+	set_variable = {
+		which = maginot_defensive_upgrade_points_max
+		value = 0
+	}
+	set_variable = {
+		which = maginot_defensive_upgrade_points_current
+		value = 0
+	}
+	set_variable = {
+		which = maginot_defensive_upgrade_points_used
+		value = 0
+	}
+	# special cap for tracking modifier
+	set_variable = {
+		which = maginot_targetting_upgrade_points_max
+		value = 5
+	}
+	# current upgrades applied
+	set_variable = {
+		which = maginot_orbital_defence_hp_upgrades
+		value = 0
+	}
+	set_variable = {
+		which = maginot_orbital_defence_atk_upgrades
+		value = 0
+	}
+	set_variable = {
+		which = maginot_orbital_defence_trg_upgrades
+		value = 0
+	}
+	# starting costs
+	set_variable = {
+		which = maginot_orbital_defence_hp_cost
+		value = 1000
+	}
+	set_variable = {
+		which = maginot_orbital_defence_atk_cost
+		value = 1000
+	}
+	set_variable = {
+		which = maginot_orbital_defence_trg_cost
+		value = 1000
+	}
+	# display values
+	set_variable = {
+		which = maginot_orbital_defence_hp_display
+		value = 0
+	}
+	set_variable = {
+		which = maginot_orbital_defence_hp_regen_display
+		value = 0
+	}
+	set_variable = {
+		which = maginot_orbital_defence_atk_display
+		value = 0
+	}
+	# targetting has 2 different values
+	set_variable = {
+		which = maginot_orbital_defence_range_display
+		value = 0
+	}
+	set_variable = {
+		which = maginot_orbital_defence_tracking_display
+		value = 0
+	}
+}

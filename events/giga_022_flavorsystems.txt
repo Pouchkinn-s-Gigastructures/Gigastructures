@@ -83,6 +83,7 @@ country_event = {
 					}
 					change_pc = pc_giga_planetary_computer
 					set_planet_size = 16
+					set_planet_flag = orbital_arcology
 					set_planet_flag = giga_planetary_computer
 					set_planet_flag = giga_rogue_ai_planetary_computer
 					add_modifier = {
@@ -113,7 +114,7 @@ country_event = {
 						set_star_flag = rogue_pc_system
 						set_star_flag = giga_special_ruined_system
 						spawn_megastructure = {
-							type = orbital_arcology_1_m
+							type = orbital_arcology_1
 							planet = PREV
 						}
 						spawn_megastructure = {
@@ -187,6 +188,7 @@ planet_event = {
 		add_deposit = d_giga_rogue_ai_corrupt_code
 		add_deposit = d_giga_rogue_ai_corrupt_code
 		add_deposit = d_giga_rogue_ai_corrupt_code
+		hidden_effect = { giga_update_rogue_ai_computer_build_speed = yes }
 	}
 
 	option = {
@@ -203,6 +205,7 @@ planet_event = {
 		add_deposit = d_giga_rogue_ai_corrupt_code
 		add_deposit = d_giga_rogue_ai_corrupt_code
 		add_deposit = d_giga_rogue_ai_corrupt_code
+		hidden_effect = { giga_update_rogue_ai_computer_build_speed = yes }
 	}
 }
 
@@ -226,6 +229,7 @@ planet_event = {
 				value = 4
 			}
 		}
+		hidden_effect = { giga_update_rogue_ai_computer_build_speed = yes }
 	}
 }
 
@@ -246,6 +250,21 @@ planet_event = {
 					has_deposit = d_giga_rogue_ai_relay_servers
 				}
 			}
+			# clean up if the attack was interrupted
+			if = {
+				limit = {
+					exists = controller
+					controller = {
+						has_country_flag = giga_rogue_ai_pcc_army_country
+					}
+				}
+				every_planet_army = {
+					limit = { army_type = pcc_rogue_ai_army }
+					remove_army = yes
+				}
+				set_controller = owner
+			}
+			# resume checks
 			planet_event = { id = giga_flavor_systems.1106 days = 30 }
 		}
 		if = {
@@ -368,9 +387,40 @@ country_event = {
             set_controller = ROOT
             add_deposit = d_giga_rogue_ai_corrupt_code
             add_deposit = d_giga_rogue_ai_relay_servers
+			hidden_effect = { giga_update_rogue_ai_computer_build_speed = yes }
             add_planet_devastation = 75
         }
     }
+}
+
+# PCC blocker cleared
+planet_event = {
+	id = giga_flavor_systems.1107
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_modifier = giga_rogue_ai_computer
+	}
+
+	immediate = {
+		# firing another event to hopefully calculate *after* the blocker is removed
+		planet_event = {
+			id = giga_flavor_systems.1108
+			days = 1
+		}
+	}
+}
+
+# PCC blocker cleared 2
+planet_event = {
+	id = giga_flavor_systems.1108
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		giga_update_rogue_ai_computer_build_speed = yes
+	}
 }
 
 namespace = giga_wrecked_ships
@@ -442,6 +492,46 @@ country_event = {
 				country_event = { id = giga_wrecked_ships.1004 }
 			}
 		}
+
+		# apply build speed compensation to all wrecked ships if build cap is set to job based
+		if = {
+			limit = {
+				has_global_flag = @giga_amb_flag
+			}
+			country_event = {
+				id = giga_wrecked_ships.10001
+				days = 1
+			}
+		}
+	}
+}
+
+country_event = {
+	id = giga_wrecked_ships.10001
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_global_flag = @giga_amb_flag
+		NOT = { has_global_flag = giga_wrecked_ships_disabled }
+	}
+
+	immediate = {
+		every_megastructure = {
+			limit = {
+				or = {
+					is_megastructure_type = giga_battleship_ruined
+					is_megastructure_type = giga_titan_ruined
+					is_megastructure_type = giga_colossus_ruined
+					is_megastructure_type = giga_juggernaut_ruined
+				}
+				not = { has_modifier = giga_amb_mega_speed }
+			}
+
+			add_modifier = {
+				modifier = giga_amb_mega_speed
+			}
+		}
 	}
 }
 
@@ -486,7 +576,7 @@ country_event = {
 								orbit_distance = 25
 								orbit_angle = random
 								graphical_culture = mammalian_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 						1 = {
@@ -496,7 +586,7 @@ country_event = {
 								orbit_distance = 25
 								orbit_angle = random
 								graphical_culture = reptilian_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 						1 = {
@@ -506,7 +596,7 @@ country_event = {
 								orbit_distance = 25
 								orbit_angle = random
 								graphical_culture = avian_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 					}
@@ -556,7 +646,7 @@ country_event = {
 								orbit_distance = 25
 								orbit_angle = random
 								graphical_culture = mammalian_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 						1 = {
@@ -566,7 +656,7 @@ country_event = {
 								orbit_distance = 25
 								orbit_angle = random
 								graphical_culture = reptilian_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 						1 = {
@@ -576,7 +666,7 @@ country_event = {
 								orbit_distance = 25
 								orbit_angle = random
 								graphical_culture = molluscoid_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 					}
@@ -626,7 +716,7 @@ country_event = {
 								orbit_distance = 25
 								orbit_angle = random
 								graphical_culture = molluscoid_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 						1 = {
@@ -636,7 +726,7 @@ country_event = {
 								orbit_distance = 25
 								orbit_angle = random
 								graphical_culture = reptilian_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 						1 = {
@@ -646,7 +736,7 @@ country_event = {
 								orbit_distance = 25
 								orbit_angle = random
 								graphical_culture = fungoid_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 						1 = {
@@ -656,7 +746,7 @@ country_event = {
 								orbit_distance = 25
 								orbit_angle = random
 								graphical_culture = avian_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 						1 = {
@@ -666,7 +756,7 @@ country_event = {
 								orbit_distance = 25
 								orbit_angle = random
 								graphical_culture = arthropoid_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 						1 = {
@@ -676,7 +766,7 @@ country_event = {
 								orbit_distance = 25
 								orbit_angle = random
 								graphical_culture = mammalian_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 					}
@@ -737,7 +827,7 @@ country_event = {
 								orbit_distance = 1
 								orbit_angle = random
 								graphical_culture = fungoid_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 						1 = {
@@ -747,7 +837,7 @@ country_event = {
 								orbit_distance = 1
 								orbit_angle = random
 								graphical_culture = arthropoid_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 						1 = {
@@ -757,7 +847,7 @@ country_event = {
 								orbit_distance = 1
 								orbit_angle = random
 								graphical_culture = molluscoid_01
-								owner = space_owner
+								#owner = space_owner
 							}
 						}
 					}
@@ -789,8 +879,10 @@ ship_event = {
 
 	option = { 
 		name = "giga_wrecked_ships.1010.a"
-		add_resource = {
-			engineering_research = 500
+		controller = {
+			add_resource = {
+				engineering_research = 500
+			}
 		}
 	}
 }
@@ -857,8 +949,10 @@ ship_event = {
 
 	option = { 
 		name = "giga_wrecked_ships.1020.a"
-		add_resource = {
-			engineering_research = 1000
+		controller = {
+			add_resource = {
+				engineering_research = 1000
+			}
 		}
 	}
 }
@@ -925,8 +1019,10 @@ ship_event = {
 
 	option = { 
 		name = "giga_wrecked_ships.1030.a"
-		add_resource = {
-			engineering_research = 500
+		controller = {
+			add_resource = {
+				engineering_research = 500
+			}
 		}
 	}
 }
@@ -994,8 +1090,10 @@ ship_event = {
 
 	option = { 
 		name = "giga_wrecked_ships.1040.a"
-		add_resource = {
-			engineering_research = 2500
+		controller = {
+			add_resource = {
+				engineering_research = 2500
+			}
 		}
 	}
 }
@@ -1580,7 +1678,7 @@ country_event = {
 			create_leader = {
 				class = admiral
 				species = event_target:giga_equinean
-				name = "Blueblood the 18th"
+				name = "Blueblood the 5th"
 				skill = 2
 				gender = male
 				traits = {
@@ -1594,7 +1692,7 @@ country_event = {
 				effect = {
 					set_owner = event_target:giga_eaw_country
 					while = {
-						count = 4
+						count = 2
 						create_ship = {
 							name = random
 							design = "Griffonia"
@@ -1603,7 +1701,7 @@ country_event = {
 						}
 					}
 					while = {
-						count = 18
+						count = 9
 						create_ship = {
 							name = random
 							design = "Zebrica"
@@ -1615,6 +1713,48 @@ country_event = {
 					set_location = {
 						target = event_target:giga_eaw_planet
 						distance = 15
+						angle = random
+					}
+				}
+			}
+			create_leader = {
+				class = admiral
+				species = event_target:giga_equinean
+				name = "Ironside the 4th"
+				skill = 3
+				gender = male
+				traits = {
+					trait = leader_trait_engineer
+				}
+				effect = { save_event_target_as = eaw_admiral }
+			}
+			create_fleet = { #Spawn a fleet
+				name = "2nd Faust Fleet"
+				settings = { uses_naval_capacity = no }
+				effect = {
+					set_owner = event_target:giga_eaw_country
+					while = {
+						count = 2
+						create_ship = {
+							name = random
+							design = "Griffonia"
+							prefix = no
+							graphical_culture = reptilian_01
+						}
+					}
+					while = {
+						count = 9
+						create_ship = {
+							name = random
+							design = "Zebrica"
+							prefix = no
+							graphical_culture = reptilian_01
+						}
+					}
+					assign_leader = event_target:eaw_admiral
+					set_location = {
+						target = event_target:giga_eaw_planet
+						distance = 10
 						angle = random
 					}
 				}

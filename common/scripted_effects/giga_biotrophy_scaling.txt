@@ -1,0 +1,291 @@
+##############################
+#	Bio-trophy bonus scaling
+#	by TTFTCUTS
+##############################
+
+# Pops working the Bio-trophy job provide a +1% complex drone output buff
+# this is fine when you have a limited number of them on a planet, but some megas allow
+# a much higher population to be concentrated in a single place, which makes the bio-trophy
+# bonus scale way higher than pdx ever intended. This planet modifier adjusts for this
+# by giving a scaling malus to complex drone output based on bio-trophy population.
+
+# It is calculated in a way which makes sure that having more bio-trophies is always 
+# better, but drops the effective efficiency of additional bio-trophies significantly
+# so that the bonuses don't get really absurd without a matching massive population.
+
+##############################
+
+# primary inputs
+@minPops = 50 # diminishing returns start after this number of pops
+@maxPops = 150 # at this number of pops the efficiency of the next one will be minimum
+@minEfficiency = 0.2 # efficiency of subsequent pops after maxPops
+
+# intermediary variables, these make the math effects simpler by pre-calculating constants
+# update these if the primary inputs are changed or everything will break
+@interval = 100 # maxPops - minPops
+@halfInterval = 50 # interval / 2
+@minPlusHalfInterval = 100 # minPops + halfInterval
+@fillEfficiency = -0.3 # minEfficiency - 0.5
+
+##############################
+
+# combined effect which recalculates variables and updates the modifier
+giga_recalculate_biotrophies = {
+	giga_recalculate_biotrophy_variables = yes
+	giga_update_biotrophy_modifier = yes
+}
+
+# this effect recalculates the variables which the modifier uses
+giga_recalculate_biotrophy_variables = {
+	# clear counter
+	set_variable = {
+		which = giga_biotrophy_count
+		value = 0
+	}
+	set_variable = {
+		which = giga_biotrophy_unemployed_count
+		value = 0
+	}
+
+	# count up all the biotrophies currently giving production bonuses
+	# still hate doing this but can't export to variable with a limit
+	every_owned_pop = {
+		limit = {
+			species = {
+				has_citizenship_type = {
+					country = prev.owner
+					type = citizenship_organic_trophy # we need to check all bio-trophies, employed or not
+				}
+			}
+		}
+
+		if = { # if they're employed and happy, increment our working trophy count
+			limit = {
+				has_job = bio_trophy
+				happiness >= 0.5 # bio-trophies only give their bonuses if they're 50%+ happy
+			}
+
+			prev = {
+				change_variable = {
+					which = giga_biotrophy_count
+					value = 1
+				}
+			}
+		}
+		else_if = { # if they're unemployed, increment our unemployed count
+			limit = {
+				is_unemployed = yes
+			}
+
+			prev = {
+				change_variable = { 
+					which = giga_biotrophy_unemployed_count
+					value = 1
+				}
+			}
+		}
+	}
+
+	# set modifier power to zero, also used when count is at or under minPops
+	set_variable = {
+		which = giga_biotrophy_modifier
+		value = 0
+	}
+	# efficiency to 1.0, since we've got no modifier power
+	set_variable = {
+		which = giga_biotrophy_efficiency
+		value = 1
+	}
+
+	# determine modifier power
+	if = {
+		limit = { # if we're over the max pops, calculate the constantly increasing value
+			check_variable = {
+				which = giga_biotrophy_count
+				value > @maxPops
+			}
+		}
+
+		# efficiency to minimum, since we're over the max count
+		set_variable = {
+			which = giga_biotrophy_efficiency
+			value = @minEfficiency
+		}
+
+		# diff = x - minPops
+		set_variable = {
+			which = giga_biotrophy_intermediate
+			value = giga_biotrophy_count
+		}
+		subtract_variable = {
+			which = giga_biotrophy_intermediate
+			value = @minPops
+		}
+
+		# diff * minEfficiency
+		multiply_variable = {
+			which = giga_biotrophy_intermediate
+			value = @minEfficiency
+		}
+		# + minPlusHalfInterval
+		change_variable = {
+			which = giga_biotrophy_intermediate
+			value = @minPlusHalfInterval
+		}
+
+		# modifier = x - (minPlusHalfInterval + minEfficiency * diff)
+		set_variable = {
+			which = giga_biotrophy_modifier
+			value = giga_biotrophy_count
+		}
+		subtract_variable = {
+			which = giga_biotrophy_modifier
+			value = giga_biotrophy_intermediate
+		}
+	}
+	else_if = {
+		limit = { # if we're between min and max pops, calculate the curve
+			check_variable = {
+				which = giga_biotrophy_count
+				value > @minPops
+			}
+		}
+
+		# diff = x - minPops
+		set_variable = {
+			which = giga_biotrophy_diff
+			value = giga_biotrophy_count
+		}
+		subtract_variable = {
+			which = giga_biotrophy_diff
+			value = @minPops
+		}
+
+		# fract = diff / interval
+		set_variable = {
+			which = giga_biotrophy_fraction
+			value = giga_biotrophy_diff
+		}
+		divide_variable = {
+			which = giga_biotrophy_fraction
+			value = @interval
+		}
+
+		# fract * fillEfficiency
+		set_variable = {
+			which = giga_biotrophy_intermediate
+			value = giga_biotrophy_fraction
+		}
+		multiply_variable = {
+			which = giga_biotrophy_intermediate
+			value = @fillEfficiency
+		}
+
+		# +1
+		change_variable = {
+			which = giga_biotrophy_intermediate
+			value = 1
+		}
+
+		# * diff
+		multiply_variable = {
+			which = giga_biotrophy_intermediate
+			value = giga_biotrophy_diff
+		}
+
+		# + minPops
+		change_variable = {
+			which = giga_biotrophy_intermediate
+			value = @minPops
+		}
+
+		# modifier = x - (minPops + diff * (fillEfficiency * fract + 1))
+		set_variable = {
+			which = giga_biotrophy_modifier
+			value = giga_biotrophy_count
+		}
+		subtract_variable = {
+			which = giga_biotrophy_modifier
+			value = giga_biotrophy_intermediate
+		}
+
+		# now that the modifier is done, calculate the efficiency for the tooltip
+		# just lerping between 1 and minEfficiency by fract, and efficiency starts set to 1
+		subtract_variable = {
+			which = giga_biotrophy_efficiency
+			value = giga_biotrophy_fraction
+		}
+
+		multiply_variable = {
+			which = giga_biotrophy_fraction # we're done with fract now so we can use it for the second part of efficiency
+			value = @minEfficiency
+		}
+
+		# efficiency = (1-fract) + (minEfficiency * fract)
+		change_variable = {
+			which = giga_biotrophy_efficiency
+			value = giga_biotrophy_fraction
+		}
+	}
+
+	# adjusted bonus for tooltip
+	set_variable = {
+		which = giga_biotrophy_adjusted
+		value = giga_biotrophy_count
+	}
+	subtract_variable = {
+		which = giga_biotrophy_adjusted
+		value = giga_biotrophy_modifier
+	}
+	round_variable_to_closest = {
+		which = giga_biotrophy_adjusted
+		value = 0.01
+	}
+
+	# efficiency percentage for tooltip
+	multiply_variable = {
+		which = giga_biotrophy_efficiency
+		value = 100
+	}
+	round_variable_to_closest = {
+		which = giga_biotrophy_efficiency
+		value = 0.01
+	}
+}
+
+# effect which reapplies the modifier with a new value, or strips it entirely if below the minimum count
+giga_update_biotrophy_modifier = {
+	if = {
+		limit = {
+			check_variable = {
+				which = giga_biotrophy_modifier
+				value > 0
+			}
+		}
+
+		if = {
+			limit = {
+				not = {
+					has_modifier = giga_biotrophy_scaling
+				}
+			}
+			add_modifier = {
+				modifier = giga_biotrophy_scaling
+			}
+		}
+		
+		if = {
+			limit = {
+				not = {
+					has_deposit = d_giga_biotrophy_scaling
+				}
+			}
+			add_deposit = d_giga_biotrophy_scaling
+		}
+	}
+	else = {
+		remove_modifier = giga_biotrophy_scaling
+		remove_deposit = d_giga_biotrophy_scaling
+	}
+}
+

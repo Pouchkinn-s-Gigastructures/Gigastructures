@@ -1,0 +1,159 @@
+@defensive_station_distance = 75
+
+##########################################################
+# Generic Effects
+
+# spawn a defensive station at a radial location
+# $WHO$ = owner
+# $WHERE$ = position
+# $DISTANCE$ = how far away
+# $ANGLE$ = at what radial angle
+giga_frameworld_spawn_defensive_station = {
+	$WHO$ = { save_event_target_as = giga_frameworld_spawn_defensive_station_owner }
+	$WHERE$ = { save_event_target_as = giga_frameworld_spawn_defensive_station_location }
+
+	create_fleet = {
+		name = "frameworld_defensive_station"
+		
+		effect = {
+			set_owner = event_target:giga_frameworld_spawn_defensive_station_owner
+			
+			create_ship = {
+				name = random
+				random_existing_design = frameworld_defensive_station
+				
+				effect = {
+					set_disable_at_health = 0
+					set_ship_flag = giga_frameworld_defensive_station
+					set_ship_flag = giga_frameworld_defensive_station_$ID$
+				}
+			}
+			
+			set_location = {
+				target = event_target:giga_frameworld_spawn_defensive_station_location
+				distance = $DISTANCE$
+				angle = $ANGLE$
+				direction = out_system
+			}
+			
+			set_fleet_flag = giga_frameworld_defensive_station
+			set_fleet_flag = giga_frameworld_defensive_station_$ID$
+		}
+	}
+}
+
+# check if this destroyed station is a specific ID, and do death
+# this = destroyed station fleet
+# $ID$ = which id to check against
+giga_frameworld_defensive_station_id_destroyed = {
+	if = {
+		limit = {
+			has_ship_flag = giga_frameworld_defensive_station_$ID$
+		}
+
+		# create numbered wreckage
+		create_ambient_object = {
+			type = giga_frameworld_defensive_station_wreckage
+			use_3d_location = yes
+			location = this
+		}
+		last_created_ambient_object = {
+			set_ambient_object_flag = giga_frameworld_defensive_station_$ID$
+		}
+
+		# set destroyed flag on frameworld
+		solar_system = {
+			random_system_planet = {
+				limit = {
+					is_planet_class = pc_giga_frameworld
+				}
+	
+				set_planet_flag = giga_frameworld_defensive_station_$ID$_destroyed
+			}
+		}
+
+		destroy_ship = this
+	}
+}
+
+# respawn a defensive station at wreckage of the same ID
+# this = planet
+# $ID$ = which ID to check
+# $WHO$ = owner
+giga_frameworld_respawn_defensive_station = {
+	solar_system = {
+		every_system_ambient_object = {
+			limit = {
+				has_ambient_object_flag = giga_frameworld_defensive_station_$ID$
+			}
+
+			destroy_ambient_object = this
+		}
+	}
+
+	giga_frameworld_spawn_defensive_station_$ID$ = { WHO = $WHO$ }
+
+	remove_planet_flag = giga_frameworld_defensive_station_$ID$_destroyed
+}
+
+# check if a station with a specific ID is missing, if it is set flag on PLANET
+# this = system
+# $PLANET$ = the frameworld to set the flag on
+# $ID$ = which ID to check
+giga_frameworld_check_defensive_station = {
+	if = {
+		limit = {
+			not = {
+				any_fleet_in_system = {
+					has_fleet_flag = giga_frameworld_defensive_station_$ID$
+				}
+			}
+			not = {
+				$PLANET$ = {
+					has_planet_flag = giga_frameworld_defensive_station_$ID$_destroyed
+				}
+			}
+		}
+
+		$PLANET$ = {
+			set_planet_flag = giga_frameworld_defensive_station_$ID$_destroyed
+		}
+	}
+}
+
+##########################################################
+# Specific Effects
+
+giga_frameworld_spawn_defensive_station_1 = { giga_frameworld_spawn_defensive_station = { WHO = $WHO$ WHERE = system_star DISTANCE = @defensive_station_distance ID = 1 ANGLE =   0 } }
+giga_frameworld_spawn_defensive_station_2 = { giga_frameworld_spawn_defensive_station = { WHO = $WHO$ WHERE = system_star DISTANCE = @defensive_station_distance ID = 2 ANGLE = 120 } }
+giga_frameworld_spawn_defensive_station_3 = { giga_frameworld_spawn_defensive_station = { WHO = $WHO$ WHERE = system_star DISTANCE = @defensive_station_distance ID = 3 ANGLE = 240 } }
+giga_frameworld_spawn_defensive_station_4 = { giga_frameworld_spawn_defensive_station = { WHO = $WHO$ WHERE = system_star DISTANCE = @defensive_station_distance ID = 4 ANGLE =  60 } }
+giga_frameworld_spawn_defensive_station_5 = { giga_frameworld_spawn_defensive_station = { WHO = $WHO$ WHERE = system_star DISTANCE = @defensive_station_distance ID = 5 ANGLE = 180 } }
+giga_frameworld_spawn_defensive_station_6 = { giga_frameworld_spawn_defensive_station = { WHO = $WHO$ WHERE = system_star DISTANCE = @defensive_station_distance ID = 6 ANGLE = 300 } }
+
+# spawn initial defensive stations
+# this = planet
+giga_frameworld_spawn_starting_defensive_stations = {
+	giga_frameworld_spawn_defensive_station_1 = { WHO = $WHO$ }
+	giga_frameworld_spawn_defensive_station_2 = { WHO = $WHO$ }
+	giga_frameworld_spawn_defensive_station_3 = { WHO = $WHO$ }
+}
+
+# spawn the other three for the maginot upgrade
+# this = planet
+giga_frameworld_spawn_maginot_defensive_stations = {
+	giga_frameworld_spawn_defensive_station_4 = { WHO = $WHO$ }
+	giga_frameworld_spawn_defensive_station_5 = { WHO = $WHO$ }
+	giga_frameworld_spawn_defensive_station_6 = { WHO = $WHO$ }
+}
+
+# run on destroyed stations to set flags and spawn wreckage
+# this = station
+giga_frameworld_defensive_station_destroyed = {
+	giga_frameworld_defensive_station_id_destroyed = { ID = 1 }
+	giga_frameworld_defensive_station_id_destroyed = { ID = 2 }
+	giga_frameworld_defensive_station_id_destroyed = { ID = 3 }
+	giga_frameworld_defensive_station_id_destroyed = { ID = 4 }
+	giga_frameworld_defensive_station_id_destroyed = { ID = 5 }
+	giga_frameworld_defensive_station_id_destroyed = { ID = 6 }
+}

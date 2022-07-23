@@ -1,8 +1,523 @@
+##COMBAT ABILITIES##
+giga_solak_abilities_bg = {
+	potential = {
+		exists = from
+		has_global_flag = solak_resistance_active
+		has_global_flag = giga_storming_pyramid_active
+		from = {
+			has_country_flag = contacted_solak_rebels
+			has_country_flag = giga_storming_pyramid_country
+		}
+		event_target:gigaflusion = {
+			owner = { exists = THIS is_country_type = katzenartig_imperium }
+			has_ground_combat = yes
+		}
+	}
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "giga_contact_solak_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+giga_solak_abilities_nuke = {
+	potential = {
+		exists = from
+		has_global_flag = solak_resistance_active
+		has_global_flag = giga_storming_pyramid_active
+		from = {
+			has_country_flag = contacted_solak_rebels
+			has_country_flag = giga_storming_pyramid_country
+		}
+		event_target:gigaflusion = {
+			owner = { exists = THIS is_country_type = katzenartig_imperium }
+			has_ground_combat = yes
+		}
+	}
+	allow = {
+		from = {
+			resource_stockpile_compare = {
+				resource = volatile_motes
+				value >= 200
+			}
+		}
+		custom_tooltip = {
+			fail_text = "cant_if_solak_ability_cooldown"
+			hidden_trigger = { NOT = { has_global_flag = giga_storming_pyramid_ability_cooldown } }
+		}
+	}
+	effect = {
+		custom_tooltip = "giga_solak_ability_nuke_tooltip"
+		from = {
+			add_resource = {
+				volatile_motes = -200
+			}
+		}
+		event_target:gigaflusion = {
+			add_planet_devastation = 5
+			random_list = {
+				20 = { add_deposit = d_radioactive_wasteland }
+				20 = { add_deposit = d_bomb_crater }
+				40 = {}
+			}
+		}
+		hidden_effect = {
+			from = { country_event = { id = giga_flusionoperations.6010 } }
+		}
+	}
+}
+
+giga_solak_abilities_infiltrate = {
+	potential = {
+		exists = from
+		has_global_flag = solak_resistance_active
+		has_global_flag = giga_storming_pyramid_active
+		from = {
+			has_country_flag = contacted_solak_rebels
+			has_country_flag = giga_storming_pyramid_country
+		}
+		event_target:gigaflusion = {
+			owner = { exists = THIS is_country_type = katzenartig_imperium }
+			has_ground_combat = yes
+		}
+	}
+	allow = {
+		from = {
+			resource_stockpile_compare = {
+				resource = influence
+				value >= 50
+			}
+		}
+		custom_tooltip = {
+			fail_text = "cant_if_solak_ability_cooldown"
+			hidden_trigger = { NOT = { has_global_flag = giga_storming_pyramid_ability_cooldown } }
+		}
+		hidden_trigger = {
+			event_target:flusion_primitives_country = {
+				any_owned_army = {
+					planet = { has_planet_flag = gigaflusion }
+					OR = {
+						army_type = flusion_army
+						army_type = riesigerkatzenpanzer_defence
+						army_type = riesigerkatzenpanzer_assault
+					}
+				}
+			}
+		}
+	}
+	effect = {
+		custom_tooltip = "giga_solak_ability_infiltrate_tooltip"
+		from = {
+			add_resource = {
+				influence = -50
+			}
+		}
+		hidden_effect = {
+			from = { country_event = { id = giga_flusionoperations.6011 } }
+		}
+	}
+}
+
+#Propaganda: Reduces Katzen morale (stacks up to 5 times), might spawn some armies!
+giga_solak_abilities_propaganda = {
+	potential = {
+		exists = from
+		has_global_flag = solak_resistance_active
+		has_global_flag = giga_storming_pyramid_active
+		from = {
+			has_country_flag = contacted_solak_rebels
+			has_country_flag = giga_storming_pyramid_country
+		}
+		event_target:gigaflusion = {
+			owner = { exists = THIS is_country_type = katzenartig_imperium }
+			has_ground_combat = yes
+		}
+	}
+	allow = {
+		from = {
+			resource_stockpile_compare = {
+				resource = influence
+				value >= 50
+			}
+		}
+		custom_tooltip = {
+			fail_text = "cant_if_solak_ability_cooldown"
+			hidden_trigger = { NOT = { has_global_flag = giga_storming_pyramid_ability_cooldown } }
+		}
+	}
+	effect = {
+		custom_tooltip = "giga_solak_ability_propaganda_tooltip"
+		from = {
+			add_resource = {
+				influence = -50
+			}
+		}
+		event_target:flusion_primitives_country = {
+			add_modifier = {
+				modifier = solakian_ability_morale_debuff
+				days = 180
+				multiplier = event_target:flusion_primitives_country.solakian_ability_morale_used
+			}
+		}
+		hidden_effect = {
+			event_target:flusion_primitives_country = {
+				if = {
+					limit = {
+						check_variable = {
+							which = solakian_ability_morale_used
+							value < 5
+						}
+					}
+					change_variable = {
+						which = solakian_ability_morale_used
+						value = 1
+					}
+				}
+				if = {
+					limit = { has_modifier = solakian_ability_morale_debuff }
+					remove_modifier = solakian_ability_morale_debuff
+				}
+			}
+			from = { country_event = { id = giga_flusionoperations.6012 } }
+		}
+	}
+}
+
+#Coerce: Remind the Flusionians of where their loyalties lie...
+giga_solak_abilities_coerce = {
+	potential = {
+		exists = from
+		has_global_flag = solak_resistance_active
+		has_global_flag = giga_storming_pyramid_active
+		from = {
+			has_country_flag = contacted_solak_rebels
+			has_country_flag = giga_storming_pyramid_country
+		}
+		event_target:gigaflusion = {
+			owner = { exists = THIS is_country_type = katzenartig_imperium }
+			has_ground_combat = yes
+		}
+	}
+	allow = {
+		from = {
+			resource_stockpile_compare = {
+				resource = unity
+				value >= 500
+			}
+		}
+		custom_tooltip = {
+			fail_text = "cant_if_solak_ability_cooldown"
+			hidden_trigger = { NOT = { has_global_flag = giga_storming_pyramid_ability_cooldown } }
+		}
+		hidden_trigger = {
+			event_target:flusion_primitives_country = {
+				any_owned_army = {
+					planet = { has_planet_flag = gigaflusion }
+					army_type = defense_army
+				}
+				count_owned_army = {
+					count > 2
+					limit = {
+						planet = { has_planet_flag = gigaflusion }
+						army_type = defense_army
+					}
+				}
+			}
+		}
+	}
+	effect = {
+		custom_tooltip = "giga_solak_ability_coerce_tooltip"
+		from = {
+			add_resource = {
+				unity = -500
+			}
+		}
+		hidden_effect = {
+			from = { country_event = { id = giga_flusionoperations.6013 } }
+		}
+	}
+}
+
 #Kaiser Lake
 giga_kaiser_lake = {
-	potential = { exists = from event_target:gigaflusion = { is_planet_class = pc_gaia } }
+	potential = { 
+		exists = from 
+		event_target:gigaflusion = { 
+			OR = {
+				is_planet_class = pc_gaia
+				is_planet_class = pc_flusion_gaia_ecu 
+			} 
+		}
+	}
 	allow = { hidden_trigger = { always = yes } }
 	effect = { hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+#Sonya (Real)
+giga_sonya_dofus_real = {
+	potential = { exists = from has_global_flag = silly_flusionian_portraits_enabled event_target:gigaflusion = { has_planet_flag = sonya_rescued } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+#Sonya (Serious)
+giga_sonya_dofus_serious = {
+	potential = { exists = from NOT = { has_global_flag = silly_flusionian_portraits_enabled } event_target:gigaflusion = { has_planet_flag = sonya_rescued } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+#Storm Pyramid
+giga_storm_pyramid_no = {
+	potential = { 
+		exists = from
+		from = { can_storm_katown_pyramid = no }
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_storm_pyramid_no" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+giga_storm_pyramid_yes = {
+	potential = { 
+		exists = from
+		from = { can_storm_katown_pyramid = yes }
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_storm_pyramid_yes" hidden_effect = { from = { country_event = { id = giga_flusionoperations.6000 } } } }
+}
+
+giga_storm_pyramid_done = {
+	potential = {
+		exists = from 
+		event_target:gigaflusion = { has_planet_flag = pyramid_stormed }
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_storm_pyramid_done" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+#Riesiger
+giga_capture_panzer_no = {
+	potential = { 
+		exists = from 
+		event_target:flusion_primitives_country = {
+			OR = {
+				check_variable = { which = katzen_res value < 3 } 
+				check_variable = { which = ezic_resistance_value value < 3 }
+			}
+		}
+		event_target:gigaflusion = { NOT = { has_planet_flag = katzen_panzers_stolen } } 
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_capture_panzer_no" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+giga_capture_panzer_yes = {
+	potential = { 
+		exists = from 
+		event_target:flusion_primitives_country = { 
+			check_variable = { which = katzen_res value >= 3 } 
+			check_variable = { which = ezic_resistance_value value >= 3 }
+		}
+		event_target:gigaflusion = { NOT = { has_planet_flag = katzen_panzers_stolen } } 
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_capture_panzer_yes" hidden_effect = { from = { country_event = { id = giga_flusionoperations.1000 } } } }
+}
+
+giga_capture_panzer_done = {
+	potential = { 
+		exists = from 
+		event_target:gigaflusion = { has_planet_flag = katzen_panzers_stolen }
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_capture_panzer_done" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+#Sonya
+giga_rescue_sonya_no = {
+	potential = { 
+		exists = from 
+		event_target:flusion_primitives_country = {
+			OR = {
+				check_variable = { which = solak_res value < 3 } 
+				check_variable = { which = zousa_res value < 2 }
+			}
+		}
+		event_target:gigaflusion = { NOT = { has_planet_flag = sonya_rescued } } 
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_rescue_sonya_no" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+giga_rescue_sonya_yes = {
+	potential = { 
+		exists = from 
+		event_target:flusion_primitives_country = { 
+			check_variable = { which = solak_res value >= 3 } 
+			check_variable = { which = zousa_res value >= 2 }
+		}
+		event_target:gigaflusion = { NOT = { has_planet_flag = sonya_rescued } } 
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_rescue_sonya_yes" hidden_effect = { from = { country_event = { id = giga_flusionoperations.2000 } } } }
+}
+
+giga_rescue_sonya_done = {
+	potential = { 
+		exists = from 
+		event_target:gigaflusion = { has_planet_flag = sonya_rescued }
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_rescue_sonya_done" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+#Solak Dam
+giga_blow_solak_dam_no = {
+	potential = { 
+		exists = from 
+		event_target:flusion_primitives_country = {
+			OR = {
+				check_variable = { which = solak_res value < 2 } 
+				check_variable = { which = ravka_res value < 3 }
+			}
+		}
+		event_target:gigaflusion = { NOT = { has_planet_flag = solak_dam_blown } } 
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_blow_solak_dam_no" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+giga_blow_solak_dam_yes = {
+	potential = { 
+		exists = from 
+		event_target:flusion_primitives_country = { 
+			check_variable = { which = solak_res value >= 2 } 
+			check_variable = { which = ravka_res value >= 3 }
+		}
+		event_target:gigaflusion = { NOT = { has_planet_flag = solak_dam_blown } } 
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_blow_solak_dam_yes" hidden_effect = { from = { country_event = { id = giga_flusionoperations.3000 } } } }
+}
+
+giga_blow_solak_dam_done = {
+	potential = { 
+		exists = from 
+		event_target:gigaflusion = { has_planet_flag = solak_dam_blown }
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_blow_solak_dam_done" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+#loris Dam
+giga_blow_loris_dam_no = {
+	potential = { 
+		exists = from 
+		event_target:flusion_primitives_country = {
+			OR = {
+				check_variable = { which = lyuin_res value < 2 } 
+				check_variable = { which = puffy_res value < 3 }
+			}
+		}
+		event_target:gigaflusion = { NOT = { has_planet_flag = loris_dam_blown } } 
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_blow_loris_dam_no" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+giga_blow_loris_dam_yes = {
+	potential = { 
+		exists = from 
+		event_target:flusion_primitives_country = { 
+			check_variable = { which = lyuin_res value >= 2 } 
+			check_variable = { which = puffy_res value >= 3 }
+		}
+		event_target:gigaflusion = { NOT = { has_planet_flag = loris_dam_blown } } 
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_blow_loris_dam_yes" hidden_effect = { from = { country_event = { id = giga_flusionoperations.4000 } } } }
+}
+
+giga_blow_loris_dam_done = {
+	potential = { 
+		exists = from 
+		event_target:gigaflusion = { has_planet_flag = loris_dam_blown }
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_blow_loris_dam_done" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+#loris (DOOOOOOOOOOO NOOOOOOOOOOOOOOOOOOOOOOOOOT!!!!!!!!)
+giga_remove_loris_no = {
+	potential = { 
+		exists = from
+		OR = {
+			event_target:flusion_primitives_country = {
+				OR = {
+					check_variable = { which = katzen_res value < 3 } 
+					check_variable = { which = puffy_res value < 3 }
+				}
+			}
+			event_target:gigaflusion = { 
+				NOT = { has_planet_flag = loris_dam_blown }
+			} 
+		}
+		event_target:gigaflusion = {
+			NOT = { has_planet_flag = loris_removed }
+		}
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_remove_loris_no" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+giga_remove_loris_yes = {
+	potential = { 
+		exists = from 
+		event_target:flusion_primitives_country = { 
+			check_variable = { which = katzen_res value >= 3 } 
+			check_variable = { which = puffy_res value >= 3 }
+		}
+		event_target:gigaflusion = { 
+			NOT = { has_planet_flag = loris_removed } 
+			has_planet_flag = loris_dam_blown
+		}
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_remove_loris_yes" hidden_effect = { from = { country_event = { id = giga_flusionoperations.5000 } } } }
+}
+
+giga_remove_loris_done = {
+	potential = { 
+		exists = from 
+		event_target:gigaflusion = {
+			has_planet_flag = loris_removed
+		}
+	}
+	allow = { always = yes }
+	effect = { custom_tooltip = "giga_remove_loris_done" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+
+#Ezic
+giga_ezicania_low = {
+	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = ezicania_res value <= 0 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "ezicania_res_low_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2024 } } } }
+}
+
+giga_ezicania_med = {
+	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = ezicania_res value = 1 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "ezicania_res_med_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2024 } } } }
+}
+
+giga_ezicania_sign = {
+	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = ezicania_res value = 2 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "ezicania_res_sign_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2024 } } } }
+}
+
+giga_ezicania_ext = {
+	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = ezicania_res value >= 3 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "ezicania_res_ext_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
 }
 
 #Laurn
@@ -82,28 +597,53 @@ giga_katown_ext = {
 
 #Solak
 giga_solak_low = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = solak_res value <= 0 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = solak_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = solak_res value <= 0 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "solak_res_low_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2010 } } } }
 }
 
 giga_solak_med = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = solak_res value = 1 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = solak_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = solak_res value = 1 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "solak_res_med_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2010 } } } }
 }
 
 giga_solak_sign = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = solak_res value = 2 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = solak_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = solak_res value = 2 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "solak_res_sign_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2010 } } } }
 }
 
 giga_solak_ext = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = solak_res value >= 3 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = solak_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = solak_res value >= 3 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "solak_res_ext_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
 }
+#dam
+giga_solak_dam_low = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = solak_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = solak_res value <= 0 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "solak_res_low_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2010 } } } }
+}
+
+giga_solak_dam_med = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = solak_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = solak_res value = 1 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "solak_res_med_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2010 } } } }
+}
+
+giga_solak_dam_sign = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = solak_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = solak_res value = 2 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "solak_res_sign_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2010 } } } }
+}
+
+giga_solak_dam_ext = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = solak_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = solak_res value >= 3 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "solak_res_ext_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
 #Zousa
 giga_zousa_low = {
 	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = zousa_res value <= 0 } } }
@@ -131,28 +671,54 @@ giga_zousa_ext = {
 
 #Lyuin
 giga_lyuin_low = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = lyuin_res value <= 0 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = loris_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = lyuin_res value <= 0 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "lyuin_res_low_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2013 } } } }
 }
 
 giga_lyuin_med = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = lyuin_res value = 1 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = loris_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = lyuin_res value = 1 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "lyuin_res_med_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2013 } } } }
 }
 
 giga_lyuin_sign = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = lyuin_res value = 2 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = loris_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = lyuin_res value = 2 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "lyuin_res_sign_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2013 } } } }
 }
 
 giga_lyuin_ext = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = lyuin_res value >= 3 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = loris_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = lyuin_res value >= 3 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "lyuin_res_ext_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
 }
+
+#Dam
+giga_lyuin_dam_low = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = loris_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = lyuin_res value <= 0 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "lyuin_res_low_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2013 } } } }
+}
+
+giga_lyuin_dam_med = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = loris_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = lyuin_res value = 1 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "lyuin_res_med_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2013 } } } }
+}
+
+giga_lyuin_dam_sign = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = loris_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = lyuin_res value = 2 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "lyuin_res_sign_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2013 } } } }
+}
+
+giga_lyuin_dam_ext = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = loris_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = lyuin_res value >= 3 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "lyuin_res_ext_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
 
 #Mercuria
 giga_mercuria_low = {
@@ -181,25 +747,50 @@ giga_mercuria_ext = {
 
 #Puffy
 giga_puffy_low = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = puffy_res value <= 0 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = loris_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = puffy_res value <= 0 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "puffy_res_low_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2014 } } } }
 }
 
 giga_puffy_med = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = puffy_res value = 1 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = loris_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = puffy_res value = 1 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "puffy_res_med_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2014 } } } }
 }
 
 giga_puffy_sign = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = puffy_res value = 2 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = loris_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = puffy_res value = 2 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "puffy_res_sign_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2014 } } } }
 }
 
 giga_puffy_ext = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = puffy_res value >= 3 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = loris_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = puffy_res value >= 3 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "puffy_res_ext_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
+#dam
+giga_puffy_dam_low = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = loris_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = puffy_res value <= 0 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "puffy_res_low_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2014 } } } }
+}
+
+giga_puffy_dam_med = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = loris_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = puffy_res value = 1 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "puffy_res_med_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2014 } } } }
+}
+
+giga_puffy_dam_sign = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = loris_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = puffy_res value = 2 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "puffy_res_sign_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2014 } } } }
+}
+
+giga_puffy_dam_ext = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = loris_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = puffy_res value >= 3 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "puffy_res_ext_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
 }
@@ -231,28 +822,54 @@ giga_symby_ext = {
 
 #Ravka
 giga_ravka_low = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = ravka_res value <= 0 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = solak_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = ravka_res value <= 0 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "ravka_res_low_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2011 } } } }
 }
 
 giga_ravka_med = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = ravka_res value = 1 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = solak_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = ravka_res value = 1 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "ravka_res_med_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2011 } } } }
 }
 
 giga_ravka_sign = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = ravka_res value = 2 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = solak_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = ravka_res value = 2 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "ravka_res_sign_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2011 } } } }
 }
 
 giga_ravka_ext = {
-	potential = { exists = from event_target:flusion_primitives_country = { check_variable = { which = ravka_res value >= 3 } } }
+	potential = { exists = from event_target:gigaflusion = { has_planet_flag = solak_dam_blown } event_target:flusion_primitives_country = { check_variable = { which = ravka_res value >= 3 } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "ravka_res_ext_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
 }
+
+#dam
+giga_ravka_dam_low = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = solak_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = ravka_res value <= 0 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "ravka_res_low_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2011 } } } }
+}
+
+giga_ravka_dam_med = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = solak_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = ravka_res value = 1 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "ravka_res_med_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2011 } } } }
+}
+
+giga_ravka_dam_sign = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = solak_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = ravka_res value = 2 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "ravka_res_sign_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2011 } } } }
+}
+
+giga_ravka_dam_ext = {
+	potential = { exists = from event_target:gigaflusion = { NOT = { has_planet_flag = solak_dam_blown } } event_target:flusion_primitives_country = { check_variable = { which = ravka_res value >= 3 } } }
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "ravka_res_ext_tooltip" hidden_effect = { from = { country_event = { id = giga_katrebels.2002 } } } }
+}
+
 
 ###COUNTERS###
 giga_res_0 = {
