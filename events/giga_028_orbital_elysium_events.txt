@@ -11,8 +11,39 @@ planet_event = {
 	}
 
 	trigger = {
+		has_planet_flag = has_orbital_elysium
 		has_modifier = giga_elysium_host_planet
+		is_under_colonization = no
+		owner = { is_country_type = default }
+		num_pops >= 5
 		num_unemployed >= 5
+		OR = {
+			AND = {
+				owner = { is_gestalt = no }
+				count_owned_pop = {
+					limit = {
+						is_unemployed = yes
+						is_shackled_robot = no
+						NOR = {
+							has_living_standard = { type = living_standard_utopian }
+							has_living_standard = { type = living_standard_good }
+							has_living_standard = { type = living_standard_shared_burden }
+						}
+					}
+					count >= 5
+				}
+			}
+			AND = {
+				owner = { is_gestalt = yes }
+				count_owned_pop = {
+					limit = {
+						is_unemployed = yes
+						NOT = { has_living_standard = { type = living_standard_organic_trophy } }
+					}
+					count >= 5
+				}
+			}
+		}
 	}
 
 	immediate = {
@@ -20,12 +51,12 @@ planet_event = {
 
 		if = {
 			limit = {
-				owner = { not = { has_country_flag = giga_elysium_cottage_industry } }
+				owner = { not = { has_country_flag = giga_elysium_cottage_industry_message } }
 			}
 
 			# send full notification message
 			owner = {
-				set_country_flag = giga_elysium_cottage_industry
+				set_country_flag = giga_elysium_cottage_industry_message
 				country_event = {
 					id = giga_elysium.002
 					scopes = {
@@ -61,9 +92,10 @@ planet_event = {
 country_event = {
 	id = giga_elysium.002
 	title = giga_elysium.002.name
-	picture = GFX_evt_financial_instruments
+	picture = GFX_evt_galactic_market
 	show_sound = event_default
 	location = from
+	is_triggered_only = yes
 
 	desc = {
 		trigger = {
@@ -91,6 +123,375 @@ country_event = {
 			from = {
 				add_deposit = d_giga_elysium_cottage_industry
 			}
+		}
+	}
+}
+
+planet_event = {
+	id = giga_elysium.003
+	hide_window = yes
+
+	mean_time_to_happen = { years = 5 }
+
+	pre_triggers = {
+		has_owner = yes
+	}
+
+	trigger = {
+		has_planet_flag = has_orbital_elysium
+		has_modifier = giga_elysium_host_planet
+		is_under_colonization = no
+		owner = { is_country_type = default }
+		num_pops >= 5
+		free_housing <= -5
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				count_deposit = {
+					limit = {
+						is_deposit_type = d_giga_elysium_livestock_pens
+					}
+					count < value:giga_elysium_pen_pops
+				}
+			}
+
+			# LIVESTOCK PEN
+
+			add_deposit = d_giga_elysium_livestock_pens
+
+			if = {
+				limit = {
+					owner = { not = { has_country_flag = giga_elysium_livestock_pens_message } }
+				}
+
+				# send full notification message
+				owner = {
+					set_country_flag = giga_elysium_livestock_pens_message
+					country_event = {
+						id = giga_elysium.005
+						scopes = {
+							from = root
+						}
+					}
+				}
+			}
+			else = {
+				# send little notification
+				create_message = {
+					type = GIGA_ELYSIUM_LIVESTOCK_PENS
+					localization = MESSAGE_GIGA_ELYSIUM_LIVESTOCK_PENS
+					days = 30
+					target = this
+
+					variable = {
+						type = name
+						localization = SYSTEM
+						scope = solar_system
+					}
+
+					variable = {
+						type = name
+						localization = PLANET
+						scope = this
+					}
+				}
+			}
+		}
+		else = {
+			# SLUMS
+
+			add_deposit = d_giga_elysium_slums
+
+			if = {
+				limit = {
+					owner = { not = { has_country_flag = giga_elysium_slums_message } }
+				}
+
+				# send full notification message
+				owner = {
+					set_country_flag = giga_elysium_slums_message
+					country_event = {
+						id = giga_elysium.004
+						scopes = {
+							from = root
+						}
+					}
+				}
+			}
+			else = {
+				# send little notification
+				create_message = {
+					type = GIGA_ELYSIUM_SLUMS
+					localization = MESSAGE_GIGA_ELYSIUM_SLUMS
+					days = 30
+					target = this
+
+					variable = {
+						type = name
+						localization = SYSTEM
+						scope = solar_system
+					}
+
+					variable = {
+						type = name
+						localization = PLANET
+						scope = this
+					}
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = giga_elysium.004
+	title = giga_elysium.004.name
+	picture = GFX_evt_spy_network
+	show_sound = event_default
+	location = from
+	is_triggered_only = yes
+
+	desc = {
+		trigger = {
+			is_gestalt = no
+		}
+		text = giga_elysium.004.desc
+	}
+	desc = {
+		trigger = {
+			is_hive_empire = yes
+		}
+		text = giga_elysium.004.desc.hive
+	}
+	desc = {
+		trigger = {
+			is_machine_empire = yes
+		}
+		text = giga_elysium.004.desc.machine
+	}
+
+	option = {
+		name = ACKNOWLEDGED
+
+		tooltip = {
+			from = {
+				add_deposit = d_giga_elysium_slums
+			}
+		}
+	}
+}
+
+country_event = {
+	id = giga_elysium.005
+	title = giga_elysium.005.name
+	picture = GFX_evt_ship_offloading_cargo
+	show_sound = event_default
+	location = from
+	is_triggered_only = yes
+
+	desc = {
+		trigger = {
+			is_gestalt = no
+		}
+		text = giga_elysium.005.desc
+	}
+	desc = {
+		trigger = {
+			is_hive_empire = yes
+		}
+		text = giga_elysium.005.desc.hive
+	}
+	desc = {
+		trigger = {
+			is_machine_empire = yes
+		}
+		text = giga_elysium.005.desc.machine
+	}
+
+	option = {
+		name = ACKNOWLEDGED
+
+		tooltip = {
+			from = {
+				add_deposit = d_giga_elysium_livestock_pens
+			}
+		}
+	}
+}
+
+#########################################################################################
+# Necrophage ascension
+
+planet_event = {
+	id = giga_elysium.1000
+	hide_window = yes
+	is_triggered_only = yes
+
+	pre_triggers = {
+		has_owner = yes
+	}
+
+	trigger = {
+		has_planet_flag = has_orbital_elysium
+		has_modifier = giga_elysium_host_planet
+		owner = {
+			has_origin = origin_necrophage
+			has_trait = trait_necrophage
+		}
+		num_assigned_jobs = {
+			job = necro_apprentice
+			value >= 1
+		}
+	}
+
+	immediate = {
+		set_timed_planet_flag = {
+			flag = necrophage_alert_timer
+			days = 2880
+		}
+		set_saved_date = {
+			key = necrophage_elevation_timer
+			days_from_present = 3600
+			expires = 3600
+		}
+		random_owned_pop = {
+			limit = {
+				is_same_species = owner_species
+				has_trait = trait_necrophage
+			}
+			species = { save_event_target_as = necrophage_pop_species }
+		}
+		every_owned_pop = {
+			limit = { has_job = necro_apprentice }
+			root.owner = {
+				if = {
+					limit = { has_ascension_perk = ap_become_the_crisis }
+					complete_crisis_objective = crisobj_purge_pops
+				}
+			}
+			root = {
+				change_variable = {
+					which = var_necrophaged_pops
+					value = 1
+				}
+				if = {
+					limit = {
+						exists = event_target:necrophage_pop_species
+					}
+					create_pop = {
+						species = event_target:necrophage_pop_species
+					}
+				}
+				else = {
+					create_pop = {
+						species = owner_species
+					}
+				}
+				if = {
+					limit = {
+						last_created_pop = {
+							NOT = { ideal_planet_class = root }
+						}
+						NOR = {
+							uses_district_set = habitat
+							uses_district_set = ring_world
+							uses_district_set = city_world
+							uses_district_set = hive_world
+							uses_district_set = machine_world
+							is_planet_class = pc_gaia
+							is_planet_class = pc_relic
+						}
+						owner = {
+							has_technology = tech_glandular_acclimation
+							NOT = { ideal_planet_class = root }
+						}
+					}
+					last_created_pop = {
+						modify_species = {
+							ideal_planet_class = root
+						}
+					}
+				}
+			}
+			every_country = {
+				limit = {
+					has_communications = root.owner
+					NOT = { is_country = root.owner }
+					NOT = { is_same_species = prev }
+					NOT = { has_ai_personality_behaviour = purger }
+					NOT = { has_origin = origin_necrophage }
+					NOT = { has_ethic = ethic_gestalt_consciousness }
+					NOR = {
+						has_valid_civic = civic_death_cult
+						has_valid_civic = civic_death_cult_corporate
+					}
+					OR = {
+						is_country_type = default
+						has_ai_personality = awakened_fallen_empire_xenophile
+					}
+					has_intel_level = {
+						who = FROM
+						category = economy
+						level >= 2
+					}
+				}
+				add_opinion_modifier = { who = root.owner modifier = opinion_necrophage }
+			}
+			every_country = {
+				limit = {
+					has_communications = root.owner
+					NOT = { is_country = root.owner }
+					is_same_species = prev
+					has_intel_level = {
+						who = FROM
+						category = economy
+						level >= 1 #lower because you'd hear from a friend of a friend
+					}
+				}
+				add_opinion_modifier = { who = root.owner modifier = opinion_necrophage_our_species }
+			}
+			kill_pop = yes
+		}
+		create_message = {
+			type = MESSAGE_NECROPHAGE_POPS_NECROPHAGED
+			localization = MESSAGE_NECROPHAGE_POPS_NECROPHAGED
+			days = 30
+			target = this
+			variable = {
+				type = name
+				localization = PLANET
+				scope = this
+			}
+			variable = {
+				type = variable
+				varname = var_necrophaged_pops
+				localization = VALUE
+				scope = this
+			}
+		}
+		if = {
+			limit = {
+				owner = {
+					OR = {
+						has_active_tradition = tr_harmony_unity_of_self
+						has_active_tradition = tr_synchronicity_unity_of_mind
+					}
+				}
+			}
+			owner = {
+				add_monthly_resource_mult = {
+					resource = unity
+					value = 1.5
+					min = 5
+					max = 100
+				}
+			}
+		}
+		set_variable = {
+			which = var_necrophaged_pops
+			value = 0
 		}
 	}
 }
