@@ -1007,28 +1007,141 @@ giga_dismantle_elysium = {
 	}
 
 	potential = {
-		has_planet_flag = has_orbital_elysium
-		any_moon = {
-			is_planet_class = pc_giga_elysium
+		is_planet_class = pc_giga_elysium
+
+		exists = owner
+		owner = {
+			not = { has_origin = origin_elysium } # elysium origin isn't allowed to take them down
+		}
+
+		exists = orbit
+		orbit = {
+			has_planet_flag = has_orbital_elysium
 		}
 	}
 
 	allow = {
-		any_moon = {
-			is_planet_class = pc_giga_elysium
-			or = {
-				not = { exists = owner }
-				and = {
-					exists = owner
-					owner = {
-						is_same_empire = root.owner
-					}
-				}
+		orbit = {
+			is_colony = yes
+			is_under_colonization = no
+			exists = owner
+			owner = {
+				is_same_empire = root.owner
 			}
 		}
 	}
 
 	effect = {
-		# do stuff
+		orbit = {
+			# clear planet modifiers
+			remove_modifier = giga_elysium_host_planet
+			hidden_effect = {
+				remove_planet_flag = has_orbital_elysium
+				clear_variable = giga_elysium_admin
+				clear_variable = giga_elysium_stability
+			}
+
+			# restore buildings
+			if = {
+				limit = {
+					owner = {
+						is_hive_empire = yes
+					}
+				}
+				remove_building = building_giga_elysium_host_hive_jobs
+				if = {
+					limit = {
+						has_building = building_giga_elysium_host_hive_major_capital
+					}
+					remove_building = building_giga_elysium_host_hive_major_capital
+					add_building = building_hive_major_capital
+				}
+				else = {
+					remove_building = building_giga_elysium_host_hive_capital
+					add_building = building_hive_capital
+				}
+			}
+			else_if = {
+				limit = {
+					owner = {
+						is_machine_empire = yes
+					}
+				}
+				remove_building = building_giga_elysium_host_machine_jobs
+				if = {
+					limit = {
+						has_building = building_giga_elysium_host_machine_major_capital
+					}
+					remove_building = building_giga_elysium_host_machine_major_capital
+					add_building = building_machine_major_capital
+				}
+				else = {
+					remove_building = building_giga_elysium_host_machine_capital
+					add_building = building_machine_capital
+				}
+			}
+			else = {
+				remove_building = building_giga_elysium_host_jobs
+				if = {
+					limit = {
+						has_building = building_giga_elysium_host_major_capital
+					}
+					remove_building = building_giga_elysium_host_major_capital
+					add_building = building_major_capital
+				}
+				else = {
+					remove_building = building_giga_elysium_host_capital
+					add_building = building_capital
+				}
+			}
+
+			# this will hopefully make the capitals switch if it's meant to be something other than these, and update the planet view
+			validate_planet_buildings_and_districts = yes
+		}
+
+		# get rid of the elysium
+		every_owned_pop = {
+			resettle_pop = {
+				pop = this
+				planet = root.orbit
+			}
+		}
+
+		hidden_effect = {
+			owner = {
+				country_event = {
+					id = giga_elysium.006
+					scopes = {
+						from = root
+						fromfrom = root.orbit
+					}
+				}
+			}
+
+			giga_remove_planet = yes
+			orbit = {
+				giga_clear_has_mega_flag = yes
+			}
+		}
+
+		custom_tooltip = giga_dismantle_elysium_tooltip
+	}
+
+	ai_weight = {
+		weight = 0
+
+		# empires which hate these should seek to take them down
+		modifier = {
+			exists = owner
+			owner = {
+				or = {
+					is_egalitarian = yes
+					is_cooperative = yes
+					has_valid_civic = civic_machine_servitor
+				}
+			}
+
+			weight = 1000
+		}
 	}
 }
