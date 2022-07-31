@@ -94,13 +94,53 @@ katzenland_clear_districts = {
 # since 3.3 removing a planet which has a colony on it causes a crash
 # so here's a little effect to shorten stuff - TTFTCUTS
 giga_remove_planet = {
+	set_planet_flag = giga_remove_planet
 	if = { 
 		limit = { is_colony = yes }
 		every_owned_pop = { kill_pop = yes }
 		destroy_colony = yes
+
+		set_planet_flag = has_megastructure
+		set_planet_flag = megastructure
+
+		change_pc = pc_giga_empty_space_asteroid
+
+		planet_event = { id = giga_mega.8500 days = 1 }
 	}
-	#planet_event = { id = giga_mega.8500 days = 1 }
-	remove_planet = yes
+	else = {
+		solar_system = {
+			every_fleet_in_system = {
+				limit = {
+					any_owned_ship = {
+						is_ship_class = shipclass_constructor
+					}
+					controller = {
+						is_ai = yes
+					}
+					is_fleet_idle = yes
+				}
+
+				set_fleet_flag = giga_remove_planet
+				every_owned_ship = {
+					set_disabled = yes
+				}
+			}
+		}
+
+		remove_planet = yes
+
+		solar_system = {
+			every_fleet_in_system = {
+				limit = {
+					has_fleet_flag = giga_remove_planet
+				}
+				every_owned_ship = {
+					set_disabled = no
+				}
+				remove_fleet_flag = giga_remove_planet
+			}
+		}
+	}
 }
 
 #################################
@@ -2254,8 +2294,90 @@ giga_start_ai_colony_if_safe = {
 				}
 			}
 		}
+		giga_get_species_for_colony = {
+			TARGET = this
+			WHO = from
+		}
 		start_colony = {
 			owner = from
+			species = event_target:giga_colony_species
+		}
+	}
+}
+
+# save an appropriate species for a colony to event_target:giga_colony_species
+# WHO = country for the colony
+# TARGET = planet to be colonised
+giga_get_species_for_colony = {
+	$WHO$ = {
+		save_event_target_as = giga_source_country
+	}
+	$TARGET$ = {
+		save_event_target_as = giga_target_planet
+	}
+
+	# try to find the best candidate species
+	event_target:giga_source_country = {
+		ordered_owned_pop_species = {
+			position = 0
+
+			# make sure they're allowed to be the rulers
+			limit = {
+				can_think = yes
+
+				# necrophage origin -> necrophages only
+				if = {
+					limit = {
+						event_target:giga_source_country = {
+							has_origin = origin_necrophage
+						}
+					}
+					has_trait = trait_necrophage
+				}
+
+				# "citizenship" check
+				if = {
+					limit = {
+						event_target:giga_source_country = {
+							is_machine_empire = yes
+						}
+					}
+					has_citizenship_type = {
+						type = citizenship_full_machine
+						country = event_target:giga_source_country
+					}
+				}
+				else = {
+					has_citizenship_type = {
+						type = citizenship_full
+						country = event_target:giga_source_country
+					}
+					
+				}
+
+				# only if colonisation is allowed for this species
+				has_colonization_control = {
+					value = no
+					country = event_target:giga_source_country
+				}
+			}
+
+			order_by = value:giga_get_species_for_colony_habitability
+
+			save_event_target_as = giga_colony_species
+		}
+	}
+
+	# primary species fallback
+	if = {
+		limit = {
+			not = { exists = event_target:giga_colony_species }
+		}
+
+		event_target:giga_source_country = {
+			species = {
+				save_event_target_as = giga_colony_species
+			}
 		}
 	}
 }
@@ -2291,6 +2413,7 @@ giga_clear_has_mega_flag = {
 				any_moon = {
 					has_planet_flag = megastructure
 					not = { has_planet_flag = giga_planet_mega }
+					not = { has_planet_flag = giga_remove_planet }
 				}
 			}
 		}

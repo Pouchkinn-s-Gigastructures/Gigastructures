@@ -1146,3 +1146,209 @@ giga_dismantle_elysium = {
 		}
 	}
 }
+
+# Flood gigas habitats
+@expand_planetary_sea_length = 720
+
+decision_giga_flood_habitat = {
+	owned_planets_only = yes
+	icon = decision_satellite_in_orbit
+
+	enactment_time = @expand_planetary_sea_length
+
+	potential = {
+		# gigas habitat types
+		or = {
+			is_planet_class = pc_giga_elysium
+		}
+
+		exists = owner
+		owner = {
+			has_ascension_perk = ap_hydrocentric
+		}
+		NOT = {
+			has_modifier = flooded_habitat
+		}
+	}
+
+	allow = {
+		custom_tooltip = {
+			fail_text = requires_free_ice_mining_station
+			owner = {
+				any_owned_starbase = {
+					has_starbase_building = ice_mining_station
+					solar_system = {
+						NOT = { has_star_flag = ice_mining_in_progress }
+					}
+				}
+			}
+		}
+	}
+
+	resources = {
+		category = decisions
+		cost = {
+			influence = 50
+			energy = 1000
+		}
+	}
+
+	on_queued = {
+		set_variable = {
+			which = decision_length
+			value = @expand_planetary_sea_length
+		}
+		export_modifier_to_variable = {
+			modifier = planet_decision_enact_speed_mult
+			variable = decision_mult_var
+		}
+		change_variable = {
+			which = decision_mult_var
+			value = 1
+		}
+		divide_variable = {
+			which = decision_length
+			value = decision_mult_var
+		}
+		change_variable = { #ideally, may as well refer to this in the final effect
+			which = decision_length
+			value = 1
+		}
+
+		owner = {
+			random_owned_starbase = {
+				limit = {
+					has_starbase_building = ice_mining_station
+					solar_system = {
+						NOT = { has_star_flag = ice_mining_in_progress }
+					}
+				}
+				solar_system = {
+					set_timed_star_flag = {
+						flag = ice_mining_in_progress
+						days = root.decision_length
+					}
+					set_timed_star_flag = {
+						flag = ice_mining@root
+						days = root.decision_length
+					}
+				}
+			}
+		}
+		clear_variable = decision_length
+		clear_variable = decision_mult_var
+	}
+
+	abort_trigger = {
+		NOT = {
+			owner = {
+				any_owned_starbase = {
+					has_starbase_building = ice_mining_station
+				}
+			}
+		}
+	}
+
+	on_unqueued = {
+		owner = {
+			random_owned_starbase = {
+				limit = {
+					solar_system = {
+						has_star_flag = ice_mining@root
+					}
+				}
+				solar_system = {
+					remove_star_flag = ice_mining@root
+					remove_star_flag = ice_mining_in_progress
+				}
+			}
+		}
+	}
+
+	abort_effect = {
+		owner = {
+			random_owned_starbase = {
+				limit = {
+					solar_system = {
+						has_star_flag = ice_mining@root
+					}
+				}
+				solar_system = {
+					remove_star_flag = ice_mining@root
+					remove_star_flag = ice_mining_in_progress
+				}
+			}
+		}
+		create_message = {
+			type = ICE_MINING_INTERRUPTED
+			localization = ICE_MINING_INTERRUPTED_HABITAT_DESC
+			days = 20
+			target = root
+		}
+	}
+
+	effect = {
+		custom_tooltip = decision_flood_habitat_tooltip
+
+		if = {
+			limit = {
+				is_planet_class = pc_giga_elysium
+			}
+			custom_tooltip = decision_giga_flood_habitat_elysium
+		}
+
+		hidden_effect = {
+			add_modifier = {
+				modifier = flooded_habitat
+				days = -1
+			}
+			ice_mining_depletion_effect = yes
+
+			if = {
+				limit = {
+					has_planet_flag = temp_ice_mine_exhausted_flag
+				}
+				event_target:mined_system.starbase = {
+					remove_starbase_building = {
+						building = ice_mining_station
+					}
+				}
+				create_message = {
+					type = ICE_MINING_HABITAT_SUCCESS
+					localization = ICE_MINING_HABITAT_SUCCESS_BUT_EXHAUSTED_DESC
+					days = 20
+					target = root
+					variable = {
+						type = name
+						localization = SYSTEM
+						scope = event_target:mined_system
+					}
+				}
+			}
+			else = {
+				create_message = {
+					type = ICE_MINING_HABITAT_SUCCESS
+					localization = ICE_MINING_HABITAT_SUCCESS_DESC
+					days = 20
+					target = root
+					variable = {
+						type = name
+						localization = SYSTEM
+						scope = event_target:mined_system
+					}
+				}
+			}
+			change_variable = {
+				which = ice_dumping_happened
+				value = 1
+			}
+
+			# special effects per hab type
+
+			# TODO: orbital entity swap for ocean planet texture
+		}
+	}
+	ai_weight = {
+		weight = 2
+	}
+}
