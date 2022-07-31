@@ -2572,6 +2572,9 @@ country_event = {
 					destroy_fleet = this 
 				}
 				star = { change_pc = pc_neutron_star }
+				set_asteroid_belt = {
+					radius = 0
+				}
 
 				# remove planets and change types
 				every_system_planet = {
@@ -2579,23 +2582,27 @@ country_event = {
 					if = {
 						limit = {
 							OR = {
-								is_planet_class = pc_asteroid
+								is_asteroid = yes
 								is_planet_class = pc_gigaorbital_ring
 								is_planet_class = pc_gigaorbital_ring_ruined
 								is_planet_class = pc_flat_world
 							}
 						}
-						giga_remove_planet = yes
+						random_list = {
+							0 = { modifier = { add = 1 is_asteroid = yes } }
+							4 = { set_planet_flag = giga_suppressor_remove }
+						}
 					}
-					if = { limit = { is_planet_class = pc_gas_giant }		set_planet_size = 5 change_pc = pc_molten }
+					if = { limit = { is_planet_class = pc_gas_giant }			set_planet_size = 5 change_pc = pc_molten }
+					else_if = { limit = { is_planet_class = pc_ice_asteroid } 	set_planet_size = 1 change_pc = pc_asteroid }
 					else_if = { limit = { planet_size <7 }						set_planet_size = 2 change_pc = pc_asteroid }
 					else_if = { limit = { planet_size <= 10 planet_size >= 7 }	change_planet_size = -5 change_pc = pc_asteroid }
 					else_if = { limit = { planet_size > 10 } 					change_planet_size = -5 }
 					if = {
 						limit = {
 							NOR = {
+								is_asteroid = yes
 								is_planet_class = pc_gas_giant
-								is_planet_class = pc_asteroid
 								is_planet_class = pc_molten
 								is_planet_class = pc_shattered
 								is_planet_class = pc_broken
@@ -2605,9 +2612,32 @@ country_event = {
 					}
 				}
 
+				# if every target is going to be removed, save one!
+				if = {
+					limit = {
+						# if every prospective planet has a science deposit
+						not = {
+							any_system_planet = {
+								is_star = no
+								not = { has_planet_flag = giga_suppressor_remove }
+							}
+						}
+					}
+					random_system_planet = {
+						limit = {
+							is_star = no
+							has_planet_flag = giga_suppressor_remove
+						}
+						remove_planet_flag = giga_suppressor_remove
+					}
+				}
+
 				# set deposits
 				every_system_planet = {
-					limit = { is_star = no }
+					limit = { 
+						is_star = no 
+						not = { has_planet_flag = giga_suppressor_remove }
+					}
 					clear_deposits = yes
 
 					random_list = {
@@ -2641,6 +2671,7 @@ country_event = {
 						not = {
 							any_system_planet = {
 								is_star = no
+								not = { has_planet_flag = giga_suppressor_remove }
 								not = {
 									has_deposit_for = shipclass_research_station
 								}
@@ -2651,6 +2682,7 @@ country_event = {
 					random_system_planet = {
 						limit = {
 							is_star = no
+							not = { has_planet_flag = giga_suppressor_remove }
 						}
 						clear_deposits = yes
 					}
@@ -2662,12 +2694,21 @@ country_event = {
 					random_system_planet = {
 						limit = {
 							is_star = no
+							not = { has_planet_flag = giga_suppressor_remove }
 							not = {
 								has_deposit_for = shipclass_research_station
 							}
 						}
 						add_deposit = d_iodizium_deposit_1
 					}
+				}
+
+				# remove the marked planets
+				every_system_planet = {
+					limit = { 
+						has_planet_flag = giga_suppressor_remove
+					}
+					giga_remove_planet = yes
 				}
 
 				# kaboom!

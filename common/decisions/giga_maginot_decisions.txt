@@ -206,11 +206,12 @@ decision_maginot_anti_jump_off = {
 
 # make sure 5 armies are on the planet
 decision_maginot_basic_garrison_check = {
-	sound = maginot_army_noise_effect
+	sound = maginot_basic_point_check_noise_effect
 	icon = decision_martial_law
 
 	# not used to keep the custom sound effect, but player can't spam this decision or stuff breaks
 	#enactment_time = 1
+	
 	resources = {
 		category = decisions
 		cost = {
@@ -268,14 +269,17 @@ decision_maginot_basic_garrison_check = {
 # mass recruit armies button
 decision_maginot_mass_recruitment = {
 	sound = maginot_army_noise_effect
-	icon = decision_martial_law # TODO
+	icon = decision_maginot_mass_recruitment
 
-	# not used to keep the custom sound effect, but player can't spam this decision or stuff breaks
-	#enactment_time = 1
+	enactment_time = 500
+
 	resources = {
-		category = decisions
+		category = armies
 		cost = {
 			energy = 10
+			alloys = 250
+
+			multiplier = value:maginot_bunker_count
 		}
 	}
 	
@@ -285,37 +289,68 @@ decision_maginot_mass_recruitment = {
 		exists = planet_owner
 		has_ground_combat = no
 		is_occupied_flag = no
-		OR = {
-			has_district = district_maginot_world_bunkers
-			has_district = district_maginot_world_bunkers_ringworld
-		}
-		always = no # TODO, not finished
-	}
-
-	allow = {
-		custom_tooltip = {
-			fail_text = maginot_wait_for_army_recruit
-			NOT = { has_planet_flag = maginot_wait_for_army_recruit }
-		}
 	}
 	
 	effect = {
 		custom_tooltip = decision_maginot_mass_recruitment_effect
 		hidden_effect = {
-			# stop player spam
-			set_timed_planet_flag = {
-				flag = maginot_wait_for_army_recruit
-				days = 30
-			}
 			if = {
 				limit = { exists = planet_owner }
 				if = {
 					limit = { planet_owner = { is_machine_empire = no } }
-					while = { count = 5	create_army = { name = "Heavy Offence Unit"	owner = planet_owner species = planet_owner.species type = random } }
+					while = { count = value:maginot_bunker_count	create_army = { owner = planet_owner species = planet_owner.species type = maginot_assault_unit } }
 				}
 				else_if = {
 					limit = { planet_owner = { is_machine_empire = yes } }
-					while = { count = 5	create_army = { name = "Heavy Offence Unit"	owner = planet_owner species = planet_owner.species type = random } }
+					while = { count = value:maginot_bunker_count 	create_army = { owner = planet_owner type = maginot_machine_assault_unit } }
+				}
+			}
+		}
+	}
+	
+	ai_weight = { # this is for player convenience
+		weight = 0
+	}
+}
+
+# Lets you mass recruit Katzenpanzers if you have them
+decision_maginot_mass_recruitment_katzenpanzer = {
+	sound = maginot_army_noise_effect
+	icon = decision_maginot_mass_recruitment_katzenpanzer
+
+	enactment_time = 750
+	
+	resources = {
+		category = armies
+		cost = {
+			alloys = 1000
+			exotic_gases = 50
+			rare_crystals = 50
+			volatile_motes = 50
+
+			multiplier = value:maginot_bunker_count
+		}
+	}
+	
+	potential = {
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		exists = planet_owner
+		planet_owner = {
+			has_technology = giga_tech_katzen_panzers
+		}
+		has_ground_combat = no
+		is_occupied_flag = no
+	}
+
+	effect = {
+		custom_tooltip = decision_maginot_mass_recruitment_katzenpanzer_effect
+		hidden_effect = {
+			if = {
+				limit = { exists = planet_owner }
+				while = {
+					count = value:maginot_bunker_count	
+					create_army = { owner = planet_owner type = riesigerkatzenpanzer_assault } 
 				}
 			}
 		}

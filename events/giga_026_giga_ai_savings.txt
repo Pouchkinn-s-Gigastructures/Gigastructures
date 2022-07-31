@@ -138,6 +138,78 @@ country_event = {
 	}
 }
 
+# mega count and building update, for AI weights
+country_event = {
+	id = giga_ai_savings.002
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		# if build cap is unlimited, skip the calcs and treat it as always available
+		if = {
+			limit = {
+				has_global_flag = giga_buildcap_u
+			}
+
+			set_variable = {
+				which = giga_ai_get_build_limit
+				value = 1000
+			}
+			set_variable = {
+				which = giga_ai_get_currently_building
+				value = 0
+			}
+		}
+		# if build cap is job based, get the AI build cap already calculated if available
+		else_if = {
+			limit = {
+				has_global_flag = giga_buildcap_j
+			}
+			if = {
+				limit = {
+					is_ai = yes
+					is_variable_set = giga_amb_ai_limit
+				}
+				set_variable = {
+					which = giga_ai_get_build_limit
+					value = giga_amb_ai_limit
+				}
+			}
+			else = {
+				set_variable = {
+					which = giga_ai_get_build_limit
+					value = 1000
+				}
+			}
+			set_variable = {
+				which = giga_ai_get_currently_building
+				value = value:giga_ai_get_currently_building
+			}
+		}
+		# if the caps are any other way, calculate both
+		else = {
+			set_variable = {
+				which = giga_ai_get_build_limit
+				value = value:giga_ai_get_build_limit
+			}
+			set_variable = {
+				which = giga_ai_get_currently_building
+				value = value:giga_ai_get_currently_building
+			}
+		}
+
+		# calculate remaining build cap
+		set_variable = {
+			which = giga_ai_get_remaining_build_limit
+			value = giga_ai_get_build_limit
+		}
+		subtract_variable = {
+			which = giga_ai_get_remaining_build_limit
+			value = giga_ai_get_currently_building
+		}
+	}
+}
+
 # sequester non-stealable relics before capital planet capture
 country_event = {
 	id = giga_ai_savings.100
@@ -234,5 +306,87 @@ country_event = {
 		from = {
 			giga_hide_unstealable_relics = yes
 		}
+	}
+}
+
+# give the AI fake galactic wonders
+country_event = {
+	id = giga_ai_savings.200
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		is_ai = yes
+		is_country_type = default
+		has_galactic_wonders = no
+		has_technology = tech_mega_engineering
+		or = {
+			num_ascension_perks > 6
+			has_country_flag = has_built_or_repaired_megastructure
+			any_country = {
+				is_ai = no
+				has_galactic_wonders = yes
+			}
+		}
+	}
+
+	immediate = {
+		set_country_flag = giga_galactic_wonders_override
+
+		if = {
+			limit = {
+				has_utopia = yes
+				NOT = { has_technology = tech_ring_world }
+			}
+			add_research_option = tech_ring_world
+		}
+		if = {
+			limit = {
+				has_utopia = yes
+				NOT = { has_technology = tech_dyson_sphere }
+			}
+			add_research_option = tech_dyson_sphere
+		}
+		if = {
+			limit = {
+				has_megacorp = yes
+				NOT = { has_technology = tech_matter_decompressor }
+			}
+			add_research_option = tech_matter_decompressor
+		}
+	}
+}
+
+# give the AI fake gigastructural constructs
+country_event = {
+	id = giga_ai_savings.201
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		is_ai = yes
+		is_country_type = default
+		has_gigastructural_constructs = no
+		has_galactic_wonders = yes
+		has_technology = tech_mega_engineering
+		has_technology = tech_self_aware_logic
+		has_technology = tech_mine_dark_matter
+		has_technology = giga_tech_ringworld_titanic_2
+		or = {
+			num_ascension_perks > 7
+			has_country_flag = has_built_or_repaired_gigastructure
+			any_country = {
+				is_ai = no
+				has_gigastructural_constructs = yes
+			}
+		}
+	}
+
+	immediate = {
+		set_country_flag = giga_gigastructural_constructs_override
+
+		if = { limit = { NOT = { has_technology = giga_tech_hrae_mc } }				add_research_option = giga_tech_hrae_mc }
+		if = { limit = { NOT = { has_technology = giga_tech_ringworld_behemoth } }	add_research_option = giga_tech_ringworld_behemoth }
+		if = { limit = { NOT = { has_technology = giga_tech_matrioshka_brain_1 } }	add_research_option = giga_tech_matrioshka_brain_1 }
 	}
 }
