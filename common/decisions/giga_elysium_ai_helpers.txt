@@ -1,0 +1,306 @@
+# helper decisions for the AI when it takes the Elysian Overseers origin
+# mostly because they fucking LOVE to make their planets urban worlds, probably due to the low district counts
+
+@flag = giga_elysium_helper_active
+
+decision_giga_elysium_city = {
+	owned_planets_only = yes
+
+	enactment_time = 30
+
+	resources = {
+		category = planet_districts
+		cost = {
+			minerals = 400
+		}
+	}
+
+	potential = {
+		exists = owner
+		uses_district_set = standard
+		has_modifier = giga_elysium_host_planet
+		owner = {
+			is_ai = yes
+			has_origin = origin_elysium
+		}
+	}
+
+	on_queued = { owner = { set_timed_country_flag = { flag = @flag days = 60 } } }
+	on_unqueued = {	owner = { remove_country_flag = @flag }	}
+	abort_trigger = {
+		or = {
+			not = { exists = owner }
+			owner = {
+				not = { has_origin = origin_elysium }
+			}
+		}
+	}
+	abort_effect = {
+		if = {
+			limit = { exists = owner } 
+			owner = { remove_country_flag = @flag }
+		}
+	}
+
+	allow = {
+		owner = { not = { has_country_flag = @flag } } 
+		free_housing < 10
+		free_district_slots > 1
+		any_moon = {
+			is_planet_class = pc_giga_elysium
+			free_building_slots = 0
+			num_unemployed > 0
+		}
+	}
+
+	effect = {
+		owner = { remove_country_flag = @flag }
+
+		if = {
+			limit = {
+				owner = { is_machine_empire = yes }
+			}
+			add_district = district_nexus
+		}
+		else_if = {
+			limit = {
+				owner = { is_hive_empire = yes }
+			}
+			add_district = district_hive
+		}
+		else = {
+			add_district = district_city
+		}
+	}
+
+	ai_weight = {
+		weight = 10
+
+		modifier = {
+			free_housing < -5
+			factor = 5
+		}
+	}
+}
+
+decision_giga_elysium_industrial = {
+	owned_planets_only = yes
+
+	enactment_time = 30
+
+	resources = {
+		category = planet_districts
+		cost = {
+			minerals = 400
+		}
+	}
+
+	potential = {
+		exists = owner
+		uses_district_set = standard
+		has_modifier = giga_elysium_host_planet
+		owner = {
+			is_ai = yes
+			has_origin = origin_elysium
+		}
+	}
+
+	on_queued = { owner = { set_timed_country_flag = { flag = @flag days = 60 } } }
+	on_unqueued = {	owner = { remove_country_flag = @flag }	}
+	abort_trigger = {
+		or = {
+			not = { exists = owner }
+			owner = {
+				not = { has_origin = origin_elysium }
+			}
+		}
+	}
+	abort_effect = {
+		if = {
+			limit = { exists = owner } 
+			owner = { remove_country_flag = @flag }
+		}
+	}
+
+	allow = {
+		owner = { not = { has_country_flag = @flag } } 
+		free_district_slots > 0
+		or = {
+			and = {
+				owner = {
+					resource_income_compare = {
+						resource = alloys
+						value < 50
+					}
+				}
+				nor = {
+					has_available_jobs = foundry
+					has_available_jobs = alloy_drone
+					has_available_jobs = fabricator
+					has_available_jobs = catalytic_technician
+					has_available_jobs = catalytic_drone
+				}
+			}
+			and = {
+				owner = {
+					country_uses_consumer_goods = yes
+					resource_income_compare = {
+						resource = consumer_goods
+						value < 30
+					}
+				}
+				nor = {
+					has_available_jobs = artisan
+					has_available_jobs = artificer
+					has_available_jobs = artisan_drone
+				}
+			}
+		}
+	}
+
+	effect = {
+		owner = { remove_country_flag = @flag }
+
+		add_district = district_industrial
+	}
+
+	ai_weight = {
+		weight = 2
+
+		modifier = {
+			has_district = district_industrial
+			factor = 5
+		}
+
+		modifier = {
+			or = {
+				colony_type = col_mining
+				colony_type = col_generator
+				colony_type = col_farming
+			}
+
+			factor = 0.01
+		}
+
+		modifier = {
+			or = {
+				colony_type = col_industrial
+				and = {
+					colony_type = col_factory
+					owner = {
+						resource_income_compare = {
+							resource = consumer_goods
+							value < 30
+						}
+					}
+				}
+				and = {
+					colony_type = col_foundry
+					owner = {
+						resource_income_compare = {
+							resource = alloys
+							value < 50
+						}
+					}
+				}
+			}
+
+			factor = 10
+		}
+	}
+}
+
+decision_giga_elysium_control = {
+	owned_planets_only = yes
+
+	enactment_time = 30
+
+	resources = {
+		category = planet_districts
+		cost = {
+			minerals = 400
+		}
+	}
+
+	potential = {
+		exists = owner
+		is_planet_class = pc_giga_elysium
+		owner = {
+			is_ai = yes
+		}
+	}
+
+	on_queued = { owner = { set_timed_country_flag = { flag = @flag days = 60 } } }
+	on_unqueued = {	owner = { remove_country_flag = @flag }	}
+	abort_trigger = {
+		or = {
+			not = { exists = owner }
+			owner = {
+				not = { has_origin = origin_elysium }
+			}
+		}
+	}
+	abort_effect = {
+		if = {
+			limit = { exists = owner } 
+			owner = { remove_country_flag = @flag }
+		}
+	}
+
+	allow = {
+		owner = { not = { has_country_flag = @flag } }
+		exists = orbit
+		orbit = {
+			planet_stability < 50
+		}
+		nor = {
+			has_available_jobs = giga_elysium_controller
+			has_available_jobs = giga_elysium_controller_drone
+		}
+	}
+
+	effect = {
+		owner = { remove_country_flag = @flag }
+
+		if = {
+			limit = {
+				free_district_slots = 0
+			}
+			
+			if = {
+				limit = {
+					has_district = district_giga_elysium_entertainment
+				}
+				remove_district = district_giga_elysium_entertainment
+			}
+			else_if = {
+				limit = {
+					has_district = district_giga_elysium_admin
+				}
+				remove_district = district_giga_elysium_admin
+			}
+			else_if = {
+				limit = {
+					has_district = district_giga_elysium_science
+				}
+				remove_district = district_giga_elysium_science
+			}
+			else = {
+				remove_district = district_giga_elysium_housing
+			}
+		}
+		add_district = district_giga_elysium_control
+	}
+
+	ai_weight = {
+		weight = 5
+
+		modifier = {
+			exists = orbit
+			orbit = {
+				planet_stability < 20
+			}
+			factor = 5
+		}
+	}
+}

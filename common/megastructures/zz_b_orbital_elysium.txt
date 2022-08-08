@@ -1,6 +1,6 @@
 orbital_elysium_0 = {
-	entity = "giga_orbital_habitat_entity_01_entity"
-	construction_entity = "giga_orbital_habitat_entity_01_entity"
+	entity = giga_elysium_01_entity
+	construction_entity = giga_elysium_01_entity
 	construction_blocks_and_blocked_by = none
 	portrait = "GFX_megastructure_construction_background"
 	place_entity_on_planet_plane = no
@@ -44,8 +44,12 @@ orbital_elysium_0 = {
 				controller = { is_same_value = prev.owner }
 			}
 			custom_tooltip = { 
-				fail_text = "must_build_around_developed_planet"	
-				has_upgraded_capital = yes
+				fail_text = "must_build_around_developed_planet"
+				or = {
+					# origin is exempt from needing 10 pops
+					from = { has_origin = origin_elysium }
+					has_upgraded_capital = yes
+				}
 			}
 			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
 			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	NOT = { has_planet_flag = has_orbital_elysium } }
@@ -62,6 +66,7 @@ orbital_elysium_0 = {
 		save_event_target_as = giga_system
 		fromfrom.planet = {
 			save_event_target_as = giga_planet
+			save_event_target_as = giga_elysium_host
 			giga_set_has_mega_flag = yes
 			set_planet_flag = has_orbital_elysium
 
@@ -69,38 +74,18 @@ orbital_elysium_0 = {
 				modifier = giga_elysium_host_planet
 			}
 
-			remove_all_buildings = yes
-			
-			if = {
-				limit = {
-					owner = { is_gestalt = no }
-				}
-				add_building = building_giga_elysium_host_capital
-				add_building = building_giga_elysium_host_jobs
-			}
-			else_if = {
-				limit = {
-					owner = { is_hive_empire = yes }
-				}
-				add_building = building_giga_elysium_host_hive_capital
-				add_building = building_giga_elysium_host_hive_jobs
-			}
-			else_if = {
-				limit = {
-					owner = { is_machine_empire = yes }
-				}
-				add_building = building_giga_elysium_host_machine_capital
-				add_building = building_giga_elysium_host_machine_jobs
-			}
+			giga_set_elysium_buildings = yes
 
-			validate_planet_buildings_and_districts = yes
+			# fire event for elysium origin empires
+			planet_event = { id = giga_elysium_origin.100 }
 		}
 		from = {
 			if = {
 				limit = {
+					not = { has_origin = origin_elysium }
 					fromfrom = {
 						not = { 
-							has_megastructure_flag = "origin_elysium" # flag applied by auto-built elysiums from the origin to hide the notification
+							has_megastructure_flag = origin_elysium # flag applied by auto-built elysiums from the origin to hide the notification
 						}
 					}
 				}
@@ -152,7 +137,7 @@ orbital_elysium_0 = {
 
 				set_name = {
 					key = "GIGA_ELYSIUM_PLANET_NAME"
-					variable_string = "[FROM.from.planet.GetName]"
+					variable_string = "[event_target:giga_elysium_host.GetName]"
 				}
 			}
 		}

@@ -34,6 +34,7 @@ country_event = {
 					finish_upgrade = yes
 				}
 			}
+			save_event_target_as = giga_elysium_host
 
 			# finish the colony and set capital scope
 			random_moon = {
@@ -48,6 +49,10 @@ country_event = {
 				create_colony = {
 					owner = root
 					species = event_target:giga_colony_species
+				}
+				set_name = {
+					key = "GIGA_ELYSIUM_PLANET_NAME"
+					variable_string = "[event_target:giga_elysium_host.GetName]"
 				}
 				add_district = district_giga_elysium_housing
 				add_district = district_giga_elysium_control
@@ -146,6 +151,175 @@ country_event = {
 
 			# clear fix modifier
 			remove_modifier = giga_elysium_origin_fix
+		}
+	}
+}
+
+# colonised planet
+planet_event = {
+	id = giga_elysium_origin.002
+	hide_window = yes
+	is_triggered_only = yes
+
+	pre_triggers = {
+		has_owner = yes
+	}
+
+	trigger = {
+		owner = {
+			has_origin = origin_elysium
+		}
+		planet_has_no_megastructure = yes
+		nor = { 
+			has_planet_flag = has_orbital_elysium 
+			is_giga_habitat = yes
+		}
+	}
+
+	immediate = {
+		set_planet_flag = has_orbital_elysium
+		giga_set_has_mega_flag = yes
+		solar_system = {
+			# create origin platform
+			spawn_megastructure = {
+				type = orbital_elysium_origin_platform_0
+				planet = root
+				owner = root.owner
+				graphical_culture = root.owner
+			}
+			# set it upgrading
+			random_system_megastructure = {
+				limit = {
+					is_megastructure_type = orbital_elysium_origin_platform_0
+					planet = {
+						is_same_value = root
+					}
+				}
+				# speed auto-built elysiums up
+				add_modifier = {
+					modifier = giga_elysium_origin_build_speed
+				}
+				set_megastructure_flag = origin_elysium
+				upgrade_megastructure_to = orbital_elysium_0
+			}
+		}
+	}
+}
+
+
+
+# when elysium is completed, remove negative modifier
+planet_event = {
+	id = giga_elysium_origin.100
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		owner = {
+			has_origin = origin_elysium
+		}
+	}
+
+	immediate = {
+		remove_modifier = giga_origin_no_elysium
+	}
+}
+
+#Tree destroyed (oh no!)
+#silently kill tree
+# planet_event = {
+# 	id = giga_elysium_origin.101
+# 	hide_window = yes
+
+# 	is_triggered_only = yes
+
+# 	trigger = {
+# 		OR = {
+# 			has_deposit = d_tree_of_life_colony
+# 			has_deposit = d_tree_of_life_home
+# 		}
+# 	}
+
+# 	immediate = {
+# 		remove_deposit = d_tree_of_life_colony
+# 		remove_deposit = d_tree_of_life_home
+# 	}
+# }
+
+#informatively kill tree
+# planet_event = {
+# 	id = giga_elysium_origin.102
+# 	title = "origin.3003.name"
+# 	desc = "origin.3003.desc"
+# 	picture = GFX_evt_burning_city
+# 	show_sound = event_alien_nature
+
+# 	is_triggered_only = yes
+
+# 	trigger = {
+# 		planet_devastation >= 50
+# 		OR = {
+# 			has_deposit = d_tree_of_life_colony
+# 			has_deposit = d_tree_of_life_home
+# 		}
+# 	}
+
+# 	immediate = {
+# 		remove_deposit = d_tree_of_life_colony
+# 		remove_deposit = d_tree_of_life_home
+# 	}
+
+# 	option = {
+# 		name = UNFORTUNATE
+# 		tooltip = {
+# 			remove_deposit = d_tree_of_life_colony
+# 			remove_deposit = d_tree_of_life_home
+# 		}
+# 		add_modifier = { modifier = no_lifetree }
+# 	}
+# }
+
+# planet transfer
+planet_event = {
+	id = giga_elysium_origin.103
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		OR = {
+			AND = {
+				FROM = { has_origin = origin_elysium }
+				nor = { 
+					has_planet_flag = megastructure
+					is_giga_habitat = yes
+					any_moon = {
+						is_planet_class = pc_giga_elysium
+					}
+					has_modifier = giga_origin_no_elysium
+				}
+			}
+			AND = {
+				FROM = { NOT = { has_origin = origin_elysium } }
+				has_modifier = giga_origin_no_elysium
+			}
+		}
+
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				FROM = { has_origin = origin_elysium }
+			}
+			add_modifier = { modifier = giga_origin_no_elysium }
+		}
+		if = {
+			limit = {
+				FROM = { NOT = { has_origin = origin_elysium } }
+			}
+			remove_modifier = giga_origin_no_elysium
 		}
 	}
 }
