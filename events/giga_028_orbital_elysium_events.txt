@@ -395,15 +395,71 @@ country_event = {
 				exists = orbit
 			}
 			orbit = {
-				set_variable = {
-					which = giga_elysium_stability
-					value = prev.modifier:giga_elysium_host_stability_add
-				}
+				if = {
+					limit = {
+						exists = owner
+						exists = controller
+						owner = { is_same_empire = root }
+						controller = { is_same_empire = root }
+					}
 
-				set_variable = {
-					which = giga_elysium_admin
-					value = prev.value:giga_elysium_admin_calc
+					set_variable = {
+						which = giga_elysium_stability
+						value = prev.modifier:giga_elysium_host_stability_add
+					}
+	
+					set_variable = {
+						which = giga_elysium_admin
+						value = prev.value:giga_elysium_admin_calc
+					}
+
+					prev = {
+						if = {
+							limit = {
+								has_modifier = giga_elysium_no_host
+							}
+							remove_modifier = giga_elysium_no_host
+						}
+
+						# AI resettlement down to the planet, even if normal auto-resettle wouldn't do anything
+						if = {
+							limit = {
+								root = { is_ai = yes }
+								num_unemployed > 3
+							}
+							random_owned_pop = {
+								limit = {
+									is_unemployed = yes
+								}
+								resettle_pop = {
+									pop = this
+									planet = prev.orbit
+								}
+							}
+						}
+					}
 				}
+				else = {
+					set_variable = {
+						which = giga_elysium_stability
+						value = 0
+					}
+	
+					set_variable = {
+						which = giga_elysium_admin
+						value = 0
+					}
+
+					prev = {
+						if = {
+							limit = {
+								not = { has_modifier = giga_elysium_no_host }
+							}
+							add_modifier = { modifier = giga_elysium_no_host }
+						}
+					}
+				}
+				
 			}
 		}
 	}
