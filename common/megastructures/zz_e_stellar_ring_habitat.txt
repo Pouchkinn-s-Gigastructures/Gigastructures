@@ -1,0 +1,207 @@
+@counter = giga_stellar_ring_value
+
+@size = giga_stellar_ring_size
+
+@marker = giga_stellar_ring_asteroid
+@root_marker = giga_stellar_ring_base
+@modifier = giga_stellar_ring_asteroid
+
+@gas = giga_stellar_ring_gas
+@motes = giga_stellar_ring_motes
+@crystals = giga_stellar_ring_crystals
+@iodizium = giga_stellar_ring_iodizium
+@supertensiles = giga_stellar_ring_supertensiles
+
+# platform
+stellar_ring_habitat_0 = { 
+	entity = construction_platform_entity
+	construction_entity = construction_platform_entity
+	construction_blocks_and_blocked_by = multi_stage_type
+	portrait = GFX_megastructure_construction_background
+	place_entity_on_planet_plane = no
+	entity_offset = { x = 0 y = -20 }
+	#prerequisites = {  }
+
+	build_time = 1800
+	resources = {
+		category = giga_megastructures
+		cost = {
+			alloys = 5000
+			unity = @giga_big_mega_start_unity_cost
+		}
+		upkeep = { energy = 5 }
+	}
+
+	potential = {
+
+	}
+
+	possible = {
+		exists = starbase
+		custom_tooltip = { fail_text = "requires_inside_border"						is_inside_border = from }
+		custom_tooltip = { fail_text = "requires_surveyed_system"					giga_system_is_surveyed = yes }
+
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "must_build_around_asteroid"			is_asteroid = yes }
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+		}
+	}
+
+	ai_weight = {
+		weight = value:giga_ai_base_mega
+	}
+
+	on_build_complete = {
+		fromfrom.planet = {
+			giga_set_has_mega_flag = yes
+		}
+	}
+}
+
+# gather asteroids
+stellar_ring_habitat_1 = { 
+	entity = construction_platform_entity
+	construction_entity = construction_platform_entity
+	construction_blocks_and_blocked_by = multi_stage_type
+	portrait = GFX_megastructure_construction_background
+	place_entity_on_planet_plane = no
+	entity_offset = { x = 0 y = -20 }
+	upgrade_from = { stellar_ring_habitat_0 }
+	#prerequisites = {  }
+
+	build_time = 1800
+	resources = {
+		category = giga_megastructures
+		cost = {
+			energy = 1000
+		}
+		cost = {
+			minerals = 10000
+		}
+		upkeep = { energy = 10 }
+	}
+
+	on_build_start = {
+		# mark every viable asteroid
+		every_system_planet = {
+			limit = {
+				or = {
+					and = {
+						is_asteroid = yes
+						nor = {
+							has_planet_flag = has_megastructure
+							has_planet_flag = megastructure
+						}
+					}
+					is_same_value = fromfrom.planet
+				}
+			}
+
+			set_planet_flag = has_megastructure
+			set_planet_flag = @marker
+			add_modifier = { modifier = @modifier }
+		}
+		# mark the root
+		fromfrom.planet = {
+			set_planet_flag = @root_marker
+		}
+	}
+
+	on_build_complete = {
+		# set up variables
+		fromfrom = {
+			set_variable = { which = @counter value = 0 }
+
+			set_variable = { which = @gas value = 0 }
+			set_variable = { which = @motes value = 0 }
+			set_variable = { which = @crystals value = 0 }
+			set_variable = { which = @iodizium value = 0 }
+			set_variable = { which = @supertensiles value = 0 }
+		}
+
+		# clear all asteroid belts
+		set_asteroid_belt = {
+			radius = 0
+		}
+
+		# consume all marked bodies, tally value
+		every_system_planet = {
+			limit = {
+				has_planet_flag = @marker
+			}
+			if = {
+				limit = {
+					exists = orbital_station
+				}
+				orbital_station = {
+					dismantle = yes
+				}
+			}
+
+			fromfrom = {
+				# size
+				change_variable = { which = @counter value = prev.trigger:planet_size }
+
+				# mineral and alloy output
+
+				# modifiers of interest
+
+				# tally up strategic deposits for mines later
+				change_variable = { which = @gas 			value = value:giga_count_resource|resource|exotic_gases| }
+				change_variable = { which = @motes 			value = value:giga_count_resource|resource|volatile_motes| }
+				change_variable = { which = @crystals 		value = value:giga_count_resource|resource|rare_crystals| }
+				change_variable = { which = @iodizium 		value = value:giga_count_resource|resource|sr_iodizium| }
+				change_variable = { which = @supertensiles 	value = value:giga_count_resource|resource|sr_giga_amb_megaconstruction| }
+			}
+
+			if = {
+				limit = {
+					not = { is_same_value = fromfrom.planet }
+				}
+				giga_remove_planet = yes
+			} 
+			else = {
+				#remove_modifier = @marker
+			}
+		}
+
+		# convert values to statistics
+		fromfrom = {
+
+
+
+			set_variable = {
+				which = @size
+				value = @counter # temp calculation
+			}
+		}
+
+		fromfrom.planet = {
+			change_pc = pc_giga_empty_space_asteroid
+			set_planet_flag = megastructure
+			set_name = "Anchor"
+			set_planet_size = fromfrom.@size
+		}
+	}
+
+	ai_weight = { factor = value:giga_ai_base_continue }
+}
+
+# build structure
+stellar_ring_habitat_2 = { 
+	entity = giga_orbital_habitat_ring
+	upgrade_from = { stellar_ring_habitat_1 }
+	scales_with_planet = yes
+}
+
+# install plates
+stellar_ring_habitat_3 = { 
+	entity = giga_orbital_habitat_ring
+	upgrade_from = { stellar_ring_habitat_2 }
+	scales_with_planet = yes
+}
