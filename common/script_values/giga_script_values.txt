@@ -207,6 +207,10 @@ giga_count_resource = {
 			amount > 19
 		}
 	}
+
+	[[mult]
+		multiply = $mult$
+	]
 }
 
 giga_get_opinion_from_jobs = {
@@ -305,5 +309,127 @@ giga_get_species_for_colony_habitability = {
 			who = prev
 		}
 		mode = weight
+	}
+}
+
+# scoring function for asteroids when building a Stellar Ring Habitat
+# determines how much a consumed asteroid contributes to the planet size calculation
+giga_orbital_asteroid_value = {
+	weight = trigger:planet_size
+	multiply = 0.4 # standard size appears to be 5, so 2 score per asteroid base
+
+	modifier = {
+		is_planet_class = pc_ice_asteroid
+		multiply = 0.8
+	}
+
+	modifier = {
+		is_planet_class = pc_crystal_asteroid
+		multiply = 1.2
+	}
+
+	add = value:giga_count_resource|resource|minerals|mult|0.5|
+	add = value:giga_count_resource|resource|energy|mult|0.25|
+	add = value:giga_count_resource|resource|alloys|mult|1.0|
+
+	# guilli's modifiers
+	modifier = {
+		has_modifier = gpm_large_asteroid
+		multiply = 1.25
+	}
+
+	modifier = {
+		has_modifier = gpm_asteroid_moon
+		multiply = 1.2
+	}
+
+	modifier = {
+		has_modifier = gpm_metal_asteroid
+		multiply = 1.5
+	}
+
+	modifier = {
+		has_modifier = gpm_dense_core
+		multiply = 1.2
+	}
+
+	modifier = {
+		has_modifier = gpm_hollow_structure
+		multiply = 0.4
+	}
+
+	modifier = {
+		has_modifier = gpm_crystallized_structure
+		multiply = 1.1
+	}
+
+	modifier = {
+		has_modifier = gpm_abandoned_mining_platforms
+		multiply = 0.6
+	}
+
+	modifier = {
+		has_modifier = gpm_spherical_asteroid
+		multiply = 1.2
+	}
+
+	modifier = {
+		has_modifier = gpm_c_type_asteroid
+		multiply = 0.75
+	}
+
+	modifier = {
+		has_modifier = gpm_s_type_asteroid
+		multiply = 1.2
+	}
+
+	modifier = {
+		has_modifier = gpm_m_type_asteroid
+		multiply = 1.5
+	}
+
+	modifier = {
+		has_modifier = gpm_v_type_asteroid
+		multiply = 0.75
+	}
+}
+
+# 10 + value, up to 20, after which excess is square rooted
+giga_orbital_size_calculation = {
+	weight = giga_stellar_ring_value
+	subtract = 20
+	min = 0
+	square_root = yes
+
+	add = value:giga_orbital_size_calculation_a
+	add = 10
+
+	round = yes
+}
+
+giga_orbital_size_calculation_a = {
+	weight = giga_stellar_ring_value
+	max = 20
+}
+
+# number of viable source asteroids in the system, for gathering cost
+giga_orbital_asteroid_count = {
+	base = 1 # the one it's built on
+	complex_trigger_modifier = {
+		trigger = count_system_planet
+		trigger_scope = solar_system
+		parameters = {
+			limit = {
+				is_asteroid = yes
+				is_moon = no
+				nor = {
+					has_planet_flag = has_megastructure
+					has_planet_flag = megastructure
+					has_anomaly = yes
+					has_planet_flag = giga_remove_planet
+				}
+			}
+		}
+		mode = add
 	}
 }
