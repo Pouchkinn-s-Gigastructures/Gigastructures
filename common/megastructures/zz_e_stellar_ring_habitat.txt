@@ -1,6 +1,8 @@
 @counter = giga_stellar_ring_value
 
 @size = giga_stellar_ring_size # beware: used later in the script by name due to an intentional parser limitation
+@prev_size = prev.giga_stellar_ring_size
+@fromfrom_size = fromfrom.giga_stellar_ring_size
 
 @marker = giga_stellar_ring_asteroid
 @root_marker = giga_stellar_ring_base
@@ -53,7 +55,7 @@ stellar_ring_habitat_0 = {
 			custom_tooltip = { fail_text = "must_build_around_asteroid"			is_asteroid = yes is_moon = no }
 			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
 			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
-			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no is_colony = no }
 			custom_tooltip = { fail_text = "requires_no_existing_orbital"		solar_system = { not = { has_star_flag = has_giga_stellar_ring_habitat } } }
 		}
 	}
@@ -115,6 +117,7 @@ stellar_ring_habitat_1 = {
 						# (don't eat guilli's ring sites please)
 						is_asteroid = yes
 						is_moon = no
+						is_colony = no
 						nor = {
 							has_planet_flag = has_megastructure
 							has_planet_flag = megastructure
@@ -213,7 +216,7 @@ stellar_ring_habitat_1 = {
 
 				set_planet_flag = megastructure
 				set_name = GIGA_ORBITAL_ANCHOR_NAME
-				set_planet_size = prev.giga_stellar_ring_size #.@size # parser limitation
+				set_planet_size = @prev_size #prev.giga_stellar_ring_size #.@size # parser limitation
 				remove_modifier = @marker
 			}
 		}
@@ -242,7 +245,7 @@ stellar_ring_habitat_2 = {
 				is_variable_set = giga_stellar_ring_size
 			}
 			alloys = 300
-			multiplier = giga_stellar_ring_size #.@size # parser limitation
+			multiplier = @size
 		}
 		# preview alloy cost
 		cost = { alloys = 7500 }
@@ -281,7 +284,7 @@ stellar_ring_habitat_3 = {
 				is_variable_set = giga_stellar_ring_size
 			}
 			alloys = 300
-			multiplier = giga_stellar_ring_size #.@size # parser limitation
+			multiplier = @size
 		}
 		# preview alloy cost
 		cost = { alloys = 7500 }
@@ -299,7 +302,7 @@ stellar_ring_habitat_3 = {
 	on_build_complete = {
 		fromfrom.planet = {
 			change_pc = pc_giga_orbital
-			set_planet_size = fromfrom.giga_stellar_ring_size #.@size # parser limitation
+			set_planet_size = @fromfrom_size #fromfrom.giga_stellar_ring_size #.@size # parser limitation
 			set_planet_entity = { entity = giga_orbital_habitat_entity graphical_culture = root.from }
 
 			set_surveyed = { surveyed = yes surveyor = from }
@@ -344,4 +347,75 @@ stellar_ring_habitat_3 = {
 	}
 
 	ai_weight = { factor = value:giga_ai_base_continue }
+}
+
+# ruined
+stellar_ring_habitat_ruined = { 
+	entity = giga_orbital_habitat_damaged_mega_entity
+	construction_entity = giga_orbital_habitat_damaged_mega_entity
+	portrait = GFX_megastructure_construction_background
+	entity_offset = { x = 0 y = 0 }
+	place_entity_on_planet_plane = yes
+	potential = { always = no }
+
+	resources = {
+		category = giga_megastructures
+	}
+}
+
+# restored
+stellar_ring_habitat_restored = { 
+	entity = ""
+	#construction_entity = giga_orbital_habitat_mega_entity
+	portrait = GFX_megastructure_construction_background
+	entity_offset = { x = 0 y = 0 }
+	place_entity_on_planet_plane = yes
+	upgrade_from = { stellar_ring_habitat_ruined }
+
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = 10000 } # same as ringworld segment
+	}
+
+	possible = {
+		exists = from
+		from = { has_technology = tech_mega_engineering }
+		custom_tooltip = { fail_text = "requires_surveyed_system"					giga_system_is_surveyed = yes }
+	}
+
+	ai_weight = {
+		weight = value:giga_ai_base_repairs
+	}
+
+	on_build_complete = {
+		spawn_planet = {
+			class = pc_giga_orbital
+			size = 18
+			location = fromfrom
+
+			init_effect = {
+				set_surveyed = { surveyed = yes surveyor = from }
+				set_all_comms_surveyed = yes
+				set_planet_flag = forbid_guillis_planet_modifiers
+				set_planet_flag = megastructure
+				set_planet_flag = prevent_anomaly
+
+				giga_apply_stellar_ring_bonus_to_system = yes
+
+				giga_start_ai_colony_if_safe = yes
+
+				set_name = {
+					key = GIGA_ORBITAL_PLANET_NAME
+					variable_string = [from.from.System.GetName]
+				}
+			}
+		}
+
+		from = {
+			set_country_flag = has_built_or_repaired_megastructure # allows galactic wonders
+		}
+		
+		remove_megastructure = fromfrom
+	}
 }
