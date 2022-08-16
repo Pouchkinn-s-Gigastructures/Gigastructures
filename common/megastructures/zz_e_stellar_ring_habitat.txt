@@ -26,7 +26,7 @@ stellar_ring_habitat_0 = {
 	portrait = GFX_megastructure_construction_background
 	place_entity_on_planet_plane = no
 	entity_offset = { x = 0 y = -20 }
-	#prerequisites = {  }
+	prerequisites = { giga_tech_stellar_ring_habitat }
 
 	build_time = 1800
 	resources = {
@@ -62,11 +62,96 @@ stellar_ring_habitat_0 = {
 
 	ai_weight = {
 		weight = value:giga_ai_base_mega
+
+		mult = value:giga_ai_core_territory
+		mult = value:giga_ai_prevent_spam|MEGA|stellar_ring_habitat|
+		mult = value:giga_ai_unlocks_galwonders
+		mult = value:giga_ai_overpopulation_boost
+
+		modifier = {
+			mult = 0.01
+			not = {
+				any_system_planet = {
+					is_colony = yes
+					exists = owner
+					owner = {
+						is_same_empire = root.space_owner
+					}
+				}
+			}
+		}
+
+		modifier = {
+			mult = 5
+			count_system_planet = {
+				count > 4
+				limit = {
+					is_colony = yes
+					exists = owner
+					owner = {
+						is_same_empire = root.space_owner
+					}
+				}
+			}
+		}
+
+		modifier = {
+			mult = 2
+			any_system_planet = {
+				is_planet_class = pc_habitat
+			}
+		}
+
+		modifier = {
+			mult = 5
+			from = {
+				has_valid_civic = civic_machine_servitor
+			}
+		}
+
+		modifier = {
+			mult = 0.5
+			count_system_planet = {
+				count < 3
+				limit = {
+					is_asteroid = yes
+					is_moon = no
+					nor = { 
+						has_planet_flag = megastructure 
+						has_planet_flag = has_megastructure 
+					}
+				}
+			}
+		}
+
+		modifier = {
+			mult = 3
+			count_system_planet = {
+				count > 4
+				limit = {
+					is_asteroid = yes
+					is_moon = no
+					nor = { 
+						has_planet_flag = megastructure 
+						has_planet_flag = has_megastructure 
+					}
+				}
+			}
+		}
 	}
 
 	on_build_complete = {
+		save_event_target_as = giga_system
+		
 		fromfrom.planet = {
 			giga_set_has_mega_flag = yes
+			save_event_target_as = giga_planet
+		}
+
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_stellar_ring_habitat years = 20 }
+			country_event = { id = giga_dialog.13601 }	# Notification
+			change_variable = { which = giga_current_stellar_ring value = 1 }
 		}
 	}
 }
@@ -80,13 +165,14 @@ stellar_ring_habitat_1 = {
 	place_entity_on_planet_plane = no
 	entity_offset = { x = 0 y = -20 }
 	upgrade_from = { stellar_ring_habitat_0 }
-	#prerequisites = {  }
+	prerequisites = { giga_tech_stellar_ring_habitat }
 
 	build_time = 1800
 	resources = {
 		category = giga_megastructures
 		cost = {
 			trigger = {
+				is_scope_valid = yes
 				is_scope_type = megastructure
 			}
 			energy = 1000
@@ -96,6 +182,7 @@ stellar_ring_habitat_1 = {
 		cost = { energy = 3000 }
 		cost = {
 			trigger = {
+				is_scope_valid = yes
 				is_scope_type = megastructure
 			}
 			energy = -3000
@@ -140,6 +227,8 @@ stellar_ring_habitat_1 = {
 	}
 
 	on_build_complete = {
+		save_event_target_as = giga_system
+
 		# set up variables
 		fromfrom = {
 			set_variable = { which = @counter value = 0 }
@@ -218,7 +307,13 @@ stellar_ring_habitat_1 = {
 				set_name = GIGA_ORBITAL_ANCHOR_NAME
 				set_planet_size = @prev_size #prev.giga_stellar_ring_size #.@size # parser limitation
 				remove_modifier = @marker
+
+				save_event_target_as = giga_planet
 			}
+		}
+
+		from = {
+			country_event = { id = giga_dialog.13602 }	# Notification
 		}
 	}
 
@@ -233,7 +328,7 @@ stellar_ring_habitat_2 = {
 	upgrade_from = { stellar_ring_habitat_1 }
 	entity_offset = { x = 0 y = 0 }
 	place_entity_on_planet_plane = yes
-	#prerequisites = {  }
+	prerequisites = { giga_tech_stellar_ring_habitat }
 	scales_with_planet = yes
 
 	build_time = 1800
@@ -241,6 +336,7 @@ stellar_ring_habitat_2 = {
 		category = giga_megastructures
 		cost = {
 			trigger = {
+				is_scope_valid = yes
 				is_scope_type = megastructure
 				is_variable_set = giga_stellar_ring_size
 			}
@@ -251,6 +347,7 @@ stellar_ring_habitat_2 = {
 		cost = { alloys = 7500 }
 		cost = {
 			trigger = {
+				is_scope_valid = yes
 				is_scope_type = megastructure
 			}
 			alloys = -7500
@@ -262,6 +359,16 @@ stellar_ring_habitat_2 = {
 	}
 
 	ai_weight = { factor = value:giga_ai_base_continue }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+		}
+		from = {
+			country_event = { id = giga_dialog.13603 }	# Notification
+		}
+	}
 }
 
 # install plates
@@ -272,7 +379,7 @@ stellar_ring_habitat_3 = {
 	upgrade_from = { stellar_ring_habitat_2 }
 	entity_offset = { x = 0 y = 0 }
 	place_entity_on_planet_plane = yes
-	#prerequisites = {  }
+	prerequisites = { giga_tech_stellar_ring_habitat }
 	scales_with_planet = yes
 
 	build_time = 3600
@@ -280,6 +387,7 @@ stellar_ring_habitat_3 = {
 		category = giga_megastructures
 		cost = {
 			trigger = {
+				is_scope_valid = yes
 				is_scope_type = megastructure
 				is_variable_set = giga_stellar_ring_size
 			}
@@ -290,6 +398,7 @@ stellar_ring_habitat_3 = {
 		cost = { alloys = 7500 }
 		cost = {
 			trigger = {
+				is_scope_valid = yes
 				is_scope_type = megastructure
 			}
 			alloys = -7500
@@ -300,6 +409,8 @@ stellar_ring_habitat_3 = {
 	}
 
 	on_build_complete = {
+		save_event_target_as = giga_system
+
 		fromfrom.planet = {
 			change_pc = pc_giga_orbital
 			set_planet_size = @fromfrom_size #fromfrom.giga_stellar_ring_size #.@size # parser limitation
@@ -337,10 +448,13 @@ stellar_ring_habitat_3 = {
 				key = GIGA_ORBITAL_PLANET_NAME
 				variable_string = [from.from.System.GetName]
 			}
+
+			save_event_target_as = giga_planet
 		}
 
 		from = {
 			set_country_flag = has_built_or_repaired_megastructure # allows galactic wonders
+			country_event = { id = giga_dialog.13604 }	# Notification
 		}
 
 		remove_megastructure = fromfrom
@@ -379,7 +493,7 @@ stellar_ring_habitat_restored = {
 	}
 
 	possible = {
-		exists = from
+		hidden_trigger = { exists = from }
 		from = { has_technology = tech_mega_engineering }
 		custom_tooltip = { fail_text = "requires_surveyed_system"					giga_system_is_surveyed = yes }
 	}
@@ -389,6 +503,8 @@ stellar_ring_habitat_restored = {
 	}
 
 	on_build_complete = {
+		save_event_target_as = giga_system
+
 		spawn_planet = {
 			class = pc_giga_orbital
 			size = 18
@@ -409,11 +525,14 @@ stellar_ring_habitat_restored = {
 					key = GIGA_ORBITAL_PLANET_NAME
 					variable_string = [from.from.System.GetName]
 				}
+
+				save_event_target_as = giga_planet
 			}
 		}
 
 		from = {
 			set_country_flag = has_built_or_repaired_megastructure # allows galactic wonders
+			country_event = { id = giga_dialog.13606 }	# Notification
 		}
 		
 		remove_megastructure = fromfrom
