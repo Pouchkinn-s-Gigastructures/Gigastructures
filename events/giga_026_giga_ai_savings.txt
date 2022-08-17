@@ -390,3 +390,135 @@ country_event = {
 		if = { limit = { NOT = { has_technology = giga_tech_matrioshka_brain_1 } }	add_research_option = giga_tech_matrioshka_brain_1 }
 	}
 }
+
+country_event = {
+	id = giga_ai_savings.1000
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		is_ai = yes
+		has_technology = tech_hyper_relays
+
+		not = { 
+			any_owned_megastructure = {
+				is_megastructure_type = giga_hyper_relay_ai_site
+			} 
+		}
+
+		resource_stockpile_compare = {
+			resource = alloys
+			value >= 5000
+			mult = value:scripted_modifier_mult|MODIFIER|megastructures_cost_mult|
+		}
+		resource_stockpile_compare = {
+			resource = rare_crystals
+			value >= 200
+			mult = value:scripted_modifier_mult|MODIFIER|megastructures_cost_mult|
+		}
+		resource_stockpile_compare = {
+			resource = influence
+			value >= 500
+			mult = value:scripted_modifier_mult|MODIFIER|megastructures_cost_mult|
+		}
+	}
+
+	immediate = {
+		random_list = {
+			1000 = {
+				# more likely to skip the more of our territory has relays
+				multiply = value:giga_ai_relay_fraction
+			}
+			10 = {
+				# find a system
+				random_system_within_border = {
+					limit = {
+						# we control the system
+						exists = starbase
+						starbase = {
+							exists = controller
+							controller = {
+								is_same_empire = root
+							}
+						}
+						# no existing relay
+						not = {
+							any_megastructure = {
+								or = {
+									is_megastructure_type = hyper_relay
+									is_megastructure_type = hyper_relay_ruined
+									is_megastructure_type = hyper_relay_restored
+									is_megastructure_type = giga_hyper_relay_ai_site
+								}
+							}
+						}
+					}
+
+					# weight block from the mega
+					weights = {
+						weight = value:giga_ai_base_kilo
+
+						modifier = {
+							factor = 3
+							is_capital_system = yes
+						}
+				
+						modifier = {
+							factor = 1.5
+							any_neighbor_system = {
+								OR = {
+									has_megastructure = hyper_relay
+									has_megastructure = hyper_relay_restored
+								}
+							}
+						}
+				
+						modifier = {
+							factor = 1.5
+							any_system_planet = {
+								is_colony = yes
+							}
+						}
+				
+						# non-gestalt empires will prefer building along trade routes, since those connect colonies to the capital
+						# this may occasionally catch other empire's trade routes that clip our territory, but pirates will eventually appear there so it's fine
+						modifier = {
+							factor = 0.2
+							from = {
+								is_gestalt = no
+							}
+							is_capital_system = no
+							has_trade_route = no
+						}
+					}
+
+					# once we have a system actually do something
+
+					spawn_megastructure = {
+						type = giga_hyper_relay_ai_site
+						owner = root
+						graphical_culture = root
+
+						orbit_distance = 200
+						orbit_angle = 30
+						random_pos = yes
+
+						init_effect = {
+							upgrade_megastructure_to = hyper_relay
+						}
+					}
+
+					root = {
+						add_resource = {
+							alloys = -500
+							rare_crystals = -100
+							influence = -25
+
+							mult = value:scripted_modifier_mult|MODIFIER|megastructures_cost_mult|
+						}
+					}
+				}
+			}
+		}
+	}
+}
