@@ -5048,15 +5048,24 @@ PixelShader = {
 		{
 			float4 UVLod = float4( (In.vUV0), 0.0, PortraitMipLevel * 0.35 );
 
+			//float shift = (In.vPos.x * 0.01) % 1;
+
+			//shift = shift * 0.2 + 0.8; // convert to gradient U coord
+			//float4 UVGrad = float4( shift, 0.95, 0.0, 0.0 );
+
 			float4 vDiffuse;
+			//float4 vGradient;
 			if( CustomDiffuseTexture > 0.5f ) {
 				vDiffuse = tex2Dlod( PortraitCharacter, UVLod );
+				//vGradient = tex2Dlod( PortraitCharacter, UVGrad );
 			} else {
 				vDiffuse = tex2Dlod( DiffuseMap, UVLod );
+				//vGradient = tex2Dlod( DiffuseMap, UVGrad );
 			}
 
-			float shift = (In.vPos.x * 0.005) % 1;
+			//vDiffuse.rgb = vGradient.rgb;
 
+			float shift = (In.vPos.x * 0.005) % 1;
 			vDiffuse.rgb = ApplyHue(vDiffuse.rgb, shift * 2 * 3.14159);
 
 			return float4( ToGamma( vDiffuse.rgb ), vDiffuse.a );
@@ -5073,6 +5082,67 @@ Effect PdxMeshRainbowBlokkatPortraitSkinned
 }
 
 Effect PdxMeshRainbowBlokkatPortraitSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+# // #########################################################################################################################################
+# // BEES
+
+PixelShader = {
+	MainCode PixelMCPortrait
+	ConstantBuffers = { PortraitCommon, TwelthKind, Shadow }
+	[[
+		float2 nearestSampleUV_AA (in float2 uv, float resolution, float sharpness) {
+			float2 tileUv = uv * resolution;
+			float2 dx = float2(ddx(tileUv.x), ddy(tileUv.x));
+			float2 dy = float2(ddx(tileUv.y), ddy(tileUv.y));
+			
+			float2 dxdy = float2(max(abs(dx.x), abs(dx.y)), max(abs(dy.x), abs(dy.y)));
+				
+			float2 texelDelta = frac(tileUv) - float2(0.5, 0.5);
+			float2 distFromEdge = float2(0.5, 0.5) - abs(texelDelta);
+			float2 aa_factor = distFromEdge * sharpness / dxdy;
+				
+			return uv - texelDelta * clamp(aa_factor, float2(0.0, 0.0), float2(1.0, 1.0)) / resolution;
+		}
+
+		float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
+		{
+			float2 uv = In.vUV0;
+
+			uv = nearestSampleUV_AA(uv, 64.0, 1.5);
+
+			float4 UVLod = float4( uv, 0.0, PortraitMipLevel * 0.35 );
+
+			float4 vDiffuse;
+			if( CustomDiffuseTexture > 0.5f ) {
+				vDiffuse = tex2Dlod( PortraitCharacter, UVLod );
+			} else {
+				vDiffuse = tex2Dlod( DiffuseMap, UVLod );
+			}
+
+			if (vDiffuse.a < 0.5) {
+				discard;
+			}
+
+			return float4( ToGamma( vDiffuse.rgb ), 1.0 );
+		}
+
+	]]
+}
+
+Effect PdxMeshMCPortraitSkinned
+{
+	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
+	PixelShader = "PixelMCPortrait"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+	RasterizerState = "RasterizerStateNoCulling"
+}
+
+Effect PdxMeshMCPortraitSkinnedShadow
 {
 	VertexShader = "VertexPdxMeshStandardShadow"
 	PixelShader = "PixelPdxMeshStandardShadow"
