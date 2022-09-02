@@ -5048,25 +5048,25 @@ PixelShader = {
 		{
 			float4 UVLod = float4( (In.vUV0), 0.0, PortraitMipLevel * 0.35 );
 
-			//float shift = (In.vPos.x * 0.01) % 1;
+			float shift = (In.vPos.x * 0.0065) % 1;
 
-			//shift = shift * 0.2 + 0.8; // convert to gradient U coord
-			//float4 UVGrad = float4( shift, 0.95, 0.0, 0.0 );
+			shift = shift * 0.2 + 0.8; // convert to gradient U coord (0.8 to 1.0)
+			float4 UVGrad = float4( shift, 0.95, 0.0, 0.0 );
 
 			float4 vDiffuse;
-			//float4 vGradient;
+			float4 vGradient;
 			if( CustomDiffuseTexture > 0.5f ) {
 				vDiffuse = tex2Dlod( PortraitCharacter, UVLod );
-				//vGradient = tex2Dlod( PortraitCharacter, UVGrad );
+				vGradient = tex2Dlod( PortraitCharacter, UVGrad );
 			} else {
 				vDiffuse = tex2Dlod( DiffuseMap, UVLod );
-				//vGradient = tex2Dlod( DiffuseMap, UVGrad );
+				vGradient = tex2Dlod( DiffuseMap, UVGrad );
 			}
 
-			//vDiffuse.rgb = vGradient.rgb;
+			vDiffuse.rgb = max(vGradient.rgb * vDiffuse.r, vDiffuse.ggg);
 
-			float shift = (In.vPos.x * 0.005) % 1;
-			vDiffuse.rgb = ApplyHue(vDiffuse.rgb, shift * 2 * 3.14159);
+			//float shift = (In.vPos.x * 0.005) % 1;
+			//vDiffuse.rgb = ApplyHue(vDiffuse.rgb, shift * 2 * 3.14159);
 
 			return float4( ToGamma( vDiffuse.rgb ), vDiffuse.a );
 		}
