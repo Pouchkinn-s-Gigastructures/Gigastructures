@@ -5,24 +5,24 @@
 @svalinn_platform_influence = 250
 
 ## normal first stage
-@svalinn_scaffold_build_time = 1800
-@svalinn_scaffold_alloys = 30000 # bunkers and guns
-@svalinn_scaffold_minerals = 5000 # misc planet construction
+@svalinn_scaffold_build_time = 1
+@svalinn_scaffold_alloys = 1
+@svalinn_scaffold_minerals = 1
 ## normal finish
-@svalinn_finish_build_time = 1800
-@svalinn_finish_alloys = 30000 # bunkers and guns
-@svalinn_finish_minerals = 20000 # terraforming and excavation
-@svalinn_finish_energy = 10000 # "antimatter" representation
+@svalinn_finish_build_time = 1
+@svalinn_finish_alloys = 1
+@svalinn_finish_minerals = 1
+@svalinn_finish_energy = 1
 
 ## ringworld first stage
-@svalinn_ringworld_scaffold_build_time = 2500
-@svalinn_ringworld_scaffold_alloys = 15000 # bunkers and guns
-@svalinn_ringworld_scaffold_minerals = 5000 # misc planet construction
+@svalinn_ringworld_scaffold_build_time = 1
+@svalinn_ringworld_scaffold_alloys = 1
+@svalinn_ringworld_scaffold_minerals = 1
 ## ringworld finish
-@svalinn_ringworld_finish_build_time = 4700
-@svalinn_ringworld_finish_alloys = 30000 # bunkers and guns
-@svalinn_ringworld_finish_minerals = 20000 # terraforming and excavation
-@svalinn_ringworld_finish_energy = 10000 # "antimatter" representation
+@svalinn_ringworld_finish_build_time = 1
+@svalinn_ringworld_finish_alloys = 1
+@svalinn_ringworld_finish_minerals = 1
+@svalinn_ringworld_finish_energy = 1
 
 
 
@@ -32,19 +32,20 @@
 @svalinn_platform_upkeep_alloys = 10
 
 ## normal first stage
-@svalinn_scaffold_upkeep_energy = 50 # keeping rings and stuff suspended
-@svalinn_scaffold_upkeep_alloys = 10
+@svalinn_scaffold_upkeep_energy = 1
+@svalinn_scaffold_upkeep_alloys = 1
 ## normal finish
 # megastructure deleted when done
 
 ## ringworld first stage
-@svalinn_ringworld_scaffold_upkeep_energy = 50 # keeping rings and stuff suspended
-@svalinn_ringworld_scaffold_upkeep_alloys = 10
+@svalinn_ringworld_scaffold_upkeep_energy = 1
+@svalinn_ringworld_scaffold_upkeep_alloys = 1
 ## ringworld finish
 # megastructure deleted when done
 
 
-
+### The SDI is built from a single platform but splits into two paths
+# each path is one half of the complete mega, both are required
 svalinn_platform_0 = {
 	entity = "giga_consite_5_5_entity"
 	construction_entity = "giga_consite_5_5_entity"
@@ -78,9 +79,10 @@ svalinn_platform_0 = {
 	}
 
 	potential = {
-		has_technology = giga_tech_svalinn_installation # this needs galactic wonders, full-blown megastructure
+		# gigastructure
+		has_technology = giga_tech_svalinn_installation
 		NOT = { has_global_flag = svalinn_disabled }
-		is_giga_one_planet_origin = no
+		is_giga_one_planet_origin = no # todo: frameworld integration
 		OR = {
 			check_variable = { which = giga_svalinn_cap value = 0 } # No Cap
 			check_variable = { which = giga_current_svalinn value < giga_svalinn_cap }
@@ -88,7 +90,10 @@ svalinn_platform_0 = {
 	}
 
 	possible = {
-		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+		custom_tooltip = {
+			fail_text = "requires_inside_border"
+			is_inside_border = from
+		}
 		custom_tooltip = {
 			fail_text = "requires_not_capped"
 			from = {
@@ -103,23 +108,35 @@ svalinn_platform_0 = {
 	placement_rules = {
 		planet_possible = {
 			# anomaly check
-			custom_tooltip = { fail_text = "requires_no_anomaly"					has_anomaly = no }
+			custom_tooltip = {
+				fail_text = "requires_no_anomaly"
+				has_anomaly = no
+			}
 			# survey check
-			custom_tooltip = { fail_text = "requires_surveyed_planet"				is_surveyed = { who = prev.from status = yes } }
+			custom_tooltip = {
+				fail_text = "requires_surveyed_planet"
+				is_surveyed = { who = prev.from status = yes }
+			}
 			# built on a star
-			custom_tooltip = { fail_text = "must_build_around_star"					is_star = yes }
+			custom_tooltip = {
+				fail_text = "must_build_around_star"
+				is_star = yes
+			}
 			# deliberate: only checking if the central structure is a mega
 			# NOT if it has a mega orbiting - this is to allow building a defense installation next to a system with a dyson or whatever
-			custom_tooltip = { fail_text = "requires_no_existing_megastructure"		NOT = { has_planet_flag = megastructure } }
+			custom_tooltip = {
+				fail_text = "requires_no_existing_megastructure"
+				NOT = { has_planet_flag = megastructure }
+			}
 		}
 	}
 
 	ai_weight = {
 		weight = value:giga_ai_base_giga
 
-		#mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|3000|MIN|0.5|
-		#mult = value:giga_ai_upkeep|RESOURCE|engineering_research|AMOUNT|3000|
-		#mult = value:giga_ai_output|RESOURCE|minerals|AMOUNT|1500|MIN|0.75|
+		#mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|1|MIN|0.5|
+		#mult = value:giga_ai_upkeep|RESOURCE|engineering_research|AMOUNT|1|
+		#mult = value:giga_ai_output|RESOURCE|minerals|AMOUNT|1|MIN|0.75|
 		mult = value:giga_ai_prevent_spam|MEGA|svalinn_installation|
 		mult = value:giga_ai_militarist_plus
 
@@ -178,20 +195,6 @@ svalinn_platform_0 = {
 				}
 			}
 		}
-		# don't turn your only planet into a Svalinn (even if it's pretty funny)
-		modifier = {
-			factor = 0
-			solar_system = {
-				exists = owner
-				is_same_value = owner.capital_scope.solar_system
-				count_system_planet = {
-					limit = {
-						habitable_planet = yes
-					}
-					count = 1
-				}
-			}
-		}
 		# Check the planet designation
 		modifier = { factor = 5.00	any_system_planet = { has_designation = col_fortress } }
 
@@ -230,21 +233,31 @@ svalinn_platform_0 = {
 		fromfrom.planet = {
 			save_event_target_as = giga_planet
 			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
-			giga_set_has_mega_flag = yes
 			set_planet_flag = has_svalinn_platform_mega # Has the construction site
+			## TODO: save country flag with megastructure scope ID based on the star and mega status
+			## used to allow different upgrades
+			## investigate using this to save neighbouring systems too
+			if = {
+				limit = {
+					NOT = { has_planet_flag = has_megastructure }
+				}
+				from = { set_country_flag = giga_svalinn_bifrost_allowed@prev }
+			}
+			giga_set_has_mega_flag = yes
 		}
 		from = {
-			country_event = { id = giga_dialog.5001 } # notification
-			set_timed_country_flag = { flag = has_recently_built_svalinn years = 10 }
+			#country_event = { id = giga_dialog.5001 } # notification
+			set_timed_country_flag = { flag = has_recently_built_svalinn years = 1 }
 			change_variable = { which = giga_current_svalinn value = 1 }
 		}
 	}
 }
 
-svalinn_world_1 = {
-	entity = "pc_giga_svalinn_world_main_features_entity"
-	construction_entity = "pc_giga_svalinn_world_main_features_entity"
-	place_entity_on_planet_plane = yes
+# the interstellar emplacement upgrade path
+svalinn_interstellar_1 = {
+	entity = ""
+	construction_entity = ""
+	place_entity_on_planet_plane = no
 	entity_offset = { x = 0 y = 0 }
 	scales_with_planet = yes
 	portrait = "GFX_spaceport_background"
@@ -269,13 +282,18 @@ svalinn_world_1 = {
 	on_build_start = {
 		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = alloys AMOUNT = @svalinn_platform_alloys }
 		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = unity  AMOUNT = @giga_big_mega_start_unity_cost }
-		apply_giga_bulwark_trad_build_speed = yes
+		#apply_giga_bulwark_trad_build_speed = yes
 	}
 
 	potential = { NOT = { has_global_flag = svalinn_disabled } }
-	possible = { from = { has_technology = giga_tech_svalinn_world } }
+	possible = {
+		from = { has_technology = giga_tech_svalinn_world }
+	}
 
+	# TODO
 	ai_weight = { factor = 10000 } # If we can build it, we will finish it
+	
+	# TODO
 	on_build_complete = {
 		save_event_target_as = giga_system
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
@@ -283,14 +301,68 @@ svalinn_world_1 = {
 	}
 }
 
-svalinn_world_2 = {
+# the coronal tap upgrade path
+svalinn_bifrost_1 = {
 	entity = ""
-	construction_entity = "pc_giga_svalinn_world_full_features_entity"
-	place_entity_on_planet_plane = yes
+	construction_entity = ""
+	place_entity_on_planet_plane = no
 	entity_offset = { x = 0 y = 0 }
 	scales_with_planet = yes
 	portrait = "GFX_spaceport_background"
-	upgrade_from = { svalinn_world_1 }
+	upgrade_from = { svalinn_platform_0 }
+
+	build_time = @svalinn_scaffold_build_time
+	resources = {
+		category = giga_megastructures
+		cost = {
+			alloys = @svalinn_scaffold_alloys
+			minerals = @svalinn_scaffold_minerals
+			unity = @giga_big_mega_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|@svalinn_scaffold_alloys| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_big_mega_unity_cost| }
+		upkeep = {
+			energy = @svalinn_scaffold_upkeep_energy
+			alloys = @svalinn_scaffold_upkeep_alloys
+		}
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = alloys AMOUNT = @svalinn_platform_alloys }
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = unity  AMOUNT = @giga_big_mega_start_unity_cost }
+		#apply_giga_bulwark_trad_build_speed = yes
+	}
+
+	potential = { NOT = { has_global_flag = svalinn_disabled } }
+	possible = {
+		from = { has_technology = giga_tech_svalinn_world }
+		custom_tooltip = {
+			fail_text = "giga_svalinn_bifrost_blocked"
+			from = { has_country_flag = giga_svalinn_bifrost_allowed@prev }
+		}
+	}
+
+	# TODO
+	ai_weight = { factor = 10000 } # If we can build it, we will finish it
+	
+	# TODO
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = { country_event = { id = giga_dialog.5002 } }	# Notification
+	}
+}
+
+
+## TODO
+svalinn_unfinished = {
+	entity = ""
+	construction_entity = ""
+	place_entity_on_planet_plane = no
+	entity_offset = { x = 0 y = 0 }
+	scales_with_planet = yes
+	portrait = "GFX_spaceport_background"
+	upgrade_from = { svalinn_platform_0 }
 
 	build_time = @svalinn_finish_build_time
 	resources = {
