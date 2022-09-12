@@ -123,6 +123,14 @@ svalinn_platform_0 = {
 				fail_text = "must_build_around_star"
 				is_star = yes
 			}
+			# must be able to support one of the two upgrade paths
+			custom_tooltip = {
+				fail_text = "svalinn_must_be_upgradeable"
+				OR = {
+					is_giga_svalinn_bifrost_allowed = yes
+					is_giga_svalinn_interstellar_allowed = yes
+				}
+			}
 			# deliberate: only checking if the central structure is a mega
 			# NOT if it has a mega orbiting - this is to allow building a defense installation next to a system with a dyson or whatever
 			custom_tooltip = {
@@ -263,10 +271,8 @@ svalinn_platform_0 = {
 			## investigate using this to save neighbouring systems too
 			if = {
 				limit = {
-					# check: the star type is fine for bifrost extraction
-					is_giga_svalinn_bifrost_allowed_star = yes
-					# bypass for some specific megas that are still ok to combine
-					is_giga_svalinn_bifrost_combinable_megastructure = yes
+					# see scripted triggers for details, must be right star and none or non-blocking megastructure
+					is_giga_svalinn_bifrost_allowed = yes
 				}
 				# records the svalinn system for later reference, because system can be scoped from the possible block (mega/planet cannot)
 				event_target:giga_owner = { set_country_flag = giga_svalinn_bifrost_allowed_@ROOT }
@@ -318,7 +324,7 @@ svalinn_bifrost_1 = {
 
 	potential = { NOT = { has_global_flag = svalinn_disabled } }
 	possible = {
-		from = { has_technology = giga_tech_svalinn_world }
+		from = { has_technology = giga_tech_svalinn_installation }
 		custom_tooltip = {
 			fail_text = "giga_svalinn_bifrost_blocked"
 			from = { has_country_flag = giga_svalinn_bifrost_allowed_@ROOT }
@@ -339,7 +345,39 @@ svalinn_bifrost_1 = {
 
 ### the interstellar emplacement upgrade path
 
-# this one is a bit messy - it's placed by other megas which are what the player actually picks
+# this is a "fake" mega that only exists to give the player the target neighbor system dialogue
+# before making the real interstellar construction site
+svalinn_interstellar_neighbor_system_option_1 = {
+	entity = ""
+	construction_entity = ""
+	place_entity_on_planet_plane = no
+	entity_offset = { x = 0 y = 0 }
+	portrait = "GFX_megastructure_nicoll"
+	upgrade_from = { svalinn_platform_0 }
+	on_build_complete = {
+		fromfrom = {
+			solar_system = {
+				spawn_megastructure = {
+					type = svalinn_interstellar_1
+					owner = root.from
+					planet = root.fromfrom.planet
+					coords_from = prev
+				}
+			}
+			remove_megastructure = this
+		}
+		#from = { country_event = { id = giga_x.002 } }
+	}
+	resources = { category = giga_gigastructures }
+
+	potential = { NOT = { has_global_flag = svalinn_disabled } }
+	possible = {
+		from = { has_technology = giga_tech_svalinn_installation }
+	}
+}
+
+# this mega is placed by event after the player has picked a target, this is the "real" construction site for the interstellar path
+# allows proper localization and picture
 svalinn_interstellar_1 = {
 	entity = "avian_01_orbital_ring_tier_3_section_entity"
 	construction_entity = "avian_01_orbital_ring_tier_3_section_entity"
@@ -371,11 +409,9 @@ svalinn_interstellar_1 = {
 		#apply_giga_bulwark_trad_build_speed = yes
 	}
 
-	potential = {
-		always = no
-	}
+	potential = { always = no }
 	possible = {
-		from = { has_technology = giga_tech_svalinn_installation }
+		from = { always = no }
 	}
 
 	# TODO
@@ -386,35 +422,6 @@ svalinn_interstellar_1 = {
 		save_event_target_as = giga_system
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		#from = { country_event = { id = giga_dialog.5002 } }	# Notification
-	}
-}
-
-# stuff
-svalinn_interstellar_neighbor_system_option_1 = {
-	entity = "avian_01_orbital_ring_tier_3_section_entity"
-	construction_entity = "avian_01_orbital_ring_tier_3_section_entity"
-	place_entity_on_planet_plane = no
-	entity_offset = { x = 0 y = 0 }
-	portrait = "GFX_megastructure_nicoll"
-	upgrade_from = { svalinn_platform_0 }
-	on_build_complete = {
-		fromfrom = {
-			solar_system = {
-				spawn_megastructure = {
-					type = svalinn_interstellar_1
-					owner = root.from
-					planet = root.fromfrom.planet
-					coords_from = prev
-				}
-			}
-			remove_megastructure = this
-		}
-		#from = { country_event = { id = giga_x.002 } }
-	}
-	resources = { category = giga_gigastructures }
-
-	possible = {
-		always = yes
 	}
 }
 
