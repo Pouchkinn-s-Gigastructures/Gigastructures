@@ -990,8 +990,86 @@ giga_calculate_half_of_distance = {
 		}
 		mode = multiply
 	}
-	
+
 	divide = 2
 }
 
+# abs(x)
+giga_abs_value = {
+	base = 0
+	set = $VAL$
+	abs = yes 
+}
+
+# approximation function for arccos (yes we need this, it's horrible)
+# use as arccos(x) by calling 
+# value:giga_approximate_arccos|VAL|1|
+# here x=1
+# VAL - x
+giga_approximate_arccos = {
+	base = 0
+	set = giga_arccos_first_steps|VAL|$VAL$|
+	subtract = giga_arccos_step_9|VAL|$VAL$|
+	add = giga_arccos_step_10|VAL|$VAL$|
+}
+
+# see adapted function
+giga_arccos_first_steps = {
+	base = 0
+	set = -0.0187293
+	multiply = giga_abs_value|VAL|$VAL$|
+	add = 0.0742610
+	multiply = giga_abs_value|VAL|$VAL$|
+	subtract = 0.2121144
+	multiply = giga_abs_value|VAL|$VAL$|
+	add = 1.5707288
+	multiply = giga_arccos_step_8|VAL|$VAL$|
+}
+
+# sqrt(1.0 - |x|)
+giga_arccos_step_8 = {
+	base = 1
+	subtract = giga_abs_value|VAL|$VAL$|
+	square_root = yes
+}
+
+# negate = 1 if x<0, 0 if x>0
+giga_arccos_negate = {
+	base = 0
+	modifier = {
+		check_variable = {
+			which = event_target:global_event_country.giga_zero
+			value > $VAL$
+		}
+		weight = 1
+	}
+}
+
+# 2 * negate * ret
+giga_arccos_step_9 = {
+	base = 2
+	multiply = giga_arccos_negate|VAL|$VAL$|
+	multiply = giga_arccos_first_steps|VAL|$VAL$|
+}
+
+# negate * pi
+giga_arccos_step_10 = {
+	base = 3.14159265358979
+	multiply = giga_arccos_negate|VAL|$VAL$|
+}
+
+# the arccos function adapted
+#def arccos_approx(x):
+#    negate = float(x < 0)
+#    x = abs(x)
+#    ret = -0.0187293
+#    ret = ret * x
+#    ret = ret + 0.0742610
+#    ret = ret * x
+#    ret = ret - 0.2121144
+#    ret = ret * x
+#    ret = ret + 1.5707288
+#    ret = ret * np.sqrt(1.0-x)
+#    ret = ret - 2 * negate * ret
+#    return negate * 3.14159265358979 + ret
 
