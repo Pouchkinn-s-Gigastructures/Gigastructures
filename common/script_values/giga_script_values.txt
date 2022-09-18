@@ -1,3 +1,5 @@
+@pi = 3.14159265358979
+
 giga_empire_size_mult = {
 	base = 0
 
@@ -985,7 +987,7 @@ giga_calculate_half_of_distance = {
 	complex_trigger_modifier = {
 		trigger = distance
 		parameters = {
-			source = event_target:giga_system_x 
+			source = $system_target_scope$
 			type = euclidean
 		}
 		mode = add
@@ -1001,35 +1003,50 @@ giga_abs_value = {
 	abs = yes 
 }
 
+# x^2
+giga_x_squared_value = {
+	base = 0
+	set = $VAL$
+	pow = 2 
+}
+
+giga_radian_to_degrees = {
+	base = 0
+	set = $VAL$
+	multiply = 180
+	divide = @pi
+}
+
 # approximation function for arccos (yes we need this, it's horrible)
+# results in radians
 # use as arccos(x) by calling 
 # value:giga_approximate_arccos|VAL|1|
-# here x=1
+# if x=1
 # VAL - x
 giga_approximate_arccos = {
 	base = 0
-	set = giga_arccos_first_steps|VAL|$VAL$|
-	subtract = giga_arccos_step_9|VAL|$VAL$|
-	add = giga_arccos_step_10|VAL|$VAL$|
+	set = value:giga_arccos_first_steps|VAL|$VAL$|
+	subtract = value:giga_arccos_step_9|VAL|$VAL$|
+	add = value:giga_arccos_step_10|VAL|$VAL$|
 }
 
 # see adapted function
 giga_arccos_first_steps = {
 	base = 0
 	set = -0.0187293
-	multiply = giga_abs_value|VAL|$VAL$|
+	multiply = value:giga_abs_value|VAL|$VAL$|
 	add = 0.0742610
-	multiply = giga_abs_value|VAL|$VAL$|
+	multiply = value:giga_abs_value|VAL|$VAL$|
 	subtract = 0.2121144
-	multiply = giga_abs_value|VAL|$VAL$|
+	multiply = value:giga_abs_value|VAL|$VAL$|
 	add = 1.5707288
-	multiply = giga_arccos_step_8|VAL|$VAL$|
+	multiply = value:giga_arccos_step_8|VAL|$VAL$|
 }
 
 # sqrt(1.0 - |x|)
 giga_arccos_step_8 = {
 	base = 1
-	subtract = giga_abs_value|VAL|$VAL$|
+	subtract = value:giga_abs_value|VAL|$VAL$|
 	square_root = yes
 }
 
@@ -1048,14 +1065,14 @@ giga_arccos_negate = {
 # 2 * negate * ret
 giga_arccos_step_9 = {
 	base = 2
-	multiply = giga_arccos_negate|VAL|$VAL$|
-	multiply = giga_arccos_first_steps|VAL|$VAL$|
+	multiply = value:giga_arccos_negate|VAL|$VAL$|
+	multiply = value:giga_arccos_first_steps|VAL|$VAL$|
 }
 
 # negate * pi
 giga_arccos_step_10 = {
-	base = 3.14159265358979
-	multiply = giga_arccos_negate|VAL|$VAL$|
+	base = @pi
+	multiply = value:giga_arccos_negate|VAL|$VAL$|
 }
 
 # the arccos function adapted
@@ -1072,4 +1089,31 @@ giga_arccos_step_10 = {
 #    ret = ret * np.sqrt(1.0-x)
 #    ret = ret - 2 * negate * ret
 #    return negate * 3.14159265358979 + ret
+
+
+# use for arccos: calculating angles on a triangle
+# allows triangulating angle for systems
+# see https://www.calculator.net/triangle-calculator.html?vc=&vx=100&vy=30&va=&vz=120&vb=&angleunits=d&x=51&y=10
+# takes $a$, $b$, $c$ which are side lengths
+giga_calculate_angle_A = {
+	base = 0
+	# arccos[(b^2 + c^2 - a^2) / (2bc)]
+	set = giga_approximate_arccos|VAL|$value:giga_calculate_angle_A_function_value|a|$a$|b|$b$|c|$c$|$|
+}
+giga_calculate_angle_A_function_value = {
+	base = 0
+	set = value:giga_calculate_angle_A_numerator|a|$a$|b|$b$|c|$c$|
+	divide = value:giga_calculate_angle_A_denominator|b|$b$|c|$c$|
+}
+giga_calculate_angle_A_numerator = {
+	base = 0
+	set = value:giga_x_squared_value|VAL|$b$|
+	add = value:giga_x_squared_value|VAL|$c$|
+	subtract = value:giga_x_squared_value|VAL|$a$|
+}
+giga_calculate_angle_A_denominator = {
+	base = 2
+	multiply = $b$
+	multiply = $c$
+}
 
