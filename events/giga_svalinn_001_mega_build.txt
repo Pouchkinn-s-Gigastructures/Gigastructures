@@ -9,7 +9,7 @@ planet_event = {
 	hide_window = yes
 
 	trigger = {
-		always = yes
+		solar_system = { giga_has_svalinn_installation = yes}
 	}
 
 	immediate = {
@@ -21,13 +21,16 @@ planet_event = {
 	}
 }
 
+########################################################################################################
+
+# process nearby systems to a svalinn under construction
 system_event = {
 	id = giga_svalinn_construction.010
 	is_triggered_only = yes
 	hide_window = yes
 
 	trigger = {
-		always = yes
+		has_star_flag = has_svalinn_platform_mega
 	}
 
 	immediate = {
@@ -72,14 +75,18 @@ system_event = {
 # .011 split to another file because of massive block of dialog options
 # see giga_svalinn_002_mega_build_target_dialog.txt
 
+########################################################################################################
+
 # management system implementation
+
+# spawns reference system with a known angle - 90 degrees is galactic north
 system_event = {
 	id = giga_svalinn_construction.080
 	is_triggered_only = yes
 	hide_window = yes
 
 	trigger = {
-		NOT = { has_global_flag = giga_svalinn_management_system_spawned }
+		has_star_flag = has_svalinn_platform_mega
 	}
 
 	immediate = {
@@ -93,35 +100,156 @@ system_event = {
 			save_event_target_as = giga_svalinn_interstellar_target_system
 		}
 
-		# make new system - always galactic north
-		spawn_system = {
-			min_distance = 5
-			max_distance = 20
-			min_orientation_angle = 90
-			max_orientation_angle = 90
-			hyperlane = no
-			is_discovered = yes
-			initializer = giga_svalinn_interstellar_init
-			effect = {
-				isolate_system = yes
-				save_event_target_as = giga_svalinn_interstellar_management_system
+		# check if already spawned reference system
+		if = {
+			limit = { NOT = { has_global_flag = giga_svalinn_management_system_spawned } }
+			event_target:giga_svalinn_construction_owner.capital_scope.solar_system = {
+				# make new system - always galactic north
+				spawn_system = {
+					min_distance = 5
+					max_distance = 5
+					min_orientation_angle = 90
+					max_orientation_angle = 90
+					hyperlane = no
+					is_discovered = yes
+					initializer = giga_svalinn_interstellar_init
+					effect = {
+						isolate_system = yes
+						set_star_flag = giga_svalinn_interstellar_management_system
+						save_event_target_as = giga_svalinn_interstellar_management_system
+					}
+				}
+				last_created_system = {
+					create_starbase = {
+						size = starbase_citadel
+						owner = event_target:giga_svalinn_construction_owner
+					}
+					set_surveyed = { surveyed = yes }
+					every_system_planet = { set_surveyed = { surveyed = yes } }
+				}
+				add_hyperlane = {
+					from = event_target:giga_svalinn_construction_owner.capital_scope.solar_system
+					to = event_target:giga_svalinn_interstellar_management_system
+				}
+				set_global_flag = giga_svalinn_management_system_spawned
 			}
 		}
-		last_created_system = {
-			create_starbase = {
-				size = starbase_starfortress
-				owner = event_target:giga_svalinn_construction_owner
-			}
-			set_surveyed = { surveyed = yes }
-			every_system_planet = { set_surveyed = { surveyed = yes } }
-		}
-		add_hyperlane = {
-			from = event_target:giga_svalinn_construction_owner.capital_scope.solar_system
-			to = event_target:giga_svalinn_interstellar_management_system
-		}
-		set_global_flag = giga_svalinn_management_system_spawned
+		
+		# next event runs calculation
+		system_event = { id = giga_svalinn_construction.081 }
 	}
 }
+
+# here's a diagram to keep track of things
+# yes, I've gone insane
+# 
+# 				  C
+# 				  /\
+#				 /  \
+#				/    \
+#			   /      \
+#      	      /		   \ side a
+# 	side b   /		    \
+#	 	    /			 \
+#		   /			  \
+#		  A -------------- B
+#				side c
+#
+# A is the construction site, B is the target system, C is galactic north
+# yes depending on positions this will become a bizarre triangle that doesn't look like this, but the math is the same
+# angle A is the angle to target system from galactic north, so 90 degrees
+
+system_event = {
+	id = giga_svalinn_construction.081
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_star_flag = has_svalinn_platform_mega
+	}
+
+	immediate = {
+		set_variable = {
+			which = giga_svalinn_triangle_side_a
+			value = 1
+		}
+		set_variable = {
+			which = giga_svalinn_triangle_side_b
+			value = 1
+		}
+		set_variable = {
+			which = giga_svalinn_triangle_side_c
+			value = 1
+		}
+
+		# from the construction system
+		export_trigger_value_to_variable = {
+			trigger = distance
+			parameters = {
+				# system that forms absolute north
+				source = event_target:giga_svalinn_interstellar_management_system
+				type = euclidean
+			}
+			variable = giga_svalinn_triangle_side_b
+		}
+		export_trigger_value_to_variable = {
+			trigger = distance
+			parameters = {
+				# system that is being targeted
+				source = event_target:giga_svalinn_interstellar_target_system
+				type = euclidean
+			}
+			variable = giga_svalinn_triangle_side_c
+		}
+		# from targeted system
+		event_target:giga_svalinn_interstellar_target_system = {
+			export_trigger_value_to_variable = {
+				trigger = distance
+				parameters = {
+					# system that forms absolute north
+					source = event_target:giga_svalinn_interstellar_management_system
+					type = euclidean
+				}
+				# doesn't want to save directly to correct scope, so middle step it is
+				variable = giga_svalinn_triangle_side_a_target_system
+			}
+		}
+		# fetch that variable
+		set_variable = {
+			which = giga_svalinn_triangle_side_a
+			value = event_target:giga_svalinn_interstellar_target_system.giga_svalinn_triangle_side_a_target_system
+		}
+		# clean up so it doesn't interfere with future svalinns
+		event_target:giga_svalinn_interstellar_target_system = { clear_variable = giga_svalinn_triangle_side_a_target_system }
+
+		# call another event
+		system_event = { id = giga_svalinn_construction.082 }
+	}
+}
+
+system_event = {
+	id = giga_svalinn_construction.082
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_star_flag = has_svalinn_platform_mega
+	}
+
+	immediate = {
+		set_variable = {
+			which = giga_svalinn_triangle_angle_A_radian
+			# this is a rabbithole and a half of a script value...
+			value = value:giga_calculate_angle_A
+		}
+		set_variable = {
+			which = giga_svalinn_triangle_angle_A_degrees
+			value = value:giga_radian_to_degrees|VAL|giga_calculate_angle_A|
+		}
+	}
+}
+
+########################################################################################################
 
 # ship implementation
 system_event = {
@@ -130,7 +258,7 @@ system_event = {
 	hide_window = yes
 
 	trigger = {
-		always = yes
+		has_star_flag = has_svalinn_platform_mega
 	}
 
 	immediate = {
@@ -311,6 +439,7 @@ system_event = {
 	}
 
 }
+########################################################################################################
 
 # spawns system
 ## call from system with svalinn construction
@@ -376,5 +505,5 @@ system_event = {
 	}
 }
 
-#effect solar_system = { every_system = { add_hyperlane = { from = prev to = this } } }
 
+# effect solar_system = { spawn_system = { min_distance = 10 max_distance = 10 min_orientation_angle = 13 max_orientation_angle = 13 is_discovered = yes initializer = giga_svalinn_interstellar_init } }
