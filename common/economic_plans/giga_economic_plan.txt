@@ -1,9 +1,11 @@
 # Base AI economic plans
 
 @rare_resource_target = 4
+@rare_resource_limit = 20
 @energy_target = 25
 @minerals_target = 30
 @alloy_target = 10
+@fleet_cap_alloy_target = 50
 @machine_empire_alloy_target = 15
 @pops_target = 9000
 @food_target = 10
@@ -79,8 +81,8 @@ giga_economy_plan = {
 		set_name = "extended food"
 		potential = {
 			has_monthly_income = { resource = physics_research value > @research_target }
-			has_monthly_income = { resource = society_research value > @research_target }	
-			has_monthly_income = { resource = engineering_research value > @research_target }	
+			has_monthly_income = { resource = society_research value > @research_target }
+			has_monthly_income = { resource = engineering_research value > @research_target }
 			country_uses_food = yes
 		}
 
@@ -100,7 +102,7 @@ giga_economy_plan = {
 					country_uses_food = yes
 				}
 				has_monthly_income = { resource = food value > @food_target }
-			}		
+			}
 		}
 		income = {
 			consumer_goods = @consumer_goods_target
@@ -122,14 +124,14 @@ giga_economy_plan = {
 	subplan = {
 		set_name = "base pops"
 		potential = {
-			has_monthly_income = { resource = energy value > @energy_target }			
+			has_monthly_income = { resource = energy value > @energy_target }
 			has_monthly_income = { resource = minerals value > @minerals_target }
 			has_monthly_income = { resource = physics_research value > @research_target }
-			has_monthly_income = { resource = society_research value > @research_target }	
-			has_monthly_income = { resource = engineering_research value > @research_target }			
+			has_monthly_income = { resource = society_research value > @research_target }
+			has_monthly_income = { resource = engineering_research value > @research_target }
 		}
 		pops = @pops_target
-	}	
+	}
 
 	#### SCALING SUBPLANS HERE ####
 	# Values in the scaling subplans are added to the base plan each time the AI reaches the target
@@ -140,8 +142,8 @@ giga_economy_plan = {
 		scaling = yes
 		set_name = "general scaling"
 		potential = {
-			has_monthly_income = { resource = energy value > @energy_target }			
-			has_monthly_income = { resource = minerals value > @minerals_target }			
+			has_monthly_income = { resource = energy value > @energy_target }
+			has_monthly_income = { resource = minerals value > @minerals_target }
 		}
 
 		income = {
@@ -157,16 +159,31 @@ giga_economy_plan = {
 
 	subplan = {
 		scaling = yes
+		set_name = "naval cap scaling"
+		potential = {
+			num_repeatable_techs > 0 #make sure it isn't messing up the earlier development (this is for the late game)
+			has_monthly_income = { resource = energy value > @energy_target }
+			has_monthly_income = { resource = minerals value > @minerals_target }
+			has_monthly_income = { resource = alloys value > @fleet_cap_alloy_target }
+			used_naval_capacity_percent > 0.95
+			used_starbase_capacity_percent >= 1
+		}
+
+		naval_cap = 50
+	}
+
+	subplan = {
+		scaling = yes
 		set_name = "general CG scaling"
 		potential = {
 			country_uses_consumer_goods = yes
-			has_monthly_income = { resource = energy value > @energy_target }			
-			has_monthly_income = { resource = minerals value > @minerals_target }			
+			has_monthly_income = { resource = energy value > @energy_target }
+			has_monthly_income = { resource = minerals value > @minerals_target }
 		}
 		income = {
 			consumer_goods = @scaling_consumer_goods_target
 		}
-	}	
+	}
 
 	#### MILITARIST EXTRA ALLOYS ####
 	subplan = {
@@ -177,9 +194,9 @@ giga_economy_plan = {
 				is_militarist = yes
 				is_homicidal = yes
 			}
-			
-			has_monthly_income = { resource = energy value > @energy_target }			
-			has_monthly_income = { resource = minerals value > @minerals_target }		
+
+			has_monthly_income = { resource = energy value > @energy_target }
+			has_monthly_income = { resource = minerals value > @minerals_target }
 		}
 
 		income = {
@@ -192,9 +209,9 @@ giga_economy_plan = {
 		scaling = yes
 		set_name = "Materialist science"
 		potential = {
-			is_materialist = yes	
-			has_monthly_income = { resource = energy value > @energy_target }			
-			has_monthly_income = { resource = minerals value > @minerals_target }	
+			is_materialist = yes
+			has_monthly_income = { resource = energy value > @energy_target }
+			has_monthly_income = { resource = minerals value > @minerals_target }
 		}
 
 		income = {
@@ -202,22 +219,22 @@ giga_economy_plan = {
 			society_research = 15
 			engineering_research = 15
 		}
-	}	
+	}
 
 	#### SPIRITUALIST UNITY ####
 	subplan = {
 		scaling = yes
 		set_name = "Spiritualist unity"
 		potential = {
-			is_spiritualist = yes	
-			has_monthly_income = { resource = energy value > @energy_target }			
-			has_monthly_income = { resource = minerals value > @minerals_target }	
+			is_spiritualist = yes
+			has_monthly_income = { resource = energy value > @energy_target }
+			has_monthly_income = { resource = minerals value > @minerals_target }
 		}
 
 		income = {
 			unity = 15
 		}
-	}	
+	}
 
 	# Optional subplans don't need to be fulfilled for the other scaling subplans to become active
 	subplan = {
@@ -234,18 +251,43 @@ giga_economy_plan = {
 		}
 	}
 
+
 	subplan = {
 		optional = yes
 		scaling = yes
-		set_name = "Scaling rare resources"
+		set_name = "Scaling exotic gases"
 
 		potential = {
-			always = yes
+			has_monthly_income = { resource = exotic_gases value < @rare_resource_limit }
 		}
 
 		income = {
 			exotic_gases = @scaling_rare_resource_target
+		}
+	}
+	subplan = {
+		optional = yes
+		scaling = yes
+		set_name = "Scaling volatile motes"
+
+		potential = {
+			has_monthly_income = { resource = volatile_motes value < @rare_resource_limit }
+		}
+
+		income = {
 			volatile_motes = @scaling_rare_resource_target
+		}
+	}
+	subplan = {
+		optional = yes
+		scaling = yes
+		set_name = "Scaling rare crystals"
+
+		potential = {
+			has_monthly_income = { resource = rare_crystals value < @rare_resource_limit }
+		}
+
+		income = {
 			rare_crystals = @scaling_rare_resource_target
 		}
 	}
