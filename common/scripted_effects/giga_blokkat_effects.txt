@@ -551,6 +551,7 @@ set_blokkat_leader_data = {
 		1 = { set_name = "Blokkbei" }
 		1 = { set_name = "Blokkiler" }
 		1 = { set_name = "Blokholl" }
+		1 = { set_name = "Blokkimous" }
 		1 = { set_name = "Philokk" }
 		1 = { set_name = "Blokkepard" }
 		1 = { set_name = "Blokkarat" }
@@ -808,7 +809,7 @@ set_blokkat_leader_data = {
 			}
 		}
 		#Breadkat (Patreon)
-		4000 = {
+		4 = {
 			set_name = "Breadkat"
 			if = {
 				limit = { NOT = { has_leader_flag = breadkat_leader } }
@@ -1004,6 +1005,7 @@ spawn_blokkat_mothership_fleet = {
 			OR = {
 				has_global_flag = giga_blokkats_bismuth
 				has_global_flag = giga_blokkats_endtech
+				has_global_flag = giga_blokkats_deathmode
 			}
 		}
 		event_target:blokkat_country = {
@@ -1074,12 +1076,48 @@ spawn_blokkat_mothership_fleet = {
 						}
 					}
 				}
+				if = {
+					limit = { has_global_flag = giga_blokkats_deathmode }
+					while = {
+						count = 50
+						create_ship = {
+							name = "Blokk-Terminator"
+							design = "Blokk-Terminator"
+							prefix = no
+							effect = {
+								set_disable_at_health = 0.01
+								set_variable = {
+									which = blokkat_ship_life_count
+									value = event_target:blokkat_country.blokkat_terminator_life_count
+								}
+							}
+						}
+					}
+					create_ship = {
+						name = "Blokk-Obliterator"
+						design = "Blokk-Obliterator"
+						prefix = no
+						effect = {
+							set_disable_at_health = 0.01
+							set_variable = {
+								which = blokkat_ship_life_count
+								value = event_target:blokkat_country.blokkat_obliterator_life_count
+							}
+						}
+					}
+				}
 				set_location = {
 					target = event_target:future_blokkat_mothership_system.star
 					distance = 5
 					angle = random
 				}
-				set_formation_scale = 10
+				if = {
+					limit = { has_global_flag = giga_blokkats_deathmode }
+					set_formation_scale = 50
+				}
+				else = {
+					set_formation_scale = 10
+				}
 				assign_leader = last_created_leader
 				set_fleet_flag = blokkat_mothership_escort_fleet
 				set_fleet_flag = blokkat_fleet
@@ -1332,7 +1370,7 @@ blokkat_movement_queue = {
 
 spawn_blokkat_scout_fleet = {
 	if = {
-		limit = { NOT = { has_global_flag = giga_blokkats_endtech } }
+		limit = { NOR = { has_global_flag = giga_blokkats_endtech has_global_flag = giga_blokkats_deathmode } }
 		event_target:blokkat_country = {
 			create_blokkat_admiral = yes
 		}
@@ -1434,12 +1472,34 @@ spawn_blokkat_scout_fleet = {
 						}
 					}
 				}
+				if = {
+					limit = { has_global_flag = giga_blokkats_deathmode }
+					while = {
+						count = 9
+						create_ship = {
+							name = "Blokk-Terminator"
+							design = "Blokk-Terminator"
+							prefix = no
+							effect = {
+								set_disable_at_health = 0.01
+								set_variable = {
+									which = blokkat_ship_life_count
+									value = event_target:blokkat_country.blokkat_terminator_life_count
+								}
+								if = {
+									limit = { has_global_flag = giga_blokkats_endtech }
+									add_modifier = { modifier = blokkat_bismuth_ship_damage_buff days = -1 }
+								}
+							}
+						}
+					}
+				}
 				set_location = {
 					target = event_target:blokkat_scout_fleet_location.star
 					distance = 400
 					angle = random
 				}
-				set_formation_scale = 25
+				set_formation_scale = 20
 				set_fleet_flag = blokkat_scout_fleet
 				set_fleet_flag = blokkat_terminator_fleet
 				set_fleet_flag = blokkat_fleet
@@ -1454,7 +1514,12 @@ spawn_blokkat_scout_fleet = {
 spawn_blokkat_escort_fleet = {
 	event_target:blokkat_country = {
 		if = {
-			limit = { NOT = { has_global_flag = giga_blokkats_endtech } }
+			limit = {
+				NOR = {
+					has_global_flag = giga_blokkats_endtech
+					has_global_flag = giga_blokkats_deathmode
+				}
+			}
 			create_blokkat_admiral = yes
 		}
 		else = { create_strong_blokkat_admiral = yes }
@@ -1471,22 +1536,25 @@ spawn_blokkat_escort_fleet = {
 		}
 		effect = {
 			set_owner = ROOT
-			while = {
-				count = 5
-				create_ship = {
-					name = "Blokk-Custodian"
-					design = "Blokk-Custodian"
-					prefix = no
-					effect = { apply_blokkat_difficulty_modifier = yes apply_blokkat_difficulty_modifier_damage = yes }
+			if = {
+				limit = { NOT = { has_global_flag = giga_blokkats_deathmode } }
+				while = {
+					count = 5
+					create_ship = {
+						name = "Blokk-Custodian"
+						design = "Blokk-Custodian"
+						prefix = no
+						effect = { apply_blokkat_difficulty_modifier = yes apply_blokkat_difficulty_modifier_damage = yes }
+					}
 				}
-			}
-			while = {
-				count = 25
-				create_ship = {
-					name = "Blokk-Evictor"
-					design = "Blokk-Evictor"
-					prefix = no
-					effect = { apply_blokkat_difficulty_modifier = yes apply_blokkat_difficulty_modifier_damage = yes }
+				while = {
+					count = 25
+					create_ship = {
+						name = "Blokk-Evictor"
+						design = "Blokk-Evictor"
+						prefix = no
+						effect = { apply_blokkat_difficulty_modifier = yes apply_blokkat_difficulty_modifier_damage = yes }
+					}
 				}
 			}
 			if = {
@@ -1546,12 +1614,34 @@ spawn_blokkat_escort_fleet = {
 					}
 				}
 			}
+			if = {
+				limit = { has_global_flag = giga_blokkats_deathmode }
+				while = {
+					count = 10
+					create_ship = {
+						name = "Blokk-Terminator"
+						design = "Blokk-Terminator"
+						prefix = no
+						effect = {
+							set_disable_at_health = 0.01
+							set_variable = {
+								which = blokkat_ship_life_count
+								value = event_target:blokkat_country.blokkat_terminator_life_count
+							}
+						}
+					}
+				}
+			}
 			set_location = {
 				target = event_target:future_blokkat_mothership_system.star
 				distance = 400
 				angle = random
 			}
 			if = {
+				limit = { has_global_flag = giga_blokkats_deathmode }
+				set_formation_scale = 40
+			}
+			else_if = {
 				limit = { has_global_flag = giga_blokkats_endtech }
 				set_formation_scale = 7
 			}
@@ -1568,6 +1658,10 @@ spawn_blokkat_escort_fleet = {
 #Difficulty
 apply_blokkat_difficulty_modifier_bigship_damage = {
 	if = {
+		limit = { has_global_flag = giga_blokkats_deathmode }
+		add_modifier = { modifier = blokkat_deathmode_ship_damage_buff_bigship days = -1 }
+	}
+	if = {
 		limit = { has_global_flag = giga_blokkats_endtech }
 		add_modifier = { modifier = blokkat_endtech_ship_damage_buff_bigship days = -1 }
 	}
@@ -1578,6 +1672,10 @@ apply_blokkat_difficulty_modifier_bigship_damage = {
 }
 
 apply_blokkat_difficulty_modifier = {
+	if = {
+		limit = { has_global_flag = giga_blokkats_deathmode }
+		add_modifier = { modifier = blokkat_deathmode_ship_buff days = -1 }
+	}
 	if = {
 		limit = { has_global_flag = giga_blokkats_endtech }
 		add_modifier = { modifier = blokkat_endtech_ship_buff days = -1 }
@@ -1590,6 +1688,10 @@ apply_blokkat_difficulty_modifier = {
 
 apply_blokkat_difficulty_modifier_damage = {
 	if = {
+		limit = { has_global_flag = giga_blokkats_deathmode }
+		add_modifier = { modifier = blokkat_deathmode_ship_damage_buff days = -1 }
+	}
+	if = {
 		limit = { has_global_flag = giga_blokkats_endtech }
 		add_modifier = { modifier = blokkat_endtech_ship_damage_buff days = -1 }
 	}
@@ -1600,6 +1702,10 @@ apply_blokkat_difficulty_modifier_damage = {
 }
 
 remove_flags_blokkat_difficulty = {
+	if = {
+		limit = { has_global_flag = giga_blokkats_very_easy }
+		remove_global_flag = giga_blokkats_very_easy
+	}
 	if = {
 		limit = { has_global_flag = giga_blokkats_easy }
 		remove_global_flag = giga_blokkats_easy
@@ -1615,6 +1721,10 @@ remove_flags_blokkat_difficulty = {
 	if = {
 		limit = { has_global_flag = giga_blokkats_endtech }
 		remove_global_flag = giga_blokkats_endtech
+	}
+	if = {
+		limit = { has_global_flag = giga_blokkats_deathmode }
+		remove_global_flag = giga_blokkats_deathmode
 	}
 }
 
