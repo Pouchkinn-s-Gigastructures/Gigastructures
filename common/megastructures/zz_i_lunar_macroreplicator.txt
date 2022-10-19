@@ -180,25 +180,61 @@ lunar_macroreplicator_2 = {
 		save_event_target_as = giga_system
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		from = { 
-			if = {
-				limit = {
-					NOT = { has_country_flag = just_assembled_warmoon }
-				}
+			#if = {
+			#	limit = {
+			#		NOT = { has_country_flag = just_assembled_warmoon }
+			#	}
 				country_event = { id = giga_printer.1012 }	# Notification
-			}
-			else_if = {
-				limit = { has_country_flag = just_assembled_warmoon }
-				remove_country_flag = just_assembled_warmoon
-			}
+			#}
+			#else_if = {
+			#	limit = { has_country_flag = just_assembled_warmoon }
+			#	remove_country_flag = just_assembled_warmoon
+			#}
+		}
+
+		# set to ready state
+		fromfrom = {
+			upgrade_megastructure_to = lunar_macroreplicator_ready
+			finish_upgrade = yes
 		}
 	}
+}
+
+lunar_macroreplicator_ready = {
+	entity = "war_moon_printer_empty_entity"
+	construction_entity = "war_moon_printer_empty_entity"
+	portrait = "GFX_megastructure_macroreplicator"
+	upgrade_from = { 
+		lunar_macroreplicator_2 
+		lunar_macroreplicator_make_moon
+	}
+	place_entity_on_planet_plane = no
+
+	build_time = 0
+	resources = {
+		category = giga_gigastructures
+		upkeep = {
+			energy = 400
+			alloys = 50
+		}
+	}
+
+	potential = { always = no }
+	possible = { always = no }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+
+	on_build_complete = {}
 }
 
 lunar_macroreplicator_make_moon = {
 	entity = "war_moon_printer_full_entity"
 	construction_entity = "war_moon_printer_printing_entity"
 	portrait = "GFX_megastructure_macroreplicator"
-	upgrade_from = { lunar_macroreplicator_2 }
+	upgrade_from = { 
+		lunar_macroreplicator_2 # legacy, debug
+		lunar_macroreplicator_ready
+	}
 	place_entity_on_planet_plane = no
 
 	build_time = 7200
@@ -260,8 +296,8 @@ lunar_macroreplicator_make_moon = {
 	on_build_complete = {
 		save_event_target_as = giga_war_moon_print
 		from = {
-			set_country_flag = just_assembled_warmoon
-			country_event = { id = giga_printer.1000 }				# Notification
+			#set_country_flag = just_assembled_warmoon
+			country_event = { id = giga_printer.1000 scopes = {	from = fromfrom.planet } }	# Notification
 			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
 			if = {
 				limit = {
@@ -274,6 +310,32 @@ lunar_macroreplicator_make_moon = {
 				set_timed_country_flag = { flag = giga_achievement_73_notification days = 30 }
 				giga_achievement_sound = yes
 			}
+		}
+
+		create_fleet = {
+			name = "Attack Moon"
+			settings = { spawn_debris = no }
+			effect = {
+				set_owner = prev
+				create_ship = {
+					name = "Attack Moon"
+					random_existing_design = giga_massive_planet
+					effect = {
+						set_ship_flag = random
+						add_modifier = {
+							modifier = printed_celestial_warship
+							days = -1
+						}
+					}
+				}
+				set_formation_scale = 2
+				set_location = fromfrom
+			}
+		}
+
+		fromfrom = {
+			upgrade_megastructure_to = lunar_macroreplicator_ready
+			finish_upgrade = yes
 		}
 	}
 }
