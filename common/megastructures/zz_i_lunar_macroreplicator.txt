@@ -38,51 +38,6 @@ lunar_macroreplicator_0 = {
 	}
 
 	ai_weight = {
-		# weight = 100	# Default = 100
-
-		# # Can we afford the upkeep
-		# modifier = { factor = 1.00	chk_afford_energy_10 = yes }
-		# modifier = { factor = 0.90	chk_afford_energy_09 = yes }
-		# modifier = { factor = 0.80	chk_afford_energy_08 = yes }
-		# modifier = { factor = 0.70	chk_afford_energy_07 = yes }
-		# modifier = { factor = 0.60	chk_afford_energy_06 = yes }
-		# modifier = { factor = 0.50	chk_afford_energy_05 = yes }
-		# modifier = { factor = 0.40	chk_afford_energy_04 = yes }
-		# modifier = { factor = 0.30	chk_afford_energy_03 = yes }
-		# modifier = { factor = 0.20	chk_afford_energy_25 = yes }
-		# modifier = { factor = 0.10	chk_afford_energy_02 = yes }
-		# modifier = { factor = 0.00	chk_afford_energy_15 = yes }
-
-		# modifier = { factor = 1.00	chk_afford_alloys_10 = yes }
-		# modifier = { factor = 0.90	chk_afford_alloys_09 = yes }
-		# modifier = { factor = 0.80	chk_afford_alloys_08 = yes }
-		# modifier = { factor = 0.70	chk_afford_alloys_07 = yes }
-		# modifier = { factor = 0.60	chk_afford_alloys_06 = yes }
-		# modifier = { factor = 0.50	chk_afford_alloys_05 = yes }
-		# modifier = { factor = 0.40	chk_afford_alloys_04 = yes }
-		# modifier = { factor = 0.30	chk_afford_alloys_03 = yes }
-		# modifier = { factor = 0.20	chk_afford_alloys_25 = yes }
-		# modifier = { factor = 0.10	chk_afford_alloys_02 = yes }
-		# modifier = { factor = 0.00	chk_afford_alloys_15 = yes }
-
-		# # Do we want the production
-
-		# # Is this system a good location?
-		# modifier = { factor = 0.75	any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } }
-
-		# # Do we lean towards this from federation/ethic/civic?
-		# modifier = { factor = value:giga_ai_base_continue	from = { has_country_flag = pangalactic_defense_league } }
-		# modifier = { factor = 2		from = { has_federation = yes federation = { has_federation_type = military_federation } } }
-		# modifier = { factor = 3		from = { has_ethic = ethic_fanatic_militarist } }
-		# modifier = { factor = 1.5	from = { has_ethic = ethic_militarist } }
-		# modifier = { factor = 1.5	from = { has_civic = civic_machine_terminator } }
-		# modifier = { factor = 1.5	from = { has_civic = civic_fanatic_purifiers } }
-		# modifier = { factor = 1.5	from = { has_civic = civic_hive_devouring_swarm } }
-		# modifier = { factor = 2		from = { is_at_war = yes } }
-
-		# # How many of this megastructure can the AI build?
-		# modifier = { factor = 0.00 from = { has_country_flag = has_recently_built_war_moon } }
-
 		weight = value:giga_ai_base_giga
 
 		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|400|MIN|0.5|
@@ -107,6 +62,52 @@ lunar_macroreplicator_0 = {
 			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
 			giga_set_has_mega_flag = yes
 		}
+		
+		# replace this with the "real" upgrade path
+		spawn_megastructure = {
+			type = lunar_macroreplicator_0_real
+			owner = from
+			planet = fromfrom.planet
+		}
+		remove_megastructure = fromfrom
+	}
+}
+
+lunar_macroreplicator_0_real = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_lunar_assembly }
+
+	build_time = 1800
+	resources = {
+		category = giga_lunar_macroreplicator
+		cost = {
+			alloys = 5000
+			influence = 100
+			unity = @giga_giga_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|5000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_giga_unity_cost| }
+		upkeep = { energy = 5 }
+	}
+
+	potential = { always = no }
+	possible = { always = no }
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+		}
+	}
+
+	ai_weight = {
+		weight = 0
 	}
 }
 
@@ -114,7 +115,7 @@ lunar_macroreplicator_1 = {
 	entity = "war_moon_printer_stage_1_entity"
 	construction_entity = "war_moon_printer_stage_1_entity"
 	portrait = "GFX_megastructure_macroreplicator"
-	upgrade_from = { lunar_macroreplicator_0 }
+	upgrade_from = { lunar_macroreplicator_0_real }
 	place_entity_on_planet_plane = no
 
 	build_time = 3600
@@ -144,6 +145,35 @@ lunar_macroreplicator_1 = {
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		from = { country_event = { id = giga_printer.1011 } }	# Notification
 	}
+}
+
+lunar_macroreplicator_1_fake = {
+	entity = "war_moon_printer_stage_1_entity"
+	construction_entity = "war_moon_printer_stage_1_entity"
+	portrait = "GFX_megastructure_macroreplicator"
+	upgrade_from = { lunar_macroreplicator_0 }
+	place_entity_on_planet_plane = no
+
+	build_time = 3600
+	resources = {
+		category = giga_gigastructures
+		cost = { 
+			alloys = 25000
+			rare_crystals = 250
+			volatile_motes = 250
+			exotic_gases = 250
+			unity = @giga_giga_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|25000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_giga_unity_cost| }
+		upkeep = {
+			energy = 200
+			alloys = 25
+		}
+	}
+
+	potential = { always = no }
+	possible = { always = no }
 }
 
 lunar_macroreplicator_2 = {
@@ -198,6 +228,35 @@ lunar_macroreplicator_2 = {
 			finish_upgrade = yes
 		}
 	}
+}
+
+lunar_macroreplicator_2_fake = {
+	entity = "war_moon_printer_empty_entity"
+	construction_entity = "war_moon_printer_stage_2_construction_entity"
+	portrait = "GFX_megastructure_macroreplicator"
+	upgrade_from = { lunar_macroreplicator_1_fake }
+	place_entity_on_planet_plane = no
+
+	build_time = 3600
+	resources = {
+		category = giga_gigastructures
+		cost = {
+			alloys = 35000
+			rare_crystals = 1000
+			volatile_motes = 1000
+			exotic_gases = 1000
+			unity = @giga_giga_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|35000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_giga_unity_cost| }
+		upkeep = {
+			energy = 400
+			alloys = 50
+		}
+	}
+
+	potential = { always = no }
+	possible = { always = no }
 }
 
 lunar_macroreplicator_ready = {
@@ -341,6 +400,36 @@ lunar_macroreplicator_make_moon = {
 	}
 }
 
+lunar_macroreplicator_make_moon_fake = {
+	entity = "war_moon_printer_full_entity"
+	construction_entity = "war_moon_printer_printing_entity"
+	portrait = "GFX_megastructure_macroreplicator"
+	upgrade_from = { 
+		lunar_macroreplicator_2_fake
+	}
+	place_entity_on_planet_plane = no
+
+	build_time = 7200
+	resources = {
+		category = giga_megastructures
+		cost = {
+			energy = 20000
+			alloys = 30000
+			sr_solar_energy = 7
+			unity = @giga_mega_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|30000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+		upkeep = {
+			energy = 400
+			alloys = 50
+		}
+	}
+
+	potential = { always = no }
+	possible = { always = no }
+}
+
 #cracker#
 
 moon_printer_orbital_mass_harvester_0 = {
@@ -348,6 +437,7 @@ moon_printer_orbital_mass_harvester_0 = {
 	construction_entity = "cracker_ring1_entity"
 	portrait = "GFX_megastructure_planetdismantler"
 	place_entity_on_planet_plane = no
+	show_in_outliner = no
 
 	potential = { always = no }
 	possible = { always = no }
@@ -360,6 +450,7 @@ moon_printer_orbital_mass_harvester_1 = {
 	construction_entity = "cracker_construction_op_entity"
 	portrait = "GFX_megastructure_planetdismantler"
 	place_entity_on_planet_plane = yes
+	show_in_outliner = no
 
 	upgrade_from = { moon_printer_orbital_mass_harvester_0 }
 
