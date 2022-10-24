@@ -11870,57 +11870,136 @@ fleet_event = { #this event is ran monthly on the mothership fleet
 				}
 				clear_orders = yes
 				clear_fleet_actions = this
-				queue_actions = {
-					find_closest_system = {
-						trigger = {
-							id = giga_blokkat.7003.trigger.1
-							NOR = {
-								systems_blokkats_wont_stripmine = yes
-								is_same_value = event_target:current_blokkat_mothership_system
-								has_star_flag = blokkat_stripmined_system
+
+				# An attempt to make the blokkats choose harvesting targets in a fairer way
+				# always choosing closest viable system has the unfortunate side-effects of both being random,
+				# and beelining the core because the stars are denser there, meaning the distances shrink towards the core
+				# - TTFTCUTS, 2022-10-24
+
+				# attempt to intelligently pick a system to move to
+				# hopefully this isn't really slow
+				ordered_system = {
+					position = 0
+					limit = {
+						NOR = {
+							systems_blokkats_wont_stripmine = yes
+							is_same_value = event_target:current_blokkat_mothership_system
+							has_star_flag = blokkat_stripmined_system
+						}
+					}
+					# distance metric based on several factors including actual distance, distance to player, core-rim position
+					order_by = value:blokkat_system_score
+					# smallest value is best
+					inverse = yes
+
+					save_event_target_as = blokkat_found_system
+				}
+
+				if = {
+					# if a target was found, go to that
+					limit = {
+						exists = event_target:blokkat_found_system
+					}
+
+					event_target:blokkat_found_system = {
+						set_name = "TEST DESTINATION"
+
+						set_star_flag = future_blokkat_mothership_system
+						clear_global_event_target = future_blokkat_mothership_system
+						save_global_event_target_as = future_blokkat_mothership_system
+						if = {
+							limit = {
+								NOT = {
+									has_hyperlane_to = event_target:current_blokkat_mothership_system
+								}
+							}
+							add_hyperlane = {
+								from = event_target:current_blokkat_mothership_system
+								to = THIS
 							}
 						}
-						found_system = {
-							effect = {
-								id = giga_blokkat.7003.trigger.2
-								THIS = {
-									set_star_flag = future_blokkat_mothership_system
-									clear_global_event_target = future_blokkat_mothership_system
-									save_global_event_target_as = future_blokkat_mothership_system
-									if = {
-										limit = {
-											NOT = {
-												has_hyperlane_to = event_target:current_blokkat_mothership_system
-											}
-										}
-										add_hyperlane = {
-											from = event_target:current_blokkat_mothership_system
-											to = THIS
-										}
-									}
-								}
-								event_target:blokkat_country = {
-									every_owned_fleet = {
-										limit = {
-											OR = {
-												has_fleet_flag = blokkat_stripmine_fleet
-												has_fleet_flag = blokkat_mothership_fleet
-											}
-										}
-										set_fleet_flag = blokkat_found_destination
-									}
-									random_owned_fleet = {
-										limit = {
-											has_fleet_flag = blokkat_mothership_fleet
-										}
-										set_timed_fleet_flag = {
-											flag = blokkat_mothership_fleet_goes_to_star
-											days = 30
-										}
-									}
+					}
+
+					event_target:blokkat_country = {
+						every_owned_fleet = {
+							limit = {
+								OR = {
+									has_fleet_flag = blokkat_stripmine_fleet
+									has_fleet_flag = blokkat_mothership_fleet
 								}
 							}
-							move_to = this
+							set_fleet_flag = blokkat_found_destination
+						}
+						random_owned_fleet = {
+							limit = {
+								has_fleet_flag = blokkat_mothership_fleet
+							}
+							set_timed_fleet_flag = {
+								flag = blokkat_mothership_fleet_goes_to_star
+								days = 30
+							}
+						}
+					}
+
+					queue_actions = {
+						move_to = event_target:blokkat_found_system
+					}
+				}
+				else = {
+
+					# just going to nearest system as fallback
+					queue_actions = {
+						find_closest_system = {
+							trigger = {
+								id = giga_blokkat.7003.trigger.1
+								NOR = {
+									systems_blokkats_wont_stripmine = yes
+									is_same_value = event_target:current_blokkat_mothership_system
+									has_star_flag = blokkat_stripmined_system
+								}
+							}
+							found_system = {
+								effect = {
+									id = giga_blokkat.7003.trigger.2
+									THIS = {
+										set_star_flag = future_blokkat_mothership_system
+										clear_global_event_target = future_blokkat_mothership_system
+										save_global_event_target_as = future_blokkat_mothership_system
+										if = {
+											limit = {
+												NOT = {
+													has_hyperlane_to = event_target:current_blokkat_mothership_system
+												}
+											}
+											add_hyperlane = {
+												from = event_target:current_blokkat_mothership_system
+												to = THIS
+											}
+										}
+									}
+									event_target:blokkat_country = {
+										every_owned_fleet = {
+											limit = {
+												OR = {
+													has_fleet_flag = blokkat_stripmine_fleet
+													has_fleet_flag = blokkat_mothership_fleet
+												}
+											}
+											set_fleet_flag = blokkat_found_destination
+										}
+										random_owned_fleet = {
+											limit = {
+												has_fleet_flag = blokkat_mothership_fleet
+											}
+											set_timed_fleet_flag = {
+												flag = blokkat_mothership_fleet_goes_to_star
+												days = 30
+											}
+										}
+									}
+								}
+								move_to = this
+							}
 						}
 					}
 				}
