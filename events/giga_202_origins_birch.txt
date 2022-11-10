@@ -51,7 +51,8 @@ country_event = {
 		no_scope = {
 			set_spawn_system_batch = begin
 			spawn_system = { min_distance >= 0  max_distance <= 0	min_orientation_angle = 44  max_orientation_angle = 46  initializer = "giga_black_hole_core_initializer"	hyperlane = no }
-			last_created_system = { set_name = "Galactic Core" }
+			#last_created_system = { set_name = "Galactic Core" }
+			last_created_system = { set_name = event_target:previous_home_system }
 			spawn_system = { min_distance >= 30	max_distance <= 30	min_orientation_angle = 25	max_orientation_angle = 25	initializer = "giga_inner_1_initializer"			hyperlane = no }
 			spawn_system = { min_distance >= 60	max_distance <= 60	min_orientation_angle = 90	max_orientation_angle = 90	initializer = "giga_inner_2_initializer"			hyperlane = no }
 			spawn_system = { min_distance >= 25	max_distance <= 25	min_orientation_angle = 80	max_orientation_angle = 80	initializer = "giga_inner_3_initializer"			hyperlane = no }
@@ -130,12 +131,48 @@ country_event = {
 
 				init_effect = {
 					save_event_target_as = birch_world
-					set_name = "Birch World"
+					#set_name = "Birch World"
+					set_name = event_target:previous_home_planet
 					set_surveyed = { surveyed = yes surveyor = from }
 					set_all_comms_surveyed = yes
 
 					#giga_birch_setup = yes
+
+					# deposits
+
+					add_deposit = d_giga_birch_origin_home_insula
+					add_deposit = d_giga_birch_origin_home_farms
+					add_deposit = d_giga_birch_origin_home_mines
+					add_deposit = d_giga_birch_origin_home_generators
+					add_deposit = d_giga_birch_origin_home_labs
+
+					if = { 
+						limit = { root = { is_machine_empire = yes } }
+						add_deposit = d_giga_birch_origin_home_machine_generators
+					}
+					if = { 
+						limit = { root = { 
+							or = {
+								is_lithoid_empire = yes 
+								has_country_flag = lithoid_subspecies
+							}
+						} }
+						add_deposit = d_giga_birch_origin_home_lithoid_mines
+					}
+					if = { 
+						limit = { root = { is_catalytic_empire = yes } }
+						add_deposit = d_giga_birch_origin_home_catalytic_farms
+					}
 					
+					# blockers
+
+					if = { 
+						limit = { root = { is_lithoid_empire = yes } }
+						add_deposit = d_giga_birch_origin_lithoid_blocker
+						add_deposit = d_giga_birch_origin_lithoid_blocker
+						add_deposit = d_giga_birch_origin_lithoid_blocker
+					}
+				
 				}
 			}
 
@@ -149,7 +186,12 @@ country_event = {
 			}
 		}
 
-		# Buildings
+		start_situation = {
+			type = giga_situation_birch_origin
+			target = event_target:birch_world
+		}
+
+		# Birch setup
 		event_target:birch_world = {
 			set_owner = root
 			set_controller = root
@@ -157,6 +199,7 @@ country_event = {
 			set_sector_capital = yes
 			sector = { assign_leader = event_target:birch_gov }
 
+			# Buildings
 			if = {
 				limit = { owner = { is_regular_empire = yes } }
 				add_building = building_capital
@@ -171,6 +214,40 @@ country_event = {
 				add_building = building_machine_capital
 				add_building = building_machine_assembly_plant
 			}
+
+			# Districts
+			while = {
+				count = event_target:previous_home_planet.value:giga_num_districts|district|district_city|
+				add_district = district_giga_planet_city
+			}
+			while = {
+				count = event_target:previous_home_planet.value:giga_num_districts|district|district_hive|
+				add_district = district_giga_planet_hive
+			}
+			while = {
+				count = event_target:previous_home_planet.value:giga_num_districts|district|district_nexus|
+				add_district = district_giga_planet_nexus
+			}
+
+			while = {
+				count = event_target:previous_home_planet.value:giga_num_districts|district|district_industrial|
+				add_district = district_industrial
+			}
+
+			while = {
+				count = event_target:previous_home_planet.value:giga_num_districts|district|district_farming|
+				add_district = district_giga_planet_farming
+			}
+			while = {
+				count = event_target:previous_home_planet.value:giga_num_districts|district|district_mining|
+				add_district = district_giga_planet_mining
+			}
+			while = {
+				count = event_target:previous_home_planet.value:giga_num_districts|district|district_generator|
+				add_district = district_giga_planet_generator
+			}
+
+			add_district = district_giga_origin_birch_lab
 		}
 
 		# Move player ships
@@ -207,7 +284,7 @@ country_event = {
 			}
 			change_pc = pc_nuked
 			destroy_colony = yes
-			reroll_planet = yes
+			#reroll_planet = yes
 		}
 
 		event_target:birch_world = {
