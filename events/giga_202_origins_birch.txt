@@ -417,6 +417,9 @@ situation_event = {
 
 	# create and exile a scientist to be the expedition's leader
 	immediate = {
+		save_event_target_as = situation
+		set_situation_flag = expedition_underway
+
 		owner = {
 			create_leader = {
 				class = scientist
@@ -432,8 +435,8 @@ situation_event = {
 	}
 
 	after = {
-		target = {
-			planet_event = {
+		owner = {
+			country_event = {
 				id = giga_birch.1001
 			}
 		}
@@ -441,16 +444,17 @@ situation_event = {
 }
 
 # expedition embarks
-planet_event = {
+country_event = {
 	id = giga_birch.1001
 	is_triggered_only = yes
-	picture = GFX_evt_baol_ruins
+	picture = GFX_evt_busy_spaceport
+	title = giga_birch.1001
 	desc = giga_birch.1001.desc
 
 	option = {
 		name = giga_birch.1001.a
 		hidden_effect = {
-			planet_event = {
+			country_event = {
 				id = giga_birch.1002
 				days = 35
 			}
@@ -459,16 +463,17 @@ planet_event = {
 }
 
 # expedition finds an abandond settlement surrounding a pillar, begins investigation
-planet_event = {
+country_event = {
 	id = giga_birch.1002
 	is_triggered_only = yes
 	picture = GFX_evt_baol_ruins
+	title = giga_birch.1002
 	desc = giga_birch.1002.desc
 
 	option = {
 		name = giga_birch.1002.a
 		hidden_effect = {
-			planet_event = {
+			country_event = {
 				id = giga_birch.1003
 				days = 12
 			}
@@ -477,15 +482,12 @@ planet_event = {
 }
 
 # expedition finds no way down, but does find usable facilities
-planet_event = {
+country_event = {
 	id = giga_birch.1003
 	is_triggered_only = yes
 	picture = GFX_evt_ancient_records
+	title = giga_birch.1003
 	desc = giga_birch.1003.desc
-
-	pre_triggers = {
-		has_owner = yes
-	}
 
 	option = {
 		name = giga_birch.1003.a # artisans
@@ -496,21 +498,35 @@ planet_event = {
 		}
 		
 		custom_tooltip = giga_birch.1003.a.desc
-		hidden_effect = { set_planet_flag = birch_expedition_1_factory }
+		hidden_effect = { event_target:situation.target = { set_planet_flag = birch_expedition_1_factory } }
 	}
 	
 	option = {
 		name = giga_birch.1003.b # scrap miners
 		
 		custom_tooltip = giga_birch.1003.b.desc
-		hidden_effect = { set_planet_flag = birch_expedition_1_miners }
+		hidden_effect = { event_target:situation.target = { set_planet_flag = birch_expedition_1_miners } }
+
+		ai_chance = {
+			modifier = {
+				factor = 5
+				owner = { is_lithoid_empire = yes }
+			}
+		}
 	}
 
 	option = {
 		name = giga_birch.1003.c # technicians
 		
 		custom_tooltip = giga_birch.1003.c.desc
-		hidden_effect = { set_planet_flag = birch_expedition_1_technicians }
+		hidden_effect = { event_target:situation.target = { set_planet_flag = birch_expedition_1_technicians } }
+
+		ai_chance = {
+			modifier = {
+				factor = 3
+				owner = { is_machine_empire = yes }
+			}
+		}
 	}
 
 	option = {
@@ -522,11 +538,40 @@ planet_event = {
 		}
 		
 		custom_tooltip = giga_birch.1003.d.desc
-		hidden_effect = { set_planet_flag = birch_expedition_1_farmers }
+		hidden_effect = { event_target:situation.target = { set_planet_flag = birch_expedition_1_farmers } }
+
+		ai_chance = {
+			modifier = {
+				factor = 5
+				owner = { is_catalytic_empire = yes }
+			}
+		}
 	}
 	
 	after = {
-		add_deposit = d_giga_birch_expedition_1
+		event_target:situation.target = { add_deposit = d_giga_birch_expedition_1 }
+		hidden_effect = {
+			country_event = {
+				id = giga_birch.1004
+				days = 5
+			}
+		}
+	}
+}
+
+# conclusion
+country_event = {
+	id = giga_birch.1004
+	is_triggered_only = yes
+	picture = GFX_evt_ancient_alien_temple
+	title = giga_birch.1004
+	desc = giga_birch.1004.desc
+
+	option = {
+		name = giga_birch.1004.a
+		hidden_effect = {
+			event_target:situation = { remove_situation_flag = expedition_underway }
+		}
 	}
 }
 
@@ -538,10 +583,99 @@ planet_event = {
 situation_event = {
 	id = giga_birch.2000
 	is_triggered_only = yes
-	picture = GFX_evt_archaeological_dig
+	hide_window = yes
+
+	# create expedition leader and discovered civ
+	immediate = {
+		save_event_target_as = situation
+		set_situation_flag = expedition_underway
+
+		owner = {
+			create_leader = {
+				class = scientist
+				species = owner_main_species
+				name = random
+			}
+			last_created_leader = {
+				exile_leader_as = giga_birch_expedition_leader
+				save_event_target_as = giga_birch_expedition_leader
+				set_immortal = yes
+			}
+		}
+
+		# other species
+		create_species = {
+			class = random_non_machine
+			homeworld = root.target
+		}
+		last_created_species = {
+			save_event_target_as = giga_birch_expeiditon_2_species
+		}
+
+		# their empire, and leader
+		create_country = {
+			type = giga_birch_natives
+			species = event_target:giga_birch_expeiditon_2_species
+			ethos = random
+			civics = random
+			auto_delete = no
+			government_restrictions = {
+				authority = { 
+					nor = { 
+						value = auth_machine_intelligence # need normal empires
+						value = auth_hive_mind 
+					} 
+				}
+				ethics = {
+					nor = {
+						value = ethic_fanatic_xenophobe # no xenophobes so it's not instant rejection
+						value = ethic_xenophobe
+						value = ethic_fanatic_spiritualist # no fanatic spiritualists to reject machines
+					}
+				}
+			}
+		}
+		last_created_country = {
+			save_event_target_as = giga_birch_expeiditon_2_country
+			establish_communications_no_message = root.owner
+			create_leader = {
+				class = ruler
+				species = event_target:giga_birch_expeiditon_2_species
+				name = random
+			}
+			last_created_leader = {
+				save_event_target_as = giga_birch_expeiditon_2_ruler
+				set_immortal = yes
+			}
+			set_leader = last_created_leader
+		}
+	}
+
+	after = {
+		owner = {
+			country_event = {
+				id = giga_birch.2001
+			}
+		}
+	}
+}
+
+country_event = {
+	id = giga_birch.2001
+	is_triggered_only = yes
+	picture = GFX_evt_ancient_alien_temple
+	title = giga_birch.2001
+	desc = giga_birch.2001.desc
 
 	option = {
-		name = OK
+		name = giga_birch.2001.a
+		# hidden_effect = {
+		# 	country_event = {
+		# 		id = giga_birch.1002
+		# 		scopes = { from = from }
+		# 		days = 70
+		# 	}
+		# }
 	}
 }
 
