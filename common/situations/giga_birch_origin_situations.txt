@@ -102,6 +102,55 @@ giga_situation_birch_origin = {
 		icon = GFX_situation_approach_balance_sheet
 		icon_background = GFX_situation_approach_bg_yellow
 		default = yes
+
+		on_select = {
+			custom_tooltip = giga_situation_birch_origin_approach_regular_desc
+		}
+
+		modifier = {
+			country_influence_produces_mult = -0.25
+			country_energy_produces_mult = -0.20
+			country_alloys_produces_mult = -0.05
+		}
+	}
+
+	approach = {
+		name = giga_situation_birch_origin_approach_extra
+		icon = GFX_situation_approach_balance_sheet
+		icon_background = GFX_situation_approach_bg_green
+
+		on_select = {
+			custom_tooltip = giga_situation_birch_origin_approach_extra_desc
+		}
+
+		modifier = {
+			country_influence_produces_mult = -0.50
+			country_energy_produces_mult = -0.30
+			country_alloys_produces_mult = -0.10
+		}
+	}
+
+	approach = {
+		name = giga_situation_birch_origin_approach_frugal
+		icon = GFX_situation_approach_balance_sheet
+		icon_background = GFX_situation_approach_bg_red
+
+		on_select = {
+			custom_tooltip = giga_situation_birch_origin_approach_frugal_desc
+		}
+
+		resources = {
+			category = situations
+			cost = {
+				influence = 50
+			}
+		}
+
+		modifier = {
+			country_influence_produces_mult = -0.10
+			country_energy_produces_mult = -0.10
+			country_alloys_produces_mult = -0.025
+		}
 	}
 
 	on_monthly = {
@@ -109,7 +158,18 @@ giga_situation_birch_origin = {
 	}
 
 	monthly_progress = {
-		base = 0
+		base = 0.8
+
+		modifier = {
+			add = 0.2
+			desc = giga_situation_birch_origin_approach_extra_effect
+			current_situation_approach = giga_situation_birch_origin_approach_extra
+		}
+		modifier = {
+			add = -0.2
+			desc = giga_situation_birch_origin_approach_frugal_effect
+			current_situation_approach = giga_situation_birch_origin_approach_frugal
+		}
 	}
 
 	on_progress_complete = {
@@ -167,7 +227,7 @@ giga_situation_birch_expedition_3 = {
 		resources = {
 			category = situations
 			upkeep = {
-				energy = 50
+				energy = 200
 			}
 		}
 
@@ -179,7 +239,7 @@ giga_situation_birch_expedition_3 = {
 					or = {
 						resource_income_compare = {
 							resource = energy
-							value >= 50
+							value >= 200
 						}
 						resource_stockpile_compare = {
 							resource = energy
@@ -191,28 +251,241 @@ giga_situation_birch_expedition_3 = {
 		}
 	}
 
+	approach = {
+		name = giga_situation_birch_expedition_3_approach_supercharge
+		icon = GFX_situation_approach_energy_credits
+		icon_background = GFX_situation_approach_bg_yellow
+
+		resources = {
+			category = situations
+			upkeep = {
+				energy = 1500
+			}
+		}
+
+		ai_weight = {
+			base = 0
+			modifier = {
+				add = 3
+				owner = {
+					or = {
+						resource_income_compare = {
+							resource = energy
+							value >= 1500
+						}
+						resource_stockpile_compare = {
+							resource = energy
+							value >= 100000
+						}
+					}
+				}
+			}
+		}
+	}
+
 	monthly_progress = {
 		base = 0
 		modifier = {
-			set = -25 # TODO: change this to a script_value so it never goes below 0
+			subtract = value:giga_birch_expedition_3_progress
 			desc = giga_situation_birch_expedition_3_approach_halt_effect
 			current_situation_approach = giga_situation_birch_expedition_3_approach_halt
 			situation_progress > 0
 		}
 		modifier = {
-			set = 50
+			add = 200
 			desc = giga_situation_birch_expedition_3_approach_power_effect
 			current_situation_approach = giga_situation_birch_expedition_3_approach_power
+		}
+		modifier = {
+			add = 1000
+			desc = giga_situation_birch_expedition_3_approach_supercharge_effect
+			current_situation_approach = giga_situation_birch_expedition_3_approach_supercharge
 		}
 	}
 
 	on_progress_complete = {
 		custom_tooltip = giga_situation_birch_expedition_3_outcome
 		hidden_effect = {
+			set_situation_locked = yes
 			owner = {
 				country_event = {
 					id = giga_birch.3003
+					scopes = {
+						from = root
+					}
 				}
+			}
+		}
+	}
+}
+
+#########################################################################################################################################
+# Expedition 4: stirring the flames of industry
+
+@giga_situation_birch_expedition_4_limit = 20
+
+giga_situation_birch_expedition_4 = {
+	picture = GFX_evt_engineering_bay
+	complete_icon_frame = GFX_situation_outcome_frame_green
+	complete_icon = GFX_situation_outcome_positive
+
+	stages = {
+		giga_situation_birch_expedition_4_stage_1 = {
+			end = @giga_situation_birch_expedition_4_limit
+			icon = GFX_situation_stage_1
+			icon_background = GFX_situation_stage_frame_green
+		}
+		giga_situation_birch_expedition_4_stage_2 = {
+			end = 100
+			icon = GFX_situation_stage_2
+			icon_background = GFX_situation_stage_frame_green
+			
+			on_first_enter = {
+				if = {
+					limit = { current_situation_approach = giga_situation_birch_expedition_4_approach_alloys }
+					target = { set_planet_flag = birch_expedition_4_alloys }
+				}
+				else_if = {
+					limit = { current_situation_approach = giga_situation_birch_expedition_4_approach_goods }
+					target = { set_planet_flag = birch_expedition_4_goods }
+				}
+				else_if = {
+					limit = { current_situation_approach = giga_situation_birch_expedition_4_approach_supertensiles }
+					target = { set_planet_flag = birch_expedition_4_supertensiles }
+				}
+
+				situation_event = {
+					id = giga_birch.4005
+				}
+			}
+		}
+	}
+
+	approach = {
+		allow = { situation_progress < @giga_situation_birch_expedition_4_limit }
+
+		name = giga_situation_birch_expedition_4_approach_choose
+		icon = GFX_situation_approach_balance_sheet
+		icon_background = GFX_situation_approach_bg_yellow
+		default = yes
+
+		ai_weight = { base = 0 }
+	}
+	approach = {
+		name = giga_situation_birch_expedition_4_approach_alloys
+		allow = { 
+			or = {
+				current_situation_approach = giga_situation_birch_expedition_4_approach_alloys
+				situation_progress < @giga_situation_birch_expedition_4_limit
+			}
+		}
+		icon = GFX_situation_approach_balance_sheet # TODO: needs icon
+		icon_background = GFX_situation_approach_bg_green
+
+		resources = {
+			category = situations
+			cost = {
+				minerals = 2000
+			}
+			upkeep = {
+				alloys = 10
+			}
+			upkeep = {
+				trigger = {
+					exists = owner
+					owner = {
+						is_catalytic_empire = no
+					}
+				}
+				minerals = 20
+			}
+			upkeep = {
+				trigger = {
+					exists = owner
+					owner = {
+						is_catalytic_empire = yes
+					}
+				}
+				food = 30
+			}
+		}
+
+		ai_weight = { base = 1 }
+	}
+	approach = {
+		potential = { owner = { country_uses_consumer_goods = yes } }
+		allow = { 
+			or = {
+				current_situation_approach = giga_situation_birch_expedition_4_approach_goods
+				situation_progress < @giga_situation_birch_expedition_4_limit
+			}
+		}
+
+		name = giga_situation_birch_expedition_4_approach_goods
+		icon = GFX_situation_approach_balance_sheet # TODO: needs icon
+		icon_background = GFX_situation_approach_bg_green
+
+		resources = {
+			category = situations
+			cost = {
+				minerals = 2000
+			}
+			upkeep = {
+				minerals = 25
+			}
+		}
+
+		ai_weight = { 
+			base = 0 
+		}
+	}
+	approach = {
+		potential = { has_global_flag = @giga_amb_flag }
+		allow = { 
+			or = {
+				current_situation_approach = giga_situation_birch_expedition_4_approach_supertensiles
+				situation_progress < @giga_situation_birch_expedition_4_limit
+			}
+		}
+
+		name = giga_situation_birch_expedition_4_approach_supertensiles
+		icon = GFX_situation_approach_balance_sheet # TODO: needs icon
+		icon_background = GFX_situation_approach_bg_green
+
+		resources = {
+			category = situations
+			cost = {
+				minerals = 1500
+				alloys = 500
+			}
+			upkeep = {
+				alloys = 25
+				unity = 20
+			}
+		}
+
+		ai_weight = { 
+			base = 2 
+		}
+	}
+
+	monthly_progress = {
+		base = 0
+		modifier = {
+			add = 2
+			desc = giga_situation_birch_expedition_4_progress
+			not = {
+				current_situation_approach = giga_situation_birch_expedition_4_approach_choose
+			}
+		}
+	}
+
+	on_progress_complete = {
+		custom_tooltip = giga_situation_birch_expedition_4_outcome
+		hidden_effect = {
+			set_situation_locked = yes
+			situation_event = {
+				id = giga_birch.4006
 			}
 		}
 	}
