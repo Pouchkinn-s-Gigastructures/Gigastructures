@@ -252,6 +252,11 @@ country_event = {
 							add_deposit = d_hibernating_lithoids
 						}
 					}
+
+					# stop buildings getting wrecked from removing city districts
+					add_modifier = {
+						modifier = frameworld_building_wreck_fix 
+					}
 				}
 			}
 
@@ -282,72 +287,8 @@ country_event = {
 			set_sector_capital = yes
 			sector = { assign_leader = event_target:birch_gov }
 
-			# # Buildings
-			# if = {
-			# 	limit = { owner = { is_regular_empire = yes } }
-			# 	add_building = building_capital
-			# }
-			# else_if = {
-			# 	limit = { owner = { is_hive_empire = yes } }
-			# 	add_building = building_hive_capital
-			# 	add_building = building_spawning_pool
-			# }
-			# else_if = {
-			# 	limit = { owner = { is_machine_empire = yes } }
-			# 	add_building = building_machine_capital
-			# 	add_building = building_machine_assembly_plant
-			# }
-
-			# # all these things are a pain in the ass tbh
-			# if = {
-			# 	limit = { owner = { is_hive_empire = yes } }
-			# 	add_building = building_spawning_pool
-			# 	add_building = building_hive_node
-			# }
-			# else_if = {
-			# 	limit = { owner = { is_machine_empire = yes } }
-			# 	add_building = building_machine_assembly_plant
-			# 	if = {
-			# 		limit = { owner = { has_civic = civic_machine_servitor }}
-			# 		add_building = building_organic_sanctuary
-			# 	}
-			# 	else = {
-			# 		add_building = building_uplink_node
-			# 	}
-			# }
-			# else_if = {
-			# 	limit = { owner = { is_gestalt = no } } # yeah this should already be covered but it can't hurt right?
-			# 	if = {
-			# 		limit = { owner = { is_spiritualist = yes } }
-			# 		if = {
-			# 			limit = { owner = { is_death_cult_empire = yes } }
-			# 			add_building = building_sacrificial_temple_1
-			# 		}
-			# 		else = {
-			# 			add_building = building_temple
-			# 		}
-			# 	}
-			# 	else = {
-			# 		add_building = building_bureaucratic_1
-			# 	}
-			# 	add_building = building_holo_theatres
-
-			# 	if = {
-			# 		limit = { owner = { has_civic = civic_permanent_employment }}
-			# 		add_building = building_posthumous_employment_center
-			# 	}
-			# 	if = {
-			# 		limit = { owner = { has_civic = civic_reanimated_armies }}
-			# 		add_building = building_dread_encampment
-			# 	}
-			# }
-
 			generate_start_buildings_and_districts = yes
 			generate_start_pops = yes
-
-			add_modifier = {
-				modifier = frameworld_building_wreck_fix # stop buildings getting wrecked from removing city districts
-			}
 
 			remove_all_districts = yes
 
@@ -391,6 +332,7 @@ country_event = {
 				add_district = district_giga_planet_generator
 			}
 
+			# clear the anti-building-wreck modifier
 			remove_modifier = frameworld_building_wreck_fix
 		}
 
@@ -2019,7 +1961,7 @@ country_event = {
 country_event = {
 	id = giga_birch.5004
 	is_triggered_only = yes
-	picture = GFX_evt_rare_tech_cache
+	picture = GFX_evt_synth_sabotage
 	title = giga_birch.5004
 	desc = giga_birch.5004.desc
 
@@ -2047,7 +1989,7 @@ country_event = {
 country_event = {
 	id = giga_birch.5005
 	is_triggered_only = yes
-	picture = GFX_evt_rare_tech_cache
+	picture = GFX_evt_sapient_AI
 	title = giga_birch.5005
 	desc = giga_birch.5005.desc
 
@@ -2129,12 +2071,135 @@ country_event = {
 situation_event = {
 	id = giga_birch.6000
 	is_triggered_only = yes
-	picture = GFX_evt_archaeological_dig
+	hide_window = yes
 
-	option = {
-		name = OK
+	trigger = {
+		this.target = { not = { has_planet_flag = birch_expedition_6_complete } }
+	}
+
+	# create and exile a scientist to be the expedition's leader
+	immediate = {
+		save_event_target_as = situation
+		set_situation_flag = expedition_underway
+
+		owner = {
+			create_leader = {
+				class = scientist
+				species = owner_main_species
+				name = random
+			}
+			last_created_leader = {
+				exile_leader_as = giga_birch_expedition_leader
+				save_event_target_as = giga_birch_expedition_leader
+				save_global_event_target_as = giga_birch_expedition_leader_@root
+				set_immortal = yes
+			}
+		}		
+	}
+
+	after = {
+		owner = {
+			country_event = {
+				id = giga_birch.6001
+			}
+		}
 	}
 }
+
+# expedition embarks
+country_event = {
+	id = giga_birch.6001
+	is_triggered_only = yes
+	picture = GFX_evt_ancient_databank
+	title = giga_birch.6001
+	desc = giga_birch.6001.desc
+
+	option = {
+		name = giga_birch.6001.a
+		hidden_effect = {
+			country_event = {
+				id = giga_birch.6002
+				days = 26
+			}
+		}
+	}
+}
+
+# expedition arrives at a new landscape layer, with radically different environment
+country_event = {
+	id = giga_birch.6001
+	is_triggered_only = yes
+	picture = GFX_evt_arctic
+	title = giga_birch.6001
+	desc = giga_birch.6001.desc
+
+	option = {
+		name = giga_birch.6001.a
+		hidden_effect = {
+			country_event = {
+				id = giga_birch.6002
+				days = 45
+			}
+		}
+	}
+}
+
+# expedition finds several settlements along their journey, seems this place was much more populated than our layer
+country_event = {
+	id = giga_birch.6002
+	is_triggered_only = yes
+	picture = GFX_evt_habitable_dig_site
+	title = giga_birch.6002
+	desc = giga_birch.6002.desc
+
+	option = {
+		name = giga_birch.6002.a
+		hidden_effect = {
+			country_event = {
+				id = giga_birch.6003
+				days = 15
+			}
+		}
+	}
+}
+
+# expedition sets up a forward base near a ravine with caverns hosting an extensive underground environment
+country_event = {
+	id = giga_birch.6003
+	is_triggered_only = yes
+	picture = GFX_evt_outpost
+	title = giga_birch.6003
+	desc = giga_birch.6003.desc
+
+	option = {
+		name = giga_birch.6003.a
+		custom_tooltip = giga_birch.6003.a.desc
+		add_deposit = d_giga_birch_expedition_6_farm
+	}
+	option = {
+		name = giga_birch.6003.b
+		custom_tooltip = giga_birch.6003.b.desc
+		add_deposit = d_giga_birch_expedition_6_generator
+	}
+
+	after = {
+		hidden_effect = {
+			event_target:situation = { 
+				remove_situation_flag = expedition_underway 
+				target = {
+					set_planet_flag = birch_expedition_6_complete
+				}
+			}
+			clear_global_event_target = giga_birch_expedition_leader_@this
+			event_target:giga_birch_expedition_leader = {
+				kill_leader = {
+					show_notification = no
+				}
+			}
+		}
+	}
+}
+
 
 #########################################################################################################################################
 
