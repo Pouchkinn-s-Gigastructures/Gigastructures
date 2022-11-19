@@ -496,3 +496,221 @@ giga_situation_birch_expedition_4 = {
 		}
 	}
 }
+
+#########################################################################################################################################
+# Expedition 7: observing the observer
+
+@giga_situation_birch_expedition_7_limit = 20
+
+giga_situation_birch_expedition_7 = {
+	picture = GFX_evt_underwater_ruins
+	complete_icon_frame = GFX_situation_outcome_frame_green
+	complete_icon = GFX_situation_outcome_positive
+
+	stages = {
+		giga_situation_birch_expedition_7_stage_1 = {
+			end = @giga_situation_birch_expedition_7_limit
+			icon = GFX_situation_stage_1
+			icon_background = GFX_situation_stage_frame_green
+		}
+		giga_situation_birch_expedition_7_stage_2 = {
+			end = 100
+			icon = GFX_situation_stage_2
+			icon_background = GFX_situation_stage_frame_green
+			
+			on_first_enter = {
+				if = {
+					limit = { current_situation_approach = giga_situation_birch_expedition_7_approach_science }
+					target = { set_planet_flag = birch_expedition_7_science }
+				}
+				else_if = {
+					limit = { current_situation_approach = giga_situation_birch_expedition_7_approach_unity }
+					target = { set_planet_flag = birch_expedition_7_unity }
+				}
+				else_if = {
+					limit = { current_situation_approach = giga_situation_birch_expedition_7_approach_trade }
+					target = { set_planet_flag = birch_expedition_7_trade }
+				}
+
+				situation_event = {
+					id = giga_birch.7005
+				}
+			}
+		}
+	}
+
+	approach = {
+		allow = { situation_progress < @giga_situation_birch_expedition_7_limit }
+
+		name = giga_situation_birch_expedition_7_approach_choose
+		icon = GFX_situation_approach_balance_sheet
+		icon_background = GFX_situation_approach_bg_yellow
+		default = yes
+
+		ai_weight = { base = 0 }
+	}
+	approach = {
+		name = giga_situation_birch_expedition_7_approach_science
+		allow = { 
+			or = {
+				current_situation_approach = giga_situation_birch_expedition_7_approach_science
+				situation_progress < @giga_situation_birch_expedition_7_limit
+			}
+		}
+		icon = GFX_situation_approach_research
+		icon_background = GFX_situation_approach_bg_green
+
+		resources = {
+			category = situations
+			cost = {
+				minerals = 5000
+			}
+			upkeep = {
+				alloys = 20
+			}
+			upkeep = {
+				trigger = {
+					owner = { is_gestalt = no }
+				}
+				consumer_goods = 50
+			}
+			upkeep = {
+				trigger = {
+					owner = { is_hive_empire = yes }
+				}
+				minerals = 100
+			}
+			upkeep = {
+				trigger = {
+					owner = { is_machine_empire = yes }
+				}
+				energy = 150
+			}
+		}
+
+		ai_weight = { base = 2 }
+	}
+	approach = {
+		potential = { owner = { country_uses_consumer_goods = yes } }
+		allow = { 
+			or = {
+				current_situation_approach = giga_situation_birch_expedition_7_approach_unity
+				situation_progress < @giga_situation_birch_expedition_7_limit
+			}
+		}
+
+		name = giga_situation_birch_expedition_7_approach_unity
+		icon = GFX_situation_approach_unity
+		icon_background = GFX_situation_approach_bg_green
+
+		resources = {
+			category = situations
+			cost = {
+				minerals = 5000
+			}
+			upkeep = {
+				minerals = 25
+				energy = 25
+			}
+			upkeep = {
+				trigger = {
+					owner = { is_gestalt = no }
+				}
+				consumer_goods = 25
+			}
+			upkeep = {
+				trigger = {
+					owner = { 
+						is_hive_empire = yes 
+						is_lithoid_empire = no
+					}
+				}
+				food = 100
+			}
+			upkeep = {
+				trigger = {
+					owner = { 
+						is_hive_empire = yes 
+						is_lithoid_empire = yes
+					}
+				}
+				minerals = 100
+			}
+			upkeep = {
+				trigger = {
+					owner = { is_machine_empire = yes }
+				}
+				energy = 100
+			}
+		}
+
+		ai_weight = { 
+			base = 1 
+
+			modifier = {
+				add = 2
+				owner = {
+					is_spiritualist = yes
+				}
+			}
+		}
+	}
+	approach = {
+		potential = { owner = { is_gestalt = no } }
+		allow = { 
+			or = {
+				current_situation_approach = giga_situation_birch_expedition_7_approach_trade
+				situation_progress < @giga_situation_birch_expedition_7_limit
+			}
+		}
+
+		name = giga_situation_birch_expedition_7_approach_trade
+		icon = GFX_situation_approach_balance_sheet # TODO: needs icon
+		icon_background = GFX_situation_approach_bg_green
+
+		resources = {
+			category = situations
+			cost = {
+				minerals = 5000
+			}
+			upkeep = {
+				minerals = 20
+				energy = 200
+			}
+		}
+
+		ai_weight = { 
+			base = 1 
+			modifier = {
+				add = 3
+				owner = {
+					or = {
+						is_megacorp = yes
+						is_competitive = yes
+					}
+				}
+			}
+		}
+	}
+
+	monthly_progress = {
+		base = 0
+		modifier = {
+			add = 2
+			desc = giga_situation_birch_expedition_7_progress
+			not = {
+				current_situation_approach = giga_situation_birch_expedition_7_approach_choose
+			}
+		}
+	}
+
+	on_progress_complete = {
+		custom_tooltip = giga_situation_birch_expedition_7_outcome
+		hidden_effect = {
+			set_situation_locked = yes
+			situation_event = {
+				id = giga_birch.7006
+			}
+		}
+	}
+}

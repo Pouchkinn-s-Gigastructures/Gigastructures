@@ -40,7 +40,7 @@ country_event = {
 		# Spawn the Birch World System
 		no_scope = {
 			set_spawn_system_batch = begin
-			spawn_system = { min_distance >= 0  max_distance <= 0	min_orientation_angle = 44  max_orientation_angle = 46  initializer = giga_black_hole_core_initializer	hyperlane = no }
+			spawn_system = { min_distance >= 0.0001  max_distance <= 0.0001	min_orientation_angle = 44  max_orientation_angle = 46  initializer = giga_black_hole_core_initializer	hyperlane = no }
 			last_created_system = { set_name = event_target:previous_home_system }
 			spawn_system = { min_distance >= 30	max_distance <= 30	min_orientation_angle = 25	max_orientation_angle = 25	initializer = giga_inner_1_initializer			hyperlane = no }
 			spawn_system = { min_distance >= 60	max_distance <= 60	min_orientation_angle = 90	max_orientation_angle = 90	initializer = giga_inner_2_initializer			hyperlane = no }
@@ -250,7 +250,7 @@ country_event = {
 				}
 			}
 
-			# it's a guaranteed habitable, but it's a bit messed up...
+			# Edge of Eternity is a guaranteed habitable, but it's a bit messed up...
 			random_system_planet = {
 				limit = { has_planet_flag = edge_of_eternity }
 
@@ -258,7 +258,7 @@ country_event = {
 				clear_deposits = yes
 
 				set_planet_flag = colony_event
-				#set_planet_flag = forbid_guillis_planet_modifiers # perhaps... perhaps we let guilli have this one
+				set_planet_flag = forbid_guillis_planet_modifiers
 				
 				add_deposit = d_giga_birch_edge_of_eternity
 
@@ -270,7 +270,10 @@ country_event = {
 				
 				add_deposit = d_giga_birch_edge_of_eternity_generators_blocker
 				add_deposit = d_giga_birch_edge_of_eternity_generators
-				add_deposit = d_massive_glacier
+				add_blocker = {
+					type = d_massive_glacier
+					blocked_deposit = none
+				}
 
 				add_deposit = d_giga_birch_edge_of_eternity_mines_blocker
 				add_deposit = d_giga_birch_edge_of_eternity_mines
@@ -1868,6 +1871,7 @@ situation_event = {
 	option = {
 		name = giga_birch.4006.a
 		
+		custom_tooltip = giga_birch.4006.a.desc
 		hidden_effect = {
 			target = {
 				set_planet_flag = birch_expedition_4_complete
@@ -2219,12 +2223,12 @@ country_event = {
 	option = {
 		name = giga_birch.6003.a
 		custom_tooltip = giga_birch.6003.a.desc
-		add_deposit = d_giga_birch_expedition_6_farm
+		event_target:situation.target = { add_deposit = d_giga_birch_expedition_6_farm }
 	}
 	option = {
 		name = giga_birch.6003.b
 		custom_tooltip = giga_birch.6003.b.desc
-		add_deposit = d_giga_birch_expedition_6_generator
+		event_target:situation.target = { add_deposit = d_giga_birch_expedition_6_generator }
 	}
 
 	after = {
@@ -2254,10 +2258,185 @@ country_event = {
 situation_event = {
 	id = giga_birch.7000
 	is_triggered_only = yes
-	picture = GFX_evt_archaeological_dig
+	hide_window = yes
+
+	trigger = {
+		this.target = { not = { has_planet_flag = birch_expedition_7_complete } }
+	}
+
+	# create and exile a scientist to be the expedition's leader
+	immediate = {
+		save_event_target_as = situation
+		set_situation_flag = expedition_underway
+
+		owner = {
+			create_leader = {
+				class = scientist
+				species = owner_main_species
+				name = random
+			}
+			last_created_leader = {
+				exile_leader_as = giga_birch_expedition_leader
+				save_event_target_as = giga_birch_expedition_leader
+				save_global_event_target_as = giga_birch_expedition_leader_@root
+				set_immortal = yes
+			}
+		}		
+	}
+
+	after = {
+		owner = {
+			country_event = {
+				id = giga_birch.7001
+			}
+		}
+	}
+}
+
+# expedition embarks
+country_event = {
+	id = giga_birch.7001
+	is_triggered_only = yes
+	picture = GFX_evt_outpost
+	title = giga_birch.7001
+	desc = giga_birch.7001.desc
 
 	option = {
-		name = OK
+		name = giga_birch.7001.a
+		hidden_effect = {
+			country_event = {
+				id = giga_birch.7002
+				days = 36
+			}
+		}
+	}
+}
+
+# expedition finds a science facility dedicated to observation, begins investigation
+country_event = {
+	id = giga_birch.7002
+	is_triggered_only = yes
+	picture = GFX_evt_icelocked_settlement
+	title = giga_birch.7002
+	desc = giga_birch.7002.desc
+
+	option = {
+		name = giga_birch.7007.a
+		enable_special_project = {
+			name = giga_birch_origin_expedition_7
+			owner = root
+			location = event_target:situation.target
+		}
+	}
+}
+
+# completion of the project, starts the repair event, gives basic deposit
+country_event = {
+	id = giga_birch.7003
+	is_triggered_only = yes
+	picture = GFX_evt_underwater_ruins
+	title = giga_birch.7003
+	desc = giga_birch.7003.desc
+
+	immediate = {
+		event_target:giga_birch_origin_situation_@root = {
+			save_event_target_as = situation
+		}
+		event_target:giga_birch_expedition_leader_@root = {
+			save_event_target_as = giga_birch_expedition_leader
+		}
+	}
+
+	option = {
+		name = giga_birch.7003.a
+
+		event_target:situation.target = {
+			add_deposit = d_giga_birch_expedition_7
+		}
+		start_situation = {
+			type = giga_situation_birch_expedition_7
+			target = event_target:situation.target
+		}
+		hidden_effect = {
+			country_event = {
+				id = giga_birch.7004
+				days = 7
+			}
+		}
+	}
+}
+
+# conclusions
+country_event = {
+	id = giga_birch.7004
+	is_triggered_only = yes
+	picture = GFX_evt_decryption
+	title = giga_birch.7004
+	desc = giga_birch.7004.desc
+
+	option = {
+		name = giga_birch.7004.a
+		
+		hidden_effect = {
+			event_target:situation = { remove_situation_flag = expedition_underway }
+			clear_global_event_target = giga_birch_expedition_leader_@this
+			event_target:giga_birch_expedition_leader = {
+				kill_leader = {
+					show_notification = no
+				}
+			}
+		}
+	}
+}
+
+# notification of observatory approach lock-in
+situation_event = {
+	id = giga_birch.7005
+	is_triggered_only = yes
+	picture = GFX_evt_underwater_ruins
+	title = giga_birch.7005
+	desc = {
+		trigger = {
+			target = { has_planet_flag = birch_expedition_7_science }
+		}
+		text = giga_birch.7005.desc.science
+	}
+	desc = {
+		trigger = {
+			target = { has_planet_flag = birch_expedition_7_unity }
+		}
+		text = giga_birch.7005.desc.unity
+	}
+	desc = {
+		trigger = {
+			target = { has_planet_flag = birch_expedition_7_trade }
+		}
+		text = giga_birch.7005.desc.trade
+	}
+
+	option = {
+		name = giga_birch.7005.a
+	}
+}
+
+# observatory repair complete, full deposit now available, end repair situation
+situation_event = {
+	id = giga_birch.7006
+	is_triggered_only = yes
+	picture = GFX_evt_society_cache
+	title = giga_birch.7006
+	desc = giga_birch.7006.desc
+
+	option = {
+		name = giga_birch.7006.a
+
+		custom_tooltip = giga_birch.7006.a.desc
+		hidden_effect = {
+			target = {
+				set_planet_flag = birch_expedition_7_complete
+			}
+		}
+		destroy_situation = this
 	}
 }
 
@@ -2270,10 +2449,224 @@ situation_event = {
 situation_event = {
 	id = giga_birch.8000
 	is_triggered_only = yes
-	picture = GFX_evt_archaeological_dig
+	hide_window = yes
+
+	trigger = {
+		this.target = { not = { has_planet_flag = birch_expedition_8_complete } }
+	}
+
+	# create and exile a scientist to be the expedition's leader
+	immediate = {
+		save_event_target_as = situation
+		set_situation_flag = expedition_underway
+
+		owner = {
+			create_leader = {
+				class = scientist
+				species = owner_main_species
+				name = random
+			}
+			last_created_leader = {
+				exile_leader_as = giga_birch_expedition_leader
+				save_event_target_as = giga_birch_expedition_leader
+				save_global_event_target_as = giga_birch_expedition_leader_@root
+				set_immortal = yes
+			}
+		}		
+	}
+
+	after = {
+		owner = {
+			country_event = {
+				id = giga_birch.8001
+			}
+		}
+	}
+}
+
+# expedition embarks
+country_event = {
+	id = giga_birch.8001
+	is_triggered_only = yes
+	picture = GFX_evt_physics_research
+	title = giga_birch.8001
+	desc = giga_birch.8001.desc
 
 	option = {
-		name = OK
+		name = giga_birch.8001.a
+		hidden_effect = {
+			country_event = {
+				id = giga_birch.8002
+				days = 25
+			}
+		}
+	}
+}
+
+# on the lowest layers, the expedition finds what appears to be another command centre, larger this time, but it doesn't make sense
+country_event = {
+	id = giga_birch.8002
+	is_triggered_only = yes
+	picture = GFX_evt_black_hole
+	title = giga_birch.8002
+	desc = giga_birch.8002.desc
+
+	option = {
+		name = giga_birch.8002.a
+		hidden_effect = {
+			country_event = {
+				id = giga_birch.8003
+				days = 10
+			}
+		}
+	}
+}
+
+# expedition realises that the command centre is 4 dimensional, using advanced construction principles
+country_event = {
+	id = giga_birch.8003
+	is_triggered_only = yes
+	picture = GFX_evt_sentient
+	title = giga_birch.8003
+	desc = {
+		trigger = {
+			has_technology = giga_tech_tetradimensional_engineering
+		}
+		text = giga_birch.8003.desc
+	}
+	desc = {
+		trigger = {
+			not = { has_technology = giga_tech_tetradimensional_engineering }
+		}
+		text = giga_birch.8003.desc.wait
+	}
+
+	option = {
+		trigger = {
+			has_technology = giga_tech_tetradimensional_engineering
+		}
+		name = giga_birch.8003.a
+		enable_special_project = {
+			name = giga_birch_origin_expedition_8
+			owner = this
+			location = event_target:situation.target
+		}
+	}
+	option = {
+		trigger = {
+			not = { has_technology = giga_tech_tetradimensional_engineering }
+		}
+		name = giga_birch.5008.b
+		custom_tooltip = giga_birch.5008.b.desc
+		hidden_effect = {
+			set_country_flag = giga_birch_expedition_8_needs_tech
+		}
+	}
+}
+
+# research tetradimensional engineering when it was needed
+country_event = {
+	id = giga_birch.8004
+	is_triggered_only = yes
+	picture = GFX_evt_synth_sabotage
+	title = giga_birch.8004
+	desc = giga_birch.8004.desc
+
+	immediate = {
+		event_target:giga_birch_origin_situation_@root = {
+			save_event_target_as = situation
+		}
+	}
+
+	option = {
+		name = giga_birch.8004.a
+
+		enable_special_project = {
+			name = giga_birch_origin_expedition_8
+			owner = this
+			location = event_target:situation.target
+		}
+		hidden_effect = {
+			remove_country_flag = giga_birch_expedition_8_needs_tech
+		}
+	}
+}
+
+# project complete, the facility is accessible again
+country_event = {
+	id = giga_birch.8005
+	is_triggered_only = yes
+	picture = GFX_evt_surreal_visions
+	title = giga_birch.8005
+	desc = giga_birch.8005.desc
+
+	immediate = {
+		event_target:giga_birch_origin_situation_@root = {
+			save_event_target_as = situation
+		}
+		event_target:giga_birch_expedition_leader_@this = {
+			save_event_target_as = giga_birch_expedition_leader
+		}
+	}
+
+	option = {
+		name = giga_birch.8005.a
+		hidden_effect = {
+			country_event = {
+				id = giga_birch.8006
+				days = 24
+			}
+		}
+	}
+}
+
+# conclusion
+country_event = {
+	id = giga_birch.8006
+	is_triggered_only = yes
+	picture = GFX_evt_crisis_defeated
+	title = giga_birch.8006
+	desc = giga_birch.8006.desc
+
+	option = {
+		name = giga_birch.8006.a
+
+		event_target:situation.target = {
+			add_deposit = d_giga_birch_expedition_8
+		}
+
+		hidden_effect = {
+			event_target:situation = { 
+				remove_situation_flag = expedition_underway 
+				target = {
+					set_planet_flag = birch_expedition_8_complete
+				}
+			}
+			clear_global_event_target = giga_birch_expedition_leader_@this
+			event_target:giga_birch_expedition_leader = {
+				kill_leader = {
+					show_notification = no
+				}
+			}
+		}
+	}
+}
+
+# tech-up
+country_event = {
+	id = giga_birch.8007
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_country_flag = giga_birch_expedition_8_needs_tech
+		last_increased_tech = giga_tech_tetradimensional_engineering
+	}
+	
+	immediate = {
+		country_event = {
+			id = giga_birch.8004
+		}
 	}
 }
 
