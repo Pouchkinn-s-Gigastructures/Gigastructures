@@ -190,7 +190,9 @@ country_event = {
 
 				init_effect = {
 					save_event_target_as = birch_world
-					#set_name = "Birch World"
+					set_planet_flag = giga_birch_origin_planet_@root
+					root = { set_country_flag = giga_birch_origin_planet_@prev }
+
 					set_name = event_target:previous_home_planet
 					set_surveyed = { surveyed = yes surveyor = from }
 					set_all_comms_surveyed = yes
@@ -281,12 +283,6 @@ country_event = {
 
 				add_deposit = d_giga_birch_edge_of_eternity_ruins
 				add_deposit = d_giga_birch_edge_of_eternity_ruins
-
-				# make it still look like full ocean though
-				# set_planet_entity = {
-				# 	entity = melted_frozen_planet_01_entity
-				# 	picture = pc_melted_frozen # TODO: replace this with something with buildings
-				# }
 			}
 
 			# Add a starbase
@@ -478,29 +474,6 @@ country_event = {
 	}
 }
 
-# Called by player pressing start.
-# country_event = {
-# 	id = giga_birch.002
-# 	title = "giga_birch.title"
-# 	desc = "giga_birch.desc"
-# 	picture = GFX_evt_black_hole
-# 	show_sound = event_sensor_ping
-
-# 	is_triggered_only = yes
-# 	trigger = { has_origin = origin_birch }
-
-# 	option = {
-# 		name = "giga_mega.403.a"
-# 		enable_special_project = {
-# 			name = "INVESTIGATE_GALACTIC_CORE_LINK"
-# 			owner = root
-# 		}
-# 		capital_scope = {
-# 			set_planet_flag = giga_core_sp_here@root
-# 		}
-# 	}
-# }
-
 # Perform linking
 country_event = {
 	id = giga_birch.003
@@ -537,30 +510,143 @@ country_event = {
 	}
 }
 
-# Force link in the midgame if the player hasn't done it themselves.
-# country_event = {
-# 	id = giga_birch.004
-# 	hide_window = yes
-# 	is_triggered_only = yes
-# 	fire_only_once = yes
+#########################################################################################################################################
+#########################################################################################################################################
+#########################################################################################################################################
 
-# 	trigger = {
-# 		has_origin = origin_birch
-# 		OR = {
-# 			mid_game_years_passed >= 1
-# 			years_passed >= 100
-# 		}
-# 	}
+# Origin Events
 
-# 	immediate = {
-# 		capital_scope = {
-# 			save_event_target_as = birch_capital
-# 			remove_planet_flag = giga_core_sp_here@root
-# 		}
-# 		abort_special_project = { type = "INVESTIGATE_GALACTIC_CORE_LINK" location = event_target:birch_capital }
-# 		country_event = { id = giga_birch.003 }
-# 	}
-# }
+# the birch was lost somehow
+country_event = {
+	id = giga_birch.100
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_origin = origin_birch
+		exists = event_target:giga_birch_origin_situation_@root
+		nor = {
+			has_country_flag = giga_birch_origin_lost
+			has_country_flag = giga_birch_origin_destroyed
+			any_owned_planet = {
+				has_planet_flag = giga_birch_origin_planet_@root
+			}
+		}
+	}
+
+	immediate = {
+		set_country_flag = giga_birch_origin_lost
+		event_target:giga_birch_origin_situation_@root = {
+			set_situation_locked = yes
+		}
+		country_event = {
+			id = giga_birch.101	
+			days = 3
+		}
+	}
+}
+
+country_event = {
+	id = giga_birch.101
+	title = giga_birch.101.name
+	desc = giga_birch.101.desc
+	picture = GFX_evt_night_raid
+
+	is_triggered_only = yes
+
+	option = {
+		name = giga_birch.101.a
+	}
+}
+
+# the birch was destroyed
+planet_event = {
+	id = giga_birch.102
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		is_planet_class = pc_origin_birch
+		any_country = {
+			has_origin = origin_birch
+			has_country_flag = giga_birch_origin_planet_@root
+			exists = event_target:giga_birch_origin_situation_@this
+		}
+	}
+
+	immediate = {
+		random_country = {
+			limit = {
+				has_origin = origin_birch
+				has_country_flag = giga_birch_origin_planet_@root
+			}
+
+			set_country_flag = giga_birch_origin_destroyed
+			country_event = { 
+				id = giga_birch.103 
+				days = 3 
+			}
+		}
+	}
+}
+
+country_event = {
+	id = giga_birch.103
+	title = giga_birch.103.name
+	desc = giga_birch.103.desc
+	picture = GFX_evt_supernova
+
+	is_triggered_only = yes
+
+	option = {
+		name = giga_birch.103.a
+		event_target:giga_birch_origin_situation_@root = {
+			destroy_situation = this
+		}
+		clear_global_event_target = giga_birch_origin_situation_@root
+	}
+}
+
+# we recovered the birch
+planet_event = {
+	id = giga_birch.104
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		is_planet_class = pc_origin_birch
+		original_owner = yes
+	}
+
+	immediate = {
+		owner = { 
+			remove_country_flag = giga_birch_origin_lost
+			event_target:giga_birch_origin_situation_@this = {
+				set_situation_locked = no
+			}
+			country_event = { 
+				id = giga_birch.105
+				days = 3 
+			} 
+		}
+	}
+}
+
+country_event = {
+	id = giga_birch.105
+	title = giga_birch.105.name
+	desc = giga_birch.105.desc
+	picture = GFX_evt_ground_combat
+
+	is_triggered_only = yes
+
+	option = {
+		name = giga_birch.105.a
+	}
+}
 
 #########################################################################################################################################
 #########################################################################################################################################
@@ -2933,6 +3019,7 @@ situation_event = {
 		event_target:giga_birch_origin_situation_@owner = {
 			destroy_situation = this
 		}
+		clear_global_event_target = giga_birch_origin_situation_@owner
 	}
 }
 
