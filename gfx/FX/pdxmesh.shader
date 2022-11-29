@@ -1248,6 +1248,107 @@ PixelShader =
 
 	]]
 
+	MainCode PixelPdxMeshReanimatedLeviathan
+		ConstantBuffers = { Common, ShipConstants, Shadow, TiledPointLight }
+	[[
+		float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
+		{
+			const float  DMG_START		= 0.5f;
+			const float  DMG_END		= 1.0f;
+			const float  DMG_TILING		= 3.5f;
+			const float  DMG_EDGE		= 0.0f;
+			const float3 DMG_EDGE_COLOR	= float3( 10.0f, 6.6f, 0.1f );
+
+			float3 pos = In.vPos.xyz / In.vPos.w;
+
+			LightingProperties lightProps;
+			lightProps._WorldSpacePos = pos;
+			lightProps._ToCameraDir = normalize( vCamPos - pos );
+
+			float3 inNormal = normalize( In.vNormal );
+			float4 normalTex = tex2D( NormalMap, In.vUV0 );
+			float3x3 TBN = Create3x3( normalize( In.vTangent ), normalize( In.vBitangent ), inNormal );
+
+			float3 normal;
+			float4 diffuse;
+			float emissive;
+
+			float emissiveSample = tex2D( SpecularMap, In.vUV0 + vUVAnimationDir * vUVAnimationTime ).r;
+			float4 properties = tex2D( SpecularMap, In.vUV0 );
+
+			normal = normalize( mul( UnpackRRxGNormal( normalTex ), TBN ) );
+			diffuse = tex2D( DiffuseMap, In.vUV0 );
+			emissive = normalTex.b * emissiveSample;
+
+			//Fade in damage texture
+			float4 damageTex = tex2D( CustomTexture2, In.vUV0 * DMG_TILING );
+			float dmgTemp = vDamage;
+			dmgTemp = 1.0f - saturate( ( dmgTemp - DMG_START ) / ( DMG_END - DMG_START ) );
+			float damageValue = ( damageTex.a - dmgTemp ) * 5.0f;
+			if( damageTex.a <= 0.001f )
+			{
+				damageValue = 0.0f;
+			}
+			float damageEdge = DMG_EDGE * saturate( 1.0f - abs( ( damageValue - 0.5f ) * 2 ) );
+			damageValue = saturate( damageValue );
+			diffuse.rgb = lerp( diffuse.rgb, damageTex.rgb, damageValue );
+			properties = lerp( properties, vec4( 0.0f ), damageValue );
+
+			diffuse.rgb *= lerp( vec3( 1.0f ), DMG_EDGE_COLOR, saturate( damageEdge ) );
+			
+			emissive *= 1.0f - damageValue;
+			emissive += damageEdge;
+						
+			float3 outColor = diffuse.rgb;
+
+			lightProps._Glossiness = properties.a;
+			lightProps._NonLinearGlossiness = GetNonLinearGlossiness( lightProps._Glossiness );
+
+			lightProps._Normal = normal;
+			float specRemapped = properties.g * properties.g * 0.4f;
+			float metalness = properties.b;
+			
+			float metalnessRemapped = 1.0f - (1.0f - metalness) * (1.0f - metalness);
+
+			lightProps._Diffuse = MetalnessToDiffuse( metalnessRemapped, outColor );
+			lightProps._SpecularColor = MetalnessToSpec( metalnessRemapped, outColor, specRemapped );
+
+			float3 diffuseLight = vec3( 0.0f );
+			float3 specularLight = vec3( 0.0f );
+			CalculateSystemPointLight( lightProps, 1.0f, diffuseLight, specularLight );
+			CalculateShipCameraLights( lightProps, 1.0f, diffuseLight, specularLight );
+			CalculatePointLights( lightProps, LightDataMap, LightIndexMap, diffuseLight, specularLight );
+
+			float3 eyeDir = normalize( pos - vCamPos.xyz );
+			float3 reflection = reflect( eyeDir, normal );
+			float mipmapIndex = GetEnvmapMipLevel( lightProps._Glossiness );
+			float3 reflectiveColor = texCUBElod( EnvironmentMap, float4( reflection, mipmapIndex ) ).rgb * CubemapIntensity;
+			specularLight += reflectiveColor * FresnelGlossy( lightProps._SpecularColor, -eyeDir, lightProps._Normal, lightProps._Glossiness );
+
+			float camDistance = length( pos - vCamPos );
+			float camDistFadeValue = saturate( ( camDistance - CamLightFadeStartStop.x ) / ( CamLightFadeStartStop.y - CamLightFadeStartStop.x ) );
+			float ambientIntensity = lerp( AmbientIntensityNearFar.x, AmbientIntensityNearFar.y, camDistFadeValue );
+
+			outColor = ComposeLight( lightProps, ambientIntensity, diffuseLight, specularLight );
+			outColor = lerp( outColor, diffuse.rgb, emissive );
+			
+			float alpha = diffuse.a;
+			alpha *= emissive;
+			alpha *= vBloomFactor;
+
+			float rimStart = lerp( RimLightStartNearFar.x, RimLightStartNearFar.y, camDistFadeValue );
+			float rimStop = lerp( RimLightStopNearFar.x, RimLightStopNearFar.y, camDistFadeValue );
+
+			float rim = smoothstep( rimStart, rimStop, 1.0f - dot( normal, lightProps._ToCameraDir ) );
+
+			outColor.rgb = lerp( outColor.rgb, RimLightDiffuse.rgb, saturate( rim ) );
+
+			outColor = ApplyDissolve( PrimaryColor.rgb, vDamage, outColor.rgb, diffuse.rgb, In.vUV0 );
+
+			return float4( outColor, alpha );
+		}
+	]]
+
 	MainCode PixelPdxMeshShip
 		ConstantBuffers = { Common, ShipConstants, Shadow, TiledPointLight }
 	[[
@@ -3970,6 +4071,31 @@ Effect PdxMeshShipShadow
 }
 
 Effect PdxMeshShipSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardSkinnedShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+Effect PdxMeshReanimatedLeviathan
+{
+	VertexShader = "VertexPdxMeshStandard"
+	PixelShader = "PixelPdxMeshReanimatedLeviathan"
+}
+
+Effect PdxMeshReanimatedLeviathanSkinned {
+	VertexShader = "VertexPdxMeshStandardSkinned"
+	PixelShader = "PixelPdxMeshReanimatedLeviathan"
+}
+
+Effect PdxMeshReanimatedLeviathanShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+Effect PdxMeshReanimatedLeviathanSkinnedShadow
 {
 	VertexShader = "VertexPdxMeshStandardSkinnedShadow"
 	PixelShader = "PixelPdxMeshStandardShadow"
