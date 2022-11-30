@@ -1,0 +1,409 @@
+# events which run on SP game load to fix updates and such
+namespace = giga_load_fix
+
+# birch renovation 2022/11/05
+event = {
+	id = giga_load_fix.1
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		any_galaxy_planet = {
+			is_planet_class = pc_birch
+			not = {
+				has_deposit = d_giga_birch_mechanics
+			}
+		}
+	}
+
+	immediate = {
+		set_update_modifiers_batch = begin
+		every_galaxy_planet = {
+			limit = {
+				is_planet_class = pc_birch
+				not = {
+					has_deposit = d_giga_birch_mechanics
+				}
+			}
+
+			# fill in missing features
+			add_deposit = d_giga_birch_mechanics
+
+			if = {
+				limit = {
+					not = {
+						has_deposit = d_giga_job_size
+					}
+				}
+				add_deposit = d_giga_job_size
+			}
+
+			if = {
+				limit = {
+					not = {
+						has_deposit = d_giga_job_upkeep
+					}
+				}
+				add_deposit = d_giga_job_upkeep
+			}
+
+			# remove defunct features
+			# d_birch_structure remains for any size 1 hold-outs
+			if = {
+				limit = { has_deposit = d_birch_start }
+				remove_deposit = d_birch_start
+			}
+			if = {
+				limit = { has_deposit = d_birch_extraction }
+				remove_deposit = d_birch_extraction
+			}
+			if = {
+				limit = { has_deposit = d_birch_lost01 }
+				remove_deposit = d_birch_lost01
+			}
+			if = {
+				limit = { has_deposit = d_found_communities }
+				remove_deposit = d_found_communities
+			}
+
+			# max insulae allowed
+			export_trigger_value_to_variable = {
+				trigger = num_pops
+				variable = gigafix_max_insulae
+			}
+			divide_variable = {
+				which = gigafix_max_insulae
+				value = 100
+			}
+			ceiling_variable = gigafix_max_insulae
+
+			# count up existing insulae
+			export_trigger_value_to_variable = {
+				trigger = num_districts
+				parameters = {
+					type = district_giga_birch_ktisma
+				}
+				variable = gigafix_ktisma
+			}
+			export_trigger_value_to_variable = {
+				trigger = num_districts
+				parameters = {
+					type = district_giga_birch_physma
+				}
+				variable = gigafix_physma
+			}
+			set_variable = {
+				which = gigafix_insulae
+				value = gigafix_ktisma
+			}
+			change_variable = {
+				which = gigafix_insulae
+				value = gigafix_physma
+			}
+
+			# set weight variables
+			set_variable = {
+				which = gigafix_total_weight
+				value = gigafix_insulae
+			}
+			set_variable = {
+				which = gigafix_orykta_weight
+				value = 0
+			}
+			set_variable = {
+				which = gigafix_ktisma_weight
+				value = gigafix_ktisma
+			}
+			set_variable = {
+				which = gigafix_physma_weight
+				value = gigafix_physma
+			}
+
+			# set specific sector desires
+			set_variable = {
+				which = gigafix_sanctuaries
+				value = 0
+			}
+
+			# mark if we have extraction
+			# it should be there, but who knows, some people might have demolished it
+			if = {
+				limit = {
+					has_district = district_giga_birch_extraction
+				}
+				set_planet_flag = gigafix_has_extraction
+				remove_district = district_giga_birch_extraction
+				change_variable = {
+					which = gigafix_insulae
+					value = 1
+				}
+				# set up weight for orykta
+				set_variable = {
+					which = gigafix_orykta_weight
+					value = gigafix_max_insulae
+				}
+				divide_variable = {
+					which = gigafix_orykta_weight
+					value = 3
+				}
+				change_variable = {
+					which = gigafix_total_weight
+					value = gigafix_orykta_weight
+				}
+			}
+
+			# deal with bio-trophies
+			if = {
+				limit = {
+					exists = owner
+					owner = {
+						has_civic = civic_machine_servitor
+					}
+				}
+
+				export_trigger_value_to_variable = {
+					trigger = count_owned_pop
+					parameters = {
+						limit = {
+							can_work_specific_job = bio_trophy
+						}
+					}
+					variable = gigafix_sanctuaries
+				}
+				# pad it out a little to make sure there's space for some new trophies
+				change_variable = {
+					which = gigafix_sanctuaries
+					value = 10
+				}
+				divide_variable = {
+					which = gigafix_sanctuaries
+					value = 30
+				}
+				ceiling_variable = gigafix_sanctuaries
+
+				set_variable = {
+					which = gigafix_extra_physma
+					value = gigafix_sanctuaries
+				}
+				divide_variable = {
+					which = gigafix_extra_physma
+					value = 10
+				}
+
+				change_variable = {
+					which = gigafix_physma_weight
+					value = gigafix_extra_physma
+				}
+				change_variable = {
+					which = gigafix_total_weight
+					value = gigafix_extra_physma
+				}
+			}
+
+			# cap insulae by max
+			if = {
+				limit = {
+					check_variable = {
+						which = gigafix_insulae
+						value > gigafix_max_insulae
+					}
+				}
+				set_variable = {
+					which = gigafix_insulae
+					value = gigafix_max_insulae
+				}
+			}
+
+			# only bother if we have some NUMBERS
+			if = {
+				limit = {
+					check_variable = {
+						which = gigafix_insulae
+						value > 0
+					}
+					check_variable = {
+						which = gigafix_total_weight
+						value > 0
+					}
+				}
+
+				# convert weights to desires
+				
+				# orykta
+				set_variable = {
+					which = gigafix_orykta_desired
+					value = gigafix_orykta_weight
+				}
+				divide_variable = {
+					which = gigafix_orykta_desired
+					value = gigafix_total_weight
+				}
+				multiply_variable = {
+					which = gigafix_orykta_desired
+					value = gigafix_insulae
+				}
+
+				# ktisma
+				set_variable = {
+					which = gigafix_ktisma_desired
+					value = gigafix_ktisma_weight
+				}
+				divide_variable = {
+					which = gigafix_ktisma_desired
+					value = gigafix_total_weight
+				}
+				multiply_variable = {
+					which = gigafix_ktisma_desired
+					value = gigafix_insulae
+				}
+
+				# physma
+				set_variable = {
+					which = gigafix_physma_desired
+					value = gigafix_physma_weight
+				}
+				divide_variable = {
+					which = gigafix_physma_desired
+					value = gigafix_total_weight
+				}
+				multiply_variable = {
+					which = gigafix_physma_desired
+					value = gigafix_insulae
+				}
+
+				# set up districts
+
+				remove_all_districts = yes
+				add_district = district_giga_birch_structure
+
+				set_variable = {
+					which = giga_birch_district_insula_built
+					value = 0
+				}
+
+				# add desired orykta
+				set_variable = {
+					which = gigafix_orykta_count
+					value = gigafix_orykta_desired
+				}
+				floor_variable = gigafix_orykta_count
+				subtract_variable = {
+					which = gigafix_orykta_desired
+					value = gigafix_orykta_count
+				}
+				while = {
+					count = gigafix_orykta_count
+
+					add_district = district_giga_birch_orykta
+					change_variable = {
+						which = giga_birch_district_insula_built
+						value = 1
+					}
+				}
+
+				# add desired ktisma
+				set_variable = {
+					which = gigafix_ktisma_count
+					value = gigafix_ktisma_desired
+				}
+				floor_variable = gigafix_ktisma_count
+				subtract_variable = {
+					which = gigafix_ktisma_desired
+					value = gigafix_ktisma_count
+				}
+				while = {
+					count = gigafix_ktisma_count
+
+					add_district = district_giga_birch_ktisma
+					change_variable = {
+						which = giga_birch_district_insula_built
+						value = 1
+					}
+				}
+
+				# add desired physma
+				set_variable = {
+					which = gigafix_physma_count
+					value = gigafix_physma_desired
+				}
+				floor_variable = gigafix_physma_count
+				subtract_variable = {
+					which = gigafix_physma_desired
+					value = gigafix_physma_count
+				}
+				while = {
+					count = gigafix_physma_count
+
+					add_district = district_giga_birch_physma
+					change_variable = {
+						which = giga_birch_district_insula_built
+						value = 1
+					}
+				}
+
+				# remainders
+				if = {
+					limit = {
+						check_variable = {
+							which = gigafix_orykta_desired
+							value > 0
+						}
+						check_variable = {
+							which = gigafix_orykta_desired
+							value > gigafix_ktisma_desired
+						}
+						check_variable = {
+							which = gigafix_orykta_desired
+							value > gigafix_physma_desired
+						}
+					}
+					add_district = district_giga_birch_orykta
+					change_variable = {
+						which = giga_birch_district_insula_built
+						value = 1
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							which = gigafix_ktisma_desired
+							value > 0
+						}
+						check_variable = {
+							which = gigafix_ktisma_desired
+							value > gigafix_orykta_desired
+						}
+						check_variable = {
+							which = gigafix_ktisma_desired
+							value > gigafix_physma_desired
+						}
+					}
+					add_district = district_giga_birch_ktisma
+					change_variable = {
+						which = giga_birch_district_insula_built
+						value = 1
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							which = gigafix_physma_desired
+							value > 0
+						}
+					}
+					add_district = district_giga_birch_physma
+					change_variable = {
+						which = giga_birch_district_insula_built
+						value = 1
+					}
+				}
+			}
+
+			every_owned_pop = {
+				clear_pop_category = yes
+			}
+			#check_planet_employment = yes
+		}
+		set_update_modifiers_batch = end
+	}
+}

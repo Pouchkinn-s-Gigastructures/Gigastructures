@@ -539,6 +539,11 @@ giga_job_scaling_country_modifier = {
 	multiply = modifier:giga_planet_job_size
 }
 
+giga_job_scaling_plus_base = {
+	base = 1
+	add = modifier:giga_planet_job_size
+}
+
 # used only in the value:toxic_attendant_growth overwrite in 01_giga_low_prio_value_overwrites.txt
 # for ease of maintenance since, well, we have a lot lmao - TTFTCUTS
 giga_toxic_attendant_growth = {
@@ -596,22 +601,48 @@ giga_toxic_attendant_growth = {
 		mult = 6
 	}
 
-	# birch, x8
+	# birch, x4
 	complex_trigger_modifier = {
 		trigger = num_districts
 		parameters = {
-			type = district_giga_birch_ktisma
+			type = district_giga_birch_ktisma_foundry
 		}
 		mode = add
-		mult = 8
+		mult = 4
 	}
 	complex_trigger_modifier = {
 		trigger = num_districts
 		parameters = {
-			type = district_void_birch_nidavellir
+			type = district_giga_birch_ktisma_factory
 		}
 		mode = add
-		mult = 8
+		mult = 4
+	}
+	complex_trigger_modifier = {
+		trigger = num_districts
+		parameters = {
+			type = district_giga_birch_ktisma_refinery
+		}
+		mode = add
+		mult = 4
+	}
+	complex_trigger_modifier = {
+		trigger = num_districts
+		parameters = {
+			type = district_giga_birch_ktisma_supertensiles
+		}
+		mode = add
+		mult = 4
+	}
+
+	# void birch, x32
+	complex_trigger_modifier = {
+		trigger = num_districts
+		parameters = {
+			type = district_giga_virch_void_ktisma
+		}
+		mode = add
+		mult = 32
 	}
 
 	# flusio-arcology, x2
@@ -733,3 +764,143 @@ giga_toxic_attendant_growth = {
 		mult = 2
 	}
 }
+
+giga_var = {
+	base = 0
+
+	modifier = {
+		is_variable_set = $var$
+		add = $var$
+	}
+
+	[[mult]
+		multiply = $mult$
+	]
+}
+
+giga_per_pop_modifier = {
+	complex_trigger_modifier = {
+		trigger = checK_modifier_value
+		parameters = {
+			modifier = $modifier$
+		}
+		mode = weight
+	}
+
+	multiply = trigger:num_pops
+	floor = yes
+}
+
+giga_num_districts = {
+	complex_trigger_modifier = {
+		trigger = num_districts
+		parameters = {
+			type = $district$
+		}
+		mode = weight
+	}
+}
+
+giga_grab_percent_pops = {
+	base = 0
+	add = trigger:num_pops
+	mult = $PERCENT$
+	ceiling  = yes
+}
+
+##############################################################
+# offset job upkeep reductions
+giga_job_upkeep = {
+	weight = modifier:planet_jobs_upkeep_mult
+	subtract = modifier:giga_planet_jobs_upkeep_offset
+
+	# only care about values which are negative
+	max = 0
+	# but make the value positive after
+	abs = yes
+}
+
+giga_job_upkeep_effect = {
+	weight = value:giga_job_upkeep
+	subtract = value:giga_job_upkeep_2
+}
+giga_job_upkeep_2 = {
+	weight = 1
+	subtract = value:giga_job_upkeep_3
+}
+giga_job_upkeep_3 = {
+	weight = 1
+	divide = value:giga_job_upkeep_4
+}
+giga_job_upkeep_4 = {
+	weight = 1
+	add = value:giga_job_upkeep
+}
+
+##############################################################
+# productive jobs
+giga_job_productive_upkeep = {
+	weight = modifier:planet_jobs_upkeep_mult
+	subtract = modifier:giga_planet_jobs_upkeep_offset
+	add = modifier:planet_jobs_productive_upkeep_mult
+	subtract = modifier:giga_planet_jobs_productive_upkeep_offset
+
+	max = 0
+	abs = yes
+}
+
+giga_job_productive_upkeep_effect = {
+	weight = value:giga_job_productive_upkeep
+	subtract = value:giga_job_productive_upkeep_2
+	subtract = value:giga_job_upkeep_effect
+}
+giga_job_productive_upkeep_2 = {
+	weight = 1
+	subtract = value:giga_job_productive_upkeep_3
+}
+giga_job_productive_upkeep_3 = {
+	weight = 1
+	divide = value:giga_job_productive_upkeep_4
+}
+giga_job_productive_upkeep_4 = {
+	weight = 1
+	add = value:giga_job_productive_upkeep
+}
+
+##############################################################
+# categories
+giga_job_category_upkeep = {
+	weight = modifier:planet_jobs_upkeep_mult
+	subtract = modifier:giga_planet_jobs_upkeep_offset
+	[[productive]
+		add = modifier:planet_jobs_productive_upkeep_mult
+		subtract = modifier:giga_planet_jobs_productive_upkeep_offset
+	]
+	add = modifier:$category$_upkeep_mult
+	subtract = modifier:giga_$category$_upkeep_offset
+
+	max = 0
+	abs = yes
+}
+
+giga_job_category_upkeep_effect = {
+	weight = value:giga_job_category_upkeep|category|$category$|[[productive]productive|yes|]
+	subtract = value:giga_job_category_upkeep_2|category|$category$|[[productive]productive|yes|]
+	subtract = value:giga_job_upkeep_effect
+	[[productive]
+		subtract = modifier:giga_planet_jobs_productive_upkeep_offset
+	]
+}
+giga_job_category_upkeep_2 = {
+	weight = 1
+	subtract = value:giga_job_category_upkeep_3|category|$category$|[[productive]productive|yes|]
+}
+giga_job_category_upkeep_3 = {
+	weight = 1
+	divide = value:giga_job_category_upkeep_4|category|$category$|[[productive]productive|yes|]
+}
+giga_job_category_upkeep_4 = {
+	weight = 1
+	add = value:giga_job_category_upkeep|category|$category$|[[productive]productive|yes|]
+}
+
