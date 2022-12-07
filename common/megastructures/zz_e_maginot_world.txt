@@ -43,6 +43,26 @@
 ## ringworld finish
 # megastructure deleted when done
 
+### Upkeep reference
+# Orbital defence (CSDS): 
+# 250 EC | 50 Alloys |
+# Maginot Command deposit:
+# 100 EC | 5 Alloys  |
+# Maginot Subspace Blocker:
+# 100 EC |
+# (the AI will always turn this on immediately)
+# Central Command job:
+# 10 EC | 50 CG		| - Organic
+# 50 EC | 30 Alloys | - Gestalt
+#
+## Total:
+# 460 EC | 55 Alloys | 50 CG | - Organic
+# 510 EC | 85 Alloys | 		   - Gestalt
+#
+# equivalent EC from job ratios:
+# 460 + 220 + 100 = 780
+# 510 + 340 + 0   = 850
+# yes crutch empire pays more, cry about it
 
 
 maginot_world_0 = {
@@ -104,7 +124,7 @@ maginot_world_0 = {
 		planet_possible = {
 			# restrict compatible planet/structure types with extensible trigger
 			custom_tooltip = {
-				fail_text = "requires_non_artifical_planet"
+				fail_text = "requires_maginotable_planet_type"
 				is_maginotable_planet_or_structure = yes
 			}
 			custom_tooltip = { fail_text = "requires_no_anomaly"					has_anomaly = no }
@@ -112,8 +132,27 @@ maginot_world_0 = {
 			custom_tooltip = { fail_text = "requires_not_asteroid"					is_asteroid = no }
 			custom_tooltip = { fail_text = "requires_not_star"						is_star = no }
 			custom_tooltip = { fail_text = "requires_no_birch"						NOT = { is_planet_class = pc_birch } }
-			# must be an empire colony
-			custom_tooltip = { fail_text = "must_build_around_habitable_planet"		is_colony = yes }
+			# must be an empire colony owned by you
+			custom_tooltip = {
+				fail_text = "requires_colonized_planet_orbital_ring"
+				is_colony = yes
+				exists = owner
+				exists = controller
+				controller = { is_same_value = prev.owner }
+			}
+			# and not a hostile world
+			custom_tooltip = {
+				fail_text = "requires_not_hostile_or_primitive"
+				NOR = {
+					planet_is_hostile_or_crisis = yes
+					AND = {
+						exists = owner
+						owner = {
+							is_country_type = primitive
+						}
+					}
+				}
+			}
 			# double check not building a maginot world on a maginot world, that makes no sense
 			custom_tooltip = {
 				fail_text = "requires_not_maginot_world"					
@@ -126,10 +165,9 @@ maginot_world_0 = {
 			# general megastructures like an orbital arcology or strategic coordination site or whatever in orbit are intentionally NOT blocked
 			custom_tooltip = { 
 				fail_text = "requires_no_existing_megastructure"		
-				NOR = { 
+				NOR = {
 					has_planet_flag = has_planet_mw_mega # this is only enabled while maginot construction site exists
-					has_planet_flag = has_planet_pc_mega
-					is_planet_class = pc_giga_planetary_computer
+					is_maginotable_restricted = yes
 				}
 			}
 			# survey check
@@ -144,40 +182,81 @@ maginot_world_0 = {
 	}
 
 	ai_weight = {
-		weight = 50	# Default = 100, these are expensive
+		weight = value:giga_ai_base_mega
+		mult = 0.5 # always applies because expensive and doesn't boost main economy
 
+		mult = value:giga_ai_output|RESOURCE|influence|AMOUNT|2|MIN|0.1|
+
+		mult = value:giga_ai_strategic_location
+
+		mult = value:giga_ai_prevent_spam|MEGA|maginot_world|
+		mult = value:giga_ai_build_low_priority
+		# this DOES unlock gigastructural constructs - but is very expensive at doing so
+		# so tell the AI to focus on the classic unlocker structures, leave this for the player
+		mult = value:giga_ai_unlock_low_priority
+		mult = value:giga_ai_cap_availability_boost
+
+		# see above in file for upkeep reference
+		# organic
+		modifier = {
+			from = { country_uses_consumer_goods = yes }
+			mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|460|
+		}
+		modifier = {
+			from = { country_uses_consumer_goods = yes }
+		 	mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|55|
+		}
+		modifier = {
+			from = { country_uses_consumer_goods = yes }
+		 	mult = value:giga_ai_upkeep|RESOURCE|consumer_goods|AMOUNT|50|
+		}
+		# gestalt
+		modifier = {
+			from = { country_uses_consumer_goods = no }
+			mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|510|
+		}
+		modifier = {
+			from = { country_uses_consumer_goods = no }
+			mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|85|
+		}
+		
+		# AI decided to fortify this system for some reason
+		modifier = { factor = 5  starbase = { has_starbase_size >= starbase_starfortress } }
+
+		# old
+		#weight = 50	# Default = 100, these are expensive
 		## Can we afford the upkeep
-		modifier = { factor = 2.00	from = { has_monthly_income = { resource = energy value >  200 } } } # comfortable surplus, go ahead
-		modifier = { factor = 0.05	from = { has_monthly_income = { resource = energy value <  100 } } } # unlikely, build only in good spots
-		modifier = { factor = 0.00	from = { has_monthly_income = { resource = energy value <  -100 } } } # don't tank the economy
-		modifier = { factor = 2.00	from = { has_monthly_income = { resource = alloys value >  20 } } } # comfortable surplus, go ahead
-		modifier = { factor = 0.05	from = { has_monthly_income = { resource = alloys value <  0 } } } # unlikely, build only in good spots
-		modifier = { factor = 0.00	from = { has_monthly_income = { resource = alloys value <  -20 } } } # don't tank the economy
+		#modifier = { factor = 2.00	from = { has_monthly_income = { resource = energy value >  200 } } } # comfortable surplus, go ahead
+		#modifier = { factor = 0.05	from = { has_monthly_income = { resource = energy value <  100 } } } # unlikely, build only in good spots
+		#modifier = { factor = 0.00	from = { has_monthly_income = { resource = energy value <  -100 } } } # don't tank the economy
+		#modifier = { factor = 2.00	from = { has_monthly_income = { resource = alloys value >  20 } } } # comfortable surplus, go ahead
+		#modifier = { factor = 0.05	from = { has_monthly_income = { resource = alloys value <  0 } } } # unlikely, build only in good spots
+		#modifier = { factor = 0.00	from = { has_monthly_income = { resource = alloys value <  -20 } } } # don't tank the economy
 
 		## Do we want the production - makes some influence so boost if needing that
-		modifier = { factor = 2.00	from = { has_monthly_income = { resource = influence value < 2 } } }
+		#modifier = { factor = 2.00	from = { has_monthly_income = { resource = influence value < 2 } } }
 
 		## Is this system a good location?
 		# border with someone else
-		modifier = { factor = 500	any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } }
+		#modifier = { factor = 500	any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } }
 		# choke point system function
-		modifier = { factor = 50 	is_bottleneck_system = yes }
+		#modifier = { factor = 50 	is_bottleneck_system = yes }
 		# has gateway, l-gate, primordial pillar in system, so fortify
-		modifier = { factor = 10
-			any_megastructure = {
-				OR = { 
-					is_megastructure_type = gateway_final
-					is_megastructure_type = gateway_restored
-					is_megastructure_type = lgate_base
-					is_megastructure_type = ehof_pgate_unknown
-					is_megastructure_type = ehof_pgate_gateway
-				}
-			}
-		}
+		#modifier = { factor = 10
+		#	any_megastructure = {
+		#		OR = { 
+		#			is_megastructure_type = gateway_final
+		#			is_megastructure_type = gateway_restored
+		#			is_megastructure_type = lgate_base
+		#			is_megastructure_type = ehof_pgate_unknown
+		#			is_megastructure_type = ehof_pgate_gateway
+		#		}
+		#	}
+		#}
 		# two jumps away owned by somebody else too
-		modifier = { factor = 1.5	any_neighbor_system = { any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } } }
+		#modifier = { factor = 1.5	any_neighbor_system = { any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } } }
 		# AI decided to fortify this system for some reason
-		modifier = { factor = 5  starbase = { has_starbase_size >= starbase_starfortress } }
+		#modifier = { factor = 5  starbase = { has_starbase_size >= starbase_starfortress } }
 		# Big worlds make good fortresses, but small ones in the case of protecting a larger world work as well
 		modifier = { factor = 5	any_system_planet = { habitable_planet = yes planet_size >= 25 } }
 		modifier = { factor = 0.1
@@ -243,7 +322,7 @@ maginot_world_0 = {
 		# Don't care about total number
 
 		# AI spam controls
-		modifier = { factor = 0.00 from = { has_country_flag = has_recently_built_maginot_world } }
+		#modifier = { factor = 0.00 from = { has_country_flag = has_recently_built_maginot_world } }
 		# cannot comply building in progress
 		modifier = {
 			factor = 0
@@ -520,3 +599,4 @@ maginot_world_ringworld_2 = {
 		remove_megastructure = fromfrom
 	}
 }
+

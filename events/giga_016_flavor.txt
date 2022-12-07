@@ -1409,118 +1409,185 @@ country_event = {
 		every_owned_megastructure = {
 			limit = {
 				is_megastructure_type = particle_accelerator_1
-				planet = { NOT = { has_planet_flag = giga_mega_failure_occured_recently } }
-			}
-			#failures
-			random_list = {
-				100 = {
-					modifier = { add = -5 planet = { check_variable = { which = giga_failure_chance value = 5 } } }
-					modifier = { add = -10 planet = { check_variable = { which = giga_failure_chance value = 10 } } }
-					modifier = { add = -15 planet = { check_variable = { which = giga_failure_chance value = 15 } } }
-					modifier = { add = -20 planet = { check_variable = { which = giga_failure_chance value = 20 } } }
-					modifier = { add = -25 planet = { check_variable = { which = giga_failure_chance value = 25 } } }
-					modifier = { add = -30 planet = { check_variable = { which = giga_failure_chance value = 30 } } }
-					modifier = { add = -35 planet = { check_variable = { which = giga_failure_chance value = 35 } } }
-					modifier = { add = -40 planet = { check_variable = { which = giga_failure_chance value = 30 } } }
-					modifier = { add = -45 planet = { check_variable = { which = giga_failure_chance value = 45 } } }
-					modifier = { add = -50 planet = { check_variable = { which = giga_failure_chance value = 50 } } }
-				}
-				0 = {
-					solar_system = { save_global_event_target_as = giga_mega_event_system }
-					planet = {
-						set_timed_planet_flag = {
-							flag = giga_mega_failure_occured_recently
-							days = 3600
-						}
-					}
-					set_megastructure_flag = giga_acc_under_repair
-					owner = { country_event = { id = giga_accelerator.110 days = 10 random = 5 } }
-					modifier = { add = 5 planet = { check_variable = { which = giga_failure_chance value = 5 } } }
-					modifier = { add = 10 planet = { check_variable = { which = giga_failure_chance value = 10 } } }
-					modifier = { add = 15 planet = { check_variable = { which = giga_failure_chance value = 15 } } }
-					modifier = { add = 20 planet = { check_variable = { which = giga_failure_chance value = 20 } } }
-					modifier = { add = 25 planet = { check_variable = { which = giga_failure_chance value = 25 } } }
-					modifier = { add = 30 planet = { check_variable = { which = giga_failure_chance value = 30 } } }
-					modifier = { add = 35 planet = { check_variable = { which = giga_failure_chance value = 35 } } }
-					modifier = { add = 40 planet = { check_variable = { which = giga_failure_chance value = 30 } } }
-					modifier = { add = 45 planet = { check_variable = { which = giga_failure_chance value = 45 } } }
-					modifier = { add = 50 planet = { check_variable = { which = giga_failure_chance value = 50 } } }
+				# if both are true ignore the accelerator for events
+				NAND = {
+					planet = { has_planet_flag = giga_mega_failure_occured_recently }
+					planet = { has_planet_flag = giga_mega_event_occured_recently   }
 				}
 			}
-		}
-		every_owned_megastructure = {
-			limit = {
-				is_megastructure_type = particle_accelerator_1
-				planet = { NOT = { has_planet_flag = giga_mega_event_occured_recently } }
+			# flip failure variable for chance calculation
+			planet = {
+				set_variable = {
+					which = giga_negative_failure_chance
+					value = 0
+				}
+				subtract_variable = {
+					which = giga_negative_failure_chance
+					value = giga_failure_chance
+				}
 			}
-			#random stuff
-			random_list = {
-				5 = { #vacuum fears
-					planet = {
-						set_timed_planet_flag = {
-							flag = giga_mega_event_occured_recently
-							days = 3600
+			# failure event
+			if = {
+				limit = {
+					NOT = { planet = { has_planet_flag = giga_mega_failure_occured_recently } }
+				}
+				random_list = {
+					100 = {
+						# nothing happens
+						modifier = {
+							always = yes
+							add = planet.giga_negative_failure_chance  
 						}
 					}
-					owner = { country_event = { id = giga_accelerator.120 days = 30 random = 180 } }
-					modifier = {
-						add = -5
-						owner = {
-							OR = {
-								is_gestalt = yes
-								has_country_flag = vacuum_fears_happened
+					0 = {
+						# failure event
+						modifier = {
+							always = yes
+							add = planet.giga_failure_chance
+						}
+						solar_system = { save_global_event_target_as = giga_mega_event_system }
+						planet = {
+							set_timed_planet_flag = {
+								flag = giga_mega_failure_occured_recently
+								days = 3600
 							}
 						}
+						set_megastructure_flag = giga_acc_under_repair
+						owner = { country_event = { id = giga_accelerator.110 days = 10 random = 5 } }
 					}
 				}
-				5 = { #quasistar
-					planet = {
-						set_timed_planet_flag = {
-							flag = giga_mega_event_occured_recently
-							days = 3600
-						}
-						set_planet_flag = cannot_dismantle_acc
-						save_global_event_target_as = accelerator_quasistar
-					}
-					owner = { country_event = { id = giga_accelerator.150 days = 30 random = 180 } }
-					modifier = {
-						add = -5
-						has_global_flag = giga_quasi_star_happened
-					}
-					modifier = {
-						factor = 0
-						planet = {
-							solar_system = {
-								any_system_planet = {
-									is_capital = yes
+			}
+			# flavour events
+			if = {
+				limit = {
+					NOT = { planet = { has_planet_flag = giga_mega_event_occured_recently } }
+				}
+				random_list = {
+					0 = { #vacuum fears
+						modifier = {
+							factor = 0
+							owner = {
+								OR = {
+									is_gestalt = yes
+									has_country_flag = vacuum_fears_happened
 								}
 							}
 						}
-					}
-				}
-				5 = { #good findings
-					planet = {
-						set_timed_planet_flag = {
-							flag = giga_mega_event_occured_recently
-							days = 3600
+						# if intensity is set higher than default, event can trigger
+						# more likely the higher the intensity
+						modifier = {
+							add = planet.acc_intensity
+							planet = {
+								check_variable = {
+									which = acc_intensity
+									value > 2
+								}
+							}
 						}
-					}
-					owner = { country_event = { id = giga_accelerator.130 days = 30 random = 180 } }
-				}
-				5 = { #dark matter
-					planet = {
-						set_timed_planet_flag = {
-							flag = giga_mega_event_occured_recently
-							days = 3600
+						# effect
+						planet = {
+							set_timed_planet_flag = {
+								flag = giga_mega_event_occured_recently
+								days = 3600
+							}
 						}
+						owner = { country_event = { id = giga_accelerator.120 days = 30 random = 180 } }
 					}
-					owner = { country_event = { id = giga_accelerator.140 days = 30 random = 180 } }
-					modifier = {
-						factor = 0
-						owner = { NOT = { has_technology = tech_mine_dark_matter } }
+					0 = { #quasistar
+						modifier = {
+							factor = 0
+							planet = {
+								solar_system = {
+									any_system_planet = {
+										is_capital = yes
+									}
+								}
+							}
+						}
+						modifier = {
+							factor = 0
+							has_global_flag = giga_quasi_star_happened
+						}
+						# if intensity is set higher than default, event can trigger
+						# more likely the higher the intensity
+						modifier = {
+							add = planet.acc_intensity
+							planet = {
+								check_variable = {
+									which = acc_intensity
+									value > 2
+								}
+							}
+						}
+						# effect
+						planet = {
+							set_timed_planet_flag = {
+								flag = giga_mega_event_occured_recently
+								days = 3600
+							}
+							set_planet_flag = cannot_dismantle_acc
+							save_global_event_target_as = accelerator_quasistar
+						}
+						owner = { country_event = { id = giga_accelerator.150 days = 30 random = 180 } }
 					}
+					5 = { #good findings
+						# more likely the higher the intensity
+						modifier = {
+							always = yes
+							add = planet.acc_intensity
+						}
+						# accelerator that's off can't get event
+						modifier = {
+							factor = 0
+							planet = {
+								check_variable = {
+									which = acc_intensity
+									value <= 1
+								}
+							}
+						}
+						# effect
+						planet = {
+							set_timed_planet_flag = {
+								flag = giga_mega_event_occured_recently
+								days = 3600
+							}
+						}
+						owner = { country_event = { id = giga_accelerator.130 days = 30 random = 180 } }
+					}
+					3 = { #dark matter
+						modifier = {
+							factor = 0
+							owner = { NOT = { has_technology = tech_mine_dark_matter } }
+						}
+						# more likely the higher the intensity
+						modifier = {
+							always = yes
+							add = planet.acc_intensity
+						}
+						# accelerator that's off can't get event
+						modifier = {
+							factor = 0
+							planet = {
+								check_variable = {
+									which = acc_intensity
+									value <= 1
+								}
+							}
+						}
+						# effect
+						planet = {
+							set_timed_planet_flag = {
+								flag = giga_mega_event_occured_recently
+								days = 3600
+							}
+						}
+						owner = { country_event = { id = giga_accelerator.140 days = 30 random = 180 } }
+					}
+					90 = {} # nothing
+					# 2% "open" for the other events, rescaling of probability
+					# with higher/lower intensity intentional
 				}
-				80 = {}
 			}
 		}
 	}
@@ -1531,6 +1598,8 @@ country_event = {
 	id = giga_accelerator.150
 	title = "giga_accelerator.150.name"
 	desc = "giga_accelerator.150.desc"
+
+	location = event_target:accelerator_quasistar
 
 	picture = GFX_evt_black_hole
 	show_sound = event_yellow_alert
@@ -1581,6 +1650,8 @@ country_event = {
 	title = "giga_accelerator.151.name"
 	desc = "giga_accelerator.151.desc"
 
+	location = event_target:accelerator_quasistar
+
 	picture = GFX_evt_star_yellow
 	show_sound = event_solar_fusion
 
@@ -1615,6 +1686,8 @@ country_event = {
 	id = giga_accelerator.152
 	title = "giga_accelerator.152.name"
 	desc = "giga_accelerator.152.desc"
+
+	location = event_target:accelerator_quasistar
 
 	picture = GFX_evt_black_hole
 	show_sound = event_yellow_alert
@@ -1679,6 +1752,8 @@ country_event = {
 	title = "giga_accelerator.153.name"
 	desc = "giga_accelerator.153.desc"
 
+	location = event_target:accelerator_quasistar
+
 	picture = GFX_evt_black_hole
 	show_sound = event_red_alert
 
@@ -1722,6 +1797,8 @@ country_event = {
 	title = "giga_accelerator.155.name"
 	desc = "giga_accelerator.155.desc"
 
+	location = event_target:accelerator_quasistar
+
 	picture = GFX_evt_star_red
 	show_sound = event_mystic_reveal
 
@@ -1759,6 +1836,8 @@ country_event = {
 	id = giga_accelerator.156
 	title = "giga_accelerator.156.name"
 	desc = "giga_accelerator.156.desc"
+
+	location = event_target:accelerator_quasistar
 
 	picture = GFX_evt_star_white
 	show_sound = event_yellow_alert
@@ -1818,6 +1897,8 @@ country_event = {
 	title = "giga_accelerator.158.name"
 	desc = "giga_accelerator.158.desc"
 
+	location = event_target:accelerator_quasistar
+
 	picture = GFX_evt_star_yellow
 	show_sound = event_red_alert
 
@@ -1855,6 +1936,8 @@ country_event = {
 	id = giga_accelerator.160
 	title = "giga_accelerator.160.name"
 	desc = "giga_accelerator.160.desc"
+
+	location = event_target:accelerator_quasistar
 
 	picture = GFX_evt_exploding_ship
 	show_sound = event_ship_explosion
@@ -1942,7 +2025,13 @@ country_event = {
 	}
 
 	option = {
-		name = "giga_accelerator.130.b"
+		name = "giga_accelerator.140.b"
+		trigger = {
+			NOR = {
+				is_gestalt = yes
+				has_ethic = ethic_fanatic_authoritarian
+			}
+		}
 		add_resource = {
 			sr_dark_matter = 50
 		}
@@ -1950,11 +2039,34 @@ country_event = {
 			modifier = gave_accelerator_scientists_raise
 			days = 360
 		}
-		trigger = {
-			NOR = {
-				is_gestalt = yes
-				has_ethic = ethic_fanatic_authoritarian
+		hidden_effect = {
+			random_list = {
+				# more DM
+				33 = { country_event = { id = giga_accelerator.141 days = 360 } }
+				# physics
+				33 = { country_event = { id = giga_accelerator.131 days = 360 } }
+				# nothing
+				33 = { }
 			}
+		}
+	}
+}
+
+# being nice has a potential reward
+country_event = {
+	id = giga_accelerator.141
+	title = "giga_accelerator.141.name"
+	desc = "giga_accelerator.141.desc"
+
+	picture = GFX_evt_surreal_visions
+	show_sound = event_mystic_reveal
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_accelerator.141.a"
+		add_resource = {
+			sr_dark_matter = 50
 		}
 	}
 }
@@ -1982,6 +2094,12 @@ country_event = {
 
 	option = {
 		name = "giga_accelerator.130.b"
+		trigger = {
+			NOR = {
+				is_gestalt = yes
+				has_ethic = ethic_fanatic_authoritarian
+			}
+		}
 		add_monthly_resource_mult = {
 			resource = physics_research
 			value = @tier5researchreward
@@ -1992,11 +2110,40 @@ country_event = {
 			modifier = gave_accelerator_scientists_raise
 			days = 360
 		}
-		trigger = {
-			NOR = {
-				is_gestalt = yes
-				has_ethic = ethic_fanatic_authoritarian
+		hidden_effect = {
+			random_list = {
+				# more DM
+				33 = {
+					modifier = { factor = 0 owner = { NOT = { has_technology = tech_mine_dark_matter } } } 
+					country_event = { id = giga_accelerator.141 days = 360 } 
+				}
+				# physics
+				33 = { country_event = { id = giga_accelerator.131 days = 360 } }
+				# nothing
+				33 = { }
 			}
+		}
+	}
+}
+
+# being nice has a potential reward
+country_event = {
+	id = giga_accelerator.131
+	title = "giga_accelerator.131.name"
+	desc = "giga_accelerator.131.desc"
+
+	picture = GFX_evt_physics_research
+	show_sound = event_laboratory_sound
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_accelerator.131.a"
+		add_monthly_resource_mult = {
+			resource = physics_research
+			value = @tier5researchreward
+			min = @tier5researchmin
+			max = @tier5researchmax
 		}
 	}
 }
@@ -2367,7 +2514,7 @@ planet_event = {
 		remove_planet_flag = giga_under_repair
 		set_variable = {
 			which = acc_intensity
-			value = 3
+			value = 2
 		}
 		solar_system = {
 			space_owner = { country_event = { id = giga_accelerator.1111 } }

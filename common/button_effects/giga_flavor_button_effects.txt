@@ -1,6 +1,6 @@
 #Failure
 giga_failure_chance_0 = {
-	potential = { event_target:giga_mega_manage_planet = { OR = { check_variable = { which = giga_failure_chance value <= 0 } check_variable = { which = acc_intensity value = 1 } } } }
+	potential = { event_target:giga_mega_manage_planet = { OR = { check_variable = { which = giga_failure_chance value <= 0 } check_variable = { which = acc_intensity value = 1 } check_variable = { which = acc_intensity value = 2 } } } }
 	allow = { hidden_trigger = { always = yes } }
 	effect = { custom_tooltip = "giga_failure_chance_0_tooltip" }
 }
@@ -483,6 +483,12 @@ giga_dismantle_accelerator = {
 		event_target:giga_mega_manage_planet = {
 			solar_system = {
 				any_system_megastructure = {
+					OR = {
+						is_megastructure_type = particle_accelerator_1
+						is_megastructure_type = particle_accelerator_1_manage
+						is_megastructure_type = particle_accelerator_restored
+					}
+					exists = planet
 					planet = { is_same_value = event_target:giga_mega_manage_planet }
 				}
 			}
@@ -788,13 +794,29 @@ giga_acc_intensity_up = {
 		custom_tooltip = "giga_acc_intensity_up"
 		hidden_effect = {
 			event_target:giga_mega_manage_planet = {
-				change_variable = {
-					which = acc_intensity
-					value = 1
+				# failure chance is 0 both for intensity 1 and 2
+				if = {
+					limit = {
+						check_variable = {
+							which = acc_intensity
+							value = 1
+						}
+					}
+					change_variable = {
+						which = acc_intensity
+						value = 1
+					}
 				}
-				change_variable = {
-					which = giga_failure_chance
-					value = 5
+				# else increase chance by 5
+				else = {
+					change_variable = {
+						which = acc_intensity
+						value = 1
+					}
+					change_variable = {
+						which = giga_failure_chance
+						value = 5
+					}
 				}
 			}
 		}
@@ -820,13 +842,29 @@ giga_acc_intensity_down = {
 		custom_tooltip = "giga_acc_intensity_down"
 		hidden_effect = {
 			event_target:giga_mega_manage_planet = {
-				subtract_variable = {
-					which = acc_intensity
-					value = 1
+				if = {
+					# chance should be 0% at 2 intensity not 1
+					limit = {
+						check_variable = {
+							which = acc_intensity
+							value = 2
+						}
+					}
+					subtract_variable = {
+						which = acc_intensity
+						value = 1
+					}
 				}
-				subtract_variable = {
-					which = giga_failure_chance
-					value = 5
+				# decrease chance by 5 until it's 0% at 2 intensity
+				else = {
+					subtract_variable = {
+						which = acc_intensity
+						value = 1
+					}
+					subtract_variable = {
+						which = giga_failure_chance
+						value = 5
+					}
 				}
 			}
 		}
