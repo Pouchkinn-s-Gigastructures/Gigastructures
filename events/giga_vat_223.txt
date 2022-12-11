@@ -347,6 +347,10 @@ planet_event = {
 					}
 				}
 			}
+			if = { #if you somehow escaped the flag previously then take this L
+				limit = { exists = owner}
+				owner = { set_country_flag = giga_vat_live_god }
+			}
 			create_fleet = {
 				name = "NAME_Giga_Deity"
 				settings = { spawn_debris = no }
@@ -407,6 +411,7 @@ planet_event = {
 					limit = {
 						check_variable = { which = giga_vat_01_grow_amount value > 1 }
 						has_megastructure_flag = giga_vat_01_in_use
+						NOT = { has_megastructure_flag = giga_vat_01_grow_10 }
 					}
 					subtract_variable = { which = giga_vat_01_grow_amount value = 1 }
 					set_variable = { which = the_vat_01_pixel value = 1}
@@ -415,6 +420,18 @@ planet_event = {
 					planet = {
 						planet_event = { id = giga_vat_events.14001 }
 					}
+				 } 
+				else_if = {#Gotta triple check so no smelly boi spam
+					limit = { checK_variable = { which = giga_vat_01_grow_amount value > 1 } 
+						has_megastructure_flag = giga_vat_01_in_use
+						has_megastructure_flag = giga_vat_01_grow_10 
+						exists = owner
+					}
+					owner = { 
+						add_resource = { food = @grow_10_food_cost mult = prev.giga_vat_01_grow_amount }
+						add_resource = { energy = @grow_10_energy_cost mult = prev.giga_vat_01_grow_amount } 
+					}
+					giga_the_vat_01_clear = yes
 				 } else = {
 					giga_the_vat_01_clear = yes
 				}
@@ -2009,7 +2026,7 @@ country_event = {
         }
     }
 }
-
+#On fleet disband for toxic god take off live god
 country_event = {
     id = giga_vat_events.90001
     is_triggered_only = yes
@@ -2025,5 +2042,25 @@ country_event = {
             limit = { from = { is_ship_size = giga_toxic_god } }
 			remove_country_flag = giga_vat_live_god
         }
+    }
+}
+
+#Sanity check on yearly pulse to make sure you don't have the flag for the toxic god unless you have a toxic god
+country_event = {
+    id = giga_vat_events.90002
+    is_triggered_only = yes
+    hide_window = yes
+    trigger = {
+		has_country_flag = giga_vat_live_god
+    }
+
+    immediate = {
+		if = {
+            limit = { NOT = { any_owned_ship = { is_ship_size = giga_toxic_god} } } #Pre-checking this just to help not cause extra load when its not needed
+			if = { 
+				limit = { NOT = { any_owned_megastructure = { has_megastructure_flag = giga_vat_01_grow_10 has_megastructure_flag = giga_vat_01_in_use} } } 
+				remove_country_flag = giga_vat_live_god
+			} 
+		}
     }
 }
