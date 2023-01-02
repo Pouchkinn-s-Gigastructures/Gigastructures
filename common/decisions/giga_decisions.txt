@@ -34,6 +34,7 @@ decision_giga_build_orbital_arcology = {
 		exists = owner
 		OR = {
 			habitable_structure = no
+			giga_habitable_structure = no
 			is_planet_class = pc_giga_planetary_computer
 			is_regular_giga_maginot_world = yes
 		}
@@ -317,7 +318,9 @@ decision_psionic_sublimation = {
 	ai_weight = { weight = 0 }
 
 	potential = {
+		exists = owner
 		owner = {
+			has_tradition = tr_psionics_psi_corps
 			has_technology = giga_tech_psychic_beacon
 			OR = {
 				has_megastructure = psychic_beacon_3
@@ -327,8 +330,35 @@ decision_psionic_sublimation = {
 	}
 
 	allow = {
-		has_building = building_psi_corps
-		any_owned_pop = { has_job = telepath }
+		OR = {
+			# normal psi corps building
+			has_building = building_psi_corps
+			# covenant buildings
+			has_building = building_composer_sanctum
+			has_building = building_eater_sanctum
+			has_building = building_instrument_sanctum
+			has_building = building_whisperers_sanctum
+			# equivalent on orbital ring
+			if = {
+				limit = {
+					exists = orbital_defence
+				}
+				orbital_defence = {
+					exists = starbase
+					starbase = {
+						OR = {
+							has_starbase_building = ring_psi_corps
+							is_starbase_building_building = ring_psi_corps
+						}
+					}
+				}
+			}
+		}
+		#any_owned_pop = { has_job = telepath }
+		num_assigned_jobs = {
+			job = telepath
+			value > 0
+		}
 	}
 
 	effect = {
@@ -635,6 +665,19 @@ decision_harvest_matter_for_planetary_printing = {
 	ai_weight = { weight = 0 }
 
 	potential = {
+		exists = space_owner
+		space_owner = { is_ai = no }
+		is_star = no
+		is_colony = no
+		is_artificial = no
+		giga_habitable_structure = no
+		if = {
+			limit = { exists = owner }
+			NOT = {
+				owner = { is_country_type = primitive }
+				owner = { is_country_type = frameworld_outpost_country_type }
+			}
+		}
 		NOR = {
 			is_planet_class = pc_shielded
 			is_planet_class = pc_gas_giant
@@ -655,23 +698,8 @@ decision_harvest_matter_for_planetary_printing = {
 			is_planet_class = pc_ai
 			is_planet_class = pc_shrouded
 			is_planet_class = pc_gigabrown_dwarf
-			is_planet_class = pc_birch
-			AND = {
-				exists = space_owner
-				space_owner = { is_ai = yes }
-			}
-			AND = {
-                exists = owner
-                OR = {
-                    owner = { is_country_type = primitive }
-                    owner = { is_country_type = frameworld_outpost_country_type }
-                }
-            }
+			giga_is_birch_world = yes
 		}
-		is_star = no
-		is_colony = no
-		is_artificial = no
-		giga_habitable_structure = no
 	}
 
 	resources = {
@@ -690,6 +718,19 @@ decision_harvest_matter_for_planetary_printing = {
 		hidden_effect = {
 			from = {
 				giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = alloys AMOUNT = 5000 }
+			}
+			# remove terraforming modifiers
+			if = {
+				limit = { 
+					OR = {
+						has_modifier = terraforming_candidate
+						has_modifier = frozen_terraforming_candidate
+						has_modifier = toxic_terraforming_candidate
+					}
+				}
+				remove_modifier = terraforming_candidate
+				remove_modifier = frozen_terraforming_candidate
+				remove_modifier = toxic_terraforming_candidate
 			}
 			set_planet_flag = getting_harvested_for_printing
 			giga_set_has_mega_flag = yes
