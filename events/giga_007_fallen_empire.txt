@@ -238,7 +238,6 @@ country_event = {
 					has_global_flag = planetary_computer_disabled
 				}
 				host_has_dlc = Nemesis
-				exists = event_target:katzenland
 				NOT = { any_country = { has_origin = origin_scion } }
 			}
 			random_list = {
@@ -290,7 +289,6 @@ country_event = {
 					has_global_flag = katzenartig_improbable
 				}
 				NOT = { has_global_flag = giga_gatzo_disabled }
-				exists = event_target:katzenland
 				NOT = { any_country = { has_origin = origin_scion } }
 			}
 			random_list = {
@@ -344,6 +342,85 @@ country_event = {
 					limit = { has_ethic = ethic_fanatic_materialist }
 					set_global_flag = pouchkinn_gatzo_fe
 					country_event = { id = giga_fallen_empire_misc.1020 days = 1 }
+				}
+				capital_scope = {
+					spawn_system = { 	
+						min_distance = 10
+						max_distance = 15
+						initializer = giga_paluush_initializer
+						hyperlane = yes
+						is_discovered = yes
+					}
+				}
+				last_created_system = {
+					# Add extra hyperlane
+					random_list = {
+						1 = { while = { count = 1 giga_generate_hyperlane = yes } }
+						1 = { while = { count = 2 giga_generate_hyperlane = yes } }
+					}
+				}
+			}
+		} 
+		set_spawn_system_batch = begin
+		if = {
+			limit = {
+				NOT = { any_system = { has_star_flag = Paluush_system } }
+				NOT = { has_global_flag = giga_gatzo_disabled } 
+			}
+			random_system = {
+				limit = {
+					NOR = {
+						has_star_flag = giga_inner
+						has_star_flag = giga_outer_01
+						has_star_flag = giga_outer_02
+						has_star_flag = giga_outer_03
+						has_star_flag = giga_galactic_center
+					}
+				}
+				spawn_system = { initializer = "giga_paluush_initializer" }
+			}
+			last_created_system = {
+				# Add extra hyperlane
+				random_list = {
+					1 = { while = { count = 1 giga_generate_hyperlane = yes } }
+					1 = { while = { count = 2 giga_generate_hyperlane = yes } }
+				}
+			}
+		}
+			
+
+		#Remove Paluushia if disabled
+		if = {
+			limit = {
+				has_global_flag = giga_gatzo_nopaluushia
+				any_system = { has_star_flag = giga_system_six }
+			}
+			random_system = {
+				limit = { has_star_flag = giga_system_six }
+				random_system_planet = {
+					limit = { has_planet_flag = paluushia }
+					change_pc = pc_shrouded
+					remove_planet_flag = paluushia
+					remove_modifier = "paluush_shield"
+					every_owned_pop = { kill_pop = yes }
+					set_planet_flag = shrouded_paluushia
+				}
+			}
+		}
+		set_spawn_system_batch = end
+		every_country = {
+			limit = {
+				is_country_type = fallen_empire
+				NOT = { is_same_empire = event_target:giga_meopa_fe }
+			}
+			capital_scope = {
+				set_planet_flag = cant_target_this_planet #NDB immunity
+				create_ambient_object = { #funny shield system effect
+					type = "giga_fe_shield"
+					location = star
+					use_3d_location = yes
+					base_angle_towards = star
+					entity_face_object = star
 				}
 			}
 		}
@@ -3122,18 +3199,7 @@ country_event = {
 		change_government = { authority = auth_imperial }
 		set_name = "Gatzo Ascendancy"
 
-		#With this simple trick GPM FE deposits are no more!
-		if = {
-			limit = { has_global_flag = guillis_planet_modifiers_active}
-			every_system_within_border = {
-				every_system_planet = {
-					limit = { NOT = { is_colony = yes } }
-					reroll_deposits = yes #Rerolls deposits to be rid of empty space housing deposits with 100s of resources
-				}
-			}
-		}
-
-		every_owned_fleet = { delete_fleet = THIS }
+		# every_owned_fleet = { delete_fleet = THIS }
 		create_species = {
 			name = "Dark Forest Ezicania"
 			plural = "Dark Forest Ezicanias"
@@ -3220,6 +3286,27 @@ country_event = {
 				save_global_event_target_as = fe_alice_clatz_leader
 			}
 		}
+		random_owned_planet = { #Preserve Cleanup, Kills specifically the preserve
+			limit = {
+				is_colony = yes
+				has_planet_flag = fe_the_preserve
+				NOT = { solar_system = { has_star_flag = giga_system_six } }
+			}
+			remove_all_districts = yes
+			remove_all_buildings = yes
+			destroy_colony = yes
+			remove_planet_flag = fallen_empire_world
+			remove_planet_flag = fe_the_preserve
+			change_pc = pc_shattered #Preserve go boom
+			reset_planet = yes
+			if = {
+				limit = { has_global_flag = guillis_planet_modifiers_active }
+				set_planet_flag = gigas_fe_modifier_cleanup
+				planet_event = {
+					id = giga_fe_cleanup.001 days = 11
+				}
+			}
+		}
 		set_leader = event_target:fe_alice_clatz_leader
 		set_male_ruler_title = "Grand Protector"
 		set_female_ruler_title = "Grand Protectress"
@@ -3231,7 +3318,7 @@ country_event = {
 			prevent_anomaly = yes
 			set_owner = event_target:giga_meopa_fe
 			set_controller = event_target:giga_meopa_fe
-			set_capital = yes
+			set_planet_flag = cant_target_this_planet #NDB immunity
 			while = {
 				count = 64
 				create_pop = {
@@ -3270,7 +3357,6 @@ country_event = {
 				count = 30
 				add_district = district_city
 			}
-			create_fallen_empire_starting_navy = yes
 			while = {
 				count = 10
 				create_army = {
@@ -3475,22 +3561,49 @@ country_event = {
 				}
 			}
 		}
-		every_owned_planet = { #Colony Cleanup
+		capital_scope.solar_system = { #capital cleanup
+			every_system_planet = { #Colony Cleanup
+				limit = {
+					is_colony = yes
+					NOT = { solar_system = { has_star_flag = giga_system_six } }
+				}
+				remove_all_districts = yes
+				remove_all_buildings = yes
+				destroy_colony = yes
+				remove_planet_flag = fallen_empire_world
+				change_pc = pc_barren
+				reset_planet = yes
+				if = {
+					limit = { has_global_flag = guillis_planet_modifiers_active }
+					set_planet_flag = gigas_fe_modifier_cleanup
+					planet_event = {
+						id = giga_fe_cleanup.001 days = 11
+					}
+				}
+			}
+		}
+
+		event_target:katzenland = {#This is just moved to let me kill the capital planets specifically
+			set_capital = yes
+			set_sector_capital = yes
+		}
+		every_owned_planet = { #Colony pop cleanup They become Katzen, a fate worse than [REDACTED]
 			limit = {
 				is_colony = yes
 				NOT = { solar_system = { has_star_flag = giga_system_six } }
 			}
-			remove_all_districts = yes
-			remove_all_buildings = yes
-			destroy_colony = yes
-			remove_planet_flag = fallen_empire_world
-			change_pc = pc_barren
-			reset_planet = yes
-			if = {
-				limit = { has_global_flag = guillis_planet_modifiers_active }
-				set_planet_flag = gigas_fe_modifier_cleanup
-				planet_event = {
-					id = giga_fe_cleanup.001 days = 11
+			change_pc = pc_continental #Makes sure katzens get their preference since why would an FE not have their preference?
+			every_owned_pop = {
+				if = {
+					limit = {
+						is_robot_pop = no 
+					}
+					change_species = event_target:flusion_katzens
+				} else_if = {
+					limit = {
+						is_robot_pop = yes
+					}
+					change_species = event_target:meopa_fe_synths
 				}
 			}
 		}
@@ -3556,25 +3669,35 @@ country_event = {
 			}
 			change_pc = pc_molten
 		}
-		#Set up the rest of the empire
+		#Sets up their shield effect
 		capital_scope = {
-			solar_system = {
-				every_neighbor_system = {
-					create_starbase = {
-						size = starbase_fe_outpost
-						owner = ROOT
-					}
-					create_fe_citadel = yes
-					every_neighbor_system = {
-						create_starbase = {
-							size = starbase_fe_outpost
-							owner = ROOT
-						}
-						create_fe_citadel = yes
-					}
-				}
+			create_ambient_object = { #funny shield system effect
+				type = "giga_fe_shield"
+				location = star
+				use_3d_location = yes
+				base_angle_towards = star
+				entity_face_object = star
 			}
 		}
+		#No longer have to setup new starbases since we don't delete the old ones
+		# capital_scope = {
+		# 	solar_system = {
+		# 		every_neighbor_system = {
+		# 			create_starbase = {
+		# 				size = starbase_fe_outpost
+		# 				owner = ROOT
+		# 			}
+		# 			create_fe_citadel = yes
+		# 			every_neighbor_system = {
+		# 				create_starbase = {
+		# 					size = starbase_fe_outpost
+		# 					owner = ROOT
+		# 				}
+		# 				create_fe_citadel = yes
+		# 			}
+		# 		}
+		# 	}
+		# }
 	}
 }
 
@@ -3677,17 +3800,7 @@ country_event = {
 		set_adjective = "Katzen"
 		set_name = "Meopian Continuum"
 		
-		if = {
-			limit = { has_global_flag = guillis_planet_modifiers_active}
-			every_system_within_border = {
-				every_system_planet = {
-					limit = { NOT = { is_colony = yes } }
-					reroll_deposits = yes #Rerolls deposits
-				}
-			}
-		}
-
-		every_owned_fleet = { delete_fleet = THIS }
+		#every_owned_fleet = { delete_fleet = THIS }
 		create_species = {
 			name = "Dark Forest Ezicania"
 			plural = "Dark Forest Ezicanias"
@@ -3756,6 +3869,7 @@ country_event = {
 		set_male_ruler_title = "Executor"
 		set_female_ruler_title = "Executor"
 		event_target:katzenland = {
+			set_planet_flag = cant_target_this_planet #NDB immunity
 			clear_blockers = yes
 			remove_modifier = katzenland_planet
 			change_pc = pc_city
@@ -3795,7 +3909,7 @@ country_event = {
 				count = 30
 				add_district = district_arcology_housing
 			}
-			create_fallen_empire_starting_navy = yes
+			#create_fallen_empire_starting_navy = yes
 			while = {
 				count = 20
 				create_army = {
@@ -3947,8 +4061,11 @@ country_event = {
 			remove_all_buildings = yes
 			destroy_colony = yes
 			remove_planet_flag = fallen_empire_world
-			change_pc = pc_barren
-			reset_planet = yes
+			change_pc = pc_katzenland #Meopa engages in a minor amount of trolling
+			add_modifier = {
+				modifier = "irradiated_desert_planet"
+				days = -1
+			}
 			if = {
 				limit = { has_global_flag = guillis_planet_modifiers_active }
 				set_planet_flag = gigas_fe_modifier_cleanup
@@ -4029,38 +4146,32 @@ country_event = {
 		event_target:forcinia = {
 			every_moon = { giga_remove_planet = yes }
 		}
-		#Set up the rest of the empire
+		#Sets up their shield effect
 		capital_scope = {
-			solar_system = {
-				every_neighbor_system = {
-					create_starbase = {
-						size = starbase_fe_outpost
-						owner = ROOT
-					}
-					create_fe_citadel = yes
-					every_neighbor_system = {
-						create_starbase = {
-							size = starbase_fe_outpost
-							owner = ROOT
-						}
-						create_fe_citadel = yes
-						every_neighbor_system = {
-							limit = { NOT = { any_system_planet = { is_planet_class = pc_katzenland } } }
-							random_system_planet = {
-								limit = {
-									OR = {
-										is_planet_class = pc_barren
-										is_planet_class = pc_barren_cold
-									}
-								}
-								add_modifier = {
-									modifier = "irradiated_desert_planet"
-									days = -1
-								}
-								change_pc = pc_katzenland
-							}
+			create_ambient_object = { #funny shield system effect
+				type = "giga_fe_shield"
+				location = star
+				use_3d_location = yes
+				base_angle_towards = star
+				entity_face_object = star
+			}
+		}
+		#Sets up his bombed worlds on border
+		every_system_within_border = {
+			every_neighbor_system = {
+				limit = { NOT = { any_system_planet = { is_planet_class = pc_katzenland } } }
+				random_system_planet = {
+					limit = {
+						OR = {
+							is_planet_class = pc_barren
+							is_planet_class = pc_barren_cold
 						}
 					}
+					add_modifier = {
+						modifier = "irradiated_desert_planet"
+						days = -1
+					}
+					change_pc = pc_katzenland
 				}
 			}
 		}
@@ -4224,18 +4335,7 @@ country_event = {
 		}
 		set_adjective = "Pouchkinnian"
 		set_name = "Pouchkinnian Research Network"
-
-		if = {
-			limit = { has_global_flag = guillis_planet_modifiers_active}
-			every_system_within_border = {
-				every_system_planet = {
-					limit = { NOT = { is_colony = yes } }
-					reroll_deposits = yes #Rerolls deposits
-				}
-			}
-		}
-
-		every_owned_fleet = { delete_fleet = THIS }
+		#every_owned_fleet = { delete_fleet = THIS }
 		create_species = {
 			name = "Dark Forest Ezicania"
 			plural = "Dark Forest Ezicanias"
@@ -4360,6 +4460,7 @@ country_event = {
 		set_male_ruler_title = "Director"
 		set_female_ruler_title = "Director"
 		event_target:katzenland = {
+			set_planet_flag = cant_target_this_planet #NDB immunity
 			set_name = "Pouchkinnland"
 			clear_blockers = yes
 			remove_modifier = katzenland_planet
@@ -4421,7 +4522,7 @@ country_event = {
 				count = 25
 				add_district = district_city
 			}
-			create_fallen_empire_starting_navy = yes
+			#create_fallen_empire_starting_navy = yes Don't want to build them a new navy since the original isn't deleted
 			while = {
 				count = 5
 				create_army = {
@@ -4747,24 +4848,18 @@ country_event = {
 			}
 			change_pc = pc_molten
 		}
-		#Set up the rest of the empire
+		#Sets up their shield effect
 		capital_scope = {
-			solar_system = {
-				every_neighbor_system = {
-					create_starbase = {
-						size = starbase_fe_outpost
-						owner = ROOT
-					}
-					create_fe_citadel = yes
-					every_neighbor_system = {
-						create_starbase = {
-							size = starbase_fe_outpost
-							owner = ROOT
-						}
-						create_fe_citadel = yes
-					}
-				}
+			create_ambient_object = { #funny shield system effect
+				type = "giga_fe_shield"
+				location = star
+				use_3d_location = yes
+				base_angle_towards = star
+				entity_face_object = star
 			}
+		}
+		#Brain gaming
+		capital_scope = {
 			spawn_system = { #Pouchkinn's Big Brain
 				min_distance = 5
 				max_distance = 8
