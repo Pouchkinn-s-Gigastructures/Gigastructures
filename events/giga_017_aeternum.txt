@@ -1551,6 +1551,7 @@ country_event = {
 					}
 				}
 			}
+			set_update_modifiers_batch = begin
 			every_country = {
 				limit = {
 					NOT = { is_country = event_target:birch_aeternum }
@@ -1575,6 +1576,7 @@ country_event = {
 					}
 				}
 			}
+			set_update_modifiers_batch = end
 		}
 		if = {
 			limit = { has_global_flag = giga_core_aeternum_1 }
@@ -1612,7 +1614,8 @@ country_event = {
 				}
 			}
 		}
-		event_target:birch_aeternum = {
+		
+		event_target:birch_aeternum = { # 28/1/23 - Bread Changes
 			country_event = { id = giga_aeternum.4100 days = 30 } #do it again
 			if = { #resettle pops to alondia
 				limit = {
@@ -1621,46 +1624,98 @@ country_event = {
 						has_orbital_bombardment = no
 					}
 				}
-				every_owned_pop = {
+				set_update_modifiers_batch = begin
+				every_owned_planet = {
 					limit = {
-						planet = {
-							is_colony = yes
-							owner = { is_country_type = dormant_aeternum }
-							NOT = { is_planet_class = pc_birch }
-							has_ground_combat = no
-							has_orbital_bombardment = no
+						is_colony = yes
+						owner = { is_country_type = dormant_aeternum }
+						NOR = { 
+							is_planet_class = pc_birch 
+							is_planet_class = pc_void_birch #Lux aeternum no longer resettle the birch to the birch
 						}
+						has_ground_combat = no
+						has_orbital_bombardment = no
 					}
-					random = {
-						chance = 25
-						resettle_pop = {
-							pop = THIS
-							planet = event_target:aeternum_birch_world
-						}
-					}
-					if = { #shroud planets with less than 10 pops
-						limit = { planet = { count_owned_pop = { count < 10 } } }
-						planet = {
-							every_owned_pop = {
+
+					if = { #shroud planets with less than 30 pops
+						limit = { count_owned_pop = { count > 30 } } #Raised the colony clear cap so that it clears sooner, resulting in fewer bouts of monthly lag overall - Bread
+						every_owned_pop = {
+							limit = {
+								planet = {
+									is_colony = yes
+									owner = { is_country_type = dormant_aeternum }
+									NOR = { 
+										is_planet_class = pc_birch 
+										is_planet_class = pc_void_birch
+									}
+									has_ground_combat = no
+									has_orbital_bombardment = no
+								}
+							}
+							random = {
+								chance = 25
 								resettle_pop = {
 									pop = THIS
 									planet = event_target:aeternum_birch_world
 								}
 							}
-							destroy_colony = yes
+						}
+					}
+					if = {
+						limit = {  count_owned_pop = { count <= 30 } }
+						every_owned_pop = {
+							limit = {
+								planet = {
+									is_colony = yes
+									owner = { is_country_type = dormant_aeternum }
+									NOR = { 
+										is_planet_class = pc_birch 
+										is_planet_class = pc_void_birch
+									}
+									has_ground_combat = no
+									has_orbital_bombardment = no
+								}
+							}
+							resettle_pop = {
+								pop = THIS
+								planet = event_target:aeternum_birch_world
+							}
+						}
+						destroy_colony = yes
+						if = {
+							limit = { NOT = { is_artificial = yes }  }
 							change_pc = pc_shrouded
+						} else = { #kind of a stopgap until I can make proper shrouded habitable entities later
+							add_modifier = {
+								modifier = beacon_shrouded_habitable_structure
+								days = -1
+							}
+						}
+						every_country = { #adds to the shroud counter, since apparently they shroud worlds from resettling also, and not only colossus. - Bread
+							limit = {
+								has_event_chain = "aeternum_chain"
+							}
+							add_event_chain_counter = {
+								event_chain = "aeternum_chain"
+								counter = "aeternum_shroud_count"
+								amount = 1
+							}
 						}
 					}
 				}
+				set_update_modifiers_batch = end
 			}
+
 			if = {
 				limit = { NOT = { has_country_flag = alondia_made_ships_recently } } # The birch world makes ships
 				event_target:aeternum_birch_world = {
 					random_list = {
 						50 = {
+							spawn_aeternite_troop_fleet = yes
 							spawn_aeternite_small_fleet = yes
 						}
 						50 = {
+							spawn_aeternite_troop_fleet = yes
 							spawn_aeternite_big_fleet = yes
 						}
 					}
