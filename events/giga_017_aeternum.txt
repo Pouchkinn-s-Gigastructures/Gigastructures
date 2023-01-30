@@ -7084,7 +7084,7 @@ country_event = {
 		every_country = {
 			limit = { has_country_flag = is_in_anti_aeternite_alliance }
 			every_country = {
-				limit = { has_country_flag = is_in_anti_aeternite_alliance }
+				limit = { has_country_flag = is_in_anti_aeternite_alliance NOT = { is_same_empire = PREV } }
 				add_opinion_modifier = {
 					who = PREV
 					modifier = opinion_put_differences_aside_aeternum
@@ -7127,6 +7127,7 @@ country_event = { #New Galcom members join AAA
 
 	trigger = {
 		has_global_flag = galcom_anti_aeternite_league_formed
+		NOT = { is_active_resolution = resolution_custodian_form_empire }
 	}
 
 	immediate = {
@@ -7164,6 +7165,7 @@ country_event = { #Remove countries from AAA
 
 	trigger = {
 		has_global_flag = galcom_anti_aeternite_league_formed
+		NOT = { is_active_resolution = resolution_custodian_form_empire }
 	}
 
 	immediate = {
@@ -7247,7 +7249,7 @@ country_event = {
 							country_event = { id = giga_aeternum.8022 }
 						}
 						every_country = {
-							limit = { has_country_flag = is_in_anti_aeternite_alliance }
+							limit = { has_country_flag = is_in_anti_aeternite_alliance NOT = { is_same_empire = event_target:precursor_invited_to_aaa } }
 							add_opinion_modifier = {
 								who = event_target:precursor_invited_to_aaa
 								modifier = opinion_put_differences_aside_aeternum
@@ -7420,7 +7422,8 @@ event = {
 		}
 		else_if = {
 			limit = { #Its gone? stopped existing one way or another.
-				NOT = {exists = event_target:anti_aeternite_federation} 
+				NOT = { is_active_resolution = resolution_custodian_form_empire }
+				NOT = { exists = event_target:anti_aeternite_federation } 
 				has_global_flag = galcom_anti_aeternite_league_formed 
 			} 
 			remove_global_flag = galcom_anti_aeternite_league_formed
@@ -7431,33 +7434,6 @@ event = {
 				}
 				remove_modifier = anti_aeternite_league_emergency
 				country_event = { id = giga_aeternum.8041 }	
-				every_country = {
-					limit = {
-						has_opinion_modifier = {
-							who = PREV
-							modifier = opinion_put_differences_aside_aeternum
-						}
-					}
-					remove_opinion_modifier = {
-						who = PREV
-						modifier = opinion_put_differences_aside_aeternum
-					}
-				}
-			}
-		}
-		else_if = {
-			limit = { #Empire has come to end the fun
-				has_galactic_emperor = yes
-				has_global_flag = galcom_anti_aeternite_league_formed 
-			} 
-			remove_global_flag = galcom_anti_aeternite_league_formed
-			every_country = {
-				if = {
-					limit = { has_country_flag = ai_no_leave_fed }
-					remove_country_flag = ai_no_leave_fed
-				}
-				remove_modifier = anti_aeternite_league_emergency
-				country_event = { id = giga_aeternum.8042 }	
 				every_country = {
 					limit = {
 						has_opinion_modifier = {
@@ -7528,6 +7504,53 @@ event = {
 }
 
 country_event = {
+	id = giga_aeternum.80241 #Imperium formation means it has to go and it has to be done on its own
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_global_flag = galcom_anti_aeternite_league_formed
+		last_resolution_changed = resolution_custodian_form_empire
+	}
+
+	immediate = {
+		remove_global_flag = galcom_anti_aeternite_league_formed
+		set_global_flag = giga_aaa_imperial_decree
+		every_country = {
+			limit = {
+				has_federation = yes
+				federation = { has_federation_flag = anti_aeternite_alliance }
+			}
+			remove_country_flag = is_in_anti_aeternite_alliance
+			if = {
+				limit = { has_federation = yes }
+				leave_alliance = { override_requirements = yes }
+			}
+			if = {
+				limit = { has_country_flag = ai_no_leave_fed }
+				remove_country_flag = ai_no_leave_fed
+			}
+			remove_modifier = anti_aeternite_league_emergency
+		}
+		every_country = {
+			country_event = { id = giga_aeternum.8042 }
+			every_country = {
+				limit = {
+					has_opinion_modifier = {
+						who = PREV
+						modifier = opinion_put_differences_aside_aeternum
+					}
+				}
+				remove_opinion_modifier = {
+					who = PREV
+					modifier = opinion_put_differences_aside_aeternum
+				}
+			}
+		}
+	}
+}
+
+country_event = {
 	id = giga_aeternum.8025
 	hide_window = yes
 	is_triggered_only = yes
@@ -7539,7 +7562,15 @@ country_event = {
 		remove_modifier = anti_aeternite_league_emergency
 		if = {
 			limit = {
-				NOT = { has_galactic_emperor = yes }
+				NOR = { 
+					is_galactic_custodian = yes 
+					AND = {
+						is_subject = yes
+						galactic_custodian = {
+							is_overlord_to = prev
+						}
+					}
+				}
 				any_galcom_member = {
 					NOT = { is_same_empire = prev }
 				}
@@ -7552,7 +7583,17 @@ country_event = {
 country_event = { #AAA attacks aeternum
 	id = giga_aeternum.8030
 	title = "giga_aeternum.8030.name"
-	desc = "giga_aeternum.8030.desc"
+	desc = {
+		trigger = { 
+			has_global_flag = galcom_anti_aeternite_league_formed 
+			NOT = { last_resolution_changed = resolution_pre_emptive_aeternum_war_empire } 
+		}	
+		text = "giga_aeternum.8030.desc"
+	}
+	desc = {
+		trigger = { last_resolution_changed = resolution_pre_emptive_aeternum_war_empire }
+		text = "giga_aeternum.8030.desc_empire" #The empire is coming for Aiondia
+	}
 	picture = GFX_evt_machine_space_battle
 	show_sound = event_ground_battle
 
@@ -7560,6 +7601,10 @@ country_event = { #AAA attacks aeternum
 
 	option = {
 		name = "giga_aeternum.8030.a"
+		trigger = {
+			has_global_flag = galcom_anti_aeternite_league_formed
+			NOT = { last_resolution_changed = resolution_pre_emptive_aeternum_war_empire } 
+		}
 		custom_tooltip = "giga_aeternum.8030.a.tooltip"
 		if = {
 			limit = { has_country_flag = is_in_anti_aeternite_alliance }
@@ -7569,6 +7614,22 @@ country_event = { #AAA attacks aeternum
 			}
 		}
 	}
+
+	option = {
+		name = "giga_aeternum.8030.b"
+		trigger = {
+			last_resolution_changed = resolution_pre_emptive_aeternum_war_empire
+		}
+		custom_tooltip = "giga_aeternum.8030.b.tooltip"
+		if = {
+			limit = { is_galactic_community_member = yes }
+			add_modifier = {
+				modifier = pre_emptive_aeternite_strike
+				days = 720
+			}
+		}
+	}
+
 }
 
 fleet_event = {
