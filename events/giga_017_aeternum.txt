@@ -570,7 +570,7 @@ country_event = {
 				name = "aeternum_chain_1"
 				desc = "aeternum_chain_1_desc"
 				event_chain = "aeternum_chain"
-				location = event_target:aeternum_birch_world.solar_system
+				location = event_target:aeternum_birch_world
 			}
 		}
 		hidden_effect = {
@@ -690,7 +690,7 @@ country_event = {
 				name = "aeternum_chain_1"
 				desc = "aeternum_chain_1_desc"
 				event_chain = "aeternum_chain"
-				location = event_target:aeternum_birch_world.solar_system
+				location = event_target:aeternum_birch_world
 			}
 			event_target:birch_aeternum = {
 				country_event = { id = giga_aeternum.5002 }
@@ -2497,7 +2497,7 @@ country_event = {
 	}
 }
 
-#no more AAA
+#AAA Won now go home
 country_event = {
 	id = giga_aeternum.8040
 	title = "giga_aeternum.8040.name"
@@ -2509,6 +2509,21 @@ country_event = {
 	option = {
 		name = "giga_aeternum.8040.a"
 		custom_tooltip = "giga_aeternum.8040.a.tooltip"
+	}
+}
+#AAA lost/ all members left
+#This event should only fire in a very very few circumstances since its usually a gameover.
+country_event = {
+	id = giga_aeternum.8041
+	title = "giga_aeternum.8041.name"
+	desc = "giga_aeternum.8041.desc"
+	picture = GFX_evt_arguing_senate
+	show_sound = event_announcement
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_aeternum.8041.a"
+		custom_tooltip = "giga_aeternum.8041.a.tooltip"
 	}
 }
 
@@ -2666,6 +2681,7 @@ country_event = {
 				limit = {
 					has_event_chain = aeternum_chain
 					NOR = {
+						has_special_project = INVESTIGATE_AETERNUM_FORGE
 						has_special_project = INVESTIGATE_AETERNUM_PLANETCRAFT
 						has_special_project = INVESTIGATE_AETERNUM_INTEL
 					}
@@ -7332,6 +7348,37 @@ event = {
 				}
 			}
 		}
+		else_if = {
+			limit = { #Its gone? stopped existing one way or another.
+				NOT = {exists = event_target:anti_aeternite_federation} 
+				has_global_flag = galcom_anti_aeternite_league_formed 
+			} 
+			remove_global_flag = galcom_anti_aeternite_league_formed
+			if = {
+				limit = { is_active_resolution = resolution_anti_aeternite_league }
+				
+			}
+			every_country = {
+				if = {
+					limit = { has_country_flag = ai_no_leave_fed }
+					remove_country_flag = ai_no_leave_fed
+				}
+				remove_modifier = anti_aeternite_league_emergency
+				country_event = { id = giga_aeternum.8041 }	
+				every_country = {
+					limit = {
+						has_opinion_modifier = {
+							who = PREV
+							modifier = opinion_put_differences_aside_aeternum
+						}
+					}
+					remove_opinion_modifier = {
+						who = PREV
+						modifier = opinion_put_differences_aside_aeternum
+					}
+				}
+			}
+		}
 		else = {
 			event_target:anti_aeternite_federation = {
 				if = {
@@ -7353,6 +7400,9 @@ event = {
 				every_country = {
 					limit = {
 						is_galactic_community_member = yes
+						any_federation = {
+							has_federation_flag = anti_aeternite_alliance
+						}
 						OR = {
 							has_federation = no
 							federation = { NOT = { has_federation_flag = anti_aeternite_alliance } }
@@ -7394,7 +7444,14 @@ country_event = {
 	immediate = {
 		remove_country_flag = is_in_anti_aeternite_alliance
 		remove_modifier = anti_aeternite_league_emergency
-		remove_from_galactic_community = yes 
+		if = {
+			limit = {
+				any_galcom_member = {
+					NOT = { is_same_empire = prev }
+				}
+			}
+			remove_from_galactic_community = yes 
+		}
 	}
 }
 
