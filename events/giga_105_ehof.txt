@@ -401,6 +401,9 @@ fleet_event = {
 }
 
 # if player lost EHOF System
+# From = system
+# FromFrom = country (new owner)
+# This = country (previous owner)
 country_event = {
 	id = ehof_megastructure.006
 	hide_window = yes
@@ -420,74 +423,167 @@ country_event = {
 			set_star_flag = ehof_megastructure_system@fromfrom
 		}
 		# New owner of system
-		fromfrom = {
-			# set variable for ui
-			set_variable = {
-				which = ehof_phase
-				value = prevprev.ehof_phase
-			}
-			# give new player the ehof tech
-			if = {
-				limit = {
-					check_variable = {
-						which = ehof_phase
-						value = 1
+		if = {
+			limit = { exists = fromfrom }
+			fromfrom = {
+				# set variable for ui
+				set_variable = {
+					which = ehof_phase
+					value = prevprev.ehof_phase
+				}
+				# give new player the ehof tech
+				if = {
+					limit = {
+						check_variable = {
+							which = ehof_phase
+							value = 1
+						}
 					}
-				}
-				give_technology = {
-					tech = "tech_ehof_phase_01"
-					message = yes
-				}
-				log = tech1
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = ehof_phase
-						value = 2
+					give_technology = {
+						tech = "tech_ehof_phase_01"
+						message = yes
 					}
+					log = tech1
 				}
-				give_technology = {
-					tech = "tech_ehof_phase_02"
-					message = yes
-				}
-				log = tech2
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = ehof_phase
-						value = 3
+				else_if = {
+					limit = {
+						check_variable = {
+							which = ehof_phase
+							value = 2
+						}
 					}
-				}
-				give_technology = {
-					tech = "tech_ehof_phase_03"
-					message = yes
-				}
-				log = tech3
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = ehof_phase
-						value = 4
+					give_technology = {
+						tech = "tech_ehof_phase_02"
+						message = yes
 					}
+					log = tech2
 				}
-				give_technology = {
-					tech = "tech_ehof_phase_04"
-					message = yes
+				else_if = {
+					limit = {
+						check_variable = {
+							which = ehof_phase
+							value = 3
+						}
+					}
+					give_technology = {
+						tech = "tech_ehof_phase_03"
+						message = yes
+					}
+					log = tech3
 				}
-				log = tech4
-			}
-			country_event = {
-				id = ehof_megastructure.201
-				days = 10
+				else_if = {
+					limit = {
+						check_variable = {
+							which = ehof_phase
+							value = 4
+						}
+					}
+					give_technology = {
+						tech = "tech_ehof_phase_04"
+						message = yes
+					}
+					log = tech4
+				}
+				country_event = {
+					id = ehof_megastructure.201
+					days = 10
+				}
 			}
 		}
 		# remove ui for Previous owner of system
 		set_variable = {
 			which = ehof_phase
 			value = 0
+		}
+	}
+}
+
+# From = system
+# FromFrom = country (previous owner)
+# This = country (new owner)
+country_event = {
+	id = ehof_megastructure.012
+	hide_window = yes
+	is_triggered_only = yes
+	trigger = {
+		from = {
+			any_system_megastructure = {
+				is_any_ehof = yes
+			}
+		}
+		NOT = { exists = fromfrom }
+	}
+	immediate = {
+		log = system_changed_owner
+		# switch star flags
+		from = {
+			set_star_flag = ehof_megastructure_system@root
+			random_system_megastructure = {#Find out which EHOF it is
+				limit = { is_any_ehof = yes }
+				switch = {
+					trigger = has_megastructure_flag
+					ehof_phase_00 = { #Delete construction site
+						remove_megastructure = this
+					}
+					ehof_phase_01 = {#Gives the appropriate tech and variable for the EHOF
+						root = {
+							set_variable = {
+								which = ehof_phase
+								value = 1
+							}
+							give_technology = {
+								tech = "tech_ehof_phase_01"
+								message = yes
+							}
+							log = tech1
+						}
+					}
+					ehof_phase_02 = {
+						root = {
+							set_variable = {
+								which = ehof_phase
+								value = 2
+							}
+							give_technology = {
+								tech = "tech_ehof_phase_02"
+								message = yes
+							}
+							log = tech2
+						}
+
+					}
+					ehof_phase_03 = {
+						root = {
+							set_variable = {
+								which = ehof_phase
+								value = 3
+							}
+							give_technology = {
+								tech = "tech_ehof_phase_03"
+								message = yes
+							}
+							log = tech3
+						}
+					}
+					ehof_phase_04 = {
+						root = {
+							set_variable = {
+								which = ehof_phase
+								value = 4
+							}
+							give_technology = {
+								tech = "tech_ehof_phase_04"
+								message = yes
+							}
+							log = tech4
+						}
+					}
+				}
+			}
+		}
+		country_event = {
+			id = ehof_megastructure.201
+			days = 10
 		}
 	}
 }
