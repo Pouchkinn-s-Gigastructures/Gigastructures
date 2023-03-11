@@ -401,6 +401,9 @@ fleet_event = {
 }
 
 # if player lost EHOF System
+# From = system
+# FromFrom = country (new owner)
+# This = country (previous owner)
 country_event = {
 	id = ehof_megastructure.006
 	hide_window = yes
@@ -420,74 +423,167 @@ country_event = {
 			set_star_flag = ehof_megastructure_system@fromfrom
 		}
 		# New owner of system
-		fromfrom = {
-			# set variable for ui
-			set_variable = {
-				which = ehof_phase
-				value = prevprev.ehof_phase
-			}
-			# give new player the ehof tech
-			if = {
-				limit = {
-					check_variable = {
-						which = ehof_phase
-						value = 1
+		if = {
+			limit = { exists = fromfrom }
+			fromfrom = {
+				# set variable for ui
+				set_variable = {
+					which = ehof_phase
+					value = prevprev.ehof_phase
+				}
+				# give new player the ehof tech
+				if = {
+					limit = {
+						check_variable = {
+							which = ehof_phase
+							value = 1
+						}
 					}
-				}
-				give_technology = {
-					tech = "tech_ehof_phase_01"
-					message = yes
-				}
-				log = tech1
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = ehof_phase
-						value = 2
+					give_technology = {
+						tech = "tech_ehof_phase_01"
+						message = yes
 					}
+					log = tech1
 				}
-				give_technology = {
-					tech = "tech_ehof_phase_02"
-					message = yes
-				}
-				log = tech2
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = ehof_phase
-						value = 3
+				else_if = {
+					limit = {
+						check_variable = {
+							which = ehof_phase
+							value = 2
+						}
 					}
-				}
-				give_technology = {
-					tech = "tech_ehof_phase_03"
-					message = yes
-				}
-				log = tech3
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = ehof_phase
-						value = 4
+					give_technology = {
+						tech = "tech_ehof_phase_02"
+						message = yes
 					}
+					log = tech2
 				}
-				give_technology = {
-					tech = "tech_ehof_phase_04"
-					message = yes
+				else_if = {
+					limit = {
+						check_variable = {
+							which = ehof_phase
+							value = 3
+						}
+					}
+					give_technology = {
+						tech = "tech_ehof_phase_03"
+						message = yes
+					}
+					log = tech3
 				}
-				log = tech4
-			}
-			country_event = {
-				id = ehof_megastructure.201
-				days = 10
+				else_if = {
+					limit = {
+						check_variable = {
+							which = ehof_phase
+							value = 4
+						}
+					}
+					give_technology = {
+						tech = "tech_ehof_phase_04"
+						message = yes
+					}
+					log = tech4
+				}
+				country_event = {
+					id = ehof_megastructure.201
+					days = 10
+				}
 			}
 		}
 		# remove ui for Previous owner of system
 		set_variable = {
 			which = ehof_phase
 			value = 0
+		}
+	}
+}
+
+# From = system
+# FromFrom = country (previous owner)
+# This = country (new owner)
+country_event = {
+	id = ehof_megastructure.012
+	hide_window = yes
+	is_triggered_only = yes
+	trigger = {
+		from = {
+			any_system_megastructure = {
+				is_any_ehof = yes
+			}
+		}
+		NOT = { exists = fromfrom }
+	}
+	immediate = {
+		log = system_changed_owner
+		# switch star flags
+		from = {
+			set_star_flag = ehof_megastructure_system@root
+			random_system_megastructure = {#Find out which EHOF it is
+				limit = { is_any_ehof = yes }
+				switch = {
+					trigger = has_megastructure_flag
+					ehof_phase_00 = { #Delete construction site
+						remove_megastructure = this
+					}
+					ehof_phase_01 = {#Gives the appropriate tech and variable for the EHOF
+						root = {
+							set_variable = {
+								which = ehof_phase
+								value = 1
+							}
+							give_technology = {
+								tech = "tech_ehof_phase_01"
+								message = yes
+							}
+							log = tech1
+						}
+					}
+					ehof_phase_02 = {
+						root = {
+							set_variable = {
+								which = ehof_phase
+								value = 2
+							}
+							give_technology = {
+								tech = "tech_ehof_phase_02"
+								message = yes
+							}
+							log = tech2
+						}
+
+					}
+					ehof_phase_03 = {
+						root = {
+							set_variable = {
+								which = ehof_phase
+								value = 3
+							}
+							give_technology = {
+								tech = "tech_ehof_phase_03"
+								message = yes
+							}
+							log = tech3
+						}
+					}
+					ehof_phase_04 = {
+						root = {
+							set_variable = {
+								which = ehof_phase
+								value = 4
+							}
+							give_technology = {
+								tech = "tech_ehof_phase_04"
+								message = yes
+							}
+							log = tech4
+						}
+					}
+				}
+			}
+		}
+		country_event = {
+			id = ehof_megastructure.201
+			days = 10
 		}
 	}
 }
@@ -503,14 +599,14 @@ country_event = {
 			has_country_flag = ehof_activating
 		}
 		OR = {
-			count_owned_megastructure = {
+			count_owned_megastructure = { #More than one Ehof
 				limit = {
 					is_any_ehof = yes
 				}
 				count > 1
 			}
-			AND = {
-				has_any_ehof = no
+			AND = { # No Ehof
+				NOT = { any_owned_megastructure = { giga_is_any_ehof_non_flag = yes } }
 				NOT = {
 					check_variable = {
 						which = ehof_phase
@@ -518,27 +614,30 @@ country_event = {
 					}
 				}
 			}
-			AND = {
+			AND = { # 1 Ehof but inactive 
 				count_owned_megastructure = {
 					limit = {
 						is_any_ehof = yes
+						OR = {
+							has_megastructure_flag = ehof_phase_01_decommissioned
+							has_megastructure_flag = ehof_phase_02_decommissioned
+							has_megastructure_flag = ehof_phase_03_decommissioned
+							has_megastructure_flag = ehof_phase_04_decommissioned
+						}
 					}
 					count = 1
 				}
-				has_an_active_ehof = no
 			}
-			AND = {
+			AND = { #1 ehof AND active
 				count_owned_megastructure = {
 					limit = {
 						is_an_active_ehof = yes
 					}
 					count = 1
-				}
+				}#This trigger would never have worked previously since its checking for all EHOFs of any given phase at once - Bread
 				OR = {
 					AND = {
-						has_megastructure = ehof_megastructure_phase1_activating
-						has_megastructure = ehof_megastructure_phase1_active
-						has_megastructure = ehof_megastructure_phase1_idle
+						has_megastructure = ehof_megastructure_phase1
 						NOT = {
 							check_variable = {
 								which = ehof_phase
@@ -547,9 +646,7 @@ country_event = {
 						}
 					}
 					AND = {
-						has_megastructure = ehof_megastructure_phase2_activating
-						has_megastructure = ehof_megastructure_phase2_active
-						has_megastructure = ehof_megastructure_phase2_idle
+						has_megastructure = ehof_megastructure_phase2
 						NOT = {
 							check_variable = {
 								which = ehof_phase
@@ -558,9 +655,7 @@ country_event = {
 						}
 					}
 					AND = {
-						has_megastructure = ehof_megastructure_phase3_activating
-						has_megastructure = ehof_megastructure_phase3_active
-						has_megastructure = ehof_megastructure_phase3_idle
+						has_megastructure = ehof_megastructure_phase3
 						NOT = {
 							check_variable = {
 								which = ehof_phase
@@ -569,9 +664,7 @@ country_event = {
 						}
 					}
 					AND = {
-						has_megastructure = ehof_megastructure_phase4_activating
-						has_megastructure = ehof_megastructure_phase4_active
-						has_megastructure = ehof_megastructure_phase4_idle
+						has_megastructure = ehof_megastructure_phase4
 						NOT = {
 							check_variable = {
 								which = ehof_phase
@@ -584,10 +677,9 @@ country_event = {
 		}
 	}
 	immediate = {
-		# We dont have any ehof
-		if = {
+		if = { # We dont have any ehof
 			limit = {
-				has_any_ehof = no
+				giga_has_any_ehof = no
 				NOT = {
 					check_variable = {
 						which = ehof_phase
@@ -599,31 +691,23 @@ country_event = {
 				which = ehof_phase
 				value = 0
 			}
-			remove_country_flag = ehof_destination_picked
-			remove_country_flag = ehof_travel_diplomacy
-			remove_country_flag = ehof_can_activate
-			remove_country_flag = ehof_can_deactivate
-			remove_country_flag = ehof_is_upgrading
-			remove_country_flag = ehof_on_cooldown
+			giga_clear_ehof_country_flags = yes
 		}
-		# We have an ehof, but it's innactive
-		else_if = {
+		else_if = { # We have an ehof, but it's inactive
 			limit = {
 				count_owned_megastructure = {
 					limit = {
 						is_any_ehof = yes
+						has_megastructure_flag = ehof_phase_01_decommissioned
+						has_megastructure_flag = ehof_phase_02_decommissioned
+						has_megastructure_flag = ehof_phase_03_decommissioned
+						has_megastructure_flag = ehof_phase_04_decommissioned
 					}
 					count = 1
 				}
-				has_an_active_ehof = no
 			}
-			remove_country_flag = ehof_destination_picked
-			remove_country_flag = ehof_travel_diplomacy
-			remove_country_flag = ehof_can_activate
-			remove_country_flag = ehof_can_deactivate
-			remove_country_flag = ehof_is_upgrading
-			remove_country_flag = ehof_on_cooldown
-			activate_an_ehof = yes
+			giga_clear_ehof_country_flags = yes
+			giga_activate_an_ehof = yes
 		}
 		# We have an active ehof, but dont have the correct flags
 		else_if = {
@@ -636,9 +720,7 @@ country_event = {
 				}
 				OR = {
 					AND = {
-						has_megastructure = ehof_megastructure_phase1_activating
-						has_megastructure = ehof_megastructure_phase1_active
-						has_megastructure = ehof_megastructure_phase1_idle
+						has_megastructure = ehof_megastructure_phase1
 						NOT = {
 							check_variable = {
 								which = ehof_phase
@@ -647,9 +729,7 @@ country_event = {
 						}
 					}
 					AND = {
-						has_megastructure = ehof_megastructure_phase2_activating
-						has_megastructure = ehof_megastructure_phase2_active
-						has_megastructure = ehof_megastructure_phase2_idle
+						has_megastructure = ehof_megastructure_phase2
 						NOT = {
 							check_variable = {
 								which = ehof_phase
@@ -658,9 +738,7 @@ country_event = {
 						}
 					}
 					AND = {
-						has_megastructure = ehof_megastructure_phase3_activating
-						has_megastructure = ehof_megastructure_phase3_active
-						has_megastructure = ehof_megastructure_phase3_idle
+						has_megastructure = ehof_megastructure_phase3
 						NOT = {
 							check_variable = {
 								which = ehof_phase
@@ -669,9 +747,7 @@ country_event = {
 						}
 					}
 					AND = {
-						has_megastructure = ehof_megastructure_phase4_activating
-						has_megastructure = ehof_megastructure_phase4_active
-						has_megastructure = ehof_megastructure_phase4_idle
+						has_megastructure = ehof_megastructure_phase4
 						NOT = {
 							check_variable = {
 								which = ehof_phase
@@ -689,15 +765,13 @@ country_event = {
 			remove_country_flag = ehof_on_cooldown
 			random_system_within_border = {
 				limit = {
-					has_an_active_ehof = yes
+					giga_has_an_active_ehof = yes
 				}
 				set_star_flag = ehof_megastructure_system@root
 			}
 			if = {
 				limit = {
-					has_megastructure = ehof_megastructure_phase1_activating
-					has_megastructure = ehof_megastructure_phase1_active
-					has_megastructure = ehof_megastructure_phase1_idle
+					has_megastructure = ehof_megastructure_phase1
 					NOT = {
 						check_variable = {
 							which = ehof_phase
@@ -712,9 +786,7 @@ country_event = {
 			}
 			else_if = {
 				limit = {
-					has_megastructure = ehof_megastructure_phase2_activating
-					has_megastructure = ehof_megastructure_phase2_active
-					has_megastructure = ehof_megastructure_phase2_idle
+					has_megastructure = ehof_megastructure_phase2
 					NOT = {
 						check_variable = {
 							which = ehof_phase
@@ -729,9 +801,7 @@ country_event = {
 			}
 			else_if = {
 				limit = {
-					has_megastructure = ehof_megastructure_phase3_activating
-					has_megastructure = ehof_megastructure_phase3_active
-					has_megastructure = ehof_megastructure_phase3_idle
+					has_megastructure = ehof_megastructure_phase3
 					NOT = {
 						check_variable = {
 							which = ehof_phase
@@ -746,9 +816,7 @@ country_event = {
 			}
 			else_if = {
 				limit = {
-					has_megastructure = ehof_megastructure_phase4_activating
-					has_megastructure = ehof_megastructure_phase4_active
-					has_megastructure = ehof_megastructure_phase4_idle
+					has_megastructure = ehof_megastructure_phase4
 					NOT = {
 						check_variable = {
 							which = ehof_phase
@@ -863,7 +931,9 @@ country_event = {
 									is_same_value = prevprev
 								}
 							}
-							decomission_this_ehof = yes
+							solar_system = {
+								giga_ehof_set_decommissioned = yes
+							}
 						}
 					}
 				}
@@ -911,7 +981,9 @@ country_event = {
 								is_same_value = prevprev
 							}
 						}
-						decomission_this_ehof = yes
+						solar_system = {
+							giga_ehof_set_decommissioned = yes
+						}
 					}
 				}
 			}
@@ -922,8 +994,8 @@ country_event = {
 		custom_gui = "ehof_mainui_option_big"
 		name = "ehof_megastructure.008.b"
 		hidden_effect = {
-			decomission_all_ehofs = yes
-			activate_an_ehof = yes
+			giga_decomission_all_ehofs = yes
+			giga_activate_an_ehof = yes
 		}
 	}
 }
@@ -1437,7 +1509,7 @@ country_event = {
 	location = this
 	is_triggered_only = yes
 	option = {
-		name = "Astonishing!"
+		name = tutorial.52.a
 		if = {
 			limit = {
 				has_ancrel = yes
@@ -1491,7 +1563,7 @@ country_event = {
 	location = this
 	is_triggered_only = yes
 	option = {
-		name = "Astonishing!"
+		name = AMAZING
 		if = {
 			limit = {
 				has_ancrel = yes
@@ -1527,7 +1599,7 @@ country_event = {
 	location = this
 	is_triggered_only = yes
 	option = {
-		name = "Astonishing!"
+		name = AMAZING
 		if = {
 			limit = {
 				has_ancrel = yes
@@ -1667,8 +1739,8 @@ country_event = {
 		}
 		any_owned_megastructure = {
 			OR = {
-				is_ehof_activating = yes
-				is_ehof_active = yes
+				has_megastructure_flag = giga_ehof_activating
+				has_megastructure_flag = giga_ehof_active
 			}
 		}
 	}
@@ -1750,7 +1822,7 @@ country_event = {
 	trigger = {
 		OR = {
 			AND = {
-				has_megastructure = ehof_megastructure_phase2_idle
+				has_megastructure = ehof_megastructure_phase2
 				has_country_flag = ehof_restored
 				NOT = {
 					has_country_flag = ehof_restored_first_time
@@ -1763,19 +1835,19 @@ country_event = {
 				}
 			}
 			AND = {
-				has_megastructure = ehof_megastructure_phase4_idle
+				has_megastructure = ehof_megastructure_phase4
 				NOT = {
 					has_country_flag = ehof_p4_first_time
 				}
 			}
 			AND = {
-				has_megastructure = ehof_megastructure_phase3_idle
+				has_megastructure = ehof_megastructure_phase3
 				NOT = {
 					has_country_flag = ehof_p3_first_time
 				}
 			}
 			AND = {
-				has_megastructure = ehof_megastructure_phase2_idle
+				has_megastructure = ehof_megastructure_phase2
 				NOT = {
 					has_country_flag = ehof_restored
 				}
@@ -1784,7 +1856,7 @@ country_event = {
 				}
 			}
 			AND = {
-				has_megastructure = ehof_megastructure_phase1_idle
+				has_megastructure = ehof_megastructure_phase1
 				NOT = {
 					has_country_flag = ehof_p1_first_time
 				}
@@ -1810,7 +1882,7 @@ country_event = {
 		# Phase 4
 		else_if = {
 			limit = {
-				has_megastructure = ehof_megastructure_phase4_idle
+				has_megastructure = ehof_megastructure_phase4
 			}
 			set_country_flag = has_built_or_repaired_gigastructure
 			set_country_flag = ehof_p4_first_time
@@ -1822,7 +1894,7 @@ country_event = {
 		# Phase 3
 		else_if = {
 			limit = {
-				has_megastructure = ehof_megastructure_phase3_idle
+				has_megastructure = ehof_megastructure_phase3
 			}
 			set_country_flag = has_built_or_repaired_megastructure
 			set_country_flag = ehof_p3_first_time
@@ -1834,7 +1906,7 @@ country_event = {
 		# Phase 2
 		else_if = {
 			limit = {
-				has_megastructure = ehof_megastructure_phase2_idle
+				has_megastructure = ehof_megastructure_phase2
 			}
 			set_country_flag = ehof_p2_first_time
 			set_timed_global_flag = {
@@ -1845,7 +1917,7 @@ country_event = {
 		# Phase 1
 		else_if = {
 			limit = {
-				has_megastructure = ehof_megastructure_phase1_idle
+				has_megastructure = ehof_megastructure_phase1
 			}
 			set_country_flag = ehof_p1_first_time
 			set_timed_global_flag = {
@@ -1926,7 +1998,20 @@ country_event = {
 		remove_state_flags = yes
 		# set new state
 		set_country_flag = ehof_activating
-		ehof_set_to_activating = yes
+		random_owned_megastructure = {
+			limit = {
+				giga_is_any_ehof_non_flag = yes
+				NOR = {
+					has_megastructure_flag = ehof_phase_04_decommissioned
+					has_megastructure_flag = ehof_phase_03_decommissioned
+					has_megastructure_flag = ehof_phase_02_decommissioned
+					has_megastructure_flag = ehof_phase_01_decommissioned
+				}
+			}
+			solar_system = {
+				giga_ehof_set_activating = yes
+			}
+		}
 		# save megastructure system
 		ehof_mega_system = yes
 		if = {
@@ -1972,7 +2057,14 @@ country_event = {
 		remove_state_flags = yes
 		# set new state
 		set_country_flag = ehof_activated
-		ehof_set_to_activated = yes
+		random_owned_megastructure = {
+			limit = {
+				has_megastructure_flag = giga_ehof_activating
+			}
+			solar_system = {
+				giga_ehof_set_active = yes
+			}
+		}
 		# open wormhole
 		event_target:ehof_destination_system = {
 			spawn_megastructure = {
@@ -2063,7 +2155,17 @@ country_event = {
 		# reset all state flags
 		remove_state_flags = yes
 		set_country_flag = ehof_on_cooldown
-		ehof_set_to_idle = yes
+		random_owned_megastructure = {
+			limit = {
+				OR = {
+					has_megastructure_flag = giga_ehof_activating
+					has_megastructure_flag = giga_ehof_active
+				}
+			}
+			solar_system = {
+				giga_ehof_set_idle = yes
+			}
+		}
 		# set back to can activate
 		if = {
 			limit = {
@@ -2182,174 +2284,21 @@ country_event = {
 		log = idle
 		ehof_recount_ships = yes
 		remove_country_flag = ehof_on_cooldown
-		ehof_set_to_idle = yes
+		random_owned_megastructure = {
+			limit = {
+				OR = {
+					has_megastructure_flag = giga_ehof_activating
+					has_megastructure_flag = giga_ehof_active
+				}
+			}
+			solar_system = {
+				giga_ehof_set_idle = yes
+			}
+		}
 		country_event = {
 			id = ehof_megastructure.009
 			days = 2
 		}		# Check EHOF state
-	}
-}
-
-# Set to Firing # TODO :: remove
-country_event = {
-	id = ehof_megastructure.202
-	hide_window = yes
-	is_triggered_only = yes
-	immediate = {
-		if = {
-			limit = {
-				has_country_flag = ehof_can_activate
-			}
-			remove_country_flag = ehof_can_activate
-		}
-		set_timed_country_flag = {
-			flag = ehof_wormhole_open
-			days = 30
-		}
-		set_country_flag = ehof_activating
-		ehof_set_to_activating = yes
-	}
-}
-
-# Set to Active TODO :: remove
-country_event = {
-	id = ehof_megastructure.203
-	hide_window = yes
-	is_triggered_only = yes
-	immediate = {
-		if = {
-			limit = {
-				is_ai = yes
-			}
-			ehof_set_to_activated = yes
-		}
-		else = {
-			if = {
-				limit = {
-					has_country_flag = ehof_destination_picked
-				}
-				remove_country_flag = ehof_destination_picked
-			}
-			if = {
-				limit = {
-					has_country_flag = ehof_travel_diplomacy
-				}
-				remove_country_flag = ehof_travel_diplomacy
-			}
-			if = {
-				limit = {
-					has_country_flag = ehof_activating
-				}
-				remove_country_flag = ehof_activating
-			}
-			set_country_flag = ehof_activated
-			ehof_set_to_activated = yes
-		}
-	}
-}
-
-# Set to Cooldown
-country_event = {
-	# TODO :: remove
-	id = ehof_megastructure.205
-	hide_window = yes
-	is_triggered_only = yes
-	immediate = {
-		if = {
-			limit = {
-				is_ai = yes
-			}
-			ehof_set_to_idle = yes
-		}
-		else = {
-			remove_country_flag = ehof_activated
-			set_country_flag = ehof_on_cooldown
-			ehof_set_to_idle = yes
-			if = {
-				limit = {
-					check_variable = {
-						which = ehof_phase
-						value = 1
-					}
-				}
-				country_event = {
-					id = ehof_megastructure.201
-					days = @ehof_phase1_cooldown_days
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = ehof_phase
-						value = 2
-					}
-				}
-				country_event = {
-					id = ehof_megastructure.201
-					days = @ehof_phase2_cooldown_days
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = ehof_phase
-						value = 3
-					}
-				}
-				country_event = {
-					id = ehof_megastructure.201
-					days = @ehof_phase3_cooldown_days
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = ehof_phase
-						value = 4
-					}
-				}
-				country_event = {
-					id = ehof_megastructure.201
-					days = @ehof_phase4_cooldown_days
-				}
-			}
-		}
-	}
-}
-
-########################################################################################################
-########################################## Open the wormholes ##########################################
-########################################################################################################
-# TODO :: remove
-country_event = {
-	id = ehof_megastructure.304
-	hide_window = yes
-	is_triggered_only = yes
-	immediate = {
-		set_country_flag = ehof_destination_picked
-		random_system = {
-			limit = {
-				has_star_flag = ehof_destination_system@root
-			}
-			spawn_megastructure = {
-				type = "ehof_megastructure_wormhole_destination"
-				orbit_angle = @ehof_wormhole_angle
-				orbit_distance = @ehof_wormhole_distance
-				owner = root
-				init_effect = {
-					set_megastructure_flag = ehof_wormhole_nexus
-					set_megastructure_flag = ehof_wormhole_opened_by_@root
-				}
-			}
-		}
-		country_event = {
-			id = ehof_megastructure.203
-			days = 2
-		}		# Set to Active
-		country_event = {
-			id = ehof_megastructure.305
-			days = 4
-		}		# Sent fleets through
 	}
 }
 
@@ -2473,7 +2422,7 @@ country_event = {
 	immediate = {
 		random_system_within_border = {
 			limit = {
-				has_an_active_ehof = yes
+				giga_has_an_active_ehof = yes
 			}
 			every_fleet_in_system = {
 				limit = {
@@ -2574,7 +2523,10 @@ country_event = {
 		log = remove_wormholes
 		every_megastructure = {
 			limit = {
-				has_megastructure_flag = ehof_wormhole_nexus
+				OR = {
+					has_megastructure_flag = ehof_wormhole_node
+					has_megastructure_flag = ehof_wormhole_nexus
+				}
 				has_megastructure_flag = ehof_wormhole_opened_by_@root
 			}
 			remove_megastructure = this
@@ -2675,10 +2627,10 @@ country_event = {
 					}
 				}
 				or = {
-					has_megastructure = ehof_megastructure_phase1_idle
-					has_megastructure = ehof_megastructure_phase2_idle
-					has_megastructure = ehof_megastructure_phase3_idle
-					has_megastructure = ehof_megastructure_phase4_idle
+					has_megastructure = ehof_megastructure_phase1
+					has_megastructure = ehof_megastructure_phase2
+					has_megastructure = ehof_megastructure_phase3
+					has_megastructure = ehof_megastructure_phase4
 				}
 			}
 			log = remove_wormholes_and_resetting_ehof_to_cooldown
@@ -3934,7 +3886,7 @@ country_event = {
 			}
 			random_system_within_border = {
 				limit = {
-					has_an_active_ehof = yes
+					giga_has_an_active_ehof = yes
 				}
 				remove_star_flag = ehof_megastructure_system@root
 				every_system_megastructure = {
