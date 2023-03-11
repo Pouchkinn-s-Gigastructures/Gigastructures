@@ -1,0 +1,270 @@
+giga_amb_stockpile_calc = {
+	base = 0
+
+	# start with twice our income
+	weight = giga_amb_income
+	multiply = 2
+
+	# make sure it's not negative
+	min = 0
+
+	# cap to current stockpile
+	# this calculates how much should be drained from the stockpile at month start
+	# (whichver is less, income*2 or stockpile)
+	complex_trigger_modifier = {
+		trigger = resource_stockpile_compare
+		parameters = {
+			resource = giga_sr_amb_megaconstruction
+		}
+		mode = max
+	}
+}
+
+giga_amb_total_progress_calc = {
+	base = 0
+
+	add = giga_amb_total_income
+	multiply = giga_amb_ratio
+
+	min = 0.01
+}
+giga_amb_progress_divisor_calc = {
+	base = 0
+
+	weight = value:giga_empire_size_mult
+	multiply = @giga_amb_empire_size_ratio_penalty
+	add = 1
+
+	multiply = @giga_amb_ratio
+}
+
+giga_amb_building_technical_calc = {
+	base = 0
+
+	complex_trigger_modifier = {
+		trigger = count_owned_fleet
+		parameters = {
+			limit = {
+				any_owned_ship = {
+					is_constructing = megastructure
+					is_building_technical_mega = yes
+				}
+			}
+		}
+		mode = add
+	}
+}
+
+giga_amb_building_kilos_calc = {
+	base = 0
+
+	complex_trigger_modifier = {
+		trigger = count_owned_megastructure
+		parameters = {
+			limit = {
+				is_upgrading = yes
+				is_kilostructure = yes
+				not = { is_technical_mega = yes }
+			}
+		}
+		mode = weight
+	}
+
+	complex_trigger_modifier = {
+		trigger = count_owned_fleet
+		parameters = {
+			limit = {
+				any_owned_ship = {
+					is_constructing = megastructure
+					is_building_kilostructure = yes
+					not = { is_building_technical_mega = yes }
+				}
+			}
+		}
+		mode = add
+	}
+}
+
+giga_amb_building_megas_calc = {
+	base = 0
+
+	complex_trigger_modifier = {
+		trigger = count_owned_megastructure
+		parameters = {
+			limit = {
+				is_upgrading = yes
+				nor = {
+					is_kilostructure = yes
+					is_gigastructure = yes
+					is_technical_mega = yes
+				}
+			}
+		}
+		mode = weight
+	}
+
+	complex_trigger_modifier = {
+		trigger = count_owned_fleet
+		parameters = {
+			limit = {
+				any_owned_ship = {
+					is_constructing = megastructure
+					nor = {
+						is_building_kilostructure = yes
+						is_building_gigastructure = yes
+						is_building_technical_mega = yes
+					}
+				}
+			}
+		}
+		mode = add
+	}
+}
+
+giga_amb_building_gigas_calc = {
+	base = 0
+
+	complex_trigger_modifier = {
+		trigger = count_owned_megastructure
+		parameters = {
+			limit = {
+				is_upgrading = yes
+				is_gigastructure = yes
+				not = { is_technical_mega = yes }
+			}
+		}
+		mode = weight
+	}
+
+	complex_trigger_modifier = {
+		trigger = count_owned_fleet
+		parameters = {
+			limit = {
+				any_owned_ship = {
+					is_constructing = megastructure
+					is_building_gigastructure = yes
+					not = { is_building_technical_mega = yes }
+				}
+			}
+		}
+		mode = add
+	}
+}
+
+giga_amb_building_megas_calc_min = {
+	# technical megas aren't here at all as they don't contribute to the split
+	weight = giga_amb_building_kilos
+	divide = 2 # kilos count half towards the total
+	add = giga_amb_building_megas
+	add = giga_amb_building_gigas
+
+	min = 1
+}
+
+# calculate progress per mega
+giga_amb_progress_calc = {
+	base = 0
+	weight = giga_amb_total_progress
+
+	# base speed per project
+	divide = value:giga_amb_building_megas_calc_min
+}
+
+# apply diminishing returns
+# sqrt(speed - offset + 0.25) - 0.5 + offset
+# the 0.25 and 0.5 come from the derivative of y = sqrt(x) as offsets to make the derivative 1 at speed = 0
+giga_amb_progress_dr = {
+	weight = giga_amb_progress
+	
+	subtract = @giga_amb_dr_offset
+	add = 0.25
+	square_root = yes
+
+	subtract = 0.5
+	add = @giga_amb_dr_offset
+}
+
+giga_amb_cap_calc = {
+	base = 0
+	complex_trigger_modifier = {
+		trigger = check_variable
+		parameters = {
+			which = giga_amb_cap
+		}
+		mode = add
+	}
+}
+
+giga_amb_start_bonus = {
+	base = 1
+	subtract = value:giga_amb_midgame_fraction
+	multiply = 20
+
+	min = 1
+
+	round = yes
+}
+giga_amb_midgame_fraction = {
+	base = 0
+	weight = trigger:years_passed
+	divide = value:giga_amb_midgame_period
+
+	pow = 3 # diminish slower earlier, faster later
+}
+giga_amb_midgame_period = {
+	base = 0
+	weight = trigger:years_passed
+	subtract = trigger:mid_game_years_passed
+}
+
+giga_amb_supertensiles_target = {
+	base = 0
+	weight = giga_amb_cap
+	multiply = 20
+}
+
+
+giga_amb_ai_cap_progress_calc = {
+	base = 0
+
+	add = giga_amb_income
+	multiply = giga_amb_ratio
+
+	min = 0.01
+}
+giga_amb_ai_limit_calc = {
+	base = 0
+	weight = value:giga_amb_ai_cap_progress_calc
+	divide = 0.9 # split to keep max projects at at least this speed before DR
+
+	floor = yes
+	min = 1
+
+	# since the AI can't handle multiple ships at once for starting things, let's let them focus on fewer faster megas
+	square_root = yes
+	round = yes
+}
+
+# how many FE forges need converting into ST buildings on this world?
+giga_amb_fe_conversion = {
+	complex_trigger_modifier = {
+		trigger = num_buildings
+		parameters = {
+			type = building_nano_forge
+		}
+		mode = weight
+	}
+
+	divide = 2
+	subtract = 0.1
+	ceiling = yes
+}
+
+giga_amb_difficulty_multiplier = {
+	weight = trigger:is_difficulty
+	min = 1
+
+	subtract = 1
+	multiply = 0.25
+	add = 1
+}

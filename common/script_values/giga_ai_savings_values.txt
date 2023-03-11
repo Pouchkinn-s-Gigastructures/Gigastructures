@@ -1,0 +1,133 @@
+
+################################################################################################
+# Investment values
+
+giga_ai_savings_balance_divided_by_fraction = {
+	weight = giga_ai_savings_$CATEGORY$_$RESOURCE$
+	divide = giga_ai_savings_$CATEGORY$_fraction
+}
+
+giga_ai_savings_split_target = {
+	weight = giga_ai_savings_max
+	multiply = giga_ai_savings_$CATEGORY$_fraction
+
+	subtract = giga_ai_savings_$CATEGORY$_$RESOURCE$
+}
+
+giga_ai_savings_invest_dynamic_calc = {
+	weight = giga_ai_savings_investment
+	max = giga_ai_savings_split_total_$RESOURCE$
+
+	multiply = value:giga_ai_savings_invest_fraction|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|
+}
+giga_ai_savings_invest_fraction = {
+	weight = giga_ai_savings_split_target_$CATEGORY$_$RESOURCE$
+	divide = giga_ai_savings_split_total_$RESOURCE$
+}
+
+giga_ai_savings_invest_fixed_calc = {
+	weight = giga_ai_savings_investment
+	multiply = giga_ai_savings_$CATEGORY$_fraction
+}
+
+# multiply resource values grabbed in script by this to factor in mega build cost
+giga_ai_savings_multiplier = {
+	base = 1
+	divide = value:giga_ai_savings_divisor|RESOURCE|$RESOURCE$|
+}
+giga_ai_savings_divisor = {
+	base = 1
+
+	complex_trigger_modifier = {
+		trigger = check_modifier_value
+		parameters = {
+			modifier = megastructures_cost_mult
+		}
+		mode = add
+	}
+
+	complex_trigger_modifier = {
+		trigger = check_modifier_value
+		parameters = {
+			modifier = megastructures_$RESOURCE$_cost_mult
+		}
+		mode = add
+	}
+
+	min = 0.1 # limit as divisor
+}
+
+# fraction of assumed max storage for a resource
+giga_ai_savings_stockpile_threshold = {
+	weight = $BASE$
+	
+	complex_trigger_modifier = {
+		trigger = check_modifier_value
+		parameters = {
+			modifier = country_resource_max_add
+		}
+		mode = add
+	}
+
+	complex_trigger_modifier = {
+		trigger = check_modifier_value
+		parameters = {
+			modifier = country_resource_max_$RESOURCE$_add
+		}
+		mode = add
+	}
+
+	multiply = 0.9
+}
+
+giga_ai_savings_stockpile_fraction = {
+	base = 0
+
+	complex_trigger_modifier = {
+		trigger = resource_stockpile_compare
+		parameters = {
+			resource = $RESOURCE$
+		}
+		mode = weight
+	}
+
+	multiply = $PERCENT$
+	multiply = 0.01
+}
+
+giga_ai_savings_income_fraction = {
+	base = 0
+
+	complex_trigger_modifier = {
+		trigger = resource_income_compare
+		parameters = {
+			resource = $RESOURCE$
+		}
+		mode = weight
+	}
+
+	multiply = $PERCENT$
+	multiply = 0.01
+}
+
+
+################################################################################################
+# Cost adjustment
+
+giga_ai_savings_cost = {
+	base = 0
+
+	modifier = {
+		exists = owner
+		owner = {
+			is_ai = yes
+			has_country_flag = @giga_ai_savings_init
+		}
+
+		weight = owner.value:giga_ai_savings_cost_value|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|AMOUNT|$AMOUNT$|
+	}
+}
+giga_ai_savings_cost_value = {
+	weight = giga_ai_savings_$CATEGORY$_$RESOURCE$
+	max = $AMOUNT$
+}

@@ -1,0 +1,248 @@
+namespace = giga_amb
+
+# monthly modifier update
+country_event = {
+	id = giga_amb.001
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_global_flag = @giga_amb_flag
+		giga_country_uses_supertensiles = yes
+	}
+
+	immediate = {
+		giga_amb_apply_initial_country_modifiers_if_needed = yes
+		giga_amb_recalculate_country_modifiers_and_consume = yes
+	}
+}
+
+# yearly AI cap update
+country_event = {
+	id = giga_amb.002
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_global_flag = @giga_amb_flag
+		has_country_flag = @giga_amb_init_flag
+		giga_country_uses_supertensiles = yes
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				is_ai = yes
+			}
+			giga_amb_recalculate_ai_limit = yes
+		}
+		else = {
+			set_variable = { #Quick fix in case the player WAS an ai at some point
+				which = giga_amb_ai_limit_modifier
+				value = 0
+			}
+			remove_modifier = giga_amb_ai_limit
+		}
+	}
+}
+
+# mega built/upgraded/upgrade started
+country_event = {
+	id = giga_amb.101
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_global_flag = @giga_amb_flag
+		has_country_flag = @giga_amb_init_flag
+		giga_country_uses_supertensiles = yes
+	}
+
+	immediate = {
+		giga_amb_recalculate_split = yes # just recalculate the count
+	}
+}
+
+# construction ship killed
+country_event = {
+	id = giga_amb.102
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_global_flag = @giga_amb_flag
+		has_country_flag = @giga_amb_init_flag
+		giga_country_uses_supertensiles = yes
+
+		fromfrom = {
+			is_ship_class = shipclass_constructor
+		}
+	}
+
+	immediate = {
+		giga_amb_recalculate_split = yes # just recalculate the count
+	}
+}
+
+# construction ship gets a new order
+# unfortunately this can't just be for megas because the order could be cancelling a mega
+ship_event = {
+	id = giga_amb.103
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_global_flag = @giga_amb_flag
+		from = {
+			has_country_flag = @giga_amb_init_flag
+			giga_country_uses_supertensiles = yes
+		}
+
+		is_ship_class = shipclass_constructor
+	}
+
+	immediate = {
+		from = {
+			giga_amb_recalculate_split = yes # just recalculate the count
+		}
+	}
+}
+
+# full update on tech/trad/AP
+country_event = {
+	id = giga_amb.201
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_global_flag = @giga_amb_flag
+		has_country_flag = @giga_amb_init_flag
+		giga_country_uses_supertensiles = yes
+	}
+
+	immediate = {
+		giga_amb_apply_initial_country_modifiers_if_needed = yes
+		giga_amb_recalculate_country_modifiers = yes
+	}
+}
+
+# mega rendered ownerless
+# clear constant time modifier
+system_event = {
+	id = giga_amb.202
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_global_flag = @giga_amb_flag
+	}
+
+	immediate = {
+		from = {
+			remove_modifier = giga_amb_speed
+		}
+	}
+}
+
+# mega changes hands
+# recalculate constant time modifier
+country_event = {
+	id = giga_amb.203
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_global_flag = @giga_amb_flag
+	}
+
+	immediate = {
+		from = {
+			giga_amb_update_constant_speed = yes
+		}
+	}
+}
+
+# deposit discovery
+ship_event = {
+	id = giga_amb.1000
+	title = giga_amb.1000.name
+	desc = {
+		trigger = {
+			success_text = {
+				hidden:owner = { has_technology = giga_tech_amb_supertensiles }
+				text = giga_amb.1000.has_tech
+			}
+		}
+	}
+	desc = {
+		trigger = {
+			success_text = {
+				hidden:owner = { not = { has_technology = giga_tech_amb_supertensiles } }
+				text = giga_amb.1000.no_tech
+			}
+		}
+	}
+	picture = GFX_evt_surreal_visions
+	show_sound = event_default
+	location = from
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_global_flag = @giga_amb_flag
+		from = {
+			has_strategic_resource = yes
+			has_anomaly = no
+			has_resource = {
+				amount > 0
+				type = giga_sr_amb_megaconstruction
+			}
+		}
+		owner = {
+			is_country_type = default
+			NOT = {
+				has_country_flag = giga_sr_amb_megaconstruction_found
+			}
+		}
+	}
+
+	immediate = {
+		owner = { set_country_flag = giga_sr_amb_megaconstruction_found }
+	}
+
+	option = {
+		name = OK
+		custom_tooltip = giga_amb.1000.tooltip
+	}
+}
+
+# add tech when building
+country_event = {
+	id = giga_amb.1001
+	title = giga_amb.1001.name
+	desc = giga_amb.1001.desc
+	picture = GFX_evt_megastructure_construction
+	show_sound = event_default
+	location = from
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_global_flag = @giga_amb_flag
+		not = {
+			has_country_flag = giga_amb_tech_given
+		}
+	}
+
+	immediate = {
+		set_country_flag = giga_amb_tech_given
+	}
+
+	option = {
+		name = EXCELLENT
+		
+		add_research_option = giga_tech_amb_supertensiles
+
+		custom_tooltip = giga_amb.1001.tooltip
+	}
+}

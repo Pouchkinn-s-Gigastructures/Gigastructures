@@ -1,0 +1,270 @@
+orbital_elysium_0 = {
+	entity = giga_elysium_01_entity
+	construction_entity = giga_elysium_01_entity
+	construction_blocks_and_blocked_by = none
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_orbital_elysium }
+
+	entity_offset = { x = -7 y = -7 }
+
+	build_time = 1800
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			alloys = 1500
+			influence = 150
+		}
+	}
+
+	potential = {
+		NOT = { has_global_flag = giga_habitats_disabled }
+		is_giga_one_planet_origin = no
+		has_technology = giga_tech_orbital_elysium
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_surveyed_planet"			is_surveyed = { who = prev.from status = yes } }
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+			custom_tooltip = {
+				fail_text = "requires_colonized_planet_orbital_ring"
+				is_colony = yes
+				exists = owner
+				exists = controller
+				controller = { is_same_value = prev.owner }
+			}
+			custom_tooltip = { 
+				fail_text = "must_build_around_developed_planet"
+				or = {
+					# origin is exempt from needing 10 pops
+					from = { has_origin = origin_elysium }
+					has_upgraded_capital = yes
+				}
+			}
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	NOT = { has_planet_flag = has_orbital_elysium } }
+		}
+	}
+
+	ai_weight = {
+		#weight = value:giga_ai_base_kilo
+
+		weight = 0
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+			save_event_target_as = giga_elysium_host
+			giga_set_has_mega_flag = yes
+			set_planet_flag = has_orbital_elysium
+
+			add_modifier = {
+				modifier = giga_elysium_host_planet
+			}
+			remove_modifier = resort_colony
+			remove_modifier = slave_colony
+
+			giga_set_elysium_buildings = yes
+			set_planet_flag = can_organic_assemble_flag
+
+			# fire event for elysium origin empires
+			planet_event = { id = giga_elysium_origin.100 }
+		}
+		from = {
+			if = {
+				limit = {
+					not = { has_origin = origin_elysium }
+					fromfrom = {
+						not = { 
+							has_megastructure_flag = origin_elysium # flag applied by auto-built elysiums from the origin to hide the notification
+						}
+					}
+				}
+				set_timed_country_flag = { flag = has_recently_built_giga_orbital_elysiums years = 20 }
+				country_event = { id = giga_dialog.1101 }	# Notification
+			}
+			change_variable = { which = giga_orbital_elysiums value = 1 }
+			change_variable = { which = giga_current_elysium value = 1 }
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_63
+					}
+				}
+				set_country_flag = giga_achievement_63
+				set_timed_country_flag = { flag = giga_achievement_63_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+		spawn_planet = {
+			class = "pc_giga_elysium"
+			location = fromfrom.planet
+			orbit_location = yes
+			orbit_angle_offset = 45
+			orbit_distance_offset = 9.899
+			size = 5
+			has_ring = no
+
+			init_effect = {
+				set_surveyed = { surveyed = yes surveyor = from }
+				set_all_comms_surveyed = yes
+				clear_blockers = yes
+				set_planet_flag = forbid_guillis_planet_modifiers
+				set_planet_flag = megastructure
+				set_planet_flag = colony_event			# Vanilla uses to prevent unwanted events on planets
+				set_planet_flag = giga_elysium
+
+				add_deposit = d_giga_elysium_buildings
+
+				giga_get_species_for_colony = {
+					TARGET = this
+					WHO = from
+				}
+				start_colony = {
+					owner = from
+					species = event_target:giga_colony_species
+				}
+
+				set_name = {
+					key = "GIGA_ELYSIUM_PLANET_NAME"
+					variable_string = "[event_target:giga_elysium_host.GetName]"
+				}
+			}
+		}
+		remove_megastructure = fromfrom
+	}
+}
+
+orbital_elysium_origin_platform_0 = {
+	entity = ""
+	construction_blocks_and_blocked_by = none
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	entity_offset = { x = -7 y = -7 }
+	show_in_outliner = no
+
+	potential = { always = no }
+	possible = { always = no }
+}
+
+orbital_elysium_origin_platform_1 = {
+	entity = giga_elysium_01_entity
+	construction_entity = giga_elysium_01_entity
+	construction_blocks_and_blocked_by = none
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+
+	entity_offset = { x = -7 y = -7 }
+	show_in_outliner = no
+
+	build_time = 600
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			alloys = 1500
+			influence = 150
+		}
+	}
+
+	potential = {
+		NOT = { has_global_flag = giga_habitats_disabled }
+		is_giga_one_planet_origin = no
+		has_technology = giga_tech_orbital_elysium
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+	}
+
+	upgrade_from = {
+		orbital_elysium_origin_platform_0
+	}
+
+	ai_weight = {
+		weight = 0
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+			save_event_target_as = giga_elysium_host
+			giga_set_has_mega_flag = yes
+			set_planet_flag = has_orbital_elysium
+
+			add_modifier = {
+				modifier = giga_elysium_host_planet
+			}
+			remove_modifier = resort_colony
+			remove_modifier = slave_colony
+
+			giga_set_elysium_buildings = yes
+			set_planet_flag = can_organic_assemble_flag
+
+			# fire event for elysium origin empires
+			planet_event = { id = giga_elysium_origin.100 }
+		}
+		from = {
+			change_variable = { which = giga_orbital_elysiums value = 1 }
+			change_variable = { which = giga_current_elysium value = 1 }
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_63
+					}
+				}
+				set_country_flag = giga_achievement_63
+				set_timed_country_flag = { flag = giga_achievement_63_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+		spawn_planet = {
+			class = "pc_giga_elysium"
+			location = fromfrom.planet
+			orbit_location = yes
+			orbit_angle_offset = 45
+			orbit_distance_offset = 9.899
+			size = 5
+			has_ring = no
+
+			init_effect = {
+				set_surveyed = { surveyed = yes surveyor = from }
+				set_all_comms_surveyed = yes
+				clear_blockers = yes
+				set_planet_flag = forbid_guillis_planet_modifiers
+				set_planet_flag = megastructure
+				set_planet_flag = colony_event			# Vanilla uses to prevent unwanted events on planets
+				set_planet_flag = giga_elysium
+
+				add_deposit = d_giga_elysium_buildings
+
+				giga_get_species_for_colony = {
+					TARGET = this
+					WHO = from
+				}
+				start_colony = {
+					owner = from
+					species = event_target:giga_colony_species
+				}
+
+				set_name = {
+					key = "GIGA_ELYSIUM_PLANET_NAME"
+					variable_string = "[event_target:giga_elysium_host.GetName]"
+				}
+
+				planet_event = { id = giga_mega.1000 } # apply locale modifiers
+			}
+		}
+		remove_megastructure = fromfrom
+	}
+}

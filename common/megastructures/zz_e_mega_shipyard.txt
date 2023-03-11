@@ -1,0 +1,278 @@
+mega_shipyard_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	entity_offset = { x = -27 y = -27 }
+	prerequisites = { "tech_mega_shipyard" }
+
+	build_time = 1800
+	resources = {
+		category = giga_mega_shipyard
+		cost = {
+			alloys = 3000
+			unity = @giga_mega_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|alloys|AMOUNT|3000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+		upkeep = { energy = 5 }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = utility RESOURCE = alloys AMOUNT = 3000 }
+		giga_ai_savings_withdraw = { CATEGORY = utility RESOURCE = unity  AMOUNT = @giga_mega_unity_cost }
+	}
+	on_build_cancel = {
+		giga_ai_savings_refund = { CATEGORY = utility RESOURCE = alloys }
+		giga_ai_savings_refund = { CATEGORY = utility RESOURCE = unity }
+	}
+
+	potential = {
+		NOT = { has_global_flag = vanilla_shipyard_disabled }
+		OR = {
+			check_variable = { which = giga_vanilla_shipyard_cap value = 0 }						# No Cap
+			check_variable = { which = giga_current_vanilla_shipyard value < giga_vanilla_shipyard_cap }
+		}
+	}
+
+	possible = {
+		exists = starbase
+		custom_tooltip = { fail_text = "requires_inside_border"			is_inside_border = from }
+		custom_tooltip = { fail_text = "requires_surveyed_system"		giga_system_is_surveyed = yes }
+		custom_tooltip = { fail_text = "requires_no_binary_trinary"		giga_is_bitrinary = no }
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					check_variable = { which = giga_vanilla_shipyard_cap value = 0 }						# No Cap
+					check_variable = { which = giga_current_vanilla_shipyard value < giga_vanilla_shipyard_cap }
+				}
+			}
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "must_build_around_star"					is_star = yes }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"		planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_no_anomaly"					has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_standard_planet_class"			giga_is_standard_star = yes }
+		}
+	}
+
+	ai_weight = {
+		# weight = 100	# Default = 100
+
+		# # Can we afford the upkeep
+
+		# # Do we want the production
+
+		# # Is this system a good location?
+		# modifier = { factor = 0.1	any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } }
+		# modifier = { factor = 0.5	any_neighbor_system = { any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } } }
+
+		# # Do we lean towards this from federation/ethic/civic?
+		# modifier = { factor = 2		from = { has_federation = yes federation = { has_federation_type = military_federation } } }
+		# modifier = { factor = 3		from = { has_ethic = ethic_fanatic_militarist } }
+		# modifier = { factor = 1.5	from = { has_ethic = ethic_militarist } }
+		# modifier = { factor = 1.5	from = { has_civic = civic_machine_terminator } }
+		# modifier = { factor = 1.5	from = { has_civic = civic_fanatic_purifiers } }
+		# modifier = { factor = 1.5	from = { has_civic = civic_hive_devouring_swarm } }
+		# modifier = { factor = 2		from = { is_at_war = yes } }
+
+		# # How many of this megastructure can the AI build?
+		# modifier = { factor = 0.00 from = { has_country_flag = has_recently_built_mega_shipyard } }
+		# modifier = {
+		# 	factor = 0
+		# 	from = {
+		# 		OR = {
+		# 			has_megastructure = mega_shipyard_0
+		# 			has_megastructure = mega_shipyard_1
+		# 			has_megastructure = mega_shipyard_2
+		# 			has_megastructure = mega_shipyard_ruined
+		# 		}
+		# 	}
+		# }
+
+		weight = value:giga_ai_base_mega
+
+		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|40|
+		mult = value:giga_ai_unlocks_galwonders
+		mult = value:giga_ai_core_territory
+		mult = value:giga_ai_prevent_spam|MEGA|mega_shipyard|
+		mult = value:giga_ai_weight_savings|CATEGORY|utility|RESOURCE|alloys|AMOUNT|33000|
+		mult = value:giga_ai_militarist_plus
+
+		modifier = { factor = 2		from = { has_federation = yes federation = { has_federation_type = military_federation } } }
+		modifier = { factor = 1.5	from = { is_homicidal = yes } }
+		modifier = { factor = 2		from = { is_at_war = yes } }
+	}
+
+	on_build_complete = {
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_mega_shipyard years = 20 }
+			set_country_flag = built_mega_shipyard_site
+			change_variable = { which = giga_current_vanilla_shipyard value = 1 }
+		}
+		fromfrom.planet = {
+			giga_set_has_mega_flag = yes
+			if = { limit = { has_orbital_station = yes } orbital_station = { dismantle = yes } }
+		}
+	}
+}
+
+mega_shipyard_1 = {
+	entity = "mega_shipyard_01_stage_1_entity"
+	construction_entity = "mega_shipyard_01_stage_1_entity"
+	portrait = GFX_megastructure_construction_background
+	place_entity_on_planet_plane = no
+	entity_offset = { x = -27 y = -27 }
+	upgrade_from = { mega_shipyard_0 }
+	prerequisites = { "tech_mega_shipyard" }
+	ship_modifier = { ship_starting_experience_add = 100 }
+	station_modifier = { starbase_shipyard_capacity_add = 5 }
+	country_modifier = { starbase_shipyard_build_speed_mult = 0.33 }
+
+	build_time = 1800
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = 10000 unity = @giga_mega_unity_cost }
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|alloys|AMOUNT|10000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+		upkeep = { energy = 10 }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = utility RESOURCE = alloys AMOUNT = 10000 }
+		giga_ai_savings_withdraw = { CATEGORY = utility RESOURCE = unity  AMOUNT = @giga_mega_unity_cost }
+	}
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = { from = { country_event = { id = feda.1 } } }
+}
+
+mega_shipyard_2 = {
+	entity = "mega_shipyard_01_stage_2_entity"
+	construction_entity = "mega_shipyard_01_stage_2_entity"
+	portrait = GFX_megastructure_construction_background
+	place_entity_on_planet_plane = no
+	entity_offset = { x = -27 y = -27 }
+	upgrade_from = { mega_shipyard_1 }
+	prerequisites = { "tech_mega_shipyard" }
+	ship_modifier = { ship_starting_experience_add = 100 }
+	station_modifier = { starbase_shipyard_capacity_add = 10 }
+	country_modifier = { starbase_shipyard_build_speed_mult = 0.67 }
+
+	build_time = 1800
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = 10000 unity = @giga_mega_unity_cost }
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|alloys|AMOUNT|10000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+		upkeep = { energy = 20 }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = utility RESOURCE = alloys AMOUNT = 10000 }
+		giga_ai_savings_withdraw = { CATEGORY = utility RESOURCE = unity  AMOUNT = @giga_mega_unity_cost }
+	}
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = { from = { country_event = { id = feda.2 } } }
+}
+
+mega_shipyard_3 = {
+	entity = "mega_shipyard_01_stage_3_entity"
+	construction_entity = "mega_shipyard_01_stage_3_entity"
+	portrait = "GFX_megastructure_mega_shipyard_background"
+	place_entity_on_planet_plane = no
+	entity_offset = { x = -27 y = -27 }
+	upgrade_from = { mega_shipyard_2 }
+	prerequisites = { "tech_mega_shipyard" }
+	show_prereqs = yes
+	ship_modifier = { ship_starting_experience_add = 100 }
+	station_modifier = { starbase_shipyard_capacity_add = 20 }
+	country_modifier = { starbase_shipyard_build_speed_mult = 1 }
+
+	build_time = 1800
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = 10000 unity = @giga_mega_unity_cost }
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|alloys|AMOUNT|10000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+		upkeep = { energy = 40 }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = utility RESOURCE = alloys AMOUNT = 10000 }
+		giga_ai_savings_withdraw = { CATEGORY = utility RESOURCE = unity  AMOUNT = @giga_mega_unity_cost }
+	}
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		set_star_flag = mega_shipyard_built
+		from = {
+			set_country_flag = has_built_or_repaired_megastructure
+			country_event = { id = feda.3 }
+		}
+	}
+}
+
+# Ruined mega shipyard
+mega_shipyard_ruined = {
+	entity = "mega_shipyard_01_destroyed_entity"
+	construction_entity = "mega_shipyard_01_destroyed_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	entity_offset = { x = -27 y = -27 }
+	potential = { always = no }
+	resources = { category = giga_megastructures }
+}
+
+# Restored mega shipyard
+mega_shipyard_restored = {
+	entity = "mega_shipyard_01_stage_3_entity"
+	construction_entity = "mega_shipyard_01_stage_3_entity"
+	portrait = "GFX_megastructure_mega_shipyard_background"
+	place_entity_on_planet_plane = no
+	entity_offset = { x = -27 y = -27 }
+	upgrade_from = { mega_shipyard_ruined }
+	ship_modifier = { ship_starting_experience_add = 100 }
+	station_modifier = { starbase_shipyard_capacity_add = 20 }
+	country_modifier = { starbase_shipyard_build_speed_mult = 1 }
+
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = 10000 unity = @giga_mega_repair_unity_cost }
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|alloys|AMOUNT|10000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|utility|RESOURCE|unity|AMOUNT|@giga_mega_repair_unity_cost| }
+		upkeep = { energy = 40 }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = utility RESOURCE = alloys AMOUNT = 10000 }
+		giga_ai_savings_withdraw = { CATEGORY = utility RESOURCE = unity  AMOUNT = @giga_mega_unity_cost }
+		fromfrom = { set_graphical_culture = root.from }
+	}
+
+	possible = {
+		exists = from
+		from = { has_technology = tech_mega_engineering }
+	}
+
+	ai_weight = { factor = value:giga_ai_base_repairs } # If we can build it, we will build it
+	on_build_complete = {
+		set_star_flag = mega_shipyard_built
+		giga_remove_system_debris = yes
+		from = {
+			set_country_flag = has_built_or_repaired_megastructure
+			country_event = { id = feda.6 }
+		}
+		fromfrom.planet = {
+			giga_set_has_mega_flag = yes
+			if = { limit = { has_orbital_station = yes } orbital_station = { dismantle = yes } }
+		}
+	}
+}

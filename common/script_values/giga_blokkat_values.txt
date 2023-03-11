@@ -1,0 +1,88 @@
+
+# Blokkat system score for choosing where to move the vester to
+# will move to the valid system with the LOWEST score
+#
+# see event giga_blokkat.7003 in giga_021_blokkat.txt
+#
+# this = system to evaluate
+blokkat_system_score = {
+	# euclidean distance to system
+	complex_trigger_modifier = {
+		trigger = distance
+		parameters = {
+			source = event_target:current_blokkat_mothership_system
+			type = euclidean
+		}
+		mode = weight
+	}
+
+	add = value:blokkat_system_score_away_bias
+
+	# bias towards rim systems due to naturally increasing star density in the core
+	multiply = value:blokkat_system_score_rim_bias
+
+
+}
+
+# adjustment to favour rimward systems to counter the naturally increasing density towards the core
+blokkat_system_score_rim_bias = {
+	# distance of the vester's current position from the core, in percent
+	weight = event_target:current_blokkat_mothership_system.trigger:distance_to_core_percent
+
+	# subtract the distance of the evaluated system from the core
+	subtract = trigger:distance_to_core_percent
+
+	# the values *should* roughly be in the range -/+100 since the method returns percent, so divide by 100
+	divide = 100
+
+	# make it so equal distance is 1, very rimward is 0 and very coreward is 2
+	add = 1
+
+	# adjust potency
+	square = yes
+
+	# make sure it doesn't go negative
+	# or to zero, as that causes them to skip right across the galaxy to very far out systems sometimes
+	min = 0.05
+}
+
+# adjustment to favour systems away from the player capital as measured on arrival
+blokkat_system_score_away_bias = {
+
+	# distance from the vester to the player capital at time of arrival
+	complex_trigger_modifier = {
+		trigger = distance
+		parameters = {
+			source = event_target:blokkat_capital_star
+			type = euclidean
+		}
+		trigger_scope = event_target:current_blokkat_mothership_system
+		mode = weight
+	}
+
+	# subtract distance from the candidate system to the player capital at time of arrival
+	complex_trigger_modifier = {
+		trigger = distance
+		parameters = {
+			source = event_target:blokkat_capital_star
+			type = euclidean
+		}
+		mode = subtract
+	}
+
+	multiply = 0.25 #0.1
+
+	min = 0
+}
+
+# distance from the selected player capital for picking a spawn point
+blokkat_spawn_distance = {
+	complex_trigger_modifier = {
+		trigger = distance
+		parameters = {
+			source = event_target:blokkat_capital_star
+			type = euclidean
+		}
+		mode = weight
+	}
+}

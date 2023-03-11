@@ -1,0 +1,814 @@
+has_frameworld_outpost = {
+	has_planet_flag = "giga_frameworld_outpost"
+}
+
+can_have_frameworld_outpost = {
+	custom_tooltip = { fail_text = "requires_surveyed_planet"				is_surveyed = { who = prev.from status = yes } }
+	custom_tooltip = { fail_text = "requires_no_anomaly"					has_anomaly = no }
+	custom_tooltip = { fail_text = "requires_not_asteroid"					is_asteroid = no }
+	#custom_tooltip = { fail_text = "must_build_around_habitable_planet"		is_colonizable = yes is_artificial = no }
+
+	custom_tooltip = { fail_text = "must_build_around_habitable_planet"		
+		or = {
+			and = { is_colonizable = yes is_artificial = no }
+
+			is_planet_class = pc_giga_planetary_computer
+			is_planet_class = pc_ringworld_habitable
+			is_planet_class = pc_shattered_ring_habitable
+			#is_planet_class = pc_habitat
+			#is_planet_class = pc_gigaorbital_ring
+			is_planet_class = pc_habitable_gas_giant
+			#is_planet_class = pc_interstellar_habitat
+			is_planet_class = pc_interstellar_ringworld_habitable
+			is_planet_class = pc_giga_penrose_habitable
+			is_planet_class = pc_ringworld_city
+			is_planet_class = pc_ringworld_machine
+			is_planet_class = pc_ringworld_hive
+			#is_planet_class = pc_equatorial_shipyard
+			is_planet_class = pc_birch
+			is_planet_class = pc_squareworld_habitable
+			#is_planet_class = pc_virtual_reality
+			#is_planet_class = pc_virtual_industry
+			#is_planet_class = pc_virtual_stellar_industry
+			is_planet_class = pc_alderson_slice_gaia
+			is_planet_class = pc_alderson_slice_pc
+			is_planet_class = pc_alderson_slice_ecu
+			is_planet_class = pc_alderson_slice_hive
+			is_planet_class = pc_alderson_slice_machine
+			is_planet_class = pc_alderson_slice_gaia_shattered
+			#is_planet_class = pc_pouchkinn_black_hole
+			is_planet_class = pc_flat_world
+		}
+	}
+
+	custom_tooltip = { fail_text = "requires_not_star"						is_star = no }
+	#custom_tooltip = { fail_text = "requires_non_giga_habitable_structure"	giga_habitable_structure = no }
+	custom_tooltip = { fail_text = "requires_no_frameworld_outpost" 		has_frameworld_outpost = no }
+	custom_tooltip = { fail_text = "requires_no_colony"						is_colony = no }
+}
+
+frameworld_can_harvest_asteroid = {
+	hidden_trigger = {
+		NOT = {
+			is_planet_class = pc_giga_empty_space_asteroid
+		}
+	}
+	custom_tooltip = { fail_text = "requires_harvestable_asteroid"		is_asteroid = yes }
+	custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+	custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+	custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+}
+
+frameworld_can_salvage_habitat = {
+	custom_tooltip = { fail_text = "requires_salvageable_habitat"		is_planet_class = pc_habitat }
+	custom_tooltip = { fail_text = "requires_no_colony"					is_colony = no }
+	custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+	custom_tooltip = { fail_text = "requires_surveyed_planet"			is_surveyed = { who = prev.from status = yes } }
+}
+
+frameworld_asteroid_has_rare_resource = {
+	or = {
+		has_resource = { type = volatile_motes amount > 0 }
+		has_resource = { type = exotic_gases amount > 0 }
+		has_resource = { type = rare_crystals amount > 0 }
+
+		has_resource = { type = sr_living_metal amount > 0 }
+		has_resource = { type = sr_zro amount > 0 }
+		has_resource = { type = sr_dark_matter amount > 0 }
+		has_resource = { type = nanites amount > 0 }
+	}
+}
+
+is_frameworld_outpost = {
+	or = {
+		is_megastructure_type = frameworld_outpost_0
+		is_megastructure_type = frameworld_outpost_marked_0
+		is_megastructure_type = frameworld_outpost_wreck_0
+		is_megastructure_type = frameworld_outpost_wreck_1
+	}
+}
+
+is_active_frameworld_outpost = {
+	or = {
+		is_megastructure_type = frameworld_outpost_0
+		is_megastructure_type = frameworld_outpost_marked_0
+	}
+}
+
+frameworld_needs_more_maintenance_drones = {
+	free_amenities < 0
+	num_assigned_jobs = {
+		job = maintenance_drone
+		value >= value:frameworld_planet_maintenance_drone_jobs
+	}
+}
+
+# does the planet associated with this outpost have a buff to a specific job's output of a resource?
+# takes the sector governor's bonuses into account so stuff like +science% doesn't make science appear
+frameworld_outpost_planet_has_multiplier = {
+	planet = {
+		or = {
+			# resource output
+			check_modifier_value = {
+				modifier = planet_jobs_$RESOURCE$_produces_mult
+				value > 0
+			}
+
+			# job output
+			check_modifier_value = {
+				modifier = planet_$JOB$_produces_mult
+				value > 0
+			}
+
+			# job resource output
+			check_modifier_value = {
+				modifier = planet_$JOB$_$RESOURCE$_produces_mult
+				value > 0
+			}
+
+			# category resource output
+			check_modifier_value = {
+				modifier = planet_$CATEGORY$_$RESOURCE$_produces_mult
+				value > 0
+			}
+
+			# flat resource output
+			check_modifier_value = {
+				modifier = planet_$JOB$_$RESOURCE$_produces_add
+				value > 0
+			}
+		}
+	}
+}
+
+can_rebuild_frameworld_defensive_station = {
+	has_ground_combat = no
+	not = { 
+		solar_system = {
+			or = {
+				and = {
+					exists = starbase
+					exists = starbase.controller
+					starbase.controller = {
+						not = { is_same_value = root.owner }
+					}
+				}
+				any_fleet_in_system = {
+					controller = {
+						is_hostile_to = root.owner
+					}
+				}
+			}
+		}
+	}
+}
+
+
+
+###############################################################################################################
+###############################################################################################################
+#          AUDIT
+###############################################################################################################
+###############################################################################################################
+
+frameworld_should_conduct_audit = {
+	OR = {
+		frameworld_audit_foundry1 = yes
+		frameworld_audit_foundry2 = yes
+
+		frameworld_audit_energygrid1 = yes
+		frameworld_audit_mineralhub1 = yes
+		frameworld_audit_energygrid2 = yes
+		frameworld_audit_mineralhub2 = yes
+
+		frameworld_audit_crime = yes
+
+		frameworld_audit_sanctuary1 = yes
+		frameworld_audit_sanctuary2 = yes
+		frameworld_audit_sanctuary3 = yes
+
+		frameworld_audit_supercomputer = yes
+
+		frameworld_audit_refinery = yes
+
+		frameworld_audit_science1 = yes
+		frameworld_audit_science2 = yes
+		frameworld_audit_science3 = yes
+
+		frameworld_audit_hydroponics = yes
+
+		frameworld_audit_upgrade_penrose = yes
+		frameworld_audit_upgrade_decompressor = yes
+		frameworld_audit_upgrade_gaia = yes
+		frameworld_audit_upgrade_advanced_city = yes
+		frameworld_audit_upgrade_advanced_industrial = yes
+		frameworld_audit_upgrade_advanced_sanctuary = yes
+		frameworld_audit_upgrade_computing_complex = yes
+		frameworld_audit_upgrade_maginot = yes
+	}
+}
+
+###############################################################################################################
+
+frameworld_audit_foundry1 = {
+	has_building = building_foundry_1
+
+	exists = owner
+	owner = {
+		has_technology = "tech_alloys_1"
+		has_monthly_income = {
+			resource = volatile_motes
+			value >= 2
+		}
+		resource_stockpile_compare = {
+			resource = minerals
+			value >= @b2_minerals
+		}
+		resource_stockpile_compare = {
+			resource = volatile_motes
+			value >= @b3_rare_cost
+		}
+	}
+}
+
+frameworld_audit_foundry2 = {
+	has_building = building_foundry_2
+
+	exists = owner
+	owner = {
+		has_technology = "tech_alloys_2"
+		has_monthly_income = {
+			resource = volatile_motes
+			value >= 2
+		}
+		resource_stockpile_compare = {
+			resource = minerals
+			value >= @b3_minerals
+		}
+		resource_stockpile_compare = {
+			resource = volatile_motes
+			value >= @b4_rare_cost
+		}
+	}
+}
+
+frameworld_audit_crime = {
+	has_building = building_sentinel_posts
+	or = {
+		free_district_slots > 2
+		and = {
+			free_district_slots > 0
+			free_building_slots = 0
+		}
+	}
+
+	exists = owner
+	owner = {
+		has_technology = "tech_colonial_centralization"
+
+		has_monthly_income = {
+			resource = rare_crystals
+			value >= 1
+		}
+	}
+}
+
+frameworld_audit_science1 = {
+	num_buildings = {
+		type = building_research_lab_1
+		value >= 2
+	}
+	or = {
+		free_district_slots > 2
+		and = {
+			free_district_slots > 0
+			free_building_slots = 0
+		}
+	}
+
+	exists = owner
+	owner = {
+		has_technology = "tech_basic_science_lab_2"
+		has_monthly_income = {
+			resource = exotic_gases
+			value > 0
+		}
+		resource_stockpile_compare = {
+			resource = exotic_gases
+			value >= 50
+		}
+	}
+}
+
+frameworld_audit_science2 = {
+	has_building = building_research_lab_2
+	or = {
+		free_district_slots > 2
+		and = {
+			free_district_slots > 0
+			free_building_slots = 0
+		}
+	}
+
+	exists = owner
+	owner = {
+		has_technology = "tech_basic_science_lab_2"
+	}
+}
+
+frameworld_audit_science3 = {
+	has_building = building_research_lab_3
+	or = {
+		free_district_slots > 3
+		and = {
+			free_district_slots > 1
+			free_building_slots = 0
+		}
+	}
+
+	exists = owner
+	owner = {
+		has_technology = "tech_basic_science_lab_3"
+	}
+}
+
+frameworld_audit_unity1 = {
+	num_buildings = {
+		type = building_uplink_node
+		value >= 2
+	}
+	or = {
+		free_district_slots > 2
+		and = {
+			free_district_slots > 0
+			free_building_slots = 0
+		}
+	}
+
+	exists = owner
+	owner = {
+		has_technology = "tech_colonial_bureaucracy"
+		has_monthly_income = {
+			resource = rare_crystals
+			value > 0
+		}
+		resource_stockpile_compare = {
+			resource = rare_crystals
+			value >= 50
+		}
+	}
+}
+
+frameworld_audit_unity2 = {
+	has_building = building_network_junction
+	or = {
+		free_district_slots > 2
+		and = {
+			free_district_slots > 0
+			free_building_slots = 0
+		}
+	}
+
+	exists = owner
+	owner = {
+		has_technology = "tech_colonial_bureaucracy"
+	}
+}
+
+frameworld_audit_unity3 = {
+	has_building = building_system_conflux
+	or = {
+		free_district_slots > 3
+		and = {
+			free_district_slots > 1
+			free_building_slots = 0
+		}
+	}
+
+	exists = owner
+	owner = {
+		has_technology = "tech_colonial_bureaucracy"
+	}
+}
+
+frameworld_audit_energygrid1 = {
+	nor = {
+		has_building = building_energy_grid
+		has_building = building_energy_nexus
+	}
+	or = {
+		free_building_slots > 0
+		has_building = building_drone_storage
+		has_building = building_drone_megastorage
+	}
+
+	exists = owner
+	owner = {
+		has_technology = "tech_power_hub_1"
+		resource_stockpile_compare = {
+			resource = minerals
+			value >= 300
+		}
+		resource_stockpile_compare = {
+			resource = alloys
+			value >= 100
+		}
+	}
+}
+
+frameworld_audit_energygrid2 = {
+	has_building = building_energy_grid
+
+	exists = owner
+	owner = {
+		has_technology = "tech_power_hub_2"
+		has_monthly_income = {
+			resource = exotic_gases
+			value >= -1
+		}
+		resource_stockpile_compare = {
+			resource = minerals
+			value >= 900
+		}
+		resource_stockpile_compare = {
+			resource = alloys
+			value >= 150
+		}
+		resource_stockpile_compare = {
+			resource = exotic_gases
+			value >= 50
+		}
+	}
+}
+
+frameworld_audit_mineralhub1 = {
+	nor = {
+		has_building = building_mineral_purification_plant
+		has_building = building_mineral_purification_hub
+	}
+	or = {
+		free_building_slots > 0
+		has_building = building_drone_storage
+		has_building = building_drone_megastorage
+	}
+
+	exists = owner
+	owner = {
+		has_technology = "tech_mineral_purification_1"
+		resource_stockpile_compare = {
+			resource = minerals
+			value >= 300
+		}
+		resource_stockpile_compare = {
+			resource = alloys
+			value >= 100
+		}
+	}
+}
+
+frameworld_audit_mineralhub2 = {
+	has_building = building_mineral_purification_plant
+
+	exists = owner
+	owner = {
+		has_technology = "tech_mineral_purification_2"
+		has_monthly_income = {
+			resource = volatile_motes
+			value >= -1
+		}
+		resource_stockpile_compare = {
+			resource = minerals
+			value >= 900
+		}
+		resource_stockpile_compare = {
+			resource = alloys
+			value >= 150
+		}
+		resource_stockpile_compare = {
+			resource = volatile_motes
+			value >= 50
+		}
+	}
+}
+
+frameworld_audit_supercomputer = {
+	not = {
+		has_building = building_supercomputer
+	}
+	or = {
+		free_building_slots > 0
+		has_building = building_drone_storage
+		has_building = building_drone_megastorage
+	}
+
+	exists = owner
+	owner = {
+		has_technology = "tech_global_research_initiative"
+		resource_stockpile_compare = {
+			resource = minerals
+			value >= 600
+		}
+	}
+}
+
+frameworld_audit_hydroponics = {
+	has_building = building_hydroponics_farm
+	or = {
+		free_district_slots > 2
+		and = {
+			free_district_slots > 0
+			free_building_slots = 0
+		}
+	}
+}
+
+frameworld_audit_refinery = {
+	or = {
+		has_building = building_chemical_plant
+		has_building = building_crystal_plant
+		has_building = building_refinery
+	}
+	or = {
+		free_district_slots > 2
+		and = {
+			free_district_slots > 0
+			free_building_slots = 0
+		}
+	}
+
+	exists = owner
+	owner = {
+		or = {
+			has_technology = "tech_volatile_motes"
+        	has_technology = "tech_exotic_gases"
+        	has_technology = "tech_rare_crystals"
+		}
+	}
+}
+
+frameworld_audit_sanctuary1 = {
+	num_buildings = {
+		type = building_organic_sanctuary
+		value >= 2
+	}
+
+	or = {
+		free_district_slots > 3
+		and = {
+			free_district_slots > 0
+			free_building_slots = 0
+			not = { has_available_jobs = bio_trophy }
+		}
+	}
+
+	exists = owner
+	owner = {
+		is_ai = yes
+		has_valid_civic = civic_machine_servitor
+		has_technology = tech_paradise_dome
+	}
+}
+
+frameworld_audit_sanctuary2 = {
+	has_building = building_organic_paradise
+
+	or = {
+		free_district_slots > 3
+		and = {
+			free_district_slots > 0
+			free_building_slots = 0
+			not = { has_available_jobs = bio_trophy }
+		}
+	}
+
+	exists = owner
+	owner = {
+		is_ai = yes
+		has_valid_civic = civic_machine_servitor
+		has_technology = tech_paradise_dome
+	}
+}
+
+frameworld_audit_sanctuary3 = {
+	or = {
+		has_building = building_organic_sanctuary
+		has_building = building_organic_paradise
+	}
+
+	has_available_jobs = bio_trophy
+
+	exists = owner
+	owner = {
+		is_ai = yes
+		has_valid_civic = civic_machine_servitor
+	}
+}
+
+###############################################################################################################
+
+frameworld_audit_upgrade_penrose = {
+	exists = owner
+	nor = { 
+		has_deposit = d_frameworld_penrose
+		has_planet_flag = frameworld_penrose
+		has_planet_flag = frameworld_upgrade 
+		has_planet_flag = frameworld_ai_upgrade_cooldown
+	}
+
+	owner = {
+		has_technology = giga_tech_penrose_sphere_2
+		resource_stockpile_compare = {
+			resource = alloys
+			value >= 5000 # leave a little spare...
+			mult = giga_frameworld_megastructure_cost
+		}
+		resource_stockpile_compare = {
+			resource = influence
+			value >= 150
+		}
+	}
+}
+
+frameworld_audit_upgrade_decompressor = {
+	exists = owner
+	nor = { 
+		has_deposit = d_frameworld_decompressor
+		has_planet_flag = frameworld_decompressor
+		has_planet_flag = frameworld_upgrade 
+		has_planet_flag = frameworld_ai_upgrade_cooldown
+	}
+
+	owner = {
+		has_technology = tech_matter_decompressor
+		resource_stockpile_compare = {
+			resource = alloys
+			value >= 5000 # leave a little spare...
+			mult = giga_frameworld_megastructure_cost
+		}
+		resource_stockpile_compare = {
+			resource = influence
+			value >= 150
+		}
+	}
+}
+
+frameworld_audit_upgrade_advanced_city = {
+	exists = owner
+	nor = { 
+		has_deposit = d_frameworld_advanced_city
+		has_planet_flag = frameworld_upgrade 
+		has_planet_flag = frameworld_ai_upgrade_cooldown
+	}
+
+	owner = {
+		has_ascension_perk = ap_machine_worlds
+		resource_stockpile_compare = {
+			resource = minerals
+			value >= 12000 # leave a little spare...
+		}
+	}
+}
+
+frameworld_audit_upgrade_advanced_industrial = {
+	exists = owner
+	nor = { 
+		has_deposit = d_frameworld_advanced_industrial
+		has_planet_flag = frameworld_upgrade 
+		has_planet_flag = frameworld_ai_upgrade_cooldown
+	}
+
+	owner = {
+		has_technology = giga_tech_equatorial_shipyard
+		resource_stockpile_compare = {
+			resource = minerals
+			value >= 12000 # leave a little spare...
+		}
+	}
+}
+
+frameworld_audit_upgrade_advanced_sanctuary = {
+	exists = owner
+	nor = { 
+		has_deposit = d_frameworld_advanced_sanctuary
+		has_planet_flag = frameworld_upgrade 
+		has_planet_flag = frameworld_ai_upgrade_cooldown
+	}
+
+	owner = {
+		has_valid_civic = civic_machine_servitor
+		has_ascension_perk = ap_arcology_project
+		resource_stockpile_compare = {
+			resource = minerals
+			value >= 12000 # leave a little spare...
+		}
+	}
+}
+
+frameworld_audit_upgrade_gaia = {
+	exists = owner
+	nor = { 
+		has_deposit = d_frameworld_gaia
+		has_planet_flag = frameworld_upgrade 
+		has_planet_flag = frameworld_ai_upgrade_cooldown
+	}
+
+	owner = {
+		has_ascension_perk = ap_world_shaper
+		resource_stockpile_compare = {
+			resource = minerals
+			value >= 6000
+		}
+		resource_stockpile_compare = {
+			resource = energy
+			value >= 22000
+		}
+		resource_stockpile_compare = {
+			resource = exotic_gases
+			value >= 1000
+		}
+	}
+}
+
+frameworld_audit_upgrade_computing_complex = {
+	exists = owner
+	nor = { 
+		has_deposit = d_frameworld_computing_complex
+		has_planet_flag = frameworld_upgrade 
+		has_planet_flag = frameworld_ai_upgrade_cooldown
+	}
+
+	owner = {
+		has_technology = giga_tech_planetary_computer
+		resource_stockpile_compare = {
+			resource = alloys
+			value >= 27000
+			mult = giga_frameworld_megastructure_cost
+		}
+		resource_stockpile_compare = {
+			resource = rare_crystals
+			value >= 1000
+			mult = giga_frameworld_megastructure_cost
+		}
+	}
+}
+
+frameworld_audit_upgrade_expanded_infrastructure = {
+	exists = owner
+	nor = { 
+		has_planet_flag = frameworld_upgrade 
+		has_planet_flag = frameworld_ai_upgrade_cooldown
+	}
+
+	or = {
+		and = { # if we have either tech and no expansions done
+			owner = {
+				or = {
+					has_technology = giga_tech_orbital_arcologies
+					has_technology = giga_tech_ringworld_gargantuan_2
+				}
+			}
+			not = { has_deposit = d_frameworld_expanded_infrastructure }
+		}
+		and = { # or we have both techs and one expansion done
+			owner = {
+				has_technology = giga_tech_orbital_arcologies
+				has_technology = giga_tech_ringworld_gargantuan_2
+			}
+			count_deposits = {
+				count = 1
+				type = d_frameworld_expanded_infrastructure
+			}
+		}
+	}
+
+	owner = {
+		resource_stockpile_compare = {
+			resource = alloys
+			value >= 17000
+			mult = giga_frameworld_megastructure_cost
+		}
+	}
+}
+
+frameworld_audit_upgrade_maginot = {
+	exists = owner
+	nor = { 
+		has_deposit = d_frameworld_maginot
+		has_planet_flag = frameworld_upgrade 
+		has_planet_flag = frameworld_ai_upgrade_cooldown
+	}
+
+	owner = {
+		has_technology = giga_tech_maginot_world
+		resource_stockpile_compare = {
+			resource = alloys
+			value >= 27000
+			mult = giga_frameworld_megastructure_cost
+		}
+		resource_income_compare = {
+			resource = energy
+			value > 150
+		}
+	}
+}
+

@@ -1,0 +1,680 @@
+namespace = maginot_orbital_defence
+
+### Disbanded
+## on_fleet_disbanded
+# This = owner of fleet
+# From = disbanded fleet
+country_event = {
+	id = maginot_orbital_defence.1001
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		from = { 
+			has_fleet_flag = maginot_orbital_defence
+			NOT = { has_fleet_flag = maginot_intentional_delete }
+		}
+	}
+
+	immediate = {
+		from.solar_system = {
+			random_system_planet = {
+				limit = {
+					is_giga_maginot_world = yes
+					check_variable = {
+						which = giga_maginot_id
+						value = ROOT.from.giga_maginot_fleet_id
+					}
+				}
+				save_event_target_as = maginot_world_location
+				# can't disband "part" of the Maginot World so respawn it
+				maginot_create_orbital_defence_fleet = yes
+				maginot_reapply_upgrades = yes # get back modifiers
+			}
+		}
+	}
+}
+
+### Destroyed
+
+## on_fleet_destroyed_victim
+# This = owner of fleet 1 (destroyed)
+# From = owner of fleet 2 (combatant)
+# FromFrom = fleet 1
+# FromFromFrom = fleet 2
+country_event = {
+	id = maginot_orbital_defence.1002
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		fromfrom = { 
+			has_fleet_flag = maginot_orbital_defence
+			NOT = { has_fleet_flag = maginot_intentional_delete }
+		}
+	}
+
+	immediate = {
+		save_event_target_as = maginot_orbital_defence_owner
+		from = { save_event_target_as = maginot_orbital_defence_destroyer }
+		fromfrom = { save_event_target_as = maginot_orbital_defence_fleet }
+		fromfrom.solar_system = { save_event_target_as = maginot_battle_system }
+		fromfromfrom = { save_event_target_as = maginot_attacker_fleet }
+		event_target:maginot_battle_system = {
+			random_system_planet = {
+				limit = {
+					is_giga_maginot_world = yes
+					check_variable = {
+						which = giga_maginot_id
+						value = event_target:maginot_orbital_defence_fleet.giga_maginot_fleet_id
+					}
+				}
+				save_event_target_as = maginot_world_location
+			}
+		}
+		if = {
+			# event shouldn't trigger multiple times
+			limit = { event_target:maginot_world_location = { has_planet_flag = maginot_has_orbital_defence } }
+			country_event = { id = maginot_orbital_defence.1004 }
+		}
+	}
+}
+
+## on_ship_destroyed_victim
+# This = owner of ship 1 (destroyed)
+# From = owner of ship 2 (combatant)
+# FromFrom = ship 1
+# FromFromFrom = ship 2
+country_event = {
+	id = maginot_orbital_defence.1003
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		fromfrom = {
+			fleet = { 
+				has_fleet_flag = maginot_orbital_defence
+				NOT = { has_fleet_flag = maginot_intentional_delete }
+			}
+			is_ship_size = strategic_defence_command_platform
+		}
+	}
+
+	immediate = {
+		save_event_target_as = maginot_orbital_defence_owner
+		from = { save_event_target_as = maginot_orbital_defence_destroyer }
+		fromfrom = { save_event_target_as = maginot_orbital_defence_platform }
+		fromfrom.fleet = { save_event_target_as = maginot_orbital_defence_fleet }
+		fromfrom.fleet.solar_system = { save_event_target_as = maginot_battle_system }
+		fromfromfrom.fleet = { save_event_target_as = maginot_attacker_fleet }
+		event_target:maginot_battle_system = {
+			random_system_planet = {
+				limit = {
+					is_giga_maginot_world = yes
+					check_variable = {
+						which = giga_maginot_id
+						value = event_target:maginot_orbital_defence_fleet.giga_maginot_fleet_id
+					}
+				}
+				save_event_target_as = maginot_world_location
+			}
+		}
+
+		delete_fleet = event_target:maginot_orbital_defence_fleet
+		if = {
+			# event shouldn't trigger multiple times
+			limit = { event_target:maginot_world_location = { has_planet_flag = maginot_has_orbital_defence } }
+			country_event = { id = maginot_orbital_defence.1004 }
+		}
+	}
+}
+
+# clean up and notify
+country_event = {
+	id = maginot_orbital_defence.1004
+	title = "maginot_orbital_defence.1004.name"
+	desc = "maginot_orbital_defence.1004.desc"
+	show_sound = event_structural_collapse
+	location = event_target:maginot_battle_system
+	picture = GFX_evt_large_explosion
+
+	is_triggered_only = yes
+
+	immediate = {
+		event_target:maginot_world_location = {	
+			# nullify variables
+			remove_planet_flag = maginot_has_orbital_defence
+			set_variable = {
+				which = points_refund_value
+				value = giga_maginot_current_SD_platform_count
+			}
+			multiply_variable = {
+				which = points_refund_value
+				value = 2 # 2 points per platform
+			}
+			change_variable = {
+				which = maginot_offensive_upgrade_points_current
+				value = points_refund_value
+			}
+			subtract_variable = {
+				which = maginot_offensive_upgrade_points_used
+				value = points_refund_value
+			}
+			set_variable = {
+				which = giga_maginot_current_SD_platform_count
+				value = 0
+			}
+			clear_variable = points_refund_value
+			# run a general check
+			maginot_check_upgrade_points = yes
+		}
+	}
+
+	option = { # Blast it!
+		name = "maginot_orbital_defence.1004.a"
+	}
+}
+
+### Repaired
+planet_event = {
+	id = maginot_orbital_defence.1005
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_scope_type = planet
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		NOT = { has_planet_flag = maginot_has_orbital_defence }
+		exists = planet_owner
+	}
+
+	immediate = {
+		save_event_target_as = maginot_world_location
+		solar_system = {
+			assign_giga_maginot_id = yes	
+		}
+		set_planet_flag = maginot_has_orbital_defence
+		maginot_create_orbital_defence_fleet = yes
+		maginot_reapply_upgrades = yes
+		# notify owner
+		planet_owner = { country_event = { id = maginot_orbital_defence.1006 } }
+	}
+}
+
+country_event = {
+	id = maginot_orbital_defence.1006
+	title = "maginot_orbital_defence.1006.name"
+	desc = "maginot_orbital_defence.1006.desc"
+	hide_window = no
+	is_triggered_only = yes
+	show_sound = event_dyson_sphere_build_complete
+	location = event_target:maginot_world_location
+	picture = GFX_evt_maginot_world
+
+	option = { # Excellent!
+		name = "maginot_orbital_defence.1006.a"
+	}
+}
+
+# monthly check event in case the platform "vanishes" - spirit flame or similar bs is probably to blame and can't be checked otherwise
+planet_event = {
+	id = maginot_orbital_defence.1007
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_scope_type = planet
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+	}
+
+	immediate = {
+		save_event_target_as = maginot_world_location
+		solar_system = {
+			if = {
+				limit = {
+					any_fleet_in_system = {
+						has_fleet_flag = maginot_orbital_defence
+						NOT = { has_fleet_flag = maginot_intentional_delete }
+						check_variable = {
+							which = giga_maginot_fleet_id
+							value = event_target:maginot_world_location.giga_maginot_id
+						}
+					}
+				}
+				# simply continue checking
+				event_target:maginot_world_location = {
+					planet_event = {
+						id = maginot_orbital_defence.1007
+						days = 30
+					}
+				}
+			}
+			# trigger broken event for owner
+			else = {
+				event_target:maginot_world_location = {
+					planet_owner = {
+						if = {
+							# event shouldn't trigger multiple times / on worlds that correctly had destruction registered
+							limit = { event_target:maginot_world_location = { has_planet_flag = maginot_has_orbital_defence } }
+							country_event = { id = maginot_orbital_defence.1004 }
+						}
+					}
+					# keep checking
+					planet_event = {
+						id = maginot_orbital_defence.1007
+						days = 30
+					}
+				}
+			}
+		}
+	}
+}
+
+### refund points for secondary SD platforms
+## on_ship_destroyed_victim
+# This = owner of ship 1 (destroyed)
+# From = owner of ship 2 (combatant)
+# FromFrom = ship 1
+# FromFromFrom = ship 2
+country_event = {
+	id = maginot_orbital_defence.1008
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		fromfrom = {
+			fleet = { 
+				has_fleet_flag = maginot_orbital_defence
+				NOT = { has_fleet_flag = maginot_intentional_delete }
+			}
+			is_ship_size = asteroid_artillery
+		}
+	}
+
+	immediate = {
+		save_event_target_as = maginot_orbital_defence_owner
+		fromfrom.fleet = { save_event_target_as = maginot_orbital_defence_fleet }
+		fromfrom.fleet.solar_system = { save_event_target_as = maginot_battle_system }
+		event_target:maginot_battle_system = {
+			random_system_planet = {
+				limit = {
+					is_giga_maginot_world = yes
+					check_variable = {
+						which = giga_maginot_id
+						value = event_target:maginot_orbital_defence_fleet.giga_maginot_fleet_id
+					}
+				}
+				save_event_target_as = maginot_world_location
+				# decrement platform counter
+				subtract_variable = {
+					which = giga_maginot_current_SD_platform_count
+					value = 1
+				}
+				# remove 2 points used
+				subtract_variable = {
+					which = maginot_offensive_upgrade_points_used
+					value = 2
+				}
+				# add 2 available points
+				change_variable = {
+					which = maginot_offensive_upgrade_points_current
+					value = 2
+				}
+			}
+		}
+	}
+}
+
+# keep maginot_orbital_defence.2000s events for buff techs
+
+# Firepower Upgrade
+country_event = {
+	id = maginot_orbital_defence.2001
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		last_increased_tech = "giga_tech_maginot_firepower_1"
+	}
+
+	immediate = {
+		every_owned_fleet = {
+			limit = {
+				has_fleet_flag = maginot_orbital_defence
+			}
+			add_modifier = {
+				modifier = giga_maginot_firepower_1
+			}
+		}
+	}
+}
+
+# Pl*netcraft Upgrade
+country_event = {
+	id = maginot_orbital_defence.2002
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		last_increased_tech = "giga_tech_maginot_planetcraft_upgrade"
+	}
+
+	immediate = {
+		every_owned_fleet = {
+			limit = {
+				has_fleet_flag = maginot_orbital_defence
+			}
+			add_modifier = {
+				modifier = giga_maginot_planetcraft_upgrade
+			}
+		}
+	}
+}
+
+# Systemcraft Upgrade
+country_event = {
+	id = maginot_orbital_defence.2003
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		last_increased_tech = "giga_tech_maginot_systemcraft_upgrade"
+	}
+
+	immediate = {
+		every_owned_fleet = {
+			limit = {
+				has_fleet_flag = maginot_orbital_defence
+			}
+			add_modifier = {
+				modifier = giga_maginot_systemcraft_upgrade
+			}
+		}
+	}
+}
+
+## can't scope to the orbital defence fleet direct from decisions (doesn't like random_fleet), so the effects are here instead
+
+# build a new SD platform
+planet_event = {
+	id = maginot_orbital_defence.3001
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		is_scope_type = planet
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		has_planet_flag = maginot_has_orbital_defence
+	}
+
+	immediate = {
+		save_event_target_as = maginot_world_location
+		solar_system = {
+			random_fleet_in_system = {
+				limit = {
+					has_fleet_flag = maginot_orbital_defence
+					check_variable = {
+						which = giga_maginot_fleet_id
+						value = event_target:maginot_world_location.giga_maginot_id
+					}
+				}
+				set_fleet_flag = maginot_intentional_delete
+				# workaround to space ships out
+				delete_fleet = this
+			}
+		}
+		# make new, spaced out fleet (yes, you have to do this)
+		maginot_create_orbital_defence_fleet = yes
+		maginot_check_upgrade_points = yes # update variables on the planet
+		maginot_reapply_upgrades = yes # get back modifiers
+	}
+}
+
+# upgrade HP
+planet_event = {
+	id = maginot_orbital_defence.3002
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		is_scope_type = planet
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		has_planet_flag = maginot_has_orbital_defence
+	}
+
+	immediate = {
+		save_event_target_as = maginot_world_location
+		# this gets used immediately
+		change_variable = {
+			which = maginot_orbital_defence_hp_upgrades
+			value = 1
+		}
+		solar_system = {
+			random_fleet_in_system = {
+				limit = {
+					has_fleet_flag = maginot_orbital_defence
+					check_variable = {
+						which = giga_maginot_fleet_id
+						value = event_target:maginot_world_location.giga_maginot_id
+					}
+				}
+				# count for number of upgrades to apply
+				set_variable = {
+					which = giga_maginot_orbital_defence_hp
+					value = event_target:maginot_world_location.maginot_orbital_defence_hp_upgrades
+				}
+				every_owned_ship = {
+					# clear previously applied modifier
+					if = {
+						limit = { has_modifier = giga_maginot_orbital_defence_hp }
+						remove_modifier = giga_maginot_orbital_defence_hp
+					}
+					# apply
+					add_modifier = {
+						modifier = giga_maginot_orbital_defence_hp
+						multiplier = prev.giga_maginot_orbital_defence_hp
+					}
+				}
+			}
+		}
+		# manage variables
+		change_variable = {
+			which = maginot_defensive_upgrade_points_current
+			value = -1
+		}
+		change_variable = {
+			which = maginot_defensive_upgrade_points_used
+			value = 1
+		}
+		# increase cost
+		multiply_variable = {
+			which = maginot_orbital_defence_hp_cost
+			value = 1.5
+		}
+		round_variable = maginot_orbital_defence_hp_cost # avoid excessive decimal buildup
+		# change display value
+		change_variable = {
+			which = maginot_orbital_defence_hp_display
+			value = 25
+		}
+		change_variable = {
+			which = maginot_orbital_defence_hp_regen_display
+			value = 500
+		}
+		maginot_check_upgrade_points = yes # update variables on the planet
+	}
+}
+
+# upgrade attack systems (atk)
+planet_event = {
+	id = maginot_orbital_defence.3003
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		is_scope_type = planet
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		has_planet_flag = maginot_has_orbital_defence
+	}
+
+	immediate = {
+		save_event_target_as = maginot_world_location
+		# this gets used immediately
+		change_variable = {
+			which = maginot_orbital_defence_atk_upgrades
+			value = 1
+		}
+		solar_system = {
+			random_fleet_in_system = {
+				limit = {
+					has_fleet_flag = maginot_orbital_defence
+					check_variable = {
+						which = giga_maginot_fleet_id
+						value = event_target:maginot_world_location.giga_maginot_id
+					}
+				}
+				# count for number of upgrades to apply
+				set_variable = {
+					which = giga_maginot_orbital_defence_atk
+					value = event_target:maginot_world_location.maginot_orbital_defence_atk_upgrades
+				}
+				every_owned_ship = {
+					# clear previously applied modifier
+					if = {
+						limit = { has_modifier = giga_maginot_orbital_defence_atk }
+						remove_modifier = giga_maginot_orbital_defence_atk
+					}
+					# apply
+					add_modifier = {
+						modifier = giga_maginot_orbital_defence_atk
+						multiplier = prev.giga_maginot_orbital_defence_atk
+					}
+				}
+			}
+		}
+		# manage variables
+		change_variable = {
+			which = maginot_offensive_upgrade_points_current
+			value = -1
+		}
+		change_variable = {
+			which = maginot_offensive_upgrade_points_used
+			value = 1
+		}
+		#increase cost
+		multiply_variable = {
+			which = maginot_orbital_defence_atk_cost
+			value = 1.5
+		}
+		round_variable = maginot_orbital_defence_atk_cost # avoid excessive decimal buildup
+		# change display value
+		change_variable = {
+			which = maginot_orbital_defence_atk_display
+			value = 10
+		}
+		maginot_check_upgrade_points = yes # update variables on the planet
+	}
+}
+
+# upgrade targetting systems (trg)
+planet_event = {
+	id = maginot_orbital_defence.3004
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		is_scope_type = planet
+		is_giga_maginot_world = yes
+		has_planet_flag = giga_maginot_world
+		has_planet_flag = maginot_has_orbital_defence
+	}
+
+	immediate = {
+		save_event_target_as = maginot_world_location
+		# this gets used immediately
+		change_variable = {
+			which = maginot_orbital_defence_trg_upgrades
+			value = 1
+		}
+		solar_system = {
+			random_fleet_in_system = {
+				limit = {
+					has_fleet_flag = maginot_orbital_defence
+					check_variable = {
+						which = giga_maginot_fleet_id
+						value = event_target:maginot_world_location.giga_maginot_id
+					}
+				}
+				# count for number of upgrades to apply
+				set_variable = {
+					which = giga_maginot_orbital_defence_trg
+					value = event_target:maginot_world_location.maginot_orbital_defence_trg_upgrades
+				}
+				every_owned_ship = {
+					# clear previously applied modifier
+					if = {
+						limit = { has_modifier = giga_maginot_orbital_defence_trg }
+						remove_modifier = giga_maginot_orbital_defence_trg
+					}
+					# apply
+					add_modifier = {
+						modifier = giga_maginot_orbital_defence_trg
+						multiplier = prev.giga_maginot_orbital_defence_trg
+					}
+				}
+			}
+		}
+		# manage variables
+		change_variable = {
+			which = maginot_defensive_upgrade_points_current
+			value = -1
+		}
+		change_variable = {
+			which = maginot_defensive_upgrade_points_used
+			value = 1
+		}
+		#increase cost
+		multiply_variable = {
+			which = maginot_orbital_defence_trg_cost
+			value = 1.5
+		}
+		round_variable = maginot_orbital_defence_trg_cost # avoid excessive decimal buildup
+		# change display value
+		change_variable = {
+			which = maginot_orbital_defence_range_display
+			value = 20
+		}
+		change_variable = {
+			which = maginot_orbital_defence_tracking_display
+			value = 5
+		}
+		maginot_check_upgrade_points = yes # update variables on the planet
+	}
+}
+
+# Armies
+planet_event = {
+	id = maginot_orbital_defence.4000
+	is_triggered_only = yes
+	hide_window = yes
+
+	pre_triggers = {
+		has_ground_combat = no
+	}
+
+	trigger = {
+		is_scope_type = planet
+		exists = ROOT.owner
+		is_giga_maginot_world = yes
+	}
+
+	immediate = {
+		maginot_check_upgrade_points = yes
+		maginot_refresh_ground_armies = yes
+	}
+}

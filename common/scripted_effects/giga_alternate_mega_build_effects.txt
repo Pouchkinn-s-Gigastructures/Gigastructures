@@ -1,0 +1,467 @@
+# run on every country when settings are confirmed
+# needs to check country type or funny kaiser man gets rekt for no supertensiles
+giga_amb_country_setup_from_menu = {
+	if = {
+		limit = {
+			giga_country_uses_supertensiles = yes
+		}
+		giga_amb_apply_initial_country_modifiers = yes
+		# calculate as if monthly here, we need the variables processed for display, and first month income is zero anyway
+		giga_amb_recalculate_country_modifiers_and_consume = yes
+	}
+}
+
+# this = country scope
+giga_amb_apply_initial_country_modifiers_if_needed = {
+	if = {
+		limit = {
+			not = { has_country_flag = @giga_amb_init_flag }
+		}
+		giga_amb_apply_initial_country_modifiers = yes
+	}
+}
+
+# this = country scope
+giga_amb_apply_initial_country_modifiers = {
+	set_country_flag = @giga_amb_init_flag
+
+	# apply base modifier
+	add_modifier = {
+		modifier = giga_amb_base
+	}
+
+	# set AI limit variable so that we don't get logged errors for checking it
+	set_variable = {
+		which = giga_amb_ai_limit
+		value = 0
+	}
+	set_variable = {
+		which = giga_amb_ai_limit_modifier
+		value = 0
+	}
+
+	# set first month variables to 0 for the sake of error log
+	set_variable = {
+		which = giga_amb_stockpile_drain
+		value = 0
+	}
+	set_variable = {
+		which = giga_amb_total_income
+		value = 0
+	}
+	set_variable = {
+		which = giga_amb_total_progress
+		value = 0
+	}
+
+	# sets raio variable for use in tooltips because you can't read scripted variables it seems...
+	set_variable = {
+		which = giga_amb_ratio
+		value = 1
+	}
+	divide_variable = {
+		which = giga_amb_ratio
+		value = @giga_amb_ratio
+	}
+
+	# assign the bonus to empires which rely a lot on mega build speed in early game
+	if = {
+		limit = {
+			giga_has_amb_important_origin = yes
+		}
+
+		capital_scope = {
+			add_deposit = d_giga_amb_start_bonus
+		}
+		add_research_option = giga_tech_amb_supertensiles
+		add_tech_progress = {
+			tech = giga_tech_amb_supertensiles
+			progress = 0.5
+		}
+	}
+
+	# set up the actual limit if we're AI
+	# this is also calculated on yearly pulse, but might as well just to be sure
+	if = {
+		limit = {
+			is_ai = yes
+		}
+		giga_amb_recalculate_ai_limit = yes
+	}
+
+	# count up the megas we start with which have supertensiles upkeep and offset that upkeep
+	set_variable = {
+		which = giga_amb_initial_megas
+		value = 0
+	}
+	every_owned_megastructure = {
+		if = {
+			limit = {
+				nor = { 
+					is_ruined_mega = yes 
+					is_technical_mega = yes
+				}
+			}
+
+			if = {
+				limit = {
+					is_kilostructure = yes
+				}
+				prev = {
+					change_variable = {
+						which = giga_amb_initial_megas
+						value = @giga_amb_kilostructure_upkeep
+					}
+				}
+			}
+			else_if = {
+				limit = { 
+					is_gigastructure = yes
+				}
+				prev = {
+					change_variable = {
+						which = giga_amb_initial_megas
+						value = @giga_amb_gigastructure_upkeep
+					}
+				}
+			}
+			else = {
+				prev = {
+					change_variable = {
+						which = giga_amb_initial_megas
+						value = @giga_amb_megastructure_upkeep
+					}
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			check_variable = {
+				which = giga_amb_initial_megas
+				value > 0
+			}
+		}
+		add_modifier = {
+			modifier = giga_amb_starting_megas_upkeep_offset
+			multiplier = giga_amb_initial_megas
+		}
+	}
+}
+
+# this = country scope
+giga_amb_recalculate_country_modifiers = {
+
+	# remove calc modifiers
+	set_update_modifiers_batch = begin
+
+	remove_modifier = giga_amb_flat_replacement
+	remove_modifier = giga_amb_speed
+	remove_modifier = giga_amb_storage_capacity
+	remove_modifier = giga_amb_empire_size_penalty
+
+	set_update_modifiers_batch = end # this forces a recalculation of modifers so the next part reads the modifier values without these modifiers
+
+	add_modifier = {
+		modifier = giga_amb_empire_size_penalty
+		multiplier = value:giga_empire_size_mult
+	}
+
+	# read resource capacity mod to var
+	export_modifier_to_variable = {
+		modifier = country_resource_max_add
+		variable = giga_amb_storage_capacity
+	}
+	# add resource capacity adjustment
+	add_modifier = {
+		modifier = giga_amb_storage_capacity
+		multiplier = giga_amb_storage_capacity
+	}
+
+	# read cap mod to var
+	export_modifier_to_variable = {
+		modifier = country_megastructure_build_cap_add
+		variable = giga_amb_cap
+	}
+	# base is 1000 so subtract 999
+	change_variable = {
+		which = giga_amb_cap
+		value = -999
+	}
+	# add back the AI sensible limit offset, which is 0 for humans
+	change_variable = {
+		which = giga_amb_cap
+		value = giga_amb_ai_limit_modifier
+	}
+
+	# read base speed to var
+	export_modifier_to_variable = {
+		modifier = megastructure_build_speed_add
+		variable = giga_amb_flat
+	}
+	change_variable = {
+		which = giga_amb_flat
+		value = 1
+	}
+	
+	# add calc flat replacement modifier if the value is > 0
+	if = {
+		limit = {
+			check_variable = {
+				which = giga_amb_flat
+				value > 0
+			}
+		}
+		add_modifier = {
+			modifier = giga_amb_flat_replacement
+			multiplier = giga_amb_flat
+		}
+	}
+	
+	# calculate ratio of income to progress
+	set_variable = {
+		which = giga_amb_ratio
+		value = 1
+	}
+	set_variable = {
+		which = giga_amb_progress_divisor
+		value = value:giga_amb_progress_divisor_calc
+	}
+	divide_variable = {
+		which = giga_amb_ratio
+		value = giga_amb_progress_divisor
+	}
+
+	# calculate total progress
+	set_variable = {
+		which = giga_amb_total_progress
+		value = value:giga_amb_total_progress_calc
+	}
+
+	# count all building megas and calculate progress per mega
+	giga_amb_recalculate_building_mega_counts = yes
+
+	# add the final progress modifier
+	add_modifier = {
+		modifier = giga_amb_speed
+		multiplier = giga_amb_progress
+	}
+
+	# reapply constant speed modifier to megas which need it
+	every_owned_megastructure = {
+		giga_amb_update_constant_speed = yes
+	}
+}
+
+giga_amb_recalculate_building_mega_counts = {
+	# count technical megas under construction
+	set_variable = {
+		which = giga_amb_building_technical
+		value = value:giga_amb_building_technical_calc
+	}
+
+	# count kilos
+	set_variable = {
+		which = giga_amb_building_kilos
+		value = value:giga_amb_building_kilos_calc
+	}
+
+	# count megas
+	set_variable = {
+		which = giga_amb_building_megas
+		value = value:giga_amb_building_megas_calc
+	}
+
+	# gount gigas
+	set_variable = {
+		which = giga_amb_building_gigas
+		value = value:giga_amb_building_gigas_calc
+	}
+
+	# calculate progress per mega
+	set_variable = {
+		which = giga_amb_progress
+		value = value:giga_amb_progress_calc
+	}
+	# apply diminishing returns above threshold
+	if = {
+		limit = {
+			check_variable = {
+				which = giga_amb_progress
+				value > @giga_amb_dr_offset
+			}
+		}
+		set_variable = {
+			which = giga_amb_progress
+			value = value:giga_amb_progress_dr
+		}
+	}
+
+	# calculate offset as 1-progress for constant speed megas
+	set_variable = {
+		which = giga_amb_progress_offset
+		value = 1
+	}
+	subtract_variable = {
+		which = giga_amb_progress_offset
+		value = giga_amb_progress
+	}
+}
+
+giga_amb_recalculate_country_modifiers_and_consume = {
+
+	# get mega job income
+	export_resource_income_to_variable = {
+		resource = giga_sr_amb_megaconstruction
+		variable = giga_amb_income
+	}
+
+	# get stockpile drain
+	set_variable = {
+		which = giga_amb_stockpile_drain
+		value = value:giga_amb_stockpile_calc
+	}
+
+	# get total income - either the amount we drained from the stockpile
+	# or the raw income, whichever is larger. This allows income over our
+	# total storage to still be valid.
+	if = {
+		limit = {
+			check_variable = {
+				which = giga_amb_income
+				value > giga_amb_stockpile_drain
+			}
+		}
+		set_variable = {
+			which = giga_amb_total_income
+			value = giga_amb_income
+		}
+	}
+	else = { 
+		set_variable = {
+			which = giga_amb_total_income
+			value = giga_amb_stockpile_drain
+		}
+	}
+
+	# do the rest of the calculations which can happen any time
+	giga_amb_recalculate_country_modifiers = yes
+
+	# subtract drain from stockpile if there's at least one running project
+	if = {
+		limit = {
+			or = {
+				check_variable = { which = giga_amb_building_technical value > 0 }
+				check_variable = { which = giga_amb_building_kilos value > 0 }
+				check_variable = { which = giga_amb_building_megas value > 0 }
+				check_variable = { which = giga_amb_building_gigas value > 0 }
+			}
+		}
+
+		# drain total income, because we just gained our income at the start
+		add_resource = {
+			giga_sr_amb_megaconstruction = -1
+			mult = giga_amb_stockpile_drain
+		}
+
+		# since we're building things, if we don't have the tech as an option or researched, add it
+		if = {
+			limit = {
+				nor = {
+					has_technology = giga_tech_amb_supertensiles
+					has_tech_option = giga_tech_amb_supertensiles
+				}
+			}
+
+			# event which gives supertensiles tech option
+			country_event = {
+				id = giga_amb.1001
+			}
+		}
+	}
+}
+
+# just recalculate the speed modifier based on number of megas
+# for triggering on start/end build
+giga_amb_recalculate_split = {
+	if = {
+		limit = {
+			has_country_flag = @giga_amb_init_flag
+		}
+
+		remove_modifier = giga_amb_speed
+
+		# count all building megas and calculate progress per mega
+		giga_amb_recalculate_building_mega_counts = yes
+
+		# add the final progress modifier
+		add_modifier = {
+			modifier = giga_amb_speed
+			multiplier = giga_amb_progress
+		}
+
+		# reapply constant speed modifier to megas which need it
+		every_owned_megastructure = {
+			giga_amb_update_constant_speed = yes
+		}
+	}
+}
+
+# recalculate the reduction in AI build limit to match their income
+# so they don't do dumb stuff like repairing 10 pieces of onion ringworld
+# with a build speed of only 1.4...
+giga_amb_recalculate_ai_limit = {
+	if = {
+		limit = {
+			has_country_flag = @giga_amb_init_flag
+		}
+		
+		remove_modifier = giga_amb_ai_limit
+
+		set_variable = {
+			which = giga_amb_ai_limit
+			value = value:giga_amb_ai_limit_calc
+		}
+
+		set_variable = {
+			which = giga_amb_ai_limit_modifier
+			value = 1001
+		}
+		subtract_variable = {
+			which = giga_amb_ai_limit_modifier
+			value = giga_amb_ai_limit
+		}
+
+		add_modifier = {
+			modifier = giga_amb_ai_limit
+			multiplier = giga_amb_ai_limit_modifier
+		}
+	}
+}
+
+giga_amb_update_constant_speed = {
+	#log_error = "CONSTANT SPEED: evaluate \\[this.GetName]"
+	if = {
+		limit = {
+			has_modifier = giga_amb_speed
+		}
+		remove_modifier = giga_amb_speed
+		#log_error = "CONSTANT SPEED: removed from \\[this.GetName]"
+	}
+
+	if = {
+		limit = {
+			exists = owner
+			owner = {
+				is_variable_set = giga_amb_progress_offset
+			}
+			mega_requires_constant_build_speed = yes
+		}
+
+		add_modifier = {
+			modifier = giga_amb_speed
+			multiplier = owner.giga_amb_progress_offset
+		}
+		#log_error = "CONSTANT SPEED: added to \\[this.GetName]"
+	}
+}

@@ -1,0 +1,164 @@
+r_square_world_ruined = {
+	entity = "squareworld_segment_ruined_mega_entity"
+	portrait = "GFX_megastructure_construction_background"
+	potential = { always = no }
+	resources = { category = giga_megastructures }
+}
+
+r_square_world_restored = {
+	entity = ""
+	construction_entity = "square_world_habitable_planet_01_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { r_square_world_ruined }
+	prerequisites = { giga_tech_event_squareworld }
+	potential = {
+		exists = this
+		has_technology = giga_tech_event_squareworld
+	}
+
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = 10000 sr_living_metal = 200 }
+	}
+
+	ai_weight = {
+		weight = value:giga_ai_base_repairs
+		modifier = {
+			weight = 0
+			from = { is_country_type = fallen_empire }
+		}
+	}
+
+	on_build_start = { fromfrom = { set_graphical_culture = root.from } }
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = { country_event = { id = giga_dialog.3003 } }	# Notification
+
+		giga_remove_system_debris = yes
+		spawn_planet = {
+			class = "pc_squareworld_habitable"
+			orbit_angle_offset = 0
+			orbit_distance_offset = 0
+			size = 10
+			location = fromfrom
+			init_effect = {
+				save_event_target_as = ring_section
+				trigger_megastructure_icon = yes
+				set_surveyed = { surveyed = yes surveyor = from }
+				add_modifier = { modifier = "square_ringworld" days = -1 }
+				set_all_comms_surveyed = yes
+				set_planet_flag = forbid_guillis_planet_modifiers
+				set_planet_flag = megastructure
+				set_planet_flag = colony_event			# Vanilla uses to prevent unwanted events on planets
+				set_planet_flag = giga_rw_square
+
+				giga_start_ai_colony_if_safe = yes
+			}
+		}
+		if = {		limit = { NOT = { has_star_flag = ring_01 } } set_star_flag = ring_01 event_target:ring_section = { set_name = "Habitable Section A" } }
+		else_if = {	limit = { NOT = { has_star_flag = ring_02 } } set_star_flag = ring_02 event_target:ring_section = { set_name = "Habitable Section B" } }
+		else_if = {	limit = { NOT = { has_star_flag = ring_03 } } set_star_flag = ring_03 event_target:ring_section = { set_name = "Habitable Section C" } }
+		else_if = {
+			limit = { NOT = { has_star_flag = ring_04 } }
+			set_star_flag = ring_04
+			event_target:ring_section = { set_name = "Habitable Section D" }
+			remove_star_flag = ring_01
+			remove_star_flag = ring_02
+			remove_star_flag = ring_03
+			remove_star_flag = ring_04
+		}
+		remove_megastructure = fromfrom
+	}
+}
+
+r_square_world_hub = {
+	entity = "square_world_hub_station_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	resources = { category = giga_megastructures }
+	potential = { always = no }
+
+}
+
+r_square_world_hub_powered = {
+	entity = "square_world_hub_station_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	upgrade_from = { r_square_world_hub }
+	potential = { has_country_flag = squareworld_expedition }
+
+	build_time = 360
+	resources = {
+		category = giga_megastructures
+		cost = {
+			energy = 7500
+			alloys = 1000
+		}
+		produces = {
+			physics_research = 100
+			engineering_research = 100
+			society_research = 100
+		}
+	}
+
+	ai_weight = {
+		weight = value:giga_ai_base_repairs
+		modifier = {
+			weight = 0
+			from = { is_country_type = fallen_empire }
+		}
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = {
+			if = {
+				limit = { NOT = { has_country_flag = has_heard_dialog_3004 } }
+				set_country_flag = has_heard_dialog_3004
+				country_event = { id = giga_dialog.3004 }	# Notification
+			}
+		}
+	}
+}
+
+r_square_world_hub_garyx = {
+	entity = "square_world_hub_station_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	upgrade_from = { r_square_world_hub_powered }
+	potential = { NOT = { has_country_flag = talking_to_garyx } }
+
+	build_time = 1
+	resources = {
+		category = giga_megastructures
+		cost = { energy = 100 }
+	}
+
+	ai_weight = {
+		weight = 0
+		modifier = {
+			weight = 0
+			from = { is_country_type = fallen_empire }
+		}
+	}
+
+	on_build_complete = {
+		from = {
+			set_country_flag = talking_to_garyx
+			country_event = { id = giga_dialog.3008 }	# Notification
+		}
+		every_system_megastructure = {
+			limit = { is_megastructure_type = r_square_world_hub_garyx }
+			remove_megastructure = this
+		}
+		spawn_megastructure = {
+			type = "r_square_world_hub_powered"
+			planet = event_target:squareworld_star
+			owner = event_target:squareworld_star.solar_system.space_owner
+		}
+	}
+}

@@ -1,0 +1,689 @@
+# Origin Birch Restoration
+
+decision_giga_origin_birch_restore = {
+	owned_planets_only = yes
+	icon = decision_birch_world
+
+	enactment_time = 1800
+	resources = {
+		category = decisions
+		cost = {
+			alloys = 40000
+			unity = 5000
+			influence = 250
+		}
+	}
+
+	potential = {
+		is_planet_class = pc_origin_birch
+		has_planet_flag = birch_expedition_4_complete # foundry
+		has_planet_flag = birch_expedition_7_complete # observatory
+		has_planet_flag = birch_expedition_9_complete # extraction
+		has_planet_flag = birch_expedition_10_complete # final push
+		exists = owner
+		owner = {
+			has_origin = origin_birch
+		}
+	}
+
+	abort_trigger = {
+		or = {
+			not = { exists = owner }
+			owner = {
+				not = {
+					has_origin = origin_birch
+				}
+			}
+		}
+	}
+
+	effect = {
+		tooltip = {
+			change_pc = pc_birch
+		}
+		custom_tooltip = decision_giga_origin_birch_restore_tooltip
+
+		hidden_effect = {
+			# set flag for speical effects like minimum insulae
+			set_planet_flag = giga_origin_birch 
+
+			############################################################################
+			# gather information for district replacement
+
+			# city districts
+			if = {
+				limit = {
+					owner = { is_gestalt = no }
+				}
+				export_trigger_value_to_variable = {
+					trigger = num_districts
+					parameters = {
+						type = district_giga_planet_city
+					}
+					variable = birch_districts_city
+				}
+			}
+			else_if = {
+				limit = {
+					owner = { is_hive_empire = yes }
+				}
+				export_trigger_value_to_variable = {
+					trigger = num_districts
+					parameters = {
+						type = district_giga_planet_hive
+					}
+					variable = birch_districts_city
+				}
+			}
+			else_if = {
+				limit = {
+					owner = { is_machine_empire = yes }
+				}
+				export_trigger_value_to_variable = {
+					trigger = num_districts
+					parameters = {
+						type = district_giga_planet_nexus
+					}
+					variable = birch_districts_city
+				}
+			}
+			
+			# industrial districts
+			export_trigger_value_to_variable = {
+				trigger = num_districts
+				parameters = {
+					type = district_industrial
+				}
+				variable = birch_districts_industrial
+			}
+
+			# generator districts
+			export_trigger_value_to_variable = {
+				trigger = num_districts
+				parameters = {
+					type = district_giga_planet_generator
+				}
+				variable = birch_districts_generator
+			}
+
+			# mining districts
+			export_trigger_value_to_variable = {
+				trigger = num_districts
+				parameters = {
+					type = district_giga_planet_mining
+				}
+				variable = birch_districts_mining
+			}
+
+			# farming districts
+			export_trigger_value_to_variable = {
+				trigger = num_districts
+				parameters = {
+					type = district_giga_planet_farming
+				}
+				variable = birch_districts_farming
+			}
+
+			# research districts
+			export_trigger_value_to_variable = {
+				trigger = num_districts
+				parameters = {
+					type = district_giga_origin_birch_lab
+				}
+				variable = birch_districts_research
+			}
+
+			############################################################################
+			# apply conversion modifier
+			add_modifier = {
+				modifier = giga_birch_restoration_fix
+				days = 3 # reduce
+			}
+
+			############################################################################
+			# change planet class
+			change_pc = pc_birch
+			add_deposit = d_giga_birch_mechanics
+			remove_all_districts = yes
+
+			############################################################################
+			# fill in new districts
+
+			# insulae
+			add_district = district_giga_birch_structure
+			add_district = district_giga_birch_orykta
+			add_district = district_giga_birch_ktisma
+			add_district = district_giga_birch_physma
+			set_or_change_variable = {
+				which = giga_birch_district_insula_built
+				value = 3
+			}
+
+			# orykta
+			while = {
+				count = value:giga_birch_restoration_orykta_generator
+				add_district = district_giga_birch_orykta_energy
+				set_or_change_variable = {
+					which = giga_birch_district_orykta_built
+					value = 1
+				}
+			}
+			while = {
+				count = value:giga_birch_restoration_orykta_mining
+				add_district = district_giga_birch_orykta_minerals
+				set_or_change_variable = {
+					which = giga_birch_district_orykta_built
+					value = 1
+				}
+			}
+			while = {
+				count = value:giga_birch_restoration_orykta_dark_matter
+				add_district = district_giga_birch_orykta_dark_matter
+				set_or_change_variable = {
+					which = giga_birch_district_orykta_built
+					value = 1
+				}
+			}
+			while = {
+				count = value:giga_birch_restoration_orykta_negative_mass
+				add_district = district_giga_birch_orykta_negative_mass
+				set_or_change_variable = {
+					which = giga_birch_district_orykta_built
+					value = 1
+				}
+			}
+
+			# prune orykta
+			while = {
+				limit = {
+					check_variable = {
+						which = giga_birch_district_orykta_built
+						value > 10
+					}
+				}
+
+				# energy first
+				if = {
+					limit = {
+						check_variable = {
+							which = giga_birch_district_orykta_built
+							value > 10
+						}
+						num_districts = {
+							type = district_giga_birch_orykta_energy
+							value > 0
+						}
+					}
+					remove_district = district_giga_birch_orykta_energy
+					set_or_change_variable = {
+						which = giga_birch_district_orykta_built
+						value = -1
+					}
+				}
+
+				# then minerals
+				if = {
+					limit = {
+						check_variable = {
+							which = giga_birch_district_orykta_built
+							value > 10
+						}
+						num_districts = {
+							type = district_giga_birch_orykta_minerals
+							value > 0
+						}
+					}
+					remove_district = district_giga_birch_orykta_minerals
+					set_or_change_variable = {
+						which = giga_birch_district_orykta_built
+						value = -1
+					}
+				}
+
+				# no others since the only other possibility should be exactly 1 dark matter sector
+			}
+
+			# ktisma
+			while = {
+				count = value:giga_birch_restoration_ktisma_factory
+				add_district = district_giga_birch_ktisma_factory
+				set_or_change_variable = {
+					which = giga_birch_district_ktisma_built
+					value = 1
+				}
+			}
+			while = {
+				count = value:giga_birch_restoration_ktisma_foundry
+				add_district = district_giga_birch_ktisma_foundry
+				set_or_change_variable = {
+					which = giga_birch_district_ktisma_built
+					value = 1
+				}
+			}
+			while = {
+				count = value:giga_birch_restoration_ktisma_refinery
+				add_district = district_giga_birch_ktisma_refinery
+				set_or_change_variable = {
+					which = giga_birch_district_ktisma_built
+					value = 1
+				}
+			}
+			while = {
+				count = value:giga_birch_restoration_ktisma_sentient_metal
+				add_district = district_giga_birch_ktisma_sentient_metal
+				set_or_change_variable = {
+					which = giga_birch_district_ktisma_built
+					value = 1
+				}
+			}
+			while = {
+				count = value:giga_birch_restoration_ktisma_supertensiles
+				add_district = district_giga_birch_ktisma_supertensiles
+				set_or_change_variable = {
+					which = giga_birch_district_ktisma_built
+					value = 1
+				}
+			}
+
+			# prune ktisma
+			while = {
+				limit = {
+					check_variable = {
+						which = giga_birch_district_ktisma_built
+						value > 10
+					}
+				}
+
+				# foundry first
+				if = {
+					limit = {
+						check_variable = {
+							which = giga_birch_district_ktisma_built
+							value > 10
+						}
+						num_districts = {
+							type = district_giga_birch_ktisma_foundry
+							value > 0
+						}
+					}
+					remove_district = district_giga_birch_ktisma_foundry
+					set_or_change_variable = {
+						which = giga_birch_district_ktisma_built
+						value = -1
+					}
+				}
+				# factory second
+				if = {
+					limit = {
+						check_variable = {
+							which = giga_birch_district_ktisma_built
+							value > 10
+						}
+						num_districts = {
+							type = district_giga_birch_ktisma_factory
+							value > 0
+						}
+					}
+					remove_district = district_giga_birch_ktisma_factory
+					set_or_change_variable = {
+						which = giga_birch_district_ktisma_built
+						value = -1
+					}
+				}
+				# foundry again third
+				if = {
+					limit = {
+						check_variable = {
+							which = giga_birch_district_ktisma_built
+							value > 10
+						}
+						num_districts = {
+							type = district_giga_birch_ktisma_foundry
+							value > 0
+						}
+					}
+					remove_district = district_giga_birch_ktisma_foundry
+					set_or_change_variable = {
+						which = giga_birch_district_ktisma_built
+						value = -1
+					}
+				}
+			}
+
+			# physma
+			while = {
+				count = value:giga_birch_restoration_physma_unity
+				if = {
+					limit = {
+						owner = { is_gestalt = yes }
+					}
+					add_district = district_giga_birch_physma_relay
+				}
+				else_if = {
+					limit = {
+						owner = { is_spiritualist = yes }
+					}
+					add_district = district_giga_birch_physma_temple
+				}
+				else = {
+					add_district = district_giga_birch_physma_bureaucratic
+				}
+				set_or_change_variable = {
+					which = giga_birch_district_physma_built
+					value = 1
+				}
+			}
+			while = {
+				count = value:giga_birch_restoration_physma_sanctuary
+				add_district = district_giga_birch_physma_sanctuary
+				set_or_change_variable = {
+					which = giga_birch_district_physma_built
+					value = 1
+				}
+			}
+			while = {
+				count = value:giga_birch_restoration_physma_farming
+				add_district = district_giga_birch_physma_farm
+				set_or_change_variable = {
+					which = giga_birch_district_physma_built
+					value = 1
+				}
+			}
+			while = {
+				count = value:giga_birch_restoration_physma_trade
+				add_district = district_giga_birch_physma_trade
+				set_or_change_variable = {
+					which = giga_birch_district_physma_built
+					value = 1
+				}
+			}
+			while = {
+				count = value:giga_birch_restoration_physma_laboratory
+				add_district = district_giga_birch_physma_laboratory
+				set_or_change_variable = {
+					which = giga_birch_district_physma_built
+					value = 1
+				}
+			}
+
+			# prune physma
+			while = {
+				limit = {
+					check_variable = {
+						which = giga_birch_district_physma_built
+						value > 10
+					}
+				}
+
+				# research first
+				if = {
+					limit = {
+						check_variable = {
+							which = giga_birch_district_physma_built
+							value > 10
+						}
+						num_districts = {
+							type = district_giga_birch_physma_laboratory
+							value > 0
+						}
+					}
+					remove_district = district_giga_birch_physma_laboratory
+				}
+
+				# trade second
+				if = {
+					limit = {
+						check_variable = {
+							which = giga_birch_district_physma_built
+							value > 10
+						}
+						num_districts = {
+							type = district_giga_birch_physma_trade
+							value > 0
+						}
+					}
+					remove_district = district_giga_birch_physma_trade
+				}
+
+				# unity third
+				if = {
+					limit = {
+						check_variable = {
+							which = giga_birch_district_physma_built
+							value > 10
+						}
+						or = {
+							num_districts = {
+								type = district_giga_birch_physma_bureaucratic
+								value > 0
+							}
+							num_districts = {
+								type = district_giga_birch_physma_temple
+								value > 0
+							}
+							num_districts = {
+								type = district_giga_birch_physma_relay
+								value > 0
+							}
+						}
+					}
+					remove_district = district_giga_birch_physma_bureaucratic
+					remove_district = district_giga_birch_physma_temple
+					remove_district = district_giga_birch_physma_relay
+				}
+
+				# farms fourth
+				if = {
+					limit = {
+						check_variable = {
+							which = giga_birch_district_physma_built
+							value > 10
+						}
+						num_districts = {
+							type = district_giga_birch_physma_farm
+							value > 0
+						}
+					}
+					remove_district = district_giga_birch_physma_farm
+				}
+			}
+
+			############################################################################
+			# replace features
+
+			# home stuff
+			add_deposit = d_giga_birch_origin_home_insula_restored
+			remove_deposit = d_giga_birch_origin_home_insula
+			remove_deposit = d_giga_birch_origin_home_farms
+			remove_deposit = d_giga_birch_origin_home_catalytic_farms
+			remove_deposit = d_giga_birch_origin_home_mines
+			remove_deposit = d_giga_birch_origin_home_lithoid_mines
+			remove_deposit = d_giga_birch_origin_home_generators
+			remove_deposit = d_giga_birch_origin_home_machine_generators
+			remove_deposit = d_giga_birch_origin_home_labs
+
+			# expedition 1
+			add_deposit = d_giga_birch_expedition_1_restored
+			remove_deposit = d_giga_birch_expedition_1_factory
+			remove_deposit = d_giga_birch_expedition_1_farmers
+			remove_deposit = d_giga_birch_expedition_1_miners
+			remove_deposit = d_giga_birch_expedition_1_technicians
+
+			# expedition 2
+			add_deposit = d_giga_birch_expedition_2_restored
+			remove_deposit = d_giga_birch_expedition_2_exterminate
+			remove_deposit = d_giga_birch_expedition_2_trade
+			remove_deposit = d_giga_birch_expedition_2_integrate
+			remove_deposit = d_giga_birch_expedition_2_conquer
+			remove_deposit = d_giga_birch_expedition_2_sanctuary
+
+			# expedition 3
+			add_deposit = d_giga_birch_expedition_3_restored
+			remove_deposit = d_giga_birch_expedition_3
+
+			# expedition 4
+			add_deposit = d_giga_birch_expedition_4_restored
+			remove_deposit = d_giga_birch_expedition_4
+
+			# expedition 5
+			add_deposit = d_giga_birch_expedition_5_restored
+			remove_deposit = d_giga_birch_expedition_5
+
+			# expedition 6
+			add_deposit = d_giga_birch_expedition_6_restored
+			remove_deposit = d_giga_birch_expedition_6_farm
+			remove_deposit = d_giga_birch_expedition_6_generator
+
+			# expedition 7
+			add_deposit = d_giga_birch_expedition_7_restored
+			remove_deposit = d_giga_birch_expedition_7
+
+			# expedition 8
+			add_deposit = d_giga_birch_expedition_8_restored
+			remove_deposit = d_giga_birch_expedition_8
+
+			# expedition 9
+			add_deposit = d_giga_birch_expedition_9_restored
+			remove_deposit = d_giga_birch_expedition_9_energy
+			remove_deposit = d_giga_birch_expedition_9_minerals
+			remove_deposit = d_giga_birch_expedition_9_dark_matter
+			
+			############################################################################
+			# notification
+			planet_event = {
+				id = giga_birch.10001
+			}
+		}
+	}
+}
+
+
+
+#########################################################################################################################################
+#########################################################################################################################################
+#########################################################################################################################################
+# Void Birch (ew)
+
+vsbw_begin = {
+	owned_planets_only = yes
+	icon = decision_transform_into_awesome
+
+	enactment_time = 7200
+	resources = {
+		category = decisions
+		cost = { 											
+			energy = 3000000
+			minerals = 3000000
+			alloys = 2000000
+			sr_dark_matter = 1500000
+			acot_sr_dark_energy = 1500000
+			influence = 750
+		}
+	}
+
+	potential = {
+		has_global_flag = acot_activated
+		is_planet_class = pc_birch
+		owner = { 
+			is_ai = no
+			#has_technology = tech_dm_ancient_palace
+			has_technology = tech_acot_create_enigmapolis
+		}
+		NOR = { 
+			has_modifier = birch_world_decaying
+			has_modifier = aet_birch_world_poorly_mapped_1
+			has_modifier = aet_birch_world_poorly_mapped_2
+			has_modifier = aet_birch_world_poorly_mapped_3
+			has_modifier = aet_birch_world_poorly_mapped_4 
+			has_modifier = aet_birch_world_tech_debuff_1
+			has_modifier = aet_birch_world_tech_debuff_2
+			has_modifier = aet_birch_world_tech_debuff_3
+			has_modifier = aet_birch_world_tech_debuff_4
+		}
+	}
+
+	effect = {
+		# this is what it shows
+		tooltip = {
+			change_pc = pc_void_birch
+		}
+
+		# this is what it actually DOES
+		hidden_effect = {
+			save_global_event_target_as = center_of_the_universe
+			solar_system = {
+				set_star_class = sc_void_birch_built
+				set_asteroid_belt = {
+					radius = 0
+				}
+				random_system_planet = {
+					limit = { is_planet_class = pc_core_black_hole }
+					set_planet_size = 5
+				}
+			}
+
+			export_trigger_value_to_variable = {
+				trigger = num_districts
+				parameters = {
+					type = district_giga_birch_orykta
+				}
+				variable = giga_void_birch_upgrade_orykta
+			}
+			export_trigger_value_to_variable = {
+				trigger = num_districts
+				parameters = {
+					type = district_giga_birch_ktisma
+				}
+				variable = giga_void_birch_upgrade_ktisma
+			}
+			export_trigger_value_to_variable = {
+				trigger = num_districts
+				parameters = {
+					type = district_giga_birch_physma
+				}
+				variable = giga_void_birch_upgrade_physma
+			}
+
+			add_deposit = d_giga_void_birch_mechanics
+
+			change_pc = pc_void_birch
+
+			remove_district = district_giga_birch_structure
+			add_district = district_giga_birch_void_structure
+
+			remove_deposit = d_giga_birch_mechanics
+			validate_planet_buildings_and_districts = yes
+
+			clear_variable = giga_birch_district_orykta_built
+			clear_variable = giga_birch_district_orykta_energy_queued
+			clear_variable = giga_birch_district_orykta_minerals_queued
+			clear_variable = giga_birch_district_orykta_dark_matter_queued
+			clear_variable = giga_birch_district_orykta_negative_energy_queued
+
+			clear_variable = giga_birch_district_ktisma_built
+			clear_variable = giga_birch_district_ktisma_foundry_queued
+			clear_variable = giga_birch_district_ktisma_factory_queued
+			clear_variable = giga_birch_district_ktisma_sentient_metal_queued
+			clear_variable = giga_birch_district_ktisma_supertensiles_queued
+			clear_variable = giga_birch_district_ktisma_refinery_queued
+
+			clear_variable = giga_birch_district_physma_built
+			clear_variable = giga_birch_district_physma_bureaucratic_queued
+			clear_variable = giga_birch_district_physma_farm_queued
+			clear_variable = giga_birch_district_physma_trade_queued
+			clear_variable = giga_birch_district_physma_lab_queued
+
+			planet_event = {
+				id = vsbw.2
+				days = 2
+			}
+
+			owner = {
+				country_event = {
+					id = vsbw.1
+					days = 1
+				}
+			}
+		}
+	}
+}

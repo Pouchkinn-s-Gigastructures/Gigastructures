@@ -1,0 +1,2644 @@
+namespace = giga_mega
+
+####################################
+### On Actions Events ##############
+####################################
+# On game start
+event = {
+	id = giga_mega.001
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_global_flag = gigastructures_enabled
+		set_global_flag = already_warned_about_new_megas
+
+		# math basis stuff
+		event_target:global_event_country = {
+			set_variable = {
+				which = giga_zero
+				value = 0
+			}
+			set_variable = {
+				which = giga_one
+				value = 1
+			}
+		}
+
+		random_list = {
+			40 = {
+				modifier = {
+					add = 10
+					has_global_flag = ring_gargantuan_disabled
+				}
+				modifier = {
+					add = 20
+					has_global_flag = ring_behemoth_disabled
+				}
+				modifier = {
+					add = 30
+					has_global_flag = ring_titanic_disabled
+				}
+			}
+			# titanic Ring System
+			30 = {
+				modifier = {
+					subtract = 30
+					has_global_flag = ring_titanic_disabled
+				}
+				if = {
+					limit = { NOT = { any_system = { has_star_flag = ruined_titanic_ring_system } } }
+					random_system = {
+						limit = {
+							NOR = {
+								is_fe_cluster = yes 
+								any_neighbor_system = {
+									is_fe_cluster = yes
+								}
+								has_star_flag = giga_inner
+								has_star_flag = giga_outer_01
+								has_star_flag = giga_outer_02
+								has_star_flag = giga_outer_03
+								has_star_flag = giga_galactic_center
+							}
+						}
+						spawn_system = { initializer = "ring_world_titanic_init_01" }
+					}
+				}
+				random_system = {
+					limit = { has_star_flag = ruined_titanic_ring_system }
+
+					# Add extra hyperlane
+					random_list = {
+						1 = { while = { count = 1 giga_generate_hyperlane = yes } }
+						1 = { while = { count = 2 giga_generate_hyperlane = yes } }
+					}
+				}
+			}
+			20 = {
+				modifier = {
+					subtract = 20
+					has_global_flag = ring_behemoth_disabled
+				}
+				# behemoth Ring System
+				if = {
+					limit = { NOT = { any_system = { has_star_flag = ruined_behemoth_ring_system } } }
+					random_system = {
+						limit = {
+							NOR = {
+								is_fe_cluster = yes 
+								any_neighbor_system = {
+									is_fe_cluster = yes
+								}
+								has_star_flag = giga_inner
+								has_star_flag = giga_outer_01
+								has_star_flag = giga_outer_02
+								has_star_flag = giga_outer_03
+								has_star_flag = giga_galactic_center
+							}
+						}
+						spawn_system = { initializer = "ring_world_behemoth_init_01" }
+					}
+				}
+				random_system = {
+					limit = { has_star_flag = ruined_behemoth_ring_system }
+
+					# Add extra hyperlane
+					random_list = {
+						1 = { while = { count = 1 giga_generate_hyperlane = yes } }
+						1 = { while = { count = 2 giga_generate_hyperlane = yes } }
+					}
+				}
+			}
+			10 = {
+				modifier = {
+					subtract = 10
+					has_global_flag = ring_gargantuan_disabled
+				}
+				# Gargantuan Ring System
+				if = {
+					limit = { NOT = { any_system = { has_star_flag = ruined_gargantuan_ring_system } } }
+					random_system = {
+						limit = {
+							NOR = {
+								is_fe_cluster = yes 
+								any_neighbor_system = {
+									is_fe_cluster = yes
+								}
+								has_star_flag = giga_inner
+								has_star_flag = giga_outer_01
+								has_star_flag = giga_outer_02
+								has_star_flag = giga_outer_03
+								has_star_flag = giga_galactic_center
+							}
+						}
+						spawn_system = { initializer = "ring_world_gargantuan_init_01" }
+					}
+				}
+				random_system = {
+					limit = { has_star_flag = ruined_gargantuan_ring_system }
+
+					# Add extra hyperlane
+					random_list = {
+						1 = { while = { count = 1 giga_generate_hyperlane = yes } }
+						1 = { while = { count = 2 giga_generate_hyperlane = yes } }
+					}
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = giga_mega.002
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = { has_origin = origin_flat_world }
+
+	immediate = {
+		capital_scope = {
+			remove_all_districts = yes
+			remove_all_buildings = yes
+			clear_blockers = yes
+			clear_deposits = yes
+
+			add_deposit = d_hot_springs
+			add_deposit = d_rushing_waterfalls
+			add_deposit = d_tempestous_mountain
+			add_deposit = d_tempestous_mountain
+			add_deposit = d_veiny_cliffs
+			add_deposit = d_prosperous_mesa
+			add_deposit = d_rich_mountain
+			add_deposit = d_rich_mountain
+			add_deposit = d_rugged_woods
+			add_deposit = d_fertile_lands
+			add_deposit = d_fertile_lands
+
+			if = {
+				limit = { owner = { is_machine_empire = yes } }
+				add_deposit = d_rushing_waterfalls
+			}
+			if = {
+				limit = { owner = { has_valid_civic = civic_machine_servitor } }
+				add_deposit = d_hot_springs
+			}
+			if = {
+				limit = { owner = { is_machine_empire = no } }
+				add_deposit = d_rugged_woods
+				if = {
+					limit = { owner = { is_lithoid_empire = yes } }
+					add_deposit = d_rich_mountain
+				}
+				else = { add_deposit = d_black_soil }
+			}
+
+			generate_start_buildings_and_districts = yes
+			generate_start_pops = yes
+			set_planet_size = 25
+			add_modifier = { modifier = "flat_world_mod" }
+		}
+	}
+}
+
+# change planet capitals on colony complete
+# fired before vanilla on_actions over in 000_giga_early_on_actions.txt
+# this could be done in country_customization, but this is theoretically more compatible and not really expensive
+# *should* be reasonably stable given it's done before other events
+# also sets elysium planet buildings on colonise
+planet_event = {
+	id = giga_mega.003
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		exists = owner
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				has_planet_flag = has_orbital_elysium
+			}
+
+			giga_set_elysium_buildings = yes
+		}
+		else = {
+			remove_all_buildings = yes
+			switch = {
+				trigger = is_planet_class
+
+				pc_giga_elysium = {
+					add_building = building_hab_capital
+				}
+				pc_giga_orbital = {
+					add_building = building_hab_capital
+				}
+			}
+			validate_planet_buildings_and_districts = yes
+		}
+	}
+}
+
+planet_event = {
+	id = giga_mega.8500
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		solar_system = {
+			every_fleet_in_system = {
+				limit = {
+					any_owned_ship = {
+						is_ship_class = shipclass_constructor
+					}
+					controller = {
+						is_ai = yes
+					}
+					is_fleet_idle = yes
+				}
+	
+				set_fleet_flag = giga_remove_planet
+				every_owned_ship = {
+					set_disabled = yes
+				}
+			}
+		}
+	
+		remove_planet = yes
+	
+		solar_system = {
+			every_fleet_in_system = {
+				limit = {
+					has_fleet_flag = giga_remove_planet
+				}
+				every_owned_ship = {
+					set_disabled = no
+				}
+				remove_fleet_flag = giga_remove_planet
+			}
+		}
+	}
+}
+
+####################################
+### Ringworld Upgrade ##############
+####################################
+planet_event = {
+	id = giga_mega.101
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		change_pc = pc_ringworld_habitable
+		set_planet_flag = giga_ringworld_upgraded
+		solar_system = { save_event_target_as = giga_system }
+		save_event_target_as = giga_planet
+		solar_system.starbase.owner = {
+			save_event_target_as = giga_upgrade_owner
+			country_event = { id = giga_dialog.1501 }	# Notification
+		}
+		if = {
+			limit = { has_planet_flag = giga_ringworld_gar }
+			set_planet_size = 40
+			set_planet_entity = { entity = "gargantuan_tech_sector_entity" graphical_culture = event_target:giga_upgrade_owner picture = pc_ringworld_section }
+			create_ambient_object = {
+				type = "giga_ringworld_upgrade_gargantuan"
+				location = this
+				use_3d_location = yes
+				base_angle_towards = solar_system.star
+				entity_face_object = solar_system.star
+			}
+			add_modifier = { modifier = "giga_gargantuan_housing" days = -1 }
+			event_target:giga_upgrade_owner = { set_variable = { which = giga_upgrade_time value = 3600 } }
+			planet_event = { id = giga_mega.102 days = 3600 }
+		}
+		else_if = {
+			limit = { has_planet_flag = giga_ringworld_beh }
+			set_planet_size = 30
+			set_planet_entity = { entity = "behemoth_tech_sector_entity" graphical_culture = event_target:giga_upgrade_owner picture = pc_ringworld_section }
+			create_ambient_object = {
+				type = "giga_ringworld_upgrade_behemoth"
+				location = this
+				use_3d_location = yes
+				base_angle_towards = solar_system.star
+				entity_face_object = solar_system.star
+			}
+			add_modifier = { modifier = "giga_behemoth_housing" days = -1 }
+			event_target:giga_upgrade_owner = { set_variable = { which = giga_upgrade_time value = 2700 } }
+			planet_event = { id = giga_mega.102 days = 2700 }
+		}
+		else_if = {
+			limit = { has_planet_flag = giga_ringworld_tit }
+			set_planet_size = 20
+			set_planet_entity = { entity = "titanic_tech_sector_entity" graphical_culture = event_target:giga_upgrade_owner picture = pc_ringworld_section }
+			create_ambient_object = {
+				type = "giga_ringworld_upgrade_titanic"
+				location = this
+				use_3d_location = yes
+				base_angle_towards = solar_system.star
+				entity_face_object = solar_system.star
+			}
+			add_modifier = { modifier = "giga_titanic_housing" days = -1 }
+			event_target:giga_upgrade_owner = { set_variable = { which = giga_upgrade_time value = 1800 } }
+			planet_event = { id = giga_mega.102 days = 1800 }
+		}
+		else = {
+			set_planet_entity = { entity = "vanilla_tech_entity" graphical_culture = event_target:giga_upgrade_owner picture = pc_ringworld_section }
+			create_ambient_object = {
+				type = "giga_ringworld_upgrade_vanilla"
+				location = this
+				use_3d_location = yes
+				base_angle_towards = solar_system.star
+				entity_face_object = solar_system.star
+			}
+			event_target:giga_upgrade_owner = { set_variable = { which = giga_upgrade_time value = 900 } }
+			planet_event = { id = giga_mega.102 days = 900 }
+		}
+		last_created_ambient_object = { set_ambient_object_flag = giga_upgrading_@root }
+	}
+}
+
+planet_event = {
+	id = giga_mega.102
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		change_pc = pc_ringworld_habitable
+		save_event_target_as = ring_section
+		solar_system = { save_event_target_as = giga_system }
+		save_event_target_as = giga_planet
+		solar_system.starbase.owner = {
+			save_event_target_as = giga_upgrade_owner
+			country_event = { id = giga_dialog.1502 }	# Notification
+		}
+		if = {		limit = { has_planet_flag = giga_ringworld_gar }	set_planet_entity = { entity = "gargantuan_gaia_habitable_sector_01_entity" graphical_culture = event_target:giga_upgrade_owner picture = pc_ringworld } }
+		else_if = {	limit = { has_planet_flag = giga_ringworld_beh }	set_planet_entity = { entity = "behemoth_gaia_habitable_sector_entity" graphical_culture = event_target:giga_upgrade_owner picture = pc_ringworld } }
+		else_if = {	limit = { has_planet_flag = giga_ringworld_tit }	set_planet_entity = { entity = "titanic_gaia_habitable_sector_entity" graphical_culture = event_target:giga_upgrade_owner picture = pc_ringworld } }
+		else = {														set_planet_entity = { entity = "vanilla_gaia_habitable_entity" graphical_culture = event_target:giga_upgrade_owner picture = pc_ringworld } }
+
+		# Set name
+		solar_system = {
+			every_system_ambient_object = { limit = { has_ambient_object_flag = giga_upgrading_@root } destroy_ambient_object = this }
+			if = {		limit = { NOT = { has_star_flag = ring_01 } } set_star_flag = ring_01 event_target:ring_section = { set_name = "Habitable Section A" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_02 } } set_star_flag = ring_02 event_target:ring_section = { set_name = "Habitable Section B" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_03 } } set_star_flag = ring_03 event_target:ring_section = { set_name = "Habitable Section C" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_04 } } set_star_flag = ring_04 event_target:ring_section = { set_name = "Habitable Section D" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_05 } } set_star_flag = ring_05 event_target:ring_section = { set_name = "Habitable Section E" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_06 } } set_star_flag = ring_06 event_target:ring_section = { set_name = "Habitable Section F" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_07 } } set_star_flag = ring_07 event_target:ring_section = { set_name = "Habitable Section G" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_08 } } set_star_flag = ring_08 event_target:ring_section = { set_name = "Habitable Section H" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_09 } } set_star_flag = ring_09 event_target:ring_section = { set_name = "Habitable Section I" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_10 } } set_star_flag = ring_10 event_target:ring_section = { set_name = "Habitable Section J" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_11 } } set_star_flag = ring_11 event_target:ring_section = { set_name = "Habitable Section K" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_12 } } set_star_flag = ring_12 event_target:ring_section = { set_name = "Habitable Section L" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_13 } } set_star_flag = ring_13 event_target:ring_section = { set_name = "Habitable Section M" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_14 } } set_star_flag = ring_14 event_target:ring_section = { set_name = "Habitable Section N" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_15 } } set_star_flag = ring_15 event_target:ring_section = { set_name = "Habitable Section O" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_16 } } set_star_flag = ring_16 event_target:ring_section = { set_name = "Habitable Section P" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_17 } } set_star_flag = ring_17 event_target:ring_section = { set_name = "Habitable Section Q" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_18 } } set_star_flag = ring_18 event_target:ring_section = { set_name = "Habitable Section R" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_19 } } set_star_flag = ring_19 event_target:ring_section = { set_name = "Habitable Section S" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_20 } } set_star_flag = ring_20 event_target:ring_section = { set_name = "Habitable Section T" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_21 } } set_star_flag = ring_21 event_target:ring_section = { set_name = "Habitable Section U" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_22 } } set_star_flag = ring_22 event_target:ring_section = { set_name = "Habitable Section V" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_23 } } set_star_flag = ring_23 event_target:ring_section = { set_name = "Habitable Section W" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_24 } } set_star_flag = ring_24 event_target:ring_section = { set_name = "Habitable Section X" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_25 } } set_star_flag = ring_25 event_target:ring_section = { set_name = "Habitable Section Y" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_26 } } set_star_flag = ring_26 event_target:ring_section = { set_name = "Habitable Section Z" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_27 } } set_star_flag = ring_27 event_target:ring_section = { set_name = "Habitable Section Aa" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_28 } } set_star_flag = ring_28 event_target:ring_section = { set_name = "Habitable Section Ab" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_29 } } set_star_flag = ring_29 event_target:ring_section = { set_name = "Habitable Section Ac" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_30 } } set_star_flag = ring_30 event_target:ring_section = { set_name = "Habitable Section Ad" } }
+			else_if = {	limit = { NOT = { has_star_flag = ring_31 } } set_star_flag = ring_31 event_target:ring_section = { set_name = "Habitable Section Ae" } }
+			else_if = {
+				limit = { NOT = { has_star_flag = ring_32 } }
+				set_star_flag = ring_32
+				event_target:ring_section = { set_name = "Habitable Section Af" }
+				remove_star_flag = ring_01
+				remove_star_flag = ring_02
+				remove_star_flag = ring_03
+				remove_star_flag = ring_04
+				remove_star_flag = ring_05
+				remove_star_flag = ring_06
+				remove_star_flag = ring_07
+				remove_star_flag = ring_08
+				remove_star_flag = ring_09
+				remove_star_flag = ring_10
+				remove_star_flag = ring_11
+				remove_star_flag = ring_12
+				remove_star_flag = ring_13
+				remove_star_flag = ring_14
+				remove_star_flag = ring_15
+				remove_star_flag = ring_16
+				remove_star_flag = ring_17
+				remove_star_flag = ring_18
+				remove_star_flag = ring_19
+				remove_star_flag = ring_20
+				remove_star_flag = ring_21
+				remove_star_flag = ring_22
+				remove_star_flag = ring_23
+				remove_star_flag = ring_24
+				remove_star_flag = ring_25
+				remove_star_flag = ring_26
+				remove_star_flag = ring_27
+				remove_star_flag = ring_28
+				remove_star_flag = ring_29
+				remove_star_flag = ring_30
+				remove_star_flag = ring_31
+				remove_star_flag = ring_32
+
+				# Notifications
+				event_target:giga_upgrade_owner = { country_event = { id = giga_dialog.1503 } }			# If upgraded all rings in system, notification
+			}
+		}
+	}
+}
+
+####################################
+### S.U.C.C. #######################
+####################################
+# Keep shrinking the planet till it's size 10, then deplete it.
+planet_event = {
+	id = giga_mega.201
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				has_planet_flag = delay_metalic_pc
+				NOT = { has_planet_flag = delay_barren_pc }
+			}
+			set_planet_flag = delay_barren_pc
+			change_pc = pc_metallic_hydrogen
+			change_planet_size = -1
+			planet_event = { id = giga_mega.201 days = 720 }
+		}
+		else_if = {
+			limit = {
+				has_planet_flag = delay_metalic_pc
+				has_planet_flag = delay_barren_pc
+				planet_size > 10
+			}
+			change_planet_size = -1
+			planet_event = { id = giga_mega.201 days = 720 }
+		}
+		else_if = {
+			limit = {
+				planet_size <= 10
+				has_planet_flag = delay_metalic_pc
+				has_planet_flag = delay_barren_pc
+			}
+			change_pc = pc_barren
+			add_deposit = d_succ_deposit
+			giga_clear_has_mega_flag = yes
+			solar_system = {
+				random_system_megastructure = {
+					limit = { 
+						is_megastructure_type = succ_2
+						planet = { is_same_value = root } 
+					}
+					remove_megastructure = this
+				}
+				owner = { country_event = { id = giga_dialog.1904 } }	# Notification
+			}
+			create_mining_station = { owner = solar_system.owner }
+		}
+		else = {
+			change_planet_size = -1
+			planet_event = { id = giga_mega.201 days = 720 }
+		}
+	}
+
+	after = { set_planet_flag = delay_metalic_pc }
+}
+
+####################################
+### Automated Stripmine ############
+####################################
+planet_event = {
+	id = giga_mega.301
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		planet_event = { id = giga_mega.302 days = 720 }
+		change_planet_size = -1
+		if = {
+			limit = { is_planet_class = pc_diamond }
+			change_pc = pc_strip_mined
+			set_planet_flag = pc_diamond
+			add_modifier = { modifier = "giga_pd_diamond_planet" days = -1 }
+		}
+		else_if = {
+			limit = { is_planet_class = pc_chthonian }
+			change_pc = pc_strip_mined
+			set_planet_flag = pc_chthonian
+			add_modifier = { modifier = "giga_pd_chthonian_planet" days = -1 }
+		}
+		else_if = {
+			limit = { is_planet_class = pc_ethane_ocean }
+			change_pc = pc_strip_mined
+			set_planet_flag = pc_ethane_ocean
+			add_modifier = { modifier = "giga_pd_ethane_planet" days = -1 }
+		}
+	}
+}
+
+planet_event = {
+	id = giga_mega.302
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = { planet_size = 5 }
+			set_planet_flag = reached_inner_core
+			if = {
+				limit = {
+					exists = solar_system.owner
+				}
+				solar_system.owner = { country_event = { id = giga_dialog.3304 days = 1 } }
+			}
+		}
+
+		if = {
+			limit = { planet_size = 2 }
+			change_pc = pc_core_mined
+			set_planet_flag = depletedstripmine
+			giga_clear_has_mega_flag = yes
+			if = {
+				limit = {
+					exists = solar_system.owner
+				}
+				solar_system.owner = { country_event = { id = giga_dialog.3305 days = 1 } }
+			}
+		}
+		else_if = {
+			limit = { planet_size > 2 }
+			change_planet_size = -1
+			planet_event = { id = giga_mega.302 days = 720 }
+		}
+	}
+}
+
+####################################
+### Birch World ####################
+####################################
+# Yearly Pulse
+event = {
+	id = giga_mega.401
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		NOR = {
+			has_global_flag = birch_black_hole_occured
+			has_global_flag = giga_core_disabled
+			has_global_flag = giga_galactic_core_spawned
+		}
+		OR = {
+			mid_game_years_passed >= 1
+			years_passed >= 100
+		}
+	}
+
+	immediate = {
+		set_global_flag = birch_black_hole_occured
+		every_country = {
+			limit = { is_ai = no }
+			country_event = { id = giga_mega.402 days = 10 random = 360 }
+		}
+	}
+}
+
+# Give Special Project for Galactic core
+country_event = {
+	id = giga_mega.402
+	title = "giga_mega.402.name"
+	desc = "giga_mega.402.desc"
+	picture = GFX_evt_black_hole
+	show_sound = event_sensor_ping
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_global_flag = giga_galactic_core_spawned }
+	}
+
+	option = {
+		name = "giga_mega.402.a"
+		enable_special_project = {
+			name = "INVESTIGATE_GALACTIC_CORE"
+			owner = root
+		}
+		capital_scope = {
+			set_planet_flag = giga_core_sp_here@root
+		}
+	}
+}
+
+# Spawn Galactic Core
+country_event = {
+	id = giga_mega.403
+	title = "giga_mega.403.name"
+	desc = "giga_mega.403.desc"
+	picture = GFX_evt_black_hole
+	show_sound = event_sensor_ping
+	is_triggered_only = yes
+	option = { name = "giga_mega.403.a" }
+
+	immediate = {
+		set_global_flag = giga_galactic_core_spawned
+		set_spawn_system_batch = begin
+		if = {
+			limit = { has_global_flag = giga_core_aeternum }
+			no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_aeternum_initializer"	hyperlane = no  } }
+		}
+		else_if = {
+			limit = { NOT = { has_global_flag = giga_core_aeternum } has_global_flag = giga_core_birch }
+			no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_core_initializer"	hyperlane = no  } }
+		}
+		else = {
+			no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_quasar_initializer"	hyperlane = no  } }
+		}
+		event_target:giga_core_system = {
+			if = {
+				limit = { has_global_flag = giga_core_aeternum } #Aeternum's perfect hexagon
+				every_country = {
+					limit = { is_ai = no }
+					country_event = { id = giga_aeternum.2010 days = 30 }
+				}
+				spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 90	max_orientation_angle = 90	initializer = "giga_inner_1_aeternum_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 150	max_orientation_angle = 150	initializer = "giga_inner_2_aeternum_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 210	max_orientation_angle = 210	initializer = "giga_inner_3_aeternum_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 270	max_orientation_angle = 270	initializer = "giga_inner_4_aeternum_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 330	max_orientation_angle = 330	initializer = "giga_inner_5_aeternum_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 30	max_orientation_angle = 30	initializer = "giga_inner_6_aeternum_initializer"	hyperlane = no }
+
+				spawn_system = { min_distance >= 55	max_distance <= 55	min_orientation_angle = 90	max_orientation_angle = 90	initializer = "giga_outer_1_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 55	max_distance <= 55	min_orientation_angle = 210	max_orientation_angle = 210	initializer = "giga_outer_2_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 55	max_distance <= 55	min_orientation_angle = 330	max_orientation_angle = 330	initializer = "giga_outer_3_initializer"	hyperlane = no }
+				#Inner hexagon lanes
+				add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_1 }
+				add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_2 }
+				add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_3 }
+				add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_4 }
+				add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_5 }
+				add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_6 }
+
+				add_hyperlane_safe = { from = event_target:giga_inner_1		to = event_target:giga_inner_2 }
+				add_hyperlane_safe = { from = event_target:giga_inner_2		to = event_target:giga_inner_3 }
+				add_hyperlane_safe = { from = event_target:giga_inner_3		to = event_target:giga_inner_4 }
+				add_hyperlane_safe = { from = event_target:giga_inner_4		to = event_target:giga_inner_5 }
+				add_hyperlane_safe = { from = event_target:giga_inner_5		to = event_target:giga_inner_6 }
+				add_hyperlane_safe = { from = event_target:giga_inner_6		to = event_target:giga_inner_1 }
+
+				add_hyperlane_safe = { from = event_target:giga_inner_1		to = event_target:giga_outer_1 }
+				add_hyperlane_safe = { from = event_target:giga_inner_3		to = event_target:giga_outer_2 }
+				add_hyperlane_safe = { from = event_target:giga_inner_5		to = event_target:giga_outer_3 }
+				#Outer systems connect to allow going around the hexagon
+				add_hyperlane_safe = { from = event_target:giga_outer_1		to = event_target:giga_outer_2 }
+				add_hyperlane_safe = { from = event_target:giga_outer_2		to = event_target:giga_outer_3 }
+				add_hyperlane_safe = { from = event_target:giga_outer_3		to = event_target:giga_outer_1 }
+				event_target:birch_aeternum = { #Initialize stuff
+					country_event = { id = giga_aeternum.1000 days = 2 }
+				}
+			}
+			else_if = {
+				limit = { NOT = { has_global_flag = giga_core_aeternum } }
+				spawn_system = { min_distance >= 30	max_distance <= 30	min_orientation_angle = 25	max_orientation_angle = 25	initializer = "giga_inner_1_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 60	max_distance <= 60	min_orientation_angle = 90	max_orientation_angle = 90	initializer = "giga_inner_2_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 25	max_distance <= 25	min_orientation_angle = 80	max_orientation_angle = 80	initializer = "giga_inner_3_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 60	max_distance <= 60	min_orientation_angle = 130	max_orientation_angle = 130	initializer = "giga_inner_7_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 60	max_distance <= 60	min_orientation_angle = 180	max_orientation_angle = 180	initializer = "giga_inner_4_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 35	max_distance <= 35	min_orientation_angle = 220	max_orientation_angle = 220	initializer = "giga_inner_5_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 60	max_distance <= 60	min_orientation_angle = 290	max_orientation_angle = 290	initializer = "giga_inner_6_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 80	max_distance <= 80	min_orientation_angle = 110	max_orientation_angle = 110	initializer = "giga_outer_1_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 90	max_distance <= 90	min_orientation_angle = 230	max_orientation_angle = 230	initializer = "giga_outer_2_initializer"	hyperlane = no }
+				spawn_system = { min_distance >= 80	max_distance <= 80	min_orientation_angle = 350	max_orientation_angle = 350	initializer = "giga_outer_3_initializer"	hyperlane = no }
+
+				add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_1 }
+				add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_3 }
+				add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_6 }
+				add_hyperlane_safe = { from = event_target:giga_inner_1		to = event_target:giga_inner_2 }
+				add_hyperlane_safe = { from = event_target:giga_inner_1		to = event_target:giga_inner_6 }
+				add_hyperlane_safe = { from = event_target:giga_inner_2		to = event_target:giga_inner_4 }
+				add_hyperlane_safe = { from = event_target:giga_inner_5		to = event_target:giga_inner_4 }
+				add_hyperlane_safe = { from = event_target:giga_inner_5		to = event_target:giga_inner_6 }
+				add_hyperlane_safe = { from = event_target:giga_inner_7		to = event_target:giga_inner_4 }
+				add_hyperlane_safe = { from = event_target:giga_inner_2		to = event_target:giga_outer_1 }
+				add_hyperlane_safe = { from = event_target:giga_inner_4		to = event_target:giga_outer_2 }
+				add_hyperlane_safe = { from = event_target:giga_inner_6		to = event_target:giga_outer_3 }
+			}
+
+			star = {
+				random_list = {
+					1 = { set_name = "Corey's Gut" }
+					1 = { set_name = "Time's Agony" }
+					1 = { set_name = "Undying Fury" }
+					1 = { set_name = "Eternal Horizon" }
+					1 = { set_name = "Sagittrevorius A" }
+					1 = { set_name = "Pouchkinn's Vortex" }
+					1 = { set_name = "The End" }
+					1 = { set_name = "Voluptia" }
+					1 = { set_name = "Powehi" }
+					1 = { set_name = "Centaurus A" }
+					1 = { set_name = "Cygnus X-1" }
+					1 = { set_name = "Sagittarius A*" }
+					1 = { set_name = "TON 618" }
+					1 = { set_name = "Steve" }
+					1 = { set_name = "Sbeve" }
+					1 = { set_name = "Twissell" }
+					1 = { set_name = "Anulus" }
+					1 = { set_name = "Aria" }
+					1 = { set_name = "Nero" }
+					1 = { set_name = "Diym" }
+					1 = { set_name = "The Auditor" }
+					1 = { set_name = "Calliope" }
+					1 = { set_name = "Abrogation" }
+					1 = { set_name = "Wimbleton" }
+					1 = { set_name = "Mike" }
+					1 = { set_name = "Supermario" }
+					1 = { set_name = "Temporal Itch" }
+					1 = { set_name = "Stellar Beholder" }
+					1 = { set_name = "Grim Reaper" }
+					1 = { set_name = "dQw4w9WgXcQ" }
+					1 = { set_name = "Shatterer of Behemoths" }
+					1 = { set_name = "Grand Gargantua" }
+					1 = { set_name = "111001" }
+					1 = { set_name = "Great Mother" }
+					1 = { set_name = "Placeholder black hole, real one is being renovated, apologies for the inconvenience" }
+					1 = { set_name = "Despacito" }
+					1 = { set_name = "siggatarius A*" }
+				}
+			}
+		}
+		event_target:giga_outer_1 = {
+			random_list = {
+				1 = { while = { count = 1 giga_generate_hyperlane = yes } }
+				1 = { while = { count = 2 giga_generate_hyperlane = yes } }
+			}
+		}
+		event_target:giga_outer_2 = {
+			random_list = {
+				1 = { while = { count = 1 giga_generate_hyperlane = yes } }
+				1 = { while = { count = 2 giga_generate_hyperlane = yes } }
+			}
+		}
+		event_target:giga_outer_3 = {
+			random_list = {
+				1 = { while = { count = 1 giga_generate_hyperlane = yes } }
+				1 = { while = { count = 2 giga_generate_hyperlane = yes } }
+			}
+		}
+		set_spawn_system_batch = end
+	}
+}
+
+####################################
+### Penrose Sphere #################
+####################################
+planet_event = { id = giga_mega.501 hide_window = yes is_triggered_only = yes immediate = { solar_system = { spawn_megastructure = { type = penrose_sphere_a41 } } } }
+planet_event = { id = giga_mega.502 hide_window = yes is_triggered_only = yes immediate = { solar_system = { spawn_megastructure = { type = penrose_sphere_a42 } } } }
+
+planet_event = {
+	id = giga_mega.503
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		solar_system = {
+			remove_star_flag = penrose_detonate_system
+
+			# Breaching Galactic Law
+			if = {
+				limit = {
+					is_galactic_community_formed = yes
+					OR = {
+						AND = {
+							is_active_resolution = "resolution_rulesofwar_reverence_for_life"
+							any_neighbor_system = { any_system_planet = { is_colony = yes } }
+						}
+						is_active_resolution = "resolution_rulesofwar_independent_tribunals"
+						is_active_resolution = "resolution_rulesofwar_last_resort_doctrine"
+						is_active_resolution = "resolution_rulesofwar_demobilization_initiative"
+					}
+				}
+				event_target:penrose_detonator = { set_timed_country_flag = { flag = resolution_breached_fired_cracker days = 3600 } }
+			}
+
+			# Wipe out system
+			every_fleet_in_system = {
+				limit = { owner = { NOT = { is_immune_to_giga_hyperweapon = yes } } } 
+				destroy_fleet = this 
+			}
+			every_system_planet = { limit = { is_star = no } remove_planet = yes }
+			giga_remove_system_debris = yes
+			every_system_megastructure = {
+				limit = {
+					NOR = {
+						is_megastructure_type = lgate_base
+						is_megastructure_type = gateway_final
+						is_megastructure_type = gateway_restored
+						#is_megastructure_type = gateway_ruined
+						is_megastructure_type = ehof_pgate_gateway
+						#is_megastructure_type = ehof_pgate_unknown
+						is_megastructure_type = hyper_relay
+						is_megastructure_type = hyper_relay_restored
+						#is_megastructure_type = hyper_relay_ruined
+					}
+				}
+				remove_megastructure = this
+			}
+
+			# Explosion
+			star = {
+				giga_clear_has_mega_flag = yes
+				while = {
+					count = 4
+					create_ambient_object = {
+						type = "penrose_sphere_explosion_object"
+						location = this
+						duration = 20
+
+						use_3d_location = yes
+
+						entity_offset = { min = 0 max = 0 }
+						entity_offset_angle = { min = 0 max = 0 }
+						entity_offset_height = { min = 0 max = 0 }
+
+						entity_scale_to_size = no
+						scale = 1
+					}
+				}
+			}
+
+			# Neighboring systems
+			every_neighbor_system = {
+				limit = {
+					NOR = {
+						is_star_class = sc_blokkat_stripmined
+						any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
+					}
+				}
+				# Ship Damage
+				every_fleet_in_system = {
+					every_owned_ship = {
+						random_list = {
+							9 = { reduce_hp = 6000 }
+							8 = { reduce_hp = 7000 }
+							7 = { reduce_hp = 8000 }
+							6 = { reduce_hp = 9000 }
+							5 = { reduce_hp = 10000 }
+							4 = { reduce_hp = 11000 }
+							3 = { reduce_hp = 12000 }
+							2 = { reduce_hp = 13000 }
+							1 = { reduce_hp = 14000 }
+						}
+					}
+				}
+
+				# Planet Damage
+				every_system_planet = {
+
+					# Opinion Modifiers (Broke our planet)
+					if = {
+						limit = {
+							is_colony = yes
+							exists = owner
+							NOT = { has_planet_flag = paluushia }
+						}
+						owner = {
+							add_opinion_modifier = { who = event_target:penrose_detonator modifier = "opinion_broke_our_planet" }
+							every_country = {
+								limit = {
+									NOR = {
+										is_country_type = primitive
+										is_same_value = prev
+									}
+									ehof_default_country = yes
+								}
+								add_opinion_modifier = { who = event_target:penrose_detonator modifier = "opinion_broke_planet" }
+							}
+						}
+					}
+
+					# If it's not a habitable structure, change it to a tomb world
+					if = {
+						limit = {
+							is_planet_habitable = yes
+							giga_habitable_structure = no
+							NOT = { has_planet_flag = paluushia }
+						}
+						change_pc = pc_nuked
+					}
+
+					# Radiate every habitable planet
+					if = {
+						limit = {
+							is_planet_habitable = yes
+							NOT = { has_planet_flag = paluushia }
+						}
+						add_modifier = { modifier = "gigablackhole_radiations" days = 3600 }
+					}
+				}
+
+				# Neighboring systems of the neighboring systems
+				every_neighbor_system = {
+					limit = {
+						NOR = {
+							any_neighbor_system = { is_same_value = prevprevprev }
+							is_same_value = prevprevprev
+							is_star_class = sc_blokkat_stripmined
+							any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
+						}
+					}
+
+					# Ship Damage
+					every_fleet_in_system = {
+						every_owned_ship = {
+							random_list = {
+								9 = { reduce_hp = 1500 }
+								8 = { reduce_hp = 1750 }
+								7 = { reduce_hp = 2000 }
+								6 = { reduce_hp = 2250 }
+								5 = { reduce_hp = 2500 }
+								4 = { reduce_hp = 2750 }
+								3 = { reduce_hp = 3000 }
+								2 = { reduce_hp = 3250 }
+								1 = { reduce_hp = 3500 }
+							}
+						}
+					}
+
+					# Planet Damage
+					every_system_planet = {
+
+						# Opinion Modifiers (Irradiated our planet)
+						if = {
+							limit = {
+								is_colony = yes
+								exists = owner
+								NOT = { has_planet_flag = paluushia }
+							}
+							owner = {
+								add_opinion_modifier = { who = event_target:penrose_detonator modifier = "opinion_irradiated_our_planet" }
+								every_country = {
+									limit = {
+										NOR = {
+											is_country_type = primitive
+											is_same_value = prev
+										}
+										ehof_default_country = yes
+									}
+									add_opinion_modifier = { who = event_target:penrose_detonator modifier = "opinion_irradiated_planet" }
+								}
+							}
+						}
+
+						# Radiate every habitable planet
+						if = {
+							limit = {
+								is_planet_habitable = yes
+								NOT = { has_planet_flag = paluushia }
+							}
+							add_modifier = { modifier = "gigablackhole_radiations" days = 3600 }
+						}
+					}
+				}
+			}
+
+			# Remove all hyperlanes
+			every_system = {
+				limit = {
+					NOR = {
+						is_star_class = sc_blokkat_stripmined
+						any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
+					}
+					distance = {
+						source = prev
+						max_jumps = 4
+						use_bypasses = no
+					}
+				}
+				every_neighbor_system = { remove_hyperlane_safe = { from = this to = prev } }
+				set_star_flag = has_no_hyperlane
+			}
+
+			# Add new hyperlanes
+			every_system = {
+				limit = {
+					has_star_flag = has_no_hyperlane
+					NOR = {
+						is_star_class = sc_blokkat_stripmined
+						any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
+					}
+				}
+				while = {
+					limit = {
+						event_target:penrose_detonator = {
+							any_owned_fleet = {
+								exists = solar_system
+								solar_system = { NOT = { has_star_flag = has_no_hyperlane } }
+								NOT = { can_access_system = prevprev }
+							}
+						}
+					}
+					random_system = {
+						limit = { has_star_flag = has_no_hyperlane }
+						remove_star_flag = has_no_hyperlane
+						set_star_flag = has_new_hyperlane
+						random_list = {
+							1 = { while = { count = 1 giga_generate_hyperlane = yes } }
+							1 = { while = { count = 2 giga_generate_hyperlane = yes } }
+						}
+					}
+				}
+			}
+
+			every_system = {
+				limit = { has_star_flag = has_new_hyperlane }
+				remove_star_flag = has_new_hyperlane
+			}
+		}
+	}
+}
+
+####################################
+### War Moon Debris ################
+####################################
+country_event = {
+	id = giga_mega.601
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		fromfrom = {
+			is_ship_size = giga_massive_planet
+			NOT = { has_ship_flag = kaiser_moon_ship }
+			NOT = { has_ship_flag = eelooship }
+		}
+	}
+
+	immediate = {
+		create_message = {
+            type = WAR_MOON_DESTROYED
+            localization = MESSAGE_WAR_MOON_DESTROYED_DESC
+            days = 30
+            target = fromfrom
+            variable = {
+                type = name
+                localization = ENEMY_NAME
+                scope = from
+            }
+            variable = {
+                type = name
+                localization = CELESTIAL_WARSHIP_NAME
+                scope = fromfrom
+            }
+			variable = {
+                type = name
+                localization = SYSTEM_NAME
+                scope = fromfrom.solar_system
+            }
+        }
+		subtract_variable = {
+			which = giga_current_warmoon
+			value = 1
+		}
+		fromfrom = {
+			solar_system = { save_event_target_as = giga_debris_system }
+			solar_system = {
+				set_timed_star_flag = { flag = giga_has_craft_debris days = 360 }
+				spawn_planet = {
+					class = pc_giga_empty_space
+					location = prev
+					init_effect = { save_event_target_as = giga_temp_planet }
+				}
+				create_ambient_object = {
+					type = attack_moon_death_explosion_effect
+					location = ROOT.fromfrom
+					duration = 30
+					use_3d_location = yes
+					entity_offset = 0
+					scale = 1
+				}
+			}
+			solar_system = { spawn_megastructure = { type = "war_moon_debris_cold_barren"	coords_from = event_target:giga_temp_planet owner = owner } }
+			event_target:giga_temp_planet = { remove_planet = yes }
+		}
+	}
+}
+
+# Success
+country_event = {
+	id = giga_mega.602
+	title = "giga_mega.602.name"
+	desc = "giga_mega.602.desc"
+	picture = GFX_evt_attack_moon
+	show_sound = event_ringworld_build_complete
+	is_triggered_only = yes
+	option = { name = "giga_mega.602.a" }
+}
+
+####################################
+### War Planet Debris ##############
+####################################
+country_event = {
+	id = giga_mega.701
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		fromfrom = {
+			OR = {
+				is_ship_size = giga_planet_behemoth
+				is_ship_size = giga_planet_behemoth_fe
+			}
+		}
+	}
+
+	immediate = {
+		subtract_variable = {
+			which = giga_current_warplanet
+			value = 1
+		}
+		create_message = {
+            type = WAR_PLANET_DESTROYED
+            localization = MESSAGE_WAR_PLANET_DESTROYED_DESC
+            days = 30
+            target = fromfrom
+            variable = {
+                type = name
+                localization = ENEMY_NAME
+                scope = from
+            }
+            variable = {
+                type = name
+                localization = CELESTIAL_WARSHIP_NAME
+                scope = fromfrom
+            }
+			variable = {
+                type = name
+                localization = SYSTEM_NAME
+                scope = fromfrom.solar_system
+            }
+        }
+		fromfrom = {
+			solar_system = { save_event_target_as = giga_debris_system }
+			solar_system = {
+				set_timed_star_flag = { flag = giga_has_craft_debris days = 360 }
+				spawn_planet = {
+					class = pc_giga_empty_space
+					location = prev
+					init_effect = { save_event_target_as = giga_temp_planet }
+				}
+				create_ambient_object = {
+					type = planetcraft_death_explosion_effect
+					location = ROOT.fromfrom
+					duration = 30
+					use_3d_location = yes
+					entity_offset = 0
+					scale = 1
+				}
+				spawn_megastructure = {
+					type = "war_planet_debris"
+					coords_from = event_target:giga_temp_planet
+					owner = owner
+				}
+			}
+			event_target:giga_temp_planet = { remove_planet = yes }
+		}
+	}
+}
+
+# Success
+country_event = {
+	id = giga_mega.702
+	title = "giga_mega.702.name"
+	desc = "giga_mega.702.desc"
+	picture = GFX_evt_debris
+	show_sound = event_ringworld_build_complete
+	is_triggered_only = yes
+	option = { name = "giga_mega.702.a" }
+}
+
+####################################
+### War System Debris ##############
+####################################
+country_event = { #It splits lol
+	id = giga_mega.711
+	hide_window = yes
+	is_triggered_only = yes
+	
+	trigger = {
+		fromfrom = {
+			is_ship_size = giga_systemcraft
+		}
+	}
+
+	immediate = {
+		subtract_variable = {
+			which = giga_current_systemcraft
+			value = 1
+		}
+		subtract_variable = {
+			which = giga_current_systemcraft_finished
+			value = 1
+		}
+		if = {
+			limit = {
+				check_variable = {
+					which = giga_current_systemcraft_finished
+					value = 0
+				}
+				NOT = {
+					any_owned_megastructure = {
+						OR = {
+							is_megastructure_type = nicoll_beam_cooldown
+							is_megastructure_type = nicoll_beam_menu
+							is_megastructure_type = nicoll_beam_ready
+							is_megastructure_type = nicoll_beam_firing
+							is_megastructure_type = quasi_stellar_obliterator_5
+							is_megastructure_type = quasi_stellar_obliterator_6
+							is_megastructure_type = quasi_stellar_obliterator_firing_1
+						}
+					}
+				}
+			}
+			remove_country_flag = giga_has_active_hyperweapon
+		}
+		create_message = {
+            type = WAR_SYSTEM_DESTROYED
+            localization = MESSAGE_WAR_SYSTEM_DESTROYED_DESC
+            days = 30
+            target = fromfrom
+            variable = {
+                type = name
+                localization = ENEMY_NAME
+                scope = from
+            }
+            variable = {
+                type = name
+                localization = CELESTIAL_WARSHIP_NAME
+                scope = fromfrom
+            }
+			variable = {
+                type = name
+                localization = SYSTEM_NAME
+                scope = fromfrom.solar_system
+            }
+        }
+		fromfrom = {
+			solar_system = {
+				save_event_target_as = giga_debris_system
+				create_ambient_object = {
+					type = systemcraft_death_explosion_effect
+					location = ROOT.fromfrom
+					duration = 30
+					use_3d_location = yes
+					entity_offset = 0
+					scale = 1
+				}
+				create_fleet = {
+					name = "Systemcraft Remains"
+					settings = {
+						spawn_debris = no
+						can_change_composition = yes
+						is_boss = yes
+					}
+					effect = {
+						set_owner = ROOT
+						while = {
+							count = 4
+							create_ship = {
+								name = "Behemoth Planetcraft"
+								graphical_culture = ROOT
+								random_existing_design = giga_planet_behemoth
+								effect = {
+									set_ship_flag = giga_planet
+									reduce_hp = 3000000
+								}
+							}
+						}
+						while = {
+							count = 5
+							create_ship = { 
+								name = "Attack Moon" 
+								random_existing_design = giga_massive_planet
+								effect = {
+									reduce_hp = 150000
+								}
+							}
+						}
+						set_formation_scale = 12
+						set_location = {
+							target = ROOT.fromfrom
+							distance = 0
+							angle = 0
+						}
+					}
+				}
+			}
+			event_target:giga_temp_planet = { remove_planet = yes }
+		}
+	}
+}
+
+
+####################################
+### Psychic Hypersiphon ############
+####################################
+# Extradimensional Invasion Begins (HIDDEN)
+country_event = {
+	id = giga_mega.801
+	hide_window = yes
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_crisis_sound = extradimensional_crisis_ambient_stage_1
+		set_crisis_stage_1 = yes
+		create_country = {
+			name = "NAME_Portal_Holder_1"
+			type = portal_holder
+			flag = {
+				icon = {		category = "special"		file = "extradimensional_01.dds" }
+				background = {	category = "backgrounds"	file = "circle.dds" }
+				colors = { "black" "black" "null" "null" }
+			}
+			effect = {
+				save_global_event_target_as = portal_holder_1
+				every_playable_country = { establish_communications_no_message = event_target:portal_holder_1 }
+			}
+		}
+		awaken_guardians_of_the_galaxy = yes
+		endgame_telemetry = extradimensional
+		set_global_flag = extradimensional_invasion_happened
+		random_system = {
+			limit = {
+				NOT = {
+					any_country = {
+						OR = {
+							is_country_type = fallen_empire
+							is_country_type = awakened_fallen_empire
+						}
+						any_system_within_border = { is_same_value = prev }
+					}
+				}
+			}
+			set_star_flag = extradimensional_origin_system
+			save_event_target_as = extradimensional_system
+			random_system_planet = {
+				create_species = {
+					name = "NAME_Unbidden"
+					class = EXD
+					portrait = exd1
+					traits = random
+					effect = { save_event_target_as = extradimensional_species }
+				}
+				create_country = {
+					name = "NAME_Unbidden"
+					type = "extradimensional"
+					species = event_target:extradimensional_species
+					name_list = "Extradimensional"
+					flag = {
+						icon = {		category = "special"		file = "extradimensional_01.dds" }
+						background = {	category = "backgrounds"	file = "circle.dds" }
+						colors = { "indigo" "blue" "null" "null" }
+					}
+					effect = {
+						set_country_flag = unbidden
+						create_ship_design = { design = "NAME_Void_Shaper" }		add_ship_design = last_created_design
+						create_ship_design = { design = "NAME_Unbidden_Anchor" }	add_ship_design = last_created_design
+						create_ship_design = { design = "NAME_Unbidden_Starbase" }	add_ship_design = last_created_design
+						save_global_event_target_as = extradimensionals
+						establish_communications_no_message = event_target:portal_holder_1
+						set_faction_hostility = {
+							target = event_target:portal_holder_1
+							set_hostile = no
+						}
+						set_graphical_culture = extra_dimensional_01
+						save_event_target_as = extradimensionals
+					}
+				}
+				event_target:extradimensionals = {
+					create_fleet = {
+						name = "NAME_Dimensional_Portal"
+						effect = {
+							set_owner = prev
+							create_ship = {
+								name = random
+								design = "NAME_Unbidden_Portal"
+								graphical_culture = "extra_dimensional_01"
+								effect = { set_ship_flag = unbidden_portal }
+							}
+							set_location = {
+								target = prevprev
+								distance = 40
+								angle = random
+							}
+							save_event_target_as = dimensional_portal
+							fleet_event = { id = crisis.1003 days = 15 } # Second Fleet Arrives
+							fleet_event = { id = crisis.1003 days = 30 } # Third Fleet Arrives
+							fleet_event = { id = crisis.1003 days = 55 } # Fourth Fleet Arrives
+							fleet_event = { id = crisis.1003 days = 90 } # Fifth Fleet Arrives
+							fleet_event = { id = crisis.1003 days = 180 } # Sixth Fleet Arrives
+							fleet_event = { id = crisis.1003 days = 265 } # Seventh Fleet Arrives
+							fleet_event = { id = crisis.1003 days = 340 } # Eight Fleet Arrives
+							fleet_event = { id = crisis.1003 days = 425 } # Ninth Fleet Arrives
+							fleet_event = { id = crisis.1003 days = 550 } # Tenth Fleet Arrives
+							fleet_event = { id = crisis.1006 days = 20 } # First Constructor Arrives
+							fleet_event = { id = crisis.1006 days = 25 } # Second Constructor Arrives
+							fleet_event = { id = crisis.1006 days = 160 } # Third Constructor Arrives
+							fleet_event = { id = crisis.1006 days = 310 } # Fourth Constructor Arrives
+							event_target:extradimensionals = { country_event = { id = crisis.1260 days = 350 } } # Spawn Cycle starts
+						}
+					}
+					create_leader = {
+						class = admiral
+						species = event_target:extradimensional_species
+						name = random
+						skill = 3
+						traits = { trait = leader_trait_ethereal }
+					}
+					create_fleet = {
+						effect = {
+							while = { count = 1		create_ship = { name = random design = "NAME_Revenant"	graphical_culture = "extra_dimensional_01" } }
+							while = { count = 20	create_ship = { name = random design = "NAME_Revenant"	graphical_culture = "extra_dimensional_01" } }
+							while = { count = 30	create_ship = { name = random design = "NAME_Phantom"	graphical_culture = "extra_dimensional_01" } }
+							while = { count = 45	create_ship = { name = random design = "NAME_Wraith"	graphical_culture = "extra_dimensional_01" } }
+							set_owner = prev
+							assign_leader = last_created_leader
+							set_location = {
+								target = event_target:dimensional_portal
+								distance = 5
+								angle = random
+							}
+							set_fleet_stance = aggressive
+							set_aggro_range = 500
+							set_aggro_range_measure_from = self
+							set_fleet_bombardment_stance = armageddon
+						}
+					}
+				}
+			}
+			if = { limit = { exists = starbase } starbase = { fleet = { destroy_fleet = this } } }
+			create_starbase = { size = starbase_exd owner = event_target:extradimensionals }
+			star = {
+				create_ambient_object = { type = "extradimensional_2" location = this }
+				last_created_ambient_object = {
+					set_ambient_object_flag = extradimensional_system_effect_2
+					set_location = {
+						target = prev
+						distance = 0
+						angle = random
+					}
+				}
+			}
+		}
+		observer_event = { id = observer.34 }
+		event_target:extradimensionals = { random_owned_ship = { ship_event = { id = crisis.1280 } } }	# make portal invincible
+		every_country = {
+			limit = {
+				ehof_default_country = yes
+				intel_level = {
+					level = high
+					system = event_target:extradimensional_system
+				}
+			}
+			country_event = { id = crisis.1007 }
+		}
+		every_country = {
+			limit = {
+				OR = {
+					is_country_type = default
+					is_country_type = fallen_empire
+					is_country_type = awakened_fallen_empire
+				}
+				NOT = {
+					intel_level = {
+						level = high
+						system = event_target:extradimensional_system
+					}
+				}
+			}
+			country_event = { id = crisis.1008 }
+		}
+	}
+}
+
+####################################
+### Planet Modifiers ###############
+####################################
+country_event = {
+	id = giga_mega.901
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		any_planet_within_border = {
+			OR = {
+				AND = {
+					has_modifier = attack_planet_candidate
+					OR = {
+						is_colony = yes
+						NOR = {
+							is_planet_class = pc_barren
+							is_planet_class = pc_barren_cold
+							is_planet_class = pc_molten
+							is_planet_class = pc_toxic
+							is_planet_class = pc_frozen
+						}
+					}
+				}
+				AND = {
+					has_modifier = attack_moon_candidate
+					OR = {
+						is_colony = yes
+						NOR = {
+							is_planet_class = pc_molten
+							is_planet_class = pc_barren
+							is_planet_class = pc_barren_cold
+							is_planet_class = pc_frozen
+						}
+					}
+				}
+				AND = {
+					is_planet_habitable = yes
+					OR = {
+						has_modifier = lifeless_temperate
+						has_modifier = lifeless_foggy
+						has_modifier = lifeless_foggy_gases
+						has_modifier = lifeless_torrid
+						has_modifier = lifeless_torrid_tectonics
+						has_modifier = irradiated_desert_planet
+						has_modifier = katzenland_planet
+					}
+				}
+			}
+		}
+	}
+
+	immediate = {
+		every_planet_within_border = {
+			limit = {
+				OR = {
+					has_modifier = attack_moon_candidate
+					has_modifier = attack_planet_candidate
+					has_modifier = lifeless_temperate
+					has_modifier = lifeless_foggy
+					has_modifier = lifeless_foggy_gases
+					has_modifier = lifeless_torrid
+					has_modifier = lifeless_torrid_tectonics
+					has_modifier = irradiated_desert_planet
+					has_modifier = katzenland_planet
+				}
+			}
+			if = {
+				limit = {
+					has_modifier = attack_moon_candidate
+					OR = {
+						is_colony = yes
+						NOR = {
+							is_planet_class = pc_molten
+							is_planet_class = pc_barren
+							is_planet_class = pc_barren_cold
+							is_planet_class = pc_frozen
+						}
+					}
+				}
+				remove_modifier = attack_moon_candidate
+			}
+			if = {
+				limit = {
+					has_modifier = attack_planet_candidate
+					OR = {
+						is_colony = yes
+						NOR = {
+							is_planet_class = pc_barren
+							is_planet_class = pc_barren_cold
+							is_planet_class = pc_molten
+							is_planet_class = pc_toxic
+							is_planet_class = pc_frozen
+						}
+					}
+				}
+				remove_modifier = attack_planet_candidate
+			}
+			if = {
+				limit = {
+					has_modifier = lifeless_temperate
+					NOT = { is_planet_class = pc_ll_temperate }
+				}
+				remove_modifier = lifeless_temperate
+			}
+			if = {
+				limit = {
+					has_modifier = lifeless_foggy
+					NOT = { is_planet_class = pc_ll_foggy }
+				}
+				remove_modifier = lifeless_foggy
+			}
+			if = {
+				limit = {
+					has_modifier = lifeless_torrid
+					NOT = { is_planet_class = pc_ll_torrid }
+				}
+				remove_modifier = lifeless_torrid
+			}
+			if = {
+				limit = {
+					has_modifier = irradiated_desert_planet
+					NOT = { is_planet_class = pc_katzenland }
+				}
+				remove_modifier = irradiated_desert_planet
+			}
+			if = {
+				limit = {
+					has_modifier = katzenland_planet
+					NOT = { is_planet_class = pc_katzenland }
+				}
+				remove_modifier = katzenland_planet
+				add_modifier = { modifier = katzenland_planet_terraformed days = -1 }
+			}
+		}
+	}
+}
+
+####################################
+### Galactic Core SP Check #########
+####################################
+country_event = {
+	id = giga_mega.1001
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		OR = {
+			has_special_project = INVESTIGATE_GALACTIC_CORE
+			has_special_project = INVESTIGATE_GALACTIC_CORE_LINK
+			is_researching_special_project = INVESTIGATE_GALACTIC_CORE
+			is_researching_special_project = INVESTIGATE_GALACTIC_CORE_LINK
+		}
+		capital_scope = { NOT = { has_planet_flag = giga_core_sp_here@root } }
+	}
+
+	immediate = {
+		random_galaxy_planet = {
+			limit = { has_planet_flag = giga_core_sp_here@root }
+			remove_planet_flag = giga_core_sp_here@root
+			root = {
+				if = {
+					limit = { has_special_project = INVESTIGATE_GALACTIC_CORE }
+					abort_special_project = {
+						type = "INVESTIGATE_GALACTIC_CORE"
+						location = prev
+					}
+					capital_scope = {
+						set_planet_flag = giga_core_sp_here@root
+						enable_special_project = {
+							name = "INVESTIGATE_GALACTIC_CORE"
+							location = this
+							owner = root
+						}
+					}
+				}
+				if = {
+					limit = { has_special_project = INVESTIGATE_GALACTIC_CORE_LINK }
+					abort_special_project = {
+						type = "INVESTIGATE_GALACTIC_CORE_LINK"
+						location = prev
+					}
+					capital_scope = {
+						set_planet_flag = giga_core_sp_here@root
+						enable_special_project = {
+							name = "INVESTIGATE_GALACTIC_CORE_LINK"
+							location = this
+							owner = root
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+####################################
+### Shipyard Uplink ################
+####################################
+# Set a flag to allow uplink to work
+planet_event = {
+	id = giga_mega.1101
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = { last_district_changed = district_virtual_shipyard }
+
+	immediate = {
+		if = {
+			limit = { has_district = district_virtual_shipyard }
+			set_planet_flag = giga_virtual_shipyard
+		}
+		else = { remove_planet_flag = giga_virtual_shipyard }
+	}
+}
+
+####################################
+### Megastructure Notifications ####
+####################################
+country_event = {
+	id = giga_mega.1201
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		from = {
+			giga_is_final_megastructure_stage = yes
+		}
+	}
+
+    immediate = {
+        every_relation = {
+            limit = { ehof_default_country = yes }
+            create_message = {
+                type = ALIEN_MEGASTRUCTURE_BUILT
+                localization = MESSAGE_ALIEN_MEGASTRUCTURE_BUILT
+                days = 30
+                target = root.fromfrom # mega cannot be target of message. use the system instead.
+                variable = {
+                    type = name
+                    localization = COUNTRY
+                    scope = root
+                }
+                variable = {
+                    type = name
+                    localization = MEGASTRUCTURE
+                    scope = root.from
+                }
+                variable = {
+                    type = name
+                    localization = SYSTEM
+                    scope = root.fromfrom
+                }
+            }
+        }
+    }
+}
+
+#Popup about new tradition tree
+country_event = {
+	id = giga_mega.500
+	title = "giga_mega.500.name"
+	desc = "giga_mega.500.desc"
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	picture = GFX_evt_announcement
+	show_sound = event_mystic_reveal_light
+
+	trigger = {
+		last_increased_tech = giga_tech_tetradimensional_engineering
+	}
+
+	option = {
+		name = "giga_mega.500.a"
+		custom_tooltip = "giga_mega.500.a.tooltip"
+	}
+}
+
+# Update event for newly habitable worlds to give them location dependent effects
+# e.g. disco moon, stellar ring influence
+planet_event = {
+	id = giga_mega.1000
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		# check for this being among a disco moon system and apply modifier if so
+		apply_disco_moon_modifiers_to_new_moon = yes
+
+		# apply orbital ring effects
+		if = {
+			limit = {
+				solar_system = {
+					any_system_planet = {
+						is_planet_class = pc_giga_orbital
+					}
+				}
+				not = { has_deposit = d_giga_orbital_effects }
+			}
+			add_deposit = d_giga_orbital_effects
+		}
+	}
+}
+
+#The Nexus deploys ships
+planet_event = {
+	id = giga_mega.7001
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		save_event_target_as = planet_deploying_ships
+		planet_owner = { save_event_target_as = strike_fleet_owner }
+		planet_event = { id = giga_mega.7003 days = 10 }
+		create_fleet = {
+			name = "[ROOT.GetName] Defense Squadron"
+			settings = {
+				spawn_debris = no
+				can_change_composition = no
+				is_boss = no
+				can_disband = no
+				can_upgrade = no
+				uses_naval_capacity = no
+				can_change_leader = no
+			}
+			effect = {
+				set_owner = event_target:strike_fleet_owner
+				while = {
+					count = event_target:planet_deploying_ships.giga_nexus_ship_count
+					create_ship = {
+						name = "Strike Corvette"
+						graphical_culture = event_target:strike_fleet_owner
+						random_existing_design = corvette
+						effect = {
+							add_modifier = {
+								modifier = giga_strike_corvette_modifier
+								days = -1
+							}
+							if = {
+								limit = { event_target:strike_fleet_owner = { has_ascension_perk = ap_eternal_vigilance } }
+								add_modifier = {
+									modifier = giga_strike_corvette_vigilance_ap
+									days = -1
+								}
+							}
+							if = {
+								limit = { event_target:strike_fleet_owner = { has_technology = giga_tech_defense_nexus_damage_1 } }
+								add_modifier = {
+									modifier = giga_strike_corvette_buff_tech_1
+									days = -1
+								}
+							}
+							if = {
+								limit = { event_target:strike_fleet_owner = { has_technology = giga_tech_defense_nexus_damage_2 } }
+								add_modifier = {
+									modifier = giga_strike_corvette_buff_tech_2
+									days = -1
+								}
+							}
+							if = {
+								limit = { event_target:planet_deploying_ships = { is_giga_maginot_world = yes } }
+								add_modifier = {
+									modifier = giga_strike_corvette_buff_maginot
+									days = -1
+								}
+							}
+						}
+					}
+				}
+				set_fleet_stance = aggressive
+				set_fleet_flag = giga_yard_entity_@ROOT
+				fleet_event = { id = giga_mega.7002 days = 30 }
+				set_formation_scale = 1
+				set_location = {
+					target = ROOT
+					distance = 0
+					angle = 0
+				}
+				ROOT = {
+					set_planet_flag = giga_yard_entity_fleet_@PREV
+					set_planet_flag = defence_squadron_deployed
+					set_timed_planet_flag = {
+						flag = giga_defence_squadron_cooldown
+						days = 90
+					}
+				}
+			}
+		}
+	}
+}
+
+fleet_event = {
+	id = giga_mega.7002
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		fleet_event = { id = giga_mega.7002 days = 30 }
+		if = {
+			limit = { solar_system = { NOT = { any_system_planet = { has_planet_flag = giga_yard_entity_fleet_@ROOT } } } }
+			random_galaxy_planet = {
+				limit = { has_planet_flag = giga_yard_entity_fleet_@ROOT }
+				save_event_target_as = giga_defense_force_planet
+			}
+			set_location = event_target:giga_defense_force_planet
+		}
+		if = {
+			limit = {
+				solar_system = {
+					NOR = { 
+						any_ship_in_system = { owner = { is_hostile_to = ROOT.owner } }
+						any_ship_in_system = { owner = { is_at_war_with = ROOT.owner } }
+					}
+				}
+			}
+			queue_actions = {
+				find_closest_planet = {
+					trigger = {
+						id = giga_mega.7001
+						has_planet_flag = giga_yard_entity_fleet_@ROOT
+					}
+					found_planet = {
+						move_to = this
+						effect = {
+							id = giga_mega.7002
+							save_event_target_as = giga_nexus_return_planet
+							set_variable = {
+								which = giga_nexus_ship_count
+								value = 0
+							}
+							ROOT = { #Count ships that returned
+								every_owned_ship = {
+									ROOT = {
+										change_variable = {
+											which = giga_nexus_ship_count
+											value = 1
+										}
+									}
+								}
+							}
+							set_variable = {
+								which = giga_nexus_ship_count
+								value = root.giga_nexus_ship_count
+							}
+							remove_planet_flag = giga_yard_entity_fleet_@ROOT
+							remove_planet_flag = defence_squadron_deployed
+							delete_fleet = ROOT
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+planet_event = {
+	id = giga_mega.7003
+
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = { has_planet_flag = defence_squadron_deployed }
+			planet_event = { id = giga_mega.7003 days = 10 }
+			if = {
+				limit = { 
+					ROOT.owner = { NOT = { any_owned_fleet = { has_fleet_flag = giga_yard_entity_@ROOT } } }
+					has_planet_flag = defence_squadron_deployed 
+				}
+				set_variable = {
+					which = giga_nexus_ship_count
+					value = 0
+				}
+				remove_planet_flag = defence_squadron_deployed
+			}
+		}
+	}
+}
+
+#Monthly event
+planet_event = {
+	id = giga_mega.7004
+
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = { #Remove the modifiers if not a colony anymore (very sad)
+		if = {
+			limit = { 
+				is_colony = yes
+				OR = { 
+					has_modifier = planetary_drive_yard_fortress_modifier 
+					has_modifier = planetary_drive_yard_fortress_modifier_gestalt
+				}
+			}
+			planet_event = { id = giga_mega.7004 days = 30 }
+		}
+		if = {
+			limit = {
+				NOR = { 
+					has_planet_flag = giga_defence_army_cooldown
+					is_occupied_flag = yes
+					has_ground_combat = yes
+				} 
+			}
+			every_planet_army = {
+				limit = { army_type = "giga_defense_nexus_army" }
+				remove_army = yes
+			}
+			set_variable = {
+				which = giga_nexus_army_count
+				value = trigger:num_pops
+			}
+			divide_variable = {
+				which = giga_nexus_army_count
+				value = 10
+			}
+			ceiling_variable = giga_nexus_army_count
+			while = {
+				count = giga_nexus_army_count
+				create_army = {
+					owner = THIS.owner
+					type = giga_defense_nexus_army
+					name = "Planetary Guardians"
+				}
+			}
+			set_timed_planet_flag = {
+				flag = giga_defence_army_cooldown
+				days = 120
+			}
+		}
+		set_variable = {
+			which = giga_nexus_ship_count_tech
+			value = owner.giga_nexus_ship_count_tech
+		}
+		giga_drive_yard_calculate_max_ship_count = yes
+		giga_drive_yard_calculate_monthly_ship_count = yes
+		if = {
+			limit = { 
+				NOT = { has_planet_flag = defence_squadron_deployed }
+				check_variable = {
+					which = giga_nexus_ship_count
+					value < giga_nexus_ship_count_max
+				}
+			}
+			change_variable = {
+				which = giga_nexus_ship_count
+				value = giga_nexus_ship_count_monthly
+			}
+		}
+		if = {
+			limit = { 
+				check_variable = {
+					which = giga_nexus_ship_count
+					value > giga_nexus_ship_count_max
+				}
+			}
+			set_variable = {
+				which = giga_nexus_ship_count
+				value = giga_nexus_ship_count_max
+			}
+		}
+	}
+}
+
+#Defense Nexus Deployment
+fleet_event = {
+	id = giga_mega.7005
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		from = { 
+			any_system_planet = { 
+				has_planet_flag = defense_nexus_deploy_system 
+				giga_can_deploy_defense_squadron = yes
+			}
+		}
+		THIS.owner = {
+			OR = {
+				is_hostile_to = from.space_owner
+				is_at_war_with = from.space_owner
+			}
+		}
+	}
+
+	immediate = {
+		from = {
+			every_system_planet = {
+				limit = {
+					has_planet_flag = defense_nexus_deploy_system
+					giga_can_deploy_defense_squadron = yes
+				}
+				planet_event = { id = giga_mega.7001 }
+			}
+		}
+	}
+}
+
+#Defense Nexus Deployment on Bombard
+planet_event = {
+	id = giga_mega.7006
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_planet_flag = defense_nexus_deploy_bombard
+		giga_can_deploy_defense_squadron = yes
+	}
+
+	immediate = {
+		planet_event = { id = giga_mega.7001 }
+	}
+}
+
+planet_event = {
+	id = giga_mega.7008
+
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = { #Remove the modifiers if not a colony anymore (very sad)
+		if = {
+			limit = { is_colony = no }
+			solar_system = {
+				random_system_megastructure = {
+					limit = { planet = { is_same_value = ROOT } }
+					remove_megastructure = THIS
+				}
+			}
+			remove_modifier = planetary_drive_yard_modifier
+			remove_modifier = planetary_drive_yard_fortress_modifier
+			remove_modifier = planetary_drive_yard_modifier_gestalt
+			remove_modifier = planetary_drive_yard_fortress_modifier_gestalt
+			giga_drive_yard_reset_variables = yes
+		}
+		else_if = {
+			limit = { is_colony = yes }
+			planet_event = { id = giga_mega.7008 days = 30 }
+		}
+	}
+}
+
+#DISMANTLE
+planet_event = {
+	id = giga_mega.7009
+	
+	title = "giga_mega.7008.name"
+	desc = "giga_mega.7008.desc"
+
+	picture = GFX_evt_megastructure_construction
+	show_sound = event_construction
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_mega.7008.a"
+		owner = {
+			add_resource = {
+				alloys = 2000
+			}
+		}
+		hidden_effect = {
+			owner = {
+				remove_country_flag = giga_defense_nexus_dismantle_popup
+				set_country_flag = giga_just_dismantled_planet_dockyard
+			}
+			remove_modifier = planetary_drive_yard_fortress_modifier
+			remove_modifier = planetary_drive_yard_fortress_modifier_gestalt
+			remove_modifier = giga_bulwark_trad_stability_nexus
+			every_planet_army = {
+				limit = { army_type = "giga_defense_nexus_army" }
+				remove_army = yes
+			}
+			if = {
+				limit = { has_building = building_defense_nexus_construction }
+				while = {
+					limit = { has_building = building_defense_nexus_construction }
+					remove_building = building_defense_nexus_construction
+				}
+			}
+			if = {
+				limit = { has_building = building_defense_nexus_capacity }
+				while = {
+					limit = { has_building = building_defense_nexus_capacity }
+					remove_building = building_defense_nexus_capacity
+				}
+			}
+			remove_planet_flag = defense_nexus_deploy_system
+			remove_planet_flag = defense_nexus_deploy_bombard
+			remove_planet_flag = defense_nexus_deploy_never
+			giga_drive_yard_reset_variables = yes
+			solar_system = {
+				random_system_megastructure = {
+					limit = { planet = { is_same_value = ROOT } }
+					remove_megastructure = THIS
+				}
+				spawn_megastructure = {
+					type = planetary_drive_yard_1
+					planet = ROOT
+					owner = ROOT.owner
+				}
+			}
+		}
+	}
+
+	option = {
+		name = "giga_mega.7008.b"
+		owner = {
+			add_resource = {
+				alloys = 3500
+			}
+		}
+		hidden_effect = {
+			owner = {
+				remove_country_flag = giga_defense_nexus_dismantle_popup
+			}
+			remove_modifier = planetary_drive_yard_fortress_modifier
+			remove_modifier = planetary_drive_yard_fortress_modifier_gestalt
+			
+			remove_planet_flag = giga_drive_yard
+			remove_planet_flag = defense_nexus_deploy_system
+			remove_planet_flag = defense_nexus_deploy_bombard
+			remove_planet_flag = defense_nexus_deploy_never
+			remove_modifier = giga_bulwark_trad_stability_nexus
+			every_planet_army = {
+				limit = { army_type = "giga_defense_nexus_army" }
+				remove_army = yes
+			}
+			if = {
+				limit = { has_building = building_defense_nexus_construction }
+				while = {
+					limit = { has_building = building_defense_nexus_construction }
+					remove_building = building_defense_nexus_construction
+				}
+			}
+			if = {
+				limit = { has_building = building_defense_nexus_capacity }
+				while = {
+					limit = { has_building = building_defense_nexus_capacity }
+					remove_building = building_defense_nexus_capacity
+				}
+			}
+			giga_drive_yard_reset_variables = yes
+			solar_system = {
+				random_system_megastructure = {
+					limit = { 
+						or = {
+							is_megastructure_type = planetary_drive_yard_1
+							is_megastructure_type = planetary_drive_yard_1_fortress
+							is_megastructure_type = planetary_drive_yard_1_shipyard
+						}
+						planet = { is_same_value = ROOT } 
+					}
+					remove_megastructure = THIS
+				}
+			}
+
+			giga_clear_has_mega_flag = yes
+		}
+	}
+
+	option = {
+		name = "giga_mega.7008.c"
+		hidden_effect = {
+			owner = { remove_country_flag = giga_defense_nexus_dismantle_popup }
+		}
+	}
+}
+
+country_event = {
+	id = giga_mega.7010
+	is_triggered_only = yes
+
+	hide_window = yes
+
+	trigger = {
+		last_increased_tech = giga_tech_repeatable_defense_nexus_capacity_upgrade
+	}
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_country_flag = giga_nexus_tech_flag_set } }
+			set_country_flag = giga_nexus_tech_flag_set
+			set_variable = {
+				which = giga_nexus_ship_count_tech
+				value = 1
+			}
+		}
+		multiply_variable = {
+			which = giga_nexus_ship_count_tech
+			value = 1.15
+		}
+	}
+}
+
+###FIX SPACING FOR MOON/PLANET FLEETS###
+
+
+country_event = {
+	id = giga_mega.8000
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		any_owned_fleet = {
+			any_owned_ship = {
+				OR = {
+					is_ship_size = giga_systemcraft
+					is_ship_size = giga_aeternum_planetcraft
+					is_ship_size = giga_planet_behemoth
+					is_ship_size = giga_massive_planet
+				}
+			}
+		}
+	}
+
+	immediate = {
+		every_owned_fleet = {
+			limit = {
+				any_owned_ship = { is_ship_size = giga_systemcraft }
+			}
+			set_formation_scale = 20
+		}
+		every_owned_fleet = {
+			limit = {
+				OR = {
+					any_owned_ship = { is_ship_size = giga_planet_behemoth }
+					any_owned_ship = { is_ship_size = giga_aeternum_planetcraft }
+				}
+			}
+			set_formation_scale = 10
+		}
+		every_owned_fleet = {
+			limit = {
+				any_owned_ship = { is_ship_size = giga_massive_planet }
+			}
+			set_formation_scale = 5
+		}
+	}
+}
+
+#yearly event to reapply mega modifiers properly
+event = {
+	id = giga_mega.8100
+	hide_window = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		every_country = { clear_giga_mega_balance_modifiers = yes }
+
+		every_country = {
+			limit = { 
+				is_ai = yes 
+				giga_country_gets_bank = yes
+			}
+
+			# init savings account stuff if we need it
+			giga_ai_savings_init = yes
+			add_modifier = {
+				modifier = giga_ai_savings_info
+			}
+			if = {
+				limit = { not = { has_relic = r_giga_ai_savings } }
+				add_relic = r_giga_ai_savings
+			}
+			
+			set_variable = {
+				which = giga_mega_output_ai_real
+				value = event_target:global_event_country.giga_mega_output_ai_real
+			}
+			if = {
+				limit = { NOT = { check_variable = { which = giga_mega_output_ai_real value = 0 } } }
+				add_modifier = {
+					modifier = giga_mega_output_balance
+					days = -1
+					multiplier = giga_mega_output_ai_real
+				}
+			}
+
+			set_variable = {
+				which = giga_mega_cost_ai_real
+				value = event_target:global_event_country.giga_mega_cost_ai_real
+			}
+			if = {
+				limit = { NOT = { check_variable = { which = giga_mega_cost_ai_real value = 0 } } }
+				add_modifier = {
+					modifier = giga_mega_cost_balance
+					days = -1
+					multiplier = giga_mega_cost_ai_real
+				}
+			}
+
+			set_variable = {
+				which = giga_mega_upkeep_ai_real
+				value = event_target:global_event_country.giga_mega_upkeep_ai_real
+			}
+			if = {
+				limit = { NOT = { check_variable = { which = giga_mega_upkeep_ai_real value = 0 } } }
+				add_modifier = {
+					modifier = giga_mega_upkeep_balance
+					days = -1
+					multiplier = giga_mega_upkeep_ai_real
+				}
+			}
+		}
+
+		every_country = {
+			limit = { 
+				OR = {
+					is_ai = no 
+					giga_country_gets_bank = no
+				}
+			}
+
+			if = {
+				limit = { has_relic = r_giga_ai_savings }
+				remove_relic = r_giga_ai_savings
+			}
+
+			set_variable = {
+				which = giga_mega_output_real
+				value = event_target:global_event_country.giga_mega_output_real
+			}
+			if = {
+				limit = { NOT = { check_variable = { which = giga_mega_output_real value = 0 } } }
+				add_modifier = {
+					modifier = giga_mega_output_balance
+					days = -1
+					multiplier = giga_mega_output_real
+				}
+			}
+
+			set_variable = {
+				which = giga_mega_cost_real
+				value = event_target:global_event_country.giga_mega_cost_real
+			}
+			if = {
+				limit = { NOT = { check_variable = { which = giga_mega_cost_real value = 0 } } }
+				add_modifier = {
+					modifier = giga_mega_cost_balance
+					days = -1
+					multiplier = giga_mega_cost_real
+				}
+			}
+
+			set_variable = {
+				which = giga_mega_upkeep_real
+				value = event_target:global_event_country.giga_mega_upkeep_real
+			}
+			if = {
+				limit = { NOT = { check_variable = { which = giga_mega_upkeep_real value = 0 } } }
+				add_modifier = {
+					modifier = giga_mega_upkeep_balance
+					days = -1
+					multiplier = giga_mega_upkeep_real
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+    id = giga_mega.8200
+    is_triggered_only = yes
+    hide_window = yes
+
+    trigger = {#Only people who are valid to be able to potentially have the cb used on or against them will have systemcraft counting
+		ehof_default_country = yes
+    }
+
+    immediate = {
+		set_variable = { #Fully recounting
+			which = giga_current_systemcraft_finished
+			value = 0
+		}
+		every_owned_ship = {
+			limit = { is_ship_size = giga_systemcraft }
+			root = {
+				change_variable = {
+					which = giga_current_systemcraft_finished
+					value = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = giga_has_active_hyperweapon
+				check_variable = {
+					which = giga_current_systemcraft_finished
+					value = 0
+				}
+				NOT = {
+					any_owned_megastructure = {
+						OR = {
+							is_megastructure_type = nicoll_beam_cooldown
+							is_megastructure_type = nicoll_beam_menu
+							is_megastructure_type = nicoll_beam_ready
+							is_megastructure_type = nicoll_beam_firing
+							is_megastructure_type = quasi_stellar_obliterator_5
+							is_megastructure_type = quasi_stellar_obliterator_6
+							is_megastructure_type = quasi_stellar_obliterator_firing_1
+						}
+					}
+				}
+			}
+			remove_country_flag = giga_has_active_hyperweapon
+		}
+		else_if = {
+			limit = {
+				OR = {
+					check_variable = {
+						which = giga_current_systemcraft_finished
+						value > 0
+					}
+					any_owned_megastructure = {
+						OR = {
+							is_megastructure_type = nicoll_beam_cooldown
+							is_megastructure_type = nicoll_beam_menu
+							is_megastructure_type = nicoll_beam_ready
+							is_megastructure_type = nicoll_beam_firing
+							is_megastructure_type = quasi_stellar_obliterator_5
+							is_megastructure_type = quasi_stellar_obliterator_6
+							is_megastructure_type = quasi_stellar_obliterator_firing_1
+						}
+					}
+				} 				
+				NOT = { has_country_flag = giga_has_active_hyperweapon }
+			}
+			set_country_flag = giga_has_active_hyperweapon
+		}
+    }
+}
+
+# Fired by on_system_lost
+# From = system
+# FromFrom = country (new owner)
+# This = country (previous owner)
+country_event = {
+    id = giga_mega.8300
+    is_triggered_only = yes
+    hide_window = yes
+
+    trigger = {
+		ehof_default_country = yes
+		has_country_flag = giga_has_active_hyperweapon
+		fromfrom = {
+			ehof_default_country = yes
+		}
+		from = {
+			any_system_megastructure = {
+				OR = {
+					is_megastructure_type = nicoll_beam_cooldown
+					is_megastructure_type = nicoll_beam_menu
+					is_megastructure_type = nicoll_beam_ready
+					is_megastructure_type = nicoll_beam_firing
+					is_megastructure_type = quasi_stellar_obliterator_5
+					is_megastructure_type = quasi_stellar_obliterator_6
+					is_megastructure_type = quasi_stellar_obliterator_firing_1
+				}
+			}
+		}
+    }
+
+    immediate = {
+		if = {
+			limit = {
+				NOT = { fromfrom = { has_country_flag = giga_has_active_hyperweapon } }
+				from = {
+					any_system_megastructure = {
+						OR = { 					
+							is_megastructure_type = nicoll_beam_cooldown
+							is_megastructure_type = nicoll_beam_menu
+							is_megastructure_type = nicoll_beam_ready
+							is_megastructure_type = nicoll_beam_firing
+							is_megastructure_type = quasi_stellar_obliterator_5
+							is_megastructure_type = quasi_stellar_obliterator_6
+							is_megastructure_type = quasi_stellar_obliterator_firing_1
+						}
+					}
+				}
+			}
+			fromfrom = { set_country_flag = giga_has_active_hyperweapon }
+		}
+		if = {
+			limit = {
+				has_country_flag = giga_has_active_hyperweapon
+				check_variable = {
+					which = giga_current_systemcraft_finished
+					value = 0
+				}
+				NOT = {
+					any_owned_megastructure = {
+						OR = {
+							is_megastructure_type = nicoll_beam_cooldown
+							is_megastructure_type = nicoll_beam_menu
+							is_megastructure_type = nicoll_beam_ready
+							is_megastructure_type = nicoll_beam_firing
+							is_megastructure_type = quasi_stellar_obliterator_5
+							is_megastructure_type = quasi_stellar_obliterator_6
+							is_megastructure_type = quasi_stellar_obliterator_firing_1
+						}
+					}
+				}
+			}
+			remove_country_flag = giga_has_active_hyperweapon
+		}
+    }
+}

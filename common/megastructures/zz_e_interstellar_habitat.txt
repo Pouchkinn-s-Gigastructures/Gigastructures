@@ -1,0 +1,306 @@
+interstellar_habitat_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	show_galactic_map_icon = yes
+	prerequisites = { giga_tech_interstellar_habitat }
+
+	build_time = 1800
+	resources = {
+		category = giga_megastructures
+		cost = {
+			alloys = 3500
+			influence = 75
+			unity = @giga_mega_unity_cost
+		}
+		upkeep = { energy = 5 }
+	}
+
+	potential = {
+		has_technology = giga_tech_interstellar_habitat
+		NOT = { has_global_flag = stellarhabitat_disabled }
+		is_giga_one_planet_origin = no
+		OR = {
+			check_variable = { which = giga_stellarhabitat_cap value = 0 }						# No Cap
+			check_variable = { which = giga_current_stellarhabitat value < giga_stellarhabitat_cap }
+		}
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border"			is_inside_border = from }
+		custom_tooltip = { fail_text = "requires_surveyed_system"		NOT = { any_system_planet = { is_surveyed = { who = prev.from status = no } } } }
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"			planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "must_build_around_star"						is_star = yes }
+			custom_tooltip = { fail_text = "requires_no_anomaly"						has_anomaly = no }
+			custom_tooltip = { fail_text = "cant_build_on_interstellar_habitat"			NOT = { solar_system = { has_star_flag = habitat_system } } }
+			custom_tooltip = {
+				fail_text = "requires_not_capped"
+				from = {
+					OR = {
+						check_variable = { which = giga_stellarhabitat_cap value = 0 }						# No Cap
+						check_variable = { which = giga_current_stellarhabitat value < giga_stellarhabitat_cap }
+					}
+				}
+			}
+		}
+	}
+
+	ai_weight = {
+		# weight = 300	# Default = 100
+
+		# # Can we afford the upkeep
+
+		# # Do we want the production
+
+		# # Is this system a good location?
+		# modifier = { factor = 0.1	any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } }
+		# modifier = { factor = 0.5	any_neighbor_system = { any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } } }
+
+		# # Do we lean towards this from federation/ethic/civic?
+
+		# # How many of this megastructure can the AI build?
+		# modifier = { factor = 0.00	from = { has_country_flag = has_recently_built_interstellar_habitat } }
+		# modifier = { factor = 0.00	from = { check_variable = { which = completed_i_ringworlds value > 1 } } }
+		# modifier = { factor = 0.50	from = { check_variable = { which = completed_i_ringworlds value = 1 } } }
+		# modifier = { factor = 0.00	from = { has_country_flag = giga_started_i_ringworld } }
+
+		weight = value:giga_ai_base_mega
+
+		mult = value:giga_ai_unlocks_gigastructures
+		mult = value:giga_ai_build_low_priority
+		mult = value:giga_ai_overpopulation_boost
+		mult = value:giga_ai_prevent_spam|MEGA|interstellar_habitat|
+		mult = value:giga_ai_core_territory
+	}
+
+	on_build_complete = {
+		set_star_flag = habitat_system
+		set_star_flag = habitat_hyperlane_needed
+		save_event_target_as = giga_system
+		set_variable = { which = i_ring_segments value = 0 }
+		save_event_target_as = interstellar_system
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+		}
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_interstellar_habitat years = 20 }
+			set_country_flag = giga_started_i_ringworld
+			change_variable = { which = giga_current_stellarhabitat value = 1 }
+			country_event = { id = giga_dialog.2901 }	# Notification + Choose where
+		}
+		remove_megastructure = fromfrom
+	}
+}
+
+interstellar_habitat_1 = {
+	entity = ""
+	portrait = "GFX_megastructure_construction_background"
+	show_galactic_map_icon = yes
+	upgrade_from = { interstellar_habitat_0 }
+
+	build_time = 2700
+	resources = {
+		category = giga_megastructures
+		cost = {
+			alloys = 5000
+			energy = 5000
+			unity = @giga_mega_unity_cost
+		}
+	}
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	potential = { NOT = { has_global_flag = stellarhabitat_disabled } }
+	possible = { from = { has_technology = giga_tech_interstellar_habitat } }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		remove_megastructure = fromfrom
+	}
+}
+
+interstellar_habitat_2 = {
+	entity = "interstellar_habitat_stacked_core"
+	construction_entity = "construction_platform_entity"
+	portrait = "GFX_megastructure_construction_background"
+	show_galactic_map_icon = no
+	upgrade_desc = hide
+	potential = { always = no }
+	on_build_complete = {
+		from = {
+			country_event = { id = giga_achievements.007 }
+			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_72
+					}
+				}
+				set_country_flag = giga_achievement_72
+				set_timed_country_flag = { flag = giga_achievement_72_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+		fromfrom = { set_graphical_culture = from }
+	}
+}
+
+interstellar_habitat_3 = {
+	entity = "interstellar_habitat_entity"
+	construction_entity = "interstellar_habitat_construction_entity"
+	portrait = "GFX_megastructure_construction_background"
+	show_galactic_map_icon = no
+	upgrade_from = { interstellar_habitat_2 }
+
+	build_time = 4800
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = 6000 influence = 300 }
+	}
+
+	potential = { 
+		NOT = { has_global_flag = stellarhabitat_disabled } 
+		is_giga_one_planet_origin = no
+	}
+	possible = { from = { has_technology = giga_tech_interstellar_ringworld } }
+
+	ai_weight = {
+		weight = value:giga_ai_base_continue
+
+		modifier = {
+			factor = 0
+			from = {
+				OR = {
+					has_megastructure = interstellar_habitat_3
+					has_megastructure = interstellar_habitat_4
+				}
+			}
+		}
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = { country_event = { id = giga_dialog.2903 } }	# Notification
+		spawn_megastructure = {
+			name = "Interstellar Ring Section"
+			type = "interstellar_habitat_4"
+			orbit_angle = 90
+			orbit_distance = 45
+			owner = from
+			graphical_culture = fromfrom
+		}
+		spawn_megastructure = {
+			name = "Interstellar Ring Section"
+			type = "interstellar_habitat_4"
+			orbit_angle = 180
+			orbit_distance = 45
+			owner = from
+			graphical_culture = fromfrom
+		}
+		spawn_megastructure = {
+			name = "Interstellar Ring Section"
+			type = "interstellar_habitat_4"
+			orbit_angle = 270
+			orbit_distance = 45
+			owner = from
+			graphical_culture = fromfrom
+		}
+		spawn_megastructure = {
+			name = "Interstellar Ring Section"
+			type = "interstellar_habitat_4"
+			orbit_angle = 0
+			orbit_distance = 45
+			owner = from
+			graphical_culture = fromfrom
+		}
+	}
+}
+
+interstellar_habitat_4 = {
+	entity = "giga_ringworld_3x_seams_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_desc = hide
+	potential = { always = no }
+}
+
+interstellar_habitat_5 = {
+	entity = "interstellar_ringworld_01_entity"
+	construction_entity = "interstellar_ringworld_01_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { interstellar_habitat_4 }
+
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = 10000 }
+	}
+
+	potential = { NOT = { has_global_flag = stellarhabitat_disabled } }
+	possible = { from = { has_technology = giga_tech_interstellar_ringworld } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = {
+			country_event = { id = giga_dialog.2904 }				# Notification
+			set_country_flag = has_built_or_repaired_gigastructure	# Triggers Gigastructural Constructs
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_84
+					}
+				}
+				set_country_flag = giga_achievement_84
+				set_timed_country_flag = { flag = giga_achievement_84_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+
+		change_variable = { which = i_ring_segments value = 1 }
+		if = {
+			limit = { check_variable = { which = i_ring_segments value >= 4 } }
+			set_variable = { which = i_ring_segments value = 0 }
+			from = {
+				remove_country_flag = giga_started_i_ringworld
+				change_variable = { which = completed_i_ringworlds value = 1 }
+			}
+		}
+
+		spawn_planet = {
+			class = pc_interstellar_ringworld_habitable
+			location = fromfrom
+			init_effect = {
+				set_name = "Interstellar Ringworld Segment"
+				set_planet_entity = { graphical_culture = root.from }
+				set_surveyed = { surveyed = yes surveyor = from }
+				set_all_comms_surveyed = yes
+				set_planet_flag = colony_event
+				trigger_megastructure_icon = yes
+				set_planet_flag = forbid_guillis_planet_modifiers
+				set_planet_flag = megastructure
+				set_planet_flag = giga_interstellar_ring
+				save_event_target_as = interstellar_section
+
+				giga_start_ai_colony_if_safe = yes
+			}
+		}
+
+		if = {		limit = { NOT = { has_star_flag = giga_interstellar_1 } } set_star_flag = giga_interstellar_1 event_target:interstellar_section = { set_name = "Interstellar Habitable Segment A" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_interstellar_2 } } set_star_flag = giga_interstellar_2 event_target:interstellar_section = { set_name = "Interstellar Habitable Segment B" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_interstellar_3 } } set_star_flag = giga_interstellar_3 event_target:interstellar_section = { set_name = "Interstellar Habitable Segment C" } }
+		else_if = {	limit = { NOT = { has_star_flag = giga_interstellar_4 } } set_star_flag = giga_interstellar_4 event_target:interstellar_section = { set_name = "Interstellar Habitable Segment D" } }
+
+		remove_megastructure = fromfrom
+	}
+}

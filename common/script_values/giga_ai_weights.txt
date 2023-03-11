@@ -1,0 +1,641 @@
+@kilo_base = 20
+@mega_base = 50
+@giga_base = 50
+@continue_base = 500
+@repair_base = 1000
+
+# multipliers for categories which don't have targets
+@science_mult = 3 # 8
+@unity_mult = 5
+
+##################################################################################################
+# utility
+
+# VAL - value to invert
+giga_ai_inverse = {
+	base = 1
+	divide = $VAL$
+}
+
+# VAL - value to subtract from 1
+giga_ai_one_minus = {
+	base = 1
+	subtract = $VAL$
+}
+
+# gets approximate mega build limit (can't account for defines)
+# use in country scope
+giga_ai_get_build_limit = {
+	base = 1
+
+	complex_trigger_modifier = {
+		trigger = check_modifier_value
+		parameters = {
+			modifier = country_megastructure_build_cap_add
+		}
+		mode = add
+		#trigger_scope = owner
+	}
+}
+
+# gets approximate number of megas under construction (all, not just ones which use cap)
+# use in country scope
+giga_ai_get_currently_building = {
+	base = 0
+
+	complex_trigger_modifier = {
+		trigger = count_owned_megastructure
+		parameters = {
+			limit = {
+				is_upgrading = yes
+			}
+		}
+		mode = add
+		#trigger_scope = owner
+	}
+
+	complex_trigger_modifier = {
+		trigger = count_owned_fleet
+		parameters = {
+			limit = {
+				is_constructing = megastructure
+			}
+		}
+		mode = add
+		#trigger_scope = owner
+	}
+}
+
+##################################################################################################
+# base values 
+# adjusted for tech tiers
+
+giga_ai_base_kilo = {
+	base = @kilo_base
+
+	modifier = {
+		root.from = {
+			has_technology = tech_mega_engineering
+		}
+
+		mult = 0.5
+	}
+
+	modifier = {
+		root.from = {
+			has_gigastructural_constructs = yes
+		}
+
+		mult = 0.5
+	}
+}
+
+giga_ai_base_mega = {
+	base = @mega_base
+
+	modifier = {
+		root.from = {
+			has_gigastructural_constructs = yes
+		}
+
+		mult = 0.5
+	}
+}
+
+giga_ai_base_giga = {
+	base = @giga_base
+}
+
+giga_ai_base_continue = {
+	base = @continue_base
+}
+
+giga_ai_base_repairs = {
+	base = @repair_base
+}
+
+##################################################################################################
+
+giga_ai_science_mult = {
+	base = @science_mult
+}
+
+giga_ai_unity_mult = {
+	base = @unity_mult
+}
+
+
+##################################################################################################
+# upkeep affordability
+# 1 when income >= amount, MIN (default 0) when income <= 0
+#
+# RESOURCE - the name of the upkeep resource
+# AMOUNT - the amount of the upkeep resource
+# MIN (optional) - minimum multiplier such that the returned value is ((fraction) * (1-MIN)) + MIN
+giga_ai_upkeep = {
+	complex_trigger_modifier = {
+		trigger = resource_income_compare
+		parameters = {
+			resource = $RESOURCE$
+		}
+		mode = weight
+		trigger_scope = root.from
+	}
+
+	divide = $AMOUNT$
+	max = 1
+	min = 0
+
+	[[MIN]
+		mult = value:giga_ai_one_minus|VAL|$MIN$|
+		add = $MIN$
+	]
+}
+
+##################################################################################################
+# output desire
+# 1 when income is below AMOUNT, 0 when income is above AMOUNT * MULT
+#
+# RESOURCE - the name of the output resource
+# AMOUNT - the amount of the output resource
+# MULT (optional, default 5) - value returns 0 when income is above AMOUNT * this 
+# MIN (optional) - minimum multiplier such that the returned value is ((fraction) * (1-MIN)) + MIN
+giga_ai_output = {
+	base = 1
+	subtract = value:giga_ai_output_calc_1|RESOURCE|$RESOURCE$|AMOUNT|$AMOUNT$|MULT|$MULT|5$|
+
+	[[MIN]
+		multiply = value:giga_ai_one_minus|VAL|$MIN$|
+		add = $MIN$
+	]
+
+	multiply = 5 # test
+}
+
+giga_ai_output_calc_1 = {
+	complex_trigger_modifier = {
+		trigger = resource_income_compare
+		parameters = {
+			resource = $RESOURCE$
+		}
+		mode = weight
+		trigger_scope = root.from
+	}
+
+	subtract = $AMOUNT$
+
+	divide = value:giga_ai_output_calc_2|AMOUNT|$AMOUNT$|MULT|$MULT$|
+
+	max = 1
+	min = 0
+}
+
+giga_ai_output_calc_2 = {
+	weight = $MULT$
+	subtract = 1
+	multiply = $AMOUNT$
+}
+
+##################################################################################################
+# prevent spam by checking a flag
+
+# MEGA - identifier for this mega type
+giga_ai_prevent_spam = {
+	base = 1
+
+	modifier = {
+		weight = 0
+
+		root.from = {
+			has_country_flag = has_recently_built_$MEGA$
+		}
+	}
+}
+
+##################################################################################################
+# count limits
+
+##################################################################################################
+# do we need other more important megas
+
+# lower priority if we have many cap but just one left
+giga_ai_build_low_priority = {
+	base = 1
+
+	modifier = {
+		root.from = {
+			is_variable_set = giga_ai_get_build_limit
+			check_variable = {
+				which = giga_ai_get_build_limit
+				value > 1
+			}
+
+			is_variable_set = giga_ai_get_remaining_build_limit
+			check_variable = {
+				which = giga_ai_get_remaining_build_limit
+				value < 2
+			}
+		}
+
+		mult = 0.1
+	}
+}
+
+##################################################################################################
+# prevent building multiples
+
+##################################################################################################
+# savings desire boost
+# 1 when savings in the specified category are below AMOUNT, 1+ (savings-AMOUNT)/DIVISOR when above
+#
+# CATEGORY - savings category to check
+# RESOURCE - resource to check
+# AMOUNT - savings threshold
+# DIVISOR (optional, default 10000)
+giga_ai_weight_savings = {
+	weight = owner.giga_ai_savings_$CATEGORY$_$RESOURCE$
+
+	subtract = $AMOUNT$
+
+	min = 0
+
+	divide = $DIVISOR|10000$
+
+	add = 1
+}
+
+##################################################################################################
+# boost for progress access
+
+# raise priority of this mega when wanting to unlock galwonders
+giga_ai_unlocks_galwonders = {
+	base = 1
+
+	modifier = {
+		root.from = {
+			has_galactic_wonders = no
+			not = {
+				has_country_flag = has_built_or_repaired_megastructure
+			}
+		}
+		weight = 100
+	}
+}
+
+# raise priority of this mega when wanting to unlock gigastructural
+giga_ai_unlocks_gigastructures = {
+	base = 1
+
+	modifier = {
+		root.from = {
+			has_galactic_wonders = yes
+			nor = {
+				has_gigastructural_constructs = yes
+				has_country_flag = has_built_or_repaired_gigastructure
+			}
+		}
+		weight = 100
+	}
+}
+
+# lower priority when we COULD unlock with a different mega
+giga_ai_unlock_low_priority = {
+	base = 1
+
+	modifier = {
+		root.from = {
+			has_galactic_wonders = no
+			not = {
+				has_country_flag = has_built_or_repaired_megastructure
+			}
+		}
+		weight = 0.1
+	}
+
+	modifier = {
+		root.from = {
+			has_galactic_wonders = yes
+			nor = {
+				has_gigastructural_constructs = yes
+				has_country_flag = has_built_or_repaired_gigastructure
+			}
+		}
+		weight = 0.1
+	}
+}
+
+##################################################################################################
+# build cap availability adjustment
+
+# increase weight if we have lots of free cap
+giga_ai_cap_availability_boost = {
+	base = 1
+
+	modifier = {
+		root.from = {
+			is_variable_set = giga_ai_get_remaining_build_limit
+		}
+		
+		weight = root.from.giga_ai_get_remaining_build_limit
+	}
+
+	max = 10
+	multiply = 0.5
+	min = 1
+}
+
+##################################################################################################
+# placement rules
+
+# prioritise placing around sector capitals and away from borders
+giga_ai_core_territory = {
+	base = 0.5
+
+	modifier = {
+		any_neighbor_system = { 
+			exists = owner 
+			not = { 
+				owner = { 
+					is_same_value = from 
+				} 
+			} 
+		}
+		
+		weight = 0.1
+	}
+
+	modifier = {
+		or = {
+			any_system_planet = {
+				or = {
+					is_capital = yes
+					is_sector_capital = yes
+				}
+			}
+			count_system_planet = {
+				count >= 2
+
+				limit = {
+					is_colony = yes
+					exists = owner
+					owner = {
+						is_primitive = no
+					}
+				}
+			}
+		}
+
+		multiply = 4
+	}
+}
+
+# prioritise borders, chokes, and bypasses
+giga_ai_strategic_location = {
+	base = 1
+
+	modifier = {
+		is_bottleneck_system = yes
+		multiply = $BOTTLENECK|5$
+	}
+
+	modifier = {
+		has_star_flag = lcluster1 # Terminal Egress, which is not counted as a bottleneck
+		multiply = 10
+	}
+
+	modifier = {
+		any_neighbor_system = { 
+			exists = owner 
+			not = { 
+				owner = { 
+					is_same_value = from 
+				} 
+			} 
+		}
+		multiply = $BORDER|10$
+	}
+
+	modifier = {
+		or = {
+			has_natural_wormhole = yes
+			any_megastructure = {
+				or = { 
+					is_megastructure_type = gateway_final
+					is_megastructure_type = gateway_restored
+					is_megastructure_type = lgate_base
+					is_megastructure_type = ehof_pgate_unknown
+					is_megastructure_type = ehof_pgate_gateway
+				}
+			}
+		}
+		multiply = $BYPASS|5$
+	}
+}
+
+# never build in a system with a colony
+giga_ai_no_colony = {
+	base = 1
+
+	modifier = {
+		any_system_planet = {
+			is_colony = yes
+		}
+		weight = 0
+	}
+}
+
+##################################################################################################
+# personality modifiers
+
+
+giga_ai_personality_ethics = {
+	base = 1
+
+	modifier = {
+		root.from = {
+			has_ethic = ethic_$ETHIC$
+		}
+		weight = 2
+	}
+	modifier = {
+		root.from = {
+			has_ethic = ethic_fanatic_$ETHIC$
+		}
+		weight = 5
+	}
+
+	[[OPPOSITE]
+
+	modifier = {
+		root.from = {
+			has_ethic = ethic_$OPPOSITE$
+		}
+		weight = 0.5
+	}
+	modifier = {
+		root.from = {
+			has_ethic = ethic_fanatic_$OPPOSITE$
+		}
+		weight = 0.2
+	}
+
+	]
+}
+
+giga_ai_xenophile 			= { weight = value:giga_ai_personality_ethics|ETHIC|xenophile|OPPOSITE|xenophobe| }
+giga_ai_xenophobe 			= { weight = value:giga_ai_personality_ethics|ETHIC|xenophobe|OPPOSITE|xenophile| }
+giga_ai_xenophile_plus 		= { weight = value:giga_ai_personality_ethics|ETHIC|xenophile| }
+giga_ai_xenophobe_plus 		= { weight = value:giga_ai_personality_ethics|ETHIC|xenophobe| }
+
+giga_ai_authoritarian 		= { weight = value:giga_ai_personality_ethics|ETHIC|authoritarian|OPPOSITE|egalitarian| }
+giga_ai_egalitarian 		= { weight = value:giga_ai_personality_ethics|ETHIC|egalitarian|OPPOSITE|authoritarian| }
+giga_ai_authoritarian_plus 	= { weight = value:giga_ai_personality_ethics|ETHIC|authoritarian| }
+giga_ai_egalitarian_plus 	= { weight = value:giga_ai_personality_ethics|ETHIC|egalitarian| }
+
+giga_ai_materialist 		= { weight = value:giga_ai_personality_ethics|ETHIC|materialist|OPPOSITE|spiritualist| }
+giga_ai_spiritualist 		= { weight = value:giga_ai_personality_ethics|ETHIC|spiritualist|OPPOSITE|materialist| }
+giga_ai_materialist_plus 	= { weight = value:giga_ai_personality_ethics|ETHIC|materialist| }
+giga_ai_spiritualist_plus 	= { weight = value:giga_ai_personality_ethics|ETHIC|spiritualist| }
+
+giga_ai_pacifist 			= { weight = value:giga_ai_personality_ethics|ETHIC|pacifist|OPPOSITE|militarist| }
+giga_ai_militarist 			= { weight = value:giga_ai_personality_ethics|ETHIC|militarist|OPPOSITE|pacifist| }
+giga_ai_pacifist_plus 		= { weight = value:giga_ai_personality_ethics|ETHIC|pacifist| }
+giga_ai_militarist_plus 	= { weight = value:giga_ai_personality_ethics|ETHIC|militarist| }
+
+##################################################################################################
+# overpopulation boosts
+
+# 1 when no overpopulation, 10 when there is any
+giga_ai_overpopulation_boost = {
+	base = 1
+
+	modifier = {
+		root.from = {
+			any_owned_planet = {
+				free_housing < 0
+				num_unemployed > 0
+				free_district_slots <= 0
+			}
+		}
+
+		weight = 10
+	}
+}
+
+##################################################################################################
+# planet size for terraforming megas
+
+# CONDITION (optional) - name of a trigger (scripted or otherwise) which should check against "= yes"
+giga_ai_planet_size = {
+	base = 0.5
+
+	modifier = {
+		any_system_planet = {
+			is_star = no
+			[[CONDITION] $CONDITION$ = yes ]
+			planet_size >= 16
+		}
+		add = 0.25
+	}
+
+	modifier = {
+		any_system_planet = {
+			is_star = no
+			[[CONDITION] $CONDITION$ = yes ]
+			planet_size >= 18
+		}
+		add = 0.25
+	}
+	
+	modifier = {
+		any_system_planet = {
+			is_star = no
+			[[CONDITION] $CONDITION$ = yes ]
+			planet_size >= 20
+		}
+		add = 0.25
+	}
+
+	modifier = {
+		any_system_planet = {
+			is_star = no
+			[[CONDITION] $CONDITION$ = yes ]
+			planet_size >= 22
+		}
+		add = 0.25
+	}
+
+	modifier = {
+		any_system_planet = {
+			is_star = no
+			[[CONDITION] $CONDITION$ = yes ]
+			planet_size > 25
+		}
+		add = 2
+	}
+
+	modifier = {
+		any_system_planet = {
+			is_star = no
+			[[CONDITION] $CONDITION$ = yes ]
+			planet_size > 30
+		}
+		add = 2
+	}
+
+	modifier = {
+		not = {
+			any_system_planet = {
+				is_star = no
+				[[CONDITION] $CONDITION$ = yes ]
+				planet_size >= 14
+			}
+		}
+		multiply = 0
+	}
+}
+
+##################################################################################################
+# gateway and relay fractions
+
+giga_ai_relay_fraction = {
+	complex_trigger_modifier = {
+		trigger = count_owned_megastructure
+		parameters = {
+			limit = {
+				or = {
+					is_megastructure_type = hyper_relay
+					is_megastructure_type = hyper_relay_restored
+				}
+			}
+		}
+
+		mode = weight
+	}
+
+	divide = trigger:controlled_systems
+
+	min = 0
+	max = 1
+}
+
+giga_ai_gateway_fraction = {
+	complex_trigger_modifier = {
+		trigger = count_owned_megastructure
+		parameters = {
+			limit = {
+				or = {
+					is_megastructure_type = gateway_final
+					is_megastructure_type = gateway_restored
+				}
+			}
+		}
+
+		mode = weight
+	}
+
+	divide = trigger:controlled_systems
+
+	min = 0
+	max = 1
+}

@@ -1,0 +1,618 @@
+### Maginot costs and build times
+## platform
+@maginot_platform_build_time = 1800
+@maginot_platform_alloys = 5000
+@maginot_platform_influence = 100
+
+## normal first stage
+@maginot_scaffold_build_time = 2500
+@maginot_scaffold_alloys = 15000 # bunkers and guns
+@maginot_scaffold_minerals = 5000 # misc planet construction
+## normal finish
+@maginot_finish_build_time = 4700
+@maginot_finish_alloys = 30000 # bunkers and guns
+@maginot_finish_minerals = 20000 # terraforming and excavation
+@maginot_finish_energy = 10000 # "antimatter" representation
+
+## ringworld first stage
+@maginot_ringworld_scaffold_build_time = 2500
+@maginot_ringworld_scaffold_alloys = 15000 # bunkers and guns
+@maginot_ringworld_scaffold_minerals = 5000 # misc planet construction
+## ringworld finish
+@maginot_ringworld_finish_build_time = 4700
+@maginot_ringworld_finish_alloys = 30000 # bunkers and guns
+@maginot_ringworld_finish_minerals = 20000 # terraforming and excavation
+@maginot_ringworld_finish_energy = 10000 # "antimatter" representation
+
+
+
+### Maginot construction upkeeps
+## platform
+@maginot_platform_upkeep_energy = 5
+@maginot_platform_upkeep_alloys = 5
+
+## normal first stage
+@maginot_scaffold_upkeep_energy = 50 # keeping rings and stuff suspended
+@maginot_scaffold_upkeep_alloys = 10
+## normal finish
+# megastructure deleted when done
+
+## ringworld first stage
+@maginot_ringworld_scaffold_upkeep_energy = 50 # keeping rings and stuff suspended
+@maginot_ringworld_scaffold_upkeep_alloys = 10
+## ringworld finish
+# megastructure deleted when done
+
+### Upkeep reference
+# Orbital defence (CSDS): 
+# 250 EC | 50 Alloys |
+# Maginot Command deposit:
+# 100 EC | 5 Alloys  |
+# Maginot Subspace Blocker:
+# 100 EC |
+# (the AI will always turn this on immediately)
+# Central Command job:
+# 10 EC | 50 CG		| - Organic
+# 50 EC | 30 Alloys | - Gestalt
+#
+## Total:
+# 460 EC | 55 Alloys | 50 CG | - Organic
+# 510 EC | 85 Alloys | 		   - Gestalt
+#
+# equivalent EC from job ratios:
+# 460 + 220 + 100 = 780
+# 510 + 340 + 0   = 850
+# yes crutch empire pays more, cry about it
+
+
+maginot_world_0 = {
+	entity = "giga_consite_5_5_entity"
+	construction_entity = "giga_consite_5_5_entity"
+	place_entity_on_planet_plane = no
+	entity_offset = { x = 0 y = 0 }
+	portrait = "GFX_megastructure_construction_background"
+
+	prerequisites = { giga_tech_maginot_world }
+
+	build_time = @maginot_platform_build_time
+	resources = {
+		category = giga_maginot_world
+		cost = {
+			alloys = @maginot_platform_alloys
+			influence = @maginot_platform_influence
+			unity = @giga_big_mega_start_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|@maginot_platform_alloys| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_big_mega_start_unity_cost| }
+		upkeep = { energy = @maginot_platform_upkeep_energy alloys = @maginot_platform_upkeep_alloys }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = alloys AMOUNT = @maginot_platform_alloys }
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = unity  AMOUNT = @giga_big_mega_start_unity_cost }
+		apply_giga_bulwark_trad_build_speed = yes
+	}
+	on_build_cancel = {
+		giga_ai_savings_refund = { CATEGORY = military RESOURCE = alloys }
+		giga_ai_savings_refund = { CATEGORY = military RESOURCE = unity }
+	}
+
+	potential = {
+		has_technology = giga_tech_maginot_world # this needs galactic wonders, full-blown megastructure
+		NOT = { has_global_flag = maginot_disabled }
+		is_giga_one_planet_origin = no
+		OR = {
+			check_variable = { which = giga_maginot_cap value = 0 } # No Cap
+			check_variable = { which = giga_current_maginot value < giga_maginot_cap }
+		}
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					check_variable = { which = giga_maginot_cap value = 0 } # No Cap
+					check_variable = { which = giga_current_maginot value < giga_maginot_cap }
+				}
+			}
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			# restrict compatible planet/structure types with extensible trigger
+			custom_tooltip = {
+				fail_text = "requires_maginotable_planet_type"
+				is_maginotable_planet_or_structure = yes
+			}
+			custom_tooltip = { fail_text = "requires_no_anomaly"					has_anomaly = no }
+			# "planets" that make no sense to build a maginot world on
+			custom_tooltip = { fail_text = "requires_not_asteroid"					is_asteroid = no }
+			custom_tooltip = { fail_text = "requires_not_star"						is_star = no }
+			custom_tooltip = { fail_text = "requires_no_birch"						NOT = { is_planet_class = pc_birch } }
+			# must be an empire colony owned by you
+			custom_tooltip = {
+				fail_text = "requires_colonized_planet_orbital_ring"
+				is_colony = yes
+				exists = owner
+				exists = controller
+				controller = { is_same_value = prev.owner }
+			}
+			# and not a hostile world
+			custom_tooltip = {
+				fail_text = "requires_not_hostile_or_primitive"
+				NOR = {
+					planet_is_hostile_or_crisis = yes
+					AND = {
+						exists = owner
+						owner = {
+							is_country_type = primitive
+						}
+					}
+				}
+			}
+			# double check not building a maginot world on a maginot world, that makes no sense
+			custom_tooltip = {
+				fail_text = "requires_not_maginot_world"					
+				NOR = {
+					is_giga_maginot_world = yes
+					has_planet_flag = giga_maginot_world
+				}
+			}
+			# not already a platform in orbit, or certain other stuff in progress/done (PCC)
+			# general megastructures like an orbital arcology or strategic coordination site or whatever in orbit are intentionally NOT blocked
+			custom_tooltip = { 
+				fail_text = "requires_no_existing_megastructure"		
+				NOR = {
+					has_planet_flag = has_planet_mw_mega # this is only enabled while maginot construction site exists
+					is_maginotable_restricted = yes
+				}
+			}
+			# survey check
+			custom_tooltip = { fail_text = "requires_surveyed_planet"				is_surveyed = { who = prev.from status = yes } }
+
+			# needs a specific building built in preparation
+			custom_tooltip = {
+				fail_text = "requires_maginot_stronghold_built"			
+				has_building = building_giga_maginot_stronghold
+			}
+		}
+	}
+
+	ai_weight = {
+		weight = value:giga_ai_base_mega
+		mult = 0.5 # always applies because expensive and doesn't boost main economy
+
+		mult = value:giga_ai_output|RESOURCE|influence|AMOUNT|2|MIN|0.1|
+
+		mult = value:giga_ai_strategic_location
+
+		mult = value:giga_ai_prevent_spam|MEGA|maginot_world|
+		mult = value:giga_ai_build_low_priority
+		# this DOES unlock gigastructural constructs - but is very expensive at doing so
+		# so tell the AI to focus on the classic unlocker structures, leave this for the player
+		mult = value:giga_ai_unlock_low_priority
+		mult = value:giga_ai_cap_availability_boost
+
+		# see above in file for upkeep reference
+		# organic
+		modifier = {
+			from = { country_uses_consumer_goods = yes }
+			mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|460|
+		}
+		modifier = {
+			from = { country_uses_consumer_goods = yes }
+		 	mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|55|
+		}
+		modifier = {
+			from = { country_uses_consumer_goods = yes }
+		 	mult = value:giga_ai_upkeep|RESOURCE|consumer_goods|AMOUNT|50|
+		}
+		# gestalt
+		modifier = {
+			from = { country_uses_consumer_goods = no }
+			mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|510|
+		}
+		modifier = {
+			from = { country_uses_consumer_goods = no }
+			mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|85|
+		}
+		
+		# AI decided to fortify this system for some reason
+		modifier = { factor = 5  starbase = { has_starbase_size >= starbase_starfortress } }
+
+		# old
+		#weight = 50	# Default = 100, these are expensive
+		## Can we afford the upkeep
+		#modifier = { factor = 2.00	from = { has_monthly_income = { resource = energy value >  200 } } } # comfortable surplus, go ahead
+		#modifier = { factor = 0.05	from = { has_monthly_income = { resource = energy value <  100 } } } # unlikely, build only in good spots
+		#modifier = { factor = 0.00	from = { has_monthly_income = { resource = energy value <  -100 } } } # don't tank the economy
+		#modifier = { factor = 2.00	from = { has_monthly_income = { resource = alloys value >  20 } } } # comfortable surplus, go ahead
+		#modifier = { factor = 0.05	from = { has_monthly_income = { resource = alloys value <  0 } } } # unlikely, build only in good spots
+		#modifier = { factor = 0.00	from = { has_monthly_income = { resource = alloys value <  -20 } } } # don't tank the economy
+
+		## Do we want the production - makes some influence so boost if needing that
+		#modifier = { factor = 2.00	from = { has_monthly_income = { resource = influence value < 2 } } }
+
+		## Is this system a good location?
+		# border with someone else
+		#modifier = { factor = 500	any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } }
+		# choke point system function
+		#modifier = { factor = 50 	is_bottleneck_system = yes }
+		# has gateway, l-gate, primordial pillar in system, so fortify
+		#modifier = { factor = 10
+		#	any_megastructure = {
+		#		OR = { 
+		#			is_megastructure_type = gateway_final
+		#			is_megastructure_type = gateway_restored
+		#			is_megastructure_type = lgate_base
+		#			is_megastructure_type = ehof_pgate_unknown
+		#			is_megastructure_type = ehof_pgate_gateway
+		#		}
+		#	}
+		#}
+		# two jumps away owned by somebody else too
+		#modifier = { factor = 1.5	any_neighbor_system = { any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } } }
+		# AI decided to fortify this system for some reason
+		#modifier = { factor = 5  starbase = { has_starbase_size >= starbase_starfortress } }
+		# Big worlds make good fortresses, but small ones in the case of protecting a larger world work as well
+		modifier = { factor = 5	any_system_planet = { habitable_planet = yes planet_size >= 25 } }
+		modifier = { factor = 0.1
+			AND = {
+				any_system_planet = { 			habitable_planet = yes 	planet_size < 18 }
+				NOT = { any_system_planet = { 	habitable_planet = yes 	planet_size >= 20 } }
+			}
+		}
+		# lots of planets
+		modifier = { factor = 10
+			count_system_planet = {
+				limit = {
+					habitable_planet = yes
+				}
+				count >= 5
+			}
+		}
+		# is capital, but only with a second planet to fortify
+		modifier = {
+			factor = 3
+			solar_system = {
+				exists = owner
+				is_same_value = owner.capital_scope.solar_system
+				count_system_planet = {
+					limit = {
+						habitable_planet = yes
+					}
+					count >= 2
+				}
+			}
+		}
+		# don't turn your only planet into a Maginot (even if it's pretty funny)
+		modifier = {
+			factor = 0
+			solar_system = {
+				exists = owner
+				is_same_value = owner.capital_scope.solar_system
+				count_system_planet = {
+					limit = {
+						habitable_planet = yes
+					}
+					count = 1
+				}
+			}
+		}
+		# Check the planet designation
+		modifier = { factor = 5.00	any_system_planet = { has_designation = col_fortress } }
+
+		## Do we lean towards this from federation/ethic/civic?
+		modifier = { factor = 2		from = { has_federation = yes federation = { has_federation_type = hegemony_federation } } }
+		modifier = { factor = 3		from = { has_federation = yes federation = { has_federation_type = military_federation } } }
+		modifier = { factor = 5		from = { has_ethic = ethic_fanatic_militarist } }
+		modifier = { factor = 3		from = { has_ethic = ethic_militarist } }
+		modifier = { factor = 2		from = { has_ethic = ethic_fanatic_xenophobe } }
+		modifier = { factor = 1.5	from = { has_ethic = ethic_xenophobe } }
+		modifier = { factor = 0.1	from = { has_ethic = ethic_fanatic_xenophile } }
+		modifier = { factor = 0.5	from = { has_ethic = ethic_xenophile } }
+		modifier = { factor = 0.5	from = { has_ethic = ethic_fanatic_pacifist } }
+		modifier = { factor = 0.1	from = { has_ethic = ethic_pacifist } }
+		modifier = { factor = 1.5	from = { has_civic = civic_citizen_service } }
+		modifier = { factor = 20	from = { has_civic = civic_inwards_perfection } }
+
+		# Don't care about total number
+
+		# AI spam controls
+		#modifier = { factor = 0.00 from = { has_country_flag = has_recently_built_maginot_world } }
+		# cannot comply building in progress
+		modifier = {
+			factor = 0
+			from = {
+				has_maginot_megastructure = yes
+			}
+		}
+	}
+
+	# on_build_start = {  }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			giga_set_has_mega_flag = yes
+			set_planet_flag = has_planet_mw_mega			# Has the construction site
+			add_deposit = d_maginot_construction_blocker 	# Deposit blocker for ongoing construction, stops arcology project
+			# Replace orbital ring
+			every_system_megastructure = {
+				limit = {
+					giga_is_orbital_ring = yes
+					# check planet
+					exists = planet
+					planet = {
+						is_same_value = prevprev
+					}
+				}
+				remove_megastructure = this
+			}
+			if = {
+				limit = { exists = orbital_defence }
+				delete_fleet = orbital_defence
+			}
+		}
+		# if ringworld switch to alternate construction
+		if = {
+			limit = { fromfrom.planet = { is_ringworld = yes } }
+			spawn_megastructure = { type = "maginot_world_ringworld_0" owner = from coords_from = fromfrom.planet planet = event_target:giga_planet }
+			remove_megastructure = fromfrom
+		}
+		# else send normal dialog event
+		else = {
+			from = { country_event = { id = giga_dialog.5001 } } # Notification, normal world
+		}
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_maginot years = 10 }
+			change_variable = { which = giga_current_maginot value = 1 }
+		}
+	}
+}
+
+maginot_world_1 = {
+	entity = "pc_giga_maginot_world_main_features_entity"
+	construction_entity = "pc_giga_maginot_world_main_features_entity"
+	place_entity_on_planet_plane = yes
+	entity_offset = { x = 0 y = 0 }
+	scales_with_planet = yes
+	portrait = "GFX_spaceport_background"
+	upgrade_from = { maginot_world_0 }
+
+	build_time = @maginot_scaffold_build_time
+	resources = {
+		category = giga_megastructures
+		cost = {
+			alloys = @maginot_scaffold_alloys
+			minerals = @maginot_scaffold_minerals
+			unity = @giga_big_mega_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|@maginot_scaffold_alloys| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_big_mega_unity_cost| }
+		upkeep = {
+			energy = @maginot_scaffold_upkeep_energy
+			alloys = @maginot_scaffold_upkeep_alloys
+		}
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = alloys AMOUNT = @maginot_platform_alloys }
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = unity  AMOUNT = @giga_big_mega_start_unity_cost }
+		apply_giga_bulwark_trad_build_speed = yes
+	}
+
+	potential = { NOT = { has_global_flag = maginot_disabled } }
+	possible = { from = { has_technology = giga_tech_maginot_world } }
+
+	ai_weight = { factor = 10000 } # If we can build it, we will finish it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = { country_event = { id = giga_dialog.5002 } }	# Notification
+	}
+}
+
+maginot_world_2 = {
+	entity = ""
+	construction_entity = "pc_giga_maginot_world_full_features_entity"
+	place_entity_on_planet_plane = yes
+	entity_offset = { x = 0 y = 0 }
+	scales_with_planet = yes
+	portrait = "GFX_spaceport_background"
+	upgrade_from = { maginot_world_1 }
+
+	build_time = @maginot_finish_build_time
+	resources = {
+		category = giga_megastructures
+		cost = {
+			alloys = @maginot_finish_alloys
+			minerals = @maginot_finish_minerals
+			energy = @maginot_finish_energy
+			unity = @giga_big_mega_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|@maginot_finish_alloys| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_big_mega_unity_cost| }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = alloys AMOUNT = @maginot_finish_alloys }
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = unity  AMOUNT = @giga_big_mega_unity_cost }
+		apply_giga_bulwark_trad_build_speed = yes
+	}
+
+	potential = { NOT = { has_global_flag = maginot_disabled } }
+	possible = { from = { has_technology = giga_tech_maginot_world } }
+
+	ai_weight = { factor = 10000 } # If we can build it, we will finish it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = {
+			country_event = { id = giga_dialog.5003 }				# Notification
+			set_country_flag = has_built_or_repaired_gigastructure	# Allows Gigastructural Constructs
+			change_variable = { which = maginot_world value = 1 }
+			save_event_target_as = maginot_world_owner
+			# if = {
+			# 	limit = {
+			# 		NOR = {
+			# 			has_global_flag = giga_achievements_disabled
+			# 			has_country_flag = giga_achievement_77
+			# 		}
+			# 	}
+			# 	set_country_flag = giga_achievement_77 # CHANGE THIS it triggers PCC achievement right now
+			# 	set_timed_country_flag = { flag = giga_achievement_77_notification days = 30 }
+			# 	giga_achievement_sound = yes
+			# }
+		}
+		fromfrom.planet = {
+			# change the planet class depending on what is being converted
+			set_giga_maginot_planet_class = yes
+			set_planet_flag = megastructure
+			set_planet_flag = giga_planet_mega
+
+			init_giga_maginot = yes
+		}
+		remove_megastructure = fromfrom
+		fromfrom.planet = {
+			giga_clear_has_mega_flag = yes
+		}
+	}
+}
+
+### Ringworld Branch ###
+maginot_world_ringworld_0 = {
+	entity = "giga_consite_5_5_entity"
+	construction_entity = "giga_consite_5_5_entity"
+	place_entity_on_planet_plane = no
+	entity_offset = { x = 0 y = 0 }
+	portrait = "GFX_megastructure_construction_background"
+
+
+	prerequisites = { giga_tech_maginot_world }
+
+	# dummy entity that can only be spawned in, these don't apply
+	build_time = 1
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = 1 }
+		upkeep = { energy = @maginot_platform_upkeep_energy alloys = @maginot_platform_upkeep_alloys }
+	}
+
+	potential = { always = no }
+
+	ai_weight = { factor = 0 } # this is a dummy
+	
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = { country_event = { id = giga_dialog.5004 } }	# Notification
+	}
+}
+
+maginot_world_ringworld_1 = {
+	entity = "pc_giga_maginot_ringworld_main_features_entity"
+	construction_entity = "pc_giga_maginot_ringworld_main_features_entity"
+	place_entity_on_planet_plane = yes
+	entity_offset = { x = 0 y = 0 }
+	# ringworlds are fixed in size
+	scales_with_planet = no
+	portrait = "GFX_spaceport_background"
+	upgrade_from = { maginot_world_ringworld_0 }
+
+	build_time = @maginot_ringworld_scaffold_build_time
+	resources = {
+		category = giga_megastructures
+		cost = {
+			alloys = @maginot_ringworld_scaffold_alloys
+			minerals = @maginot_ringworld_scaffold_minerals
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|@maginot_ringworld_scaffold_alloys| }
+		upkeep = {
+			energy = @maginot_ringworld_scaffold_upkeep_energy
+			alloys = @maginot_ringworld_scaffold_upkeep_alloys
+		}
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = alloys AMOUNT = @maginot_ringworld_scaffold_alloys }
+		apply_giga_bulwark_trad_build_speed = yes
+	}
+
+	potential = { NOT = { has_global_flag = maginot_disabled } }
+	possible = { from = { has_technology = giga_tech_maginot_world } }
+
+	ai_weight = { factor = 10000 } # If we can build it, we will finish it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = { country_event = { id = giga_dialog.5005 } }	# Notification
+	}
+}
+
+maginot_world_ringworld_2 = {
+	entity = ""
+	construction_entity = "pc_giga_maginot_ringworld_full_features_entity"
+	place_entity_on_planet_plane = yes
+	entity_offset = { x = 0 y = 0 }
+	# ringworlds are fixed in size
+	scales_with_planet = no
+	portrait = "GFX_spaceport_background"
+	upgrade_from = { maginot_world_ringworld_1 }
+
+	build_time = @maginot_ringworld_finish_build_time
+	resources = {
+		category = giga_megastructures
+		cost = {
+			alloys = @maginot_ringworld_finish_alloys
+			minerals = @maginot_ringworld_finish_minerals
+			energy = @maginot_ringworld_finish_energy
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|@maginot_ringworld_finish_alloys| }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = alloys AMOUNT = @maginot_ringworld_finish_alloys }
+		apply_giga_bulwark_trad_build_speed = yes
+	}
+
+	potential = { NOT = { has_global_flag = maginot_disabled } }
+	possible = { from = { has_technology = giga_tech_maginot_world } }
+
+	ai_weight = { factor = 10000 } # If we can build it, we will finish it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = {
+			country_event = { id = giga_dialog.5006 }				# Notification
+			set_country_flag = has_built_or_repaired_gigastructure	# Allows Gigastructural Constructs
+			change_variable = { which = maginot_world value = 1 }
+			save_event_target_as = maginot_world_owner
+			# if = {
+			# 	limit = {
+			# 		NOR = {
+			# 			has_global_flag = giga_achievements_disabled
+			# 			has_country_flag = giga_achievement_77
+			# 		}
+			# 	}
+			# 	set_country_flag = giga_achievement_77 # CHANGE THIS it triggers PCC achievement right now
+			# 	set_timed_country_flag = { flag = giga_achievement_77_notification days = 30 }
+			# 	giga_achievement_sound = yes
+			# }
+		}
+		fromfrom.planet = {
+			# change the planet class to ringworld
+			set_giga_maginot_planet_class = yes
+			# perform other setup
+			init_giga_maginot = yes
+		}
+		# last, remove megastructure, everything from here is done by planet
+		remove_megastructure = fromfrom
+	}
+}
+

@@ -1,0 +1,252 @@
+namespace = ehof_cheat
+
+# Cheats
+country_event = {
+	id = ehof_cheat.001
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = { limit = { exists = event_target:current_system_creator } clear_global_event_target = current_system_creator }
+		save_global_event_target_as = current_system_creator
+		set_country_flag = ehof_already_cheated
+		save_event_target_as = ehof_cheating
+		set_variable = { which = ehof_phase value = 1 }
+		every_galaxy_planet = { set_surveyed = { surveyed = yes surveyor = event_target:ehof_cheating } }
+		give_technology = { tech = tech_wormhole_stabilization message = no }
+		give_technology = { tech = tech_abstract_1 message = no }
+		give_technology = { tech = tech_ehof_phase_01 message = no }
+		random_country = {
+			limit = { is_country_type = global_event }
+			change_variable = { which = amount_of_ehofs value = 1 }
+		}
+
+		capital_scope.solar_system = {
+			random_system_planet = { save_event_target_as = ehof_cheatspyorb }
+			spawn_megastructure = {
+				type = "spy_orb_4"
+				orbit_angle = 0
+				orbit_distance = 0
+				owner = event_target:ehof_cheating
+				coords_from = event_target:ehof_cheatspyorb
+			}
+			closest_system = {
+				limit = {
+					OR = {
+						is_star_class = sc_black_hole
+						is_star_class = sc_ehof_black_hole
+					}
+					NOR = {
+						has_megastructure = ehof_megastructure_phase1
+						has_star_flag = ruined_ehof_system
+						exists = owner
+						any_ship_in_system = { owner = { is_hostile = event_target:ehof_cheating } }
+					}
+				}
+				create_starbase = {
+					size = starbase_citadel
+					module = shipyard
+					module = gun_battery
+					module = gun_battery
+					module = gun_battery
+					module = gun_battery
+					module = gun_battery
+					owner = event_target:ehof_cheating
+				}
+				set_star_flag = ehof_megastructure_system@event_target:ehof_cheating
+				every_system_planet = { set_planet_flag = cant_build_here set_planet_flag = cant_target_this_planet } # Prevents NDB & QSO
+			}
+		}
+
+		while = {
+			limit = { check_variable = { which = enough_ehofs value < 5 } }
+			change_variable = { which = enough_ehofs value = 1 }
+			random_country = {
+				limit = {
+					ehof_default_country = yes
+					NOT = { has_country_flag = ehof_already_cheated }
+				}
+				random_country = {
+					limit = { is_country_type = global_event }
+					change_variable = { which = amount_of_ehofs value = 1 }
+				}
+				give_technology = { tech = tech_wormhole_stabilization message = no }
+				give_technology = { tech = tech_abstract_1 message = no }
+				give_technology = { tech = tech_ehof_phase_01 message = no }
+				set_country_flag = ehof_already_cheated
+				save_event_target_as = ehof_cheating
+				set_variable = { which = ehof_phase value = 1 }
+				every_galaxy_planet = { set_surveyed = { surveyed = yes surveyor = event_target:ehof_cheating } }
+
+				capital_scope.solar_system = {
+					random_system_planet = { save_event_target_as = ehof_cheatspyorb }
+					spawn_megastructure = {
+						type = "spy_orb_4"
+						orbit_angle = 0
+						orbit_distance = 0
+						owner = event_target:ehof_cheating
+						coords_from = event_target:ehof_cheatspyorb
+					}
+					closest_system = {
+						limit = {
+							OR = {
+								is_star_class = sc_black_hole
+								is_star_class = sc_ehof_black_hole
+							}
+							NOR = {
+								has_megastructure = ehof_megastructure_phase1
+								has_star_flag = ruined_ehof_system
+								exists = owner
+								any_ship_in_system = { owner = { is_hostile = event_target:ehof_cheating } }
+							}
+						}
+						create_starbase = {
+							size = starbase_citadel
+							module = shipyard
+							module = gun_battery
+							module = gun_battery
+							module = gun_battery
+							module = gun_battery
+							module = gun_battery
+							owner = event_target:ehof_cheating
+						}
+						set_star_flag = ehof_megastructure_system@event_target:ehof_cheating
+						every_system_planet = { set_planet_flag = cant_build_here set_planet_flag = cant_target_this_planet } # Prevents NDB & QSO
+					}
+				}
+			}
+		}
+		set_variable = { which = enough_ehofs value = 0 }
+		country_event = { id = ehof_cheat.0011 days = 2 }
+	}
+}
+
+country_event = {
+	id = ehof_cheat.0011
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		random_system_within_border = {
+			limit = { any_system_planet = { has_planet_flag = cant_build_here } }
+			spawn_megastructure = { type = "ehof_megastructure_phase1" owner = root }
+		}
+	}
+}
+
+country_event = {
+	id = ehof_cheat.002
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_global_flag = ehof_cheating
+		random_country = {
+			limit = { is_country_type = global_event }
+			set_global_flag = compound_invasion_happened
+			country_event = { id = compound_spawn.001 days = 2 }			# Spawn systems
+
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = compound_capped_1					# Spawn after vanilla crisis (Dealt with in trigger)
+						has_global_flag = compound_capped_2					# Spawn with vanilla crisis  (Dealt with in trigger)
+					}
+				}
+				if = {		limit = { has_global_flag = compound_capped_4 } set_variable = { which = giga_spawn_crisis_compound value = 2 } }	# 2 additional crisis
+				else_if = {	limit = { has_global_flag = compound_capped_3 } set_variable = { which = giga_spawn_crisis_compound value = 1 } }	# 1 additional crisis
+				else_if = {
+					limit = { has_global_flag = compound_capped_s }
+					random_list = {
+						1 = { set_variable = { which = giga_spawn_crisis_compound value = 0 } }
+						1 = { set_variable = { which = giga_spawn_crisis_compound value = 1 } }
+						1 = { set_variable = { which = giga_spawn_crisis_compound value = 2 } }
+					}
+				}
+
+				while = {
+					limit = { check_variable = { which = giga_spawn_crisis_compound value > 0 } }
+					subtract_variable = { which = giga_spawn_crisis_compound value = 1 }
+					random_list = {
+						1 = {	### Prethoryn Scourge (Swarm)
+							modifier = { factor = 0 has_global_flag = prethoryn_invasion_happened }
+							modifier = { factor = 0 has_global_flag = giga_spawned_scourge }
+							country_event = { id = crisis.10 days = 100 random = 400 }
+							set_global_flag = giga_spawned_scourge
+						}
+						1 = {	### Unbidden (Extradimensionals)
+							modifier = { factor = 0 has_global_flag = extradimensional_invasion_happened }
+							modifier = { factor = 0 has_global_flag = giga_spawned_unbidden }
+							country_event = { id = crisis.1000 days = 100 random = 400 }
+							set_global_flag = giga_spawned_unbidden
+						}
+						1 = {	### Contingency (AI)
+							modifier = { factor = 0 has_global_flag = ai_invasion_happened }
+							modifier = { factor = 0 has_global_flag = giga_spawned_contingency }
+							country_event = { id = crisis.2005 days = 100 random = 400 }
+							set_global_flag = giga_spawned_contingency
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = ehof_cheat.003
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = { has_megastructure = ehof_megastructure_phase1 }
+
+	immediate = {
+		if = { limit = { has_country_flag = ehof_can_activate } remove_country_flag = ehof_can_activate }
+		set_variable = { which = ehof_phase value = 4 }
+		random_system_within_border = {
+			limit = { has_star_flag = ehof_megastructure_system@root }
+			every_system_megastructure = { delete_megastructure = this }
+
+			spawn_megastructure = {
+				type = "ehof_megastructure_phase4"
+				orbit_angle = 0
+				orbit_distance = 0
+				owner = root
+				init_effect = { set_megastructure_flag = ehof_phase_04 }
+			}
+		}
+		give_technology = { tech = tech_wormhole_stabilization message = no }
+
+		give_technology = { tech = tech_abstract_1 message = no }
+		give_technology = { tech = tech_abstract_2 message = no }
+		give_technology = { tech = tech_abstract_3 message = no }
+		give_technology = { tech = tech_abstract_4 message = no }
+
+		give_technology = { tech = tech_photonic_m message = no }
+		give_technology = { tech = tech_negative_pressure message = no }
+		give_technology = { tech = tech_negative_e_s message = no }
+		give_technology = { tech = tech_ssn_det message = no }
+		give_technology = { tech = tech_u_r_e_t message = no }
+		give_technology = { tech = tech_hardlight_c_u message = no }
+		give_technology = { tech = tech_nm_utilization_1 message = no }
+
+		give_technology = { tech = tech_prob_c message = no }
+		give_technology = { tech = tech_condensed_ews message = no }
+
+		give_technology = { tech = tech_ehof_phase_01 message = no }
+		give_technology = { tech = tech_ehof_phase_02 message = no }
+		give_technology = { tech = tech_ehof_phase_03 message = no }
+		give_technology = { tech = tech_ehof_phase_04 message = no }
+	}
+}
+
+country_event = {
+	id = ehof_cheat.004
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_global_flag = ehof_can_roll_advanced
+		country_event = { id = ehof_systems.000 }
+	}
+}

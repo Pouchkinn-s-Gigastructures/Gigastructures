@@ -1,0 +1,343 @@
+#####################
+# Construction Site #
+#####################
+ehof_sm_forge_phase0 = {
+	entity = "construction_platform_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	entity_offset = { x = -25 y = 25 }
+	show_galactic_map_icon = yes
+	place_entity_on_planet_plane = no
+
+	build_time = 1800
+	resources = {
+		category = giga_megastructures
+		cost = {
+			unity = @giga_big_mega_start_unity_cost # 300
+			alloys = 5000
+		}
+		upkeep = {
+			energy = 5
+		}
+	}
+
+	prerequisites = { tech_sm_megastructure }
+	potential = { NOT = { any_owned_megastructure = { has_megastructure_flag = sm_forge } } }
+
+	possible = {
+		exists = starbase
+		custom_tooltip = {
+			fail_text = "requires_inside_border"
+			is_inside_border = from
+		}
+		custom_tooltip = {
+			fail_text = "requires_surveyed_system"
+			NOT = {
+				any_system_planet = {
+					is_surveyed = {
+						who = prev.from
+						status = no
+					}
+				}
+			}
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = {
+				fail_text = "requires_cplanet"
+				is_planet_class = pc_ehof_cplanet
+			}
+			custom_tooltip = {
+				fail_text = "requires_no_anomaly"
+				NOT = { has_anomaly = yes }
+			}
+		}
+	}
+
+	ai_weight = {
+		# factor = 5
+
+		# modifier = {
+		# 	factor = 0.1
+		# 	any_neighbor_system = {
+		# 		exists = owner
+		# 		NOT = { owner = { is_same_value = from } }
+		# 	}
+		# }
+
+		weight = value:giga_ai_base_mega
+		mult = 20 # kind of a big deal if you have access to it
+
+		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|200|MIN|0.5|
+		mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|100|MIN|0.1|
+		mult = value:giga_ai_output|RESOURCE|ehof_sr_sentient_metal|AMOUNT|2000|MIN|0.5|
+		mult = value:giga_ai_output|RESOURCE|ehof_sr_negative_mass|AMOUNT|1500|MIN|0.5|
+	}
+
+	on_build_complete = {
+		spawn_megastructure = {
+			type = ehof_sm_forge_phase00
+			coords_from = fromfrom.planet
+			owner = from
+			orbit_angle = 315
+			orbit_distance = 35
+			graphical_culture = fromfrom
+			init_effect = { set_megastructure_flag = sm_forge }
+		}
+		remove_megastructure = fromfrom
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			giga_set_has_mega_flag = yes
+		}
+		from = {
+			country_event = { id = giga_dialog.11101 }	# Notification
+		}
+	}
+}
+
+###########################
+# Phase Construction Site #
+###########################
+ehof_sm_forge_phase00 = {
+	entity = "construction_platform_entity"
+	portrait = "GFX_megastructure_construction_background"
+	show_galactic_map_icon = yes
+	place_entity_on_planet_plane = no
+	potential = { always = no }
+}
+
+#########################
+# Phase 1 Megastructure #
+#########################
+ehof_sm_forge_phase1 = {
+	entity = "ehof_sm_forge_phase1_entity"
+	portrait = "GFX_megastructure_sm_forge"
+	#construction_entity = "ehof_sm_forge_phase1_entity"
+	#rotate_to_center = yes Rotate to center seems to be making it vanish completely
+	show_galactic_map_icon = yes
+	#place_entity_on_planet_plane = yes since its trying to be placed above a (currently) size 0 planet this isn't really needed, it will already be placed as if its on the planet plane (well slightly higher)
+	upgrade_from = { ehof_sm_forge_phase00 }
+	ai_weight = { factor = 5 }
+
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		cost = {
+			alloys = 10000
+			ehof_sr_negative_mass = 10000
+		}
+		upkeep = {
+			alloys = 20
+			energy = 40
+		}
+	}
+
+	on_build_complete = {
+		if = {
+			limit = { NOT = { any_system_ambient_object = { is_ambient_object_type = fake_cplanet } } }
+			fromfrom.planet = {
+				create_ambient_object = {
+					type = "fake_cplanet"
+					location = this
+					use_3d_location = yes
+					base_angle_towards = star
+					entity_face_object = star
+					entity_offset = { min = 0 max = 0 }
+				}
+			}
+		}
+
+		fromfrom = {
+			if = { limit = { NOT = { has_megastructure_flag = sm_forge } }	set_megastructure_flag = sm_forge }
+			planet = { save_event_target_as = giga_planet }
+		}
+		from = {
+			country_event = { id = giga_dialog.11102 }	# Notification
+		}
+	}
+}
+
+#########################
+# Phase 2 Megastructure #
+#########################
+ehof_sm_forge_phase2 = {
+	entity = "ehof_sm_forge_phase2_entity"
+	portrait = "GFX_megastructure_sm_forge"
+	construction_entity = "ehof_sm_forge_phase2_attach"
+	#rotate_to_center = yes
+	show_galactic_map_icon = yes
+	#place_entity_on_planet_plane = yes
+	upgrade_from = { ehof_sm_forge_phase1 }
+	ai_weight = { factor = 5 }
+
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		cost = {
+			ehof_sr_sentient_metal = 5000
+			ehof_sr_negative_mass = 7500
+		}
+		upkeep = {
+			alloys = 50
+			energy = 100
+		}
+		produces = {
+			ehof_sr_sentient_metal = 300
+			ehof_sr_negative_mass = 200
+		}
+	}
+	on_build_complete = {
+		if = {
+			limit = { NOT = { any_system_ambient_object = { is_ambient_object_type = fake_cplanet } } }
+			fromfrom.planet = {
+				create_ambient_object = {
+					type = "fake_cplanet"
+					location = this
+					use_3d_location = yes
+					base_angle_towards = star
+					entity_face_object = star
+					entity_offset = { min = 0 max = 0 }
+				}
+			}
+		}
+
+		# create_ambient_object = {
+		# 	type = sm_forge_p3
+		# 	location = fromfrom
+		# 	use_3d_location = yes
+		# 	entity_face_object = fromfrom.planet
+		# }
+
+		fromfrom = {
+			if = { limit = { NOT = { has_megastructure_flag = sm_forge } } set_megastructure_flag = sm_forge }
+			planet = { save_event_target_as = giga_planet }
+		}
+		from = {
+			country_event = { id = giga_dialog.11103 }	# Notification
+		}
+	}
+}
+
+#########################
+# Phase 3 Megastructure #
+#########################
+ehof_sm_forge_phase3 = {
+	entity = "ehof_sm_forge_phase3_entity"
+	portrait = "GFX_megastructure_sm_forge"
+	construction_entity = "ehof_sm_forge_phase3_attach"
+	#rotate_to_center = yes
+	show_galactic_map_icon = yes
+	#place_entity_on_planet_plane = yes
+	upgrade_from = { ehof_sm_forge_phase2 }
+	ai_weight = { factor = 5 }
+
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		cost = {
+			ehof_sr_sentient_metal = 10000
+			ehof_sr_negative_mass = 15000
+		}
+		upkeep = {
+			alloys = 75
+			energy = 150
+		}
+		produces = {
+			ehof_sr_sentient_metal = 750
+			ehof_sr_negative_mass = 500
+		}
+	}
+	on_build_complete = {
+		if = {
+			limit = { NOT = { any_system_ambient_object = { is_ambient_object_type = fake_cplanet } } }
+			fromfrom.planet = {
+				create_ambient_object = {
+					type = "fake_cplanet"
+					location = this
+					use_3d_location = yes
+					base_angle_towards = star
+					entity_face_object = star
+					entity_offset = { min = 0 max = 0 }
+				}
+			}
+		}
+
+		# create_ambient_object = {
+		# 	type = sm_forge_p2
+		# 	location = fromfrom
+		# 	use_3d_location = yes
+		# 	entity_face_object = fromfrom.planet
+		# }
+		fromfrom = {
+			if = { limit = { NOT = { has_megastructure_flag = sm_forge } } set_megastructure_flag = sm_forge }
+			planet = { save_event_target_as = giga_planet }
+		}
+		from = {
+			country_event = { id = giga_dialog.11104 }	# Notification
+		}
+	}
+}
+
+#########################
+# Phase 4 Megastructure #
+#########################
+ehof_sm_forge_phase4 = {
+	entity = "ehof_sm_forge_phase4_entity"
+	portrait = "GFX_megastructure_sm_forge"
+	construction_entity = "ehof_sm_forge_phase4_attach"
+	#rotate_to_center = yes
+	show_galactic_map_icon = yes
+	#place_entity_on_planet_plane = yes
+	upgrade_from = { ehof_sm_forge_phase3 }
+	ai_weight = { factor = 5 }
+
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		cost = {
+			ehof_sr_sentient_metal = 20000
+			ehof_sr_negative_mass = 30000
+		}
+		upkeep = {
+			alloys = 100
+			energy = 200
+		}
+		produces = {
+			ehof_sr_sentient_metal = 2000
+			ehof_sr_negative_mass = 1500
+		}
+	}
+
+	on_build_complete = {
+		if = {
+			limit = { NOT = { any_system_ambient_object = { is_ambient_object_type = fake_cplanet } } }
+			fromfrom.planet = {
+				create_ambient_object = {
+					type = "fake_cplanet"
+					location = this
+					use_3d_location = yes
+					base_angle_towards = star
+					entity_face_object = star
+					entity_offset = { min = 0 max = 0 }
+				}
+			}
+		}
+		# create_ambient_object = {
+		# 	type = sm_forge_p4
+		# 	location = fromfrom
+		# 	use_3d_location = yes
+		# 	entity_face_object = fromfrom.planet
+		# }
+		fromfrom = {
+			if = { limit = { NOT = { has_megastructure_flag = sm_forge } } set_megastructure_flag = sm_forge }
+			planet = { save_event_target_as = giga_planet }
+		}
+		from = {
+			set_country_flag = has_built_or_repaired_gigastructure # unlocks gigastructural constructs
+			country_event = { id = giga_dialog.11105 }	# Notification
+		}
+	}
+}

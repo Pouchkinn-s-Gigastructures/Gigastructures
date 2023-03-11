@@ -1,0 +1,334 @@
+blokkat_star_fix_0 = {
+	entity = "giga_consite_7_7_entity"
+	construction_entity = "giga_consite_7_7_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_blokkat_fix_systems }
+
+	build_time = 1800
+	resources = {
+		category = giga_gigastructures
+		cost = {
+			alloys = 50000
+		}
+		upkeep = { energy = 10 }
+	}
+
+	potential = {
+		has_technology = giga_tech_blokkat_fix_systems
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_surveyed_system"				giga_system_is_surveyed = yes }
+		custom_tooltip = { fail_text = "requires_no_colonized_planets"			NOT = { any_system_planet = { is_colony = yes } } }
+		custom_tooltip = { fail_text = "requires_no_existing_megastructure"		has_no_non_gate_megastructure = yes }
+		custom_tooltip = { fail_text = "requires_no_crisis_system"				NOT = { any_system_planet = { has_planet_flag = crisis_vital_planet } } }
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { 
+				fail_text = "requires_no_existing_megastructure"
+				AND = {
+					planet_has_no_megastructure = yes
+					solar_system = { NOT = { has_star_flag = blokkat_star_fix } }
+				} 
+			}
+			custom_tooltip = { fail_text = "requires_no_anomaly"					has_anomaly = no }
+			custom_tooltip = { 
+				fail_text = "requires_destroyed_system"			
+				OR = {
+					is_star_class = sc_blokkat_stripmined
+					is_star_class = sc_empty_space
+				}
+			}
+		}
+	}
+
+	ai_weight = {
+		weight = 0
+	}
+	
+	on_build_complete = {
+		save_event_target_as = giga_system
+		set_star_flag = blokkat_star_fix
+		create_starbase = {
+			size = starbase_outpost
+			owner = ROOT.from
+		}
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			giga_set_has_mega_flag = yes
+		}
+		from = {
+			country_event = { id = giga_blokkat.3353 }	# Notification
+		}
+	}
+}
+
+#Done
+blokkat_star_fix_1 = {
+	entity = "blokkat_systemfixmega_entity"
+	construction_entity = "blokkat_systemfixmega_entity"
+	portrait = "GFX_megastructure_blokkat_shieldkiller"
+	upgrade_from = { blokkat_star_fix_0 }
+
+	build_time = 7200
+	resources = {
+		category = giga_gigastructures
+		cost = { 
+			alloys = 75000
+			energy = 200000
+		}
+		upkeep = { 
+			energy = 500
+		}
+	}
+
+	possible = {
+		from = {
+			has_technology = giga_tech_blokkat_fix_systems
+		}
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = { 
+			save_event_target_as = giga_planet 
+		}
+		from = { country_event = { id = giga_blokkat.3354 } }	# Notification
+	}
+}
+
+#ACTIVATE
+blokkat_star_fix_active = {
+	entity = "blokkat_systemfixmega_entity"
+	construction_entity = ""
+	portrait = "GFX_megastructure_blokkat_shieldkiller"
+	upgrade_from = { blokkat_star_fix_1 }
+
+	build_time = 4
+
+	resources = {
+		category = giga_gigastructures
+		cost = { 
+			energy = 400000
+		}
+	}
+
+	possible = {
+		from = {
+			has_technology = giga_tech_blokkat_fix_systems
+		}
+	}
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		remove_star_flag = blokkat_star_fix
+		create_ambient_object = {
+			type = "blokkat_dismantler_death_explosion_effect"
+			play_animation_once = yes
+			location = ROOT.fromfrom.planet
+		}
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+			remove_modifier = blokkat_can_repair_system
+		}
+		set_name = random
+		from = { country_event = { id = giga_blokkat.3355 } }	# Notification
+		random_list = {
+			1 = { while = { count = 2 giga_generate_hyperlane = yes } }
+			1 = { while = { count = 3 giga_generate_hyperlane = yes } }
+			1 = { while = { count = 4 giga_generate_hyperlane = yes } }
+		}
+		random_list = {
+			1 = { set_variable = { which = blokkat_new_system_planet_count value = 1 } }
+			1 = { set_variable = { which = blokkat_new_system_planet_count value = 2 } }
+			1 = { set_variable = { which = blokkat_new_system_planet_count value = 3 } }
+			1 = { set_variable = { which = blokkat_new_system_planet_count value = 4 } }
+			1 = { set_variable = { which = blokkat_new_system_planet_count value = 5 } }
+			1 = { set_variable = { which = blokkat_new_system_planet_count value = 6 } }
+		}
+		set_variable = {
+			which = blokkat_system_planet_number
+			value = 1
+		}
+		spawn_planet = {
+			class = rl_all_normal_planets
+			location = ROOT.star 
+			orbit_angle_offset = -30
+			orbit_distance_offset = 50
+			init_effect = {
+				save_event_target_as = giga_blokkat_repair_current_planet
+				set_name = random
+				ROOT = {
+					change_variable = {
+						which = blokkat_system_planet_number
+						value = 1
+					}
+				}
+			}
+		}
+		while = {
+			limit = {
+				check_variable = {
+					which = blokkat_new_system_planet_count
+					value > 0
+				}
+			}
+			ROOT = {
+				random_list = {
+					1 = {
+						spawn_planet = {
+							class = rl_unhabitable_planets
+							location = event_target:giga_blokkat_repair_current_planet
+							orbit_angle_offset = -235
+							orbit_distance_offset = 20
+							init_effect = {
+								save_event_target_as = giga_blokkat_repair_current_planet
+								set_name = random
+								ROOT = {
+									change_variable = {
+										which = blokkat_system_planet_number
+										value = 1
+									}
+								}
+							}
+						}
+					}
+					1 = {
+						spawn_planet = {
+							class = rl_unhabitable_planets
+							location = event_target:giga_blokkat_repair_current_planet
+							orbit_angle_offset = -186
+							orbit_distance_offset = 20
+							init_effect = {
+								save_event_target_as = giga_blokkat_repair_current_planet
+								set_name = random
+								ROOT = {
+									change_variable = {
+										which = blokkat_system_planet_number
+										value = 1
+									}
+								}
+							}
+						}
+					}
+					1 = {
+						spawn_planet = {
+							class = rl_unhabitable_planets
+							location = event_target:giga_blokkat_repair_current_planet
+							orbit_angle_offset = -28
+							orbit_distance_offset = 20
+							init_effect = {
+								save_event_target_as = giga_blokkat_repair_current_planet
+								set_name = random
+								ROOT = {
+									change_variable = {
+										which = blokkat_system_planet_number
+										value = 1
+									}
+								}
+							}
+						}
+					}
+					1 = {
+						spawn_planet = {
+							class = rl_unhabitable_planets
+							location = event_target:giga_blokkat_repair_current_planet
+							orbit_angle_offset = -87
+							orbit_distance_offset = 20
+							init_effect = {
+								save_event_target_as = giga_blokkat_repair_current_planet
+								set_name = random
+								ROOT = {
+									change_variable = {
+										which = blokkat_system_planet_number
+										value = 1
+									}
+								}
+							}
+						}
+					}
+					1 = {
+						spawn_planet = {
+							class = rl_unhabitable_planets
+							location = event_target:giga_blokkat_repair_current_planet
+							orbit_angle_offset = -132
+							orbit_distance_offset = 20
+							init_effect = {
+								save_event_target_as = giga_blokkat_repair_current_planet
+								set_name = random
+								ROOT = {
+									change_variable = {
+										which = blokkat_system_planet_number
+										value = 1
+									}
+								}
+							}
+						}
+					}
+				}
+				subtract_variable = {
+					which = blokkat_new_system_planet_count
+					value = 1
+				}
+			}
+		}
+		remove_megastructure = fromfrom
+		event_target:giga_planet = {
+			giga_clear_has_mega_flag = yes
+		}
+		random_list = {
+			1 = {
+				set_star_class = sc_m
+				star = {
+					change_pc = pc_m_star
+					set_planet_size = 20
+				}					
+			}
+			1 = {
+				set_star_class = sc_k
+				star = {
+					change_pc = pc_k_star
+					set_planet_size = 20
+				}					
+			}
+			1 = {
+				set_star_class = sc_g
+				star = {
+					change_pc = pc_g_star
+					set_planet_size = 25
+				}					
+			}
+			1 = {
+				set_star_class = sc_f
+				star = {
+					change_pc = pc_f_star
+					set_planet_size = 25
+				}					
+			}
+			1 = {
+				set_star_class = sc_a
+				star = {
+					change_pc = pc_a_star
+					set_planet_size = 30
+				}					
+			}
+			1 = {
+				set_star_class = sc_b
+				star = {
+					change_pc = pc_b_star
+					set_planet_size = 30
+				}					
+			}
+		}
+		every_system_planet = {
+			limit = { is_planet_class = pc_giga_empty_space }
+			remove_planet = yes
+		}
+	}
+}

@@ -1,0 +1,582 @@
+############################################################################
+# Base weight categories
+
+# general worker resource producer
+giga_worker_weight = {
+	[[FACTOR]] # stop failure on 2 resources
+
+	[[IMPORTANT] base = @specialist_job_weight ]
+	[[!IMPORTANT] base = @worker_job_weight ]
+	
+	# split resources
+	[[RESOURCE2] 
+		multiply = value:job_weights_multiple_resources_modifier|JOB|$JOB$|RESOURCE1|$RESOURCE$|WEIGHT1|$WEIGHT$|RESOURCE2|$RESOURCE2$|WEIGHT2|$WEIGHT2$|
+	]
+
+	# single resource
+	[[!RESOURCE2] 
+		multiply = value:job_weights_modifier|JOB|$JOB$|RESOURCE|$RESOURCE$|FACTOR|$FACTOR|1$|
+	]
+
+	[[TRADE]
+		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_trade_mult|
+	]
+
+	[[AMENITIES]
+		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_amenities_mult|
+	]
+
+	# general worker modifiers
+	modifier = {
+		factor = 10
+		is_enslaved = yes
+		can_take_servant_job = no
+		NOT = { has_slavery_type = { type = slavery_indentured } }
+	}
+	modifier = {
+		factor = 3
+		OR = {
+			is_non_sapient_robot = yes
+			is_shackled_robot = yes
+		}
+		can_take_servant_job = no
+		owner = { has_technology = tech_droid_workers }
+	}
+	modifier = {
+		factor = 200
+		OR = {
+			is_non_sapient_robot = yes
+			is_shackled_robot = yes
+		}
+		can_take_servant_job = no
+		owner = { NOT = { has_technology = tech_droid_workers } }
+	}
+	modifier = {
+		factor = 0.25
+		can_take_servant_job = yes
+	}
+
+	# low income modifier
+	modifier = {
+		factor = 1.2
+		exists = planet
+		planet = {
+			has_available_jobs = $JOB$
+		}
+		exists = owner
+		owner = {
+			is_ai = yes
+			has_monthly_income = {
+				resource = $RESOURCE$
+				value < 0
+			}
+		}
+	}
+
+	[[RESOURCE2]
+		modifier = {
+			factor = 1.2
+			exists = planet
+			planet = {
+				has_available_jobs = $JOB$
+			}
+			exists = owner
+			owner = {
+				is_ai = yes
+				has_monthly_income = {
+					resource = $RESOURCE2$
+					value < 0
+				}
+			}
+		}
+	]
+}
+
+
+giga_specialist_weight = {
+	weight = value:giga_specialist_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|][[TRADE]TRADE|yes|][[STICKY]STICKY|$STICKY$|][[INDENTURED]INDENTURED|$INDENTURED$|]
+
+	# split resources
+	[[RESOURCE2] 
+		multiply = value:job_weights_multiple_resources_modifier|JOB|$JOB$|RESOURCE1|$RESOURCE$|WEIGHT1|$WEIGHT$|RESOURCE2|$RESOURCE2$|WEIGHT2|$WEIGHT2$|
+	]
+
+	# single resource
+	[[!RESOURCE2] 
+		multiply = value:job_weights_modifier|JOB|$JOB$|RESOURCE|$RESOURCE$|FACTOR|$FACTOR|1$|
+	]
+}
+
+giga_specialist_triple_weight = {
+	weight = value:giga_specialist_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|][[TRADE]TRADE|yes|][[STICKY]STICKY|$STICKY$|][[INDENTURED]INDENTURED|$INDENTURED$|]
+
+	multiply = value:giga_specialist_triple_weight_calc|JOB|$JOB$|RESOURCE1|$RESOURCE1$|WEIGHT1|$WEIGHT1$|RESOURCE2|$RESOURCE2$|WEIGHT2|$WEIGHT2$|RESOURCE3|$RESOURCE3$|WEIGHT3|$WEIGHT3$|
+}
+
+giga_specialist_triple_weight_calc = {
+
+	complex_trigger_modifier = {
+		trigger = check_economic_production_modifier_for_job
+		parameters = {
+			job = $JOB$
+			resource = {
+				$RESOURCE1$ = $WEIGHT1$
+				$RESOURCE2$ = $WEIGHT2$
+				$RESOURCE2$ = $WEIGHT3$
+			}
+		}
+		mode = add
+	}
+	add = 1
+	min = 0
+	pow = 3 #we need it to have a bit more impact
+
+	modifier = {
+		owner = {
+			has_deficit = $RESOURCE1$
+		}
+		multiply = @\[ 10 * $WEIGHT1$ ]
+	}
+	modifier = {
+		owner = {
+			has_deficit = $RESOURCE2$
+		}
+		multiply = @\[ 10 * $WEIGHT2$ ]
+	}
+	modifier = {
+		owner = {
+			has_deficit = $RESOURCE3$
+		}
+		multiply = @\[ 10 * $WEIGHT3$ ]
+	}
+}
+
+giga_specialist_no_resource_weight = {
+	[[FACTOR]] # stop failure on 2 resources
+	base = @specialist_job_weight
+
+	[[TRADE]
+		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_trade_mult|
+	]
+
+	[[AMENITIES]
+		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_amenities_mult|
+	]
+
+	modifier = {
+		factor = 0.2
+		has_citizenship_rights = no
+		NOT = { has_trait = trait_mechanical }
+	}
+	modifier = {
+		factor = 0.1
+		can_take_servant_job = yes
+	}
+	modifier = {
+		factor = $STICKY|1.5$
+		has_job = $JOB$
+	}
+
+	[[INDENTURED]
+		modifier = {
+			factor = $INDENTURED$
+			is_enslaved = yes
+			has_slavery_type = { type = slavery_indentured }
+		}
+	]
+}
+
+giga_researcher_weight = {
+	base = @specialist_job_weight
+	mult = value:job_weights_research_modifier|JOB|$JOB$|
+
+	[[TRADE]
+		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_trade_mult|
+	]
+
+	[[AMENITIES]
+		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_amenities_mult|
+	]
+
+	modifier = {
+		factor = 0.2
+		has_citizenship_rights = no
+		NOT = { has_trait = trait_mechanical }
+	}
+	modifier = {
+		factor = 2
+		has_living_standard = { type = living_standard_academic_privilege }
+	}
+	modifier = {
+		factor = 0.1
+		can_take_servant_job = yes
+	}
+	modifier = {
+		factor = 1.5
+		has_job = $JOB$
+	}
+	modifier = {
+		factor = 0.8
+		is_enslaved = yes
+		has_slavery_type = { type = slavery_indentured }
+	}
+}
+
+giga_ruler_weight = {
+	weight = value:giga_ruler_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|][[TRADE]TRADE|yes|][[STICKY]STICKY|$STICKY$|]
+
+	# split resources
+	[[RESOURCE2] 
+		multiply = value:job_weights_multiple_resources_modifier|JOB|$JOB$|RESOURCE1|$RESOURCE$|WEIGHT1|$WEIGHT$|RESOURCE2|$RESOURCE2$|WEIGHT2|$WEIGHT2$|
+	]
+
+	# single resource
+	[[!RESOURCE2] 
+		multiply = value:job_weights_modifier|JOB|$JOB$|RESOURCE|$RESOURCE$|FACTOR|$FACTOR|1$|
+	]
+}
+
+giga_ruler_no_resource_weight = {
+	base = @ruler_job_weight
+
+	[[TRADE]
+		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_trade_mult|
+	]
+
+	[[AMENITIES]
+		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_amenities_mult|
+	]
+
+	modifier = {
+		factor = 0.1
+		has_citizenship_rights = no
+		NOT = { has_trait = trait_mechanical }
+	}
+	modifier = {
+		factor = $STICKY|5$
+		has_job = $JOB$
+	}
+	# crisis purge
+	modifier = {
+		factor = 0.01
+		exists = planet
+		exists = planet.controller
+		planet.controller = {
+			OR = {
+				is_country_type = swarm
+				is_country_type = ai_empire
+			}
+		}
+		OR = { # contingency won't purge itself
+			NOT = { exists = event_target:custodian_bot }
+			AND = {
+				exists = event_target:custodian_bot
+				NOT = { species = { is_same_value = event_target:custodian_bot } }
+			}
+		}
+	}
+}
+
+giga_menial_drone_weight = {
+	[[FACTOR]] # stop failure on 2 resources
+
+	[[IMPORTANT] base = @complex_drone_job_weight ]
+	[[!IMPORTANT] base = @simple_drone_job_weight ]
+
+	# split resources
+	[[RESOURCE2] 
+		multiply = value:job_weights_multiple_resources_modifier|JOB|$JOB$|RESOURCE1|$RESOURCE$|WEIGHT1|$WEIGHT$|RESOURCE2|$RESOURCE2$|WEIGHT2|$WEIGHT2$|
+	]
+
+	# single resource
+	[[!RESOURCE2] 
+		multiply = value:job_weights_modifier|JOB|$JOB$|RESOURCE|$RESOURCE$|FACTOR|$FACTOR|1$|
+	]
+
+	[[QUOTA]
+		modifier = {
+			factor = 0.9
+			NOT = { has_job = $JOB$ }
+			owner = {
+				has_monthly_income = {
+					resource = $RESOURCE$
+					value > $QUOTA$
+				}
+			}
+		}
+	]
+
+	[[AMENITIES]
+		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_amenities_mult|
+	]
+
+	modifier = {
+		factor = $STICKY|1.2$
+		has_job = $JOB$
+	}
+	modifier = {
+		factor = 1.1
+		exists = owner
+		years_passed < 1
+		owner = { has_valid_civic = civic_machine_assimilator }
+		has_trait = trait_cybernetic
+	}
+}
+
+giga_complex_drone_weight = {
+	weight = value:giga_complex_drone_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|][[STICKY]STICKY|$STICKY$|][[FACTOR]FACTOR|$FACTOR$|]
+
+	# split resources
+	[[RESOURCE2] 
+		multiply = value:job_weights_multiple_resources_modifier|JOB|$JOB$|RESOURCE1|$RESOURCE$|WEIGHT1|$WEIGHT$|RESOURCE2|$RESOURCE2$|WEIGHT2|$WEIGHT2$|
+	]
+
+	# single resource
+	[[!RESOURCE2] 
+		multiply = value:job_weights_modifier|JOB|$JOB$|RESOURCE|$RESOURCE$|FACTOR|$FACTOR|1$|
+	]
+}
+
+giga_complex_drone_triple_weight = {
+	weight = value:giga_complex_drone_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|][[STICKY]STICKY|$STICKY$|][[FACTOR]FACTOR|$FACTOR$|]
+
+	multiply = value:giga_complex_drone_triple_weight_calc|JOB|$JOB$|RESOURCE1|$RESOURCE1$|WEIGHT1|$WEIGHT1$|RESOURCE2|$RESOURCE2$|WEIGHT2|$WEIGHT2$|RESOURCE3|$RESOURCE3$|WEIGHT3|$WEIGHT3$|
+}
+
+giga_complex_drone_triple_weight_calc = {
+	base = 0
+
+	complex_trigger_modifier = {
+		trigger = check_economic_production_modifier_for_job
+		parameters = {
+			job = $JOB$
+			resource = {
+				$RESOURCE1$ = $WEIGHT1$
+				$RESOURCE2$ = $WEIGHT2$
+				$RESOURCE2$ = $WEIGHT3$
+			}
+		}
+		mode = add
+	}
+	add = 1
+	min = 0
+	pow = 3 #we need it to have a bit more impact
+
+	modifier = {
+		owner = {
+			has_deficit = $RESOURCE1$
+		}
+		multiply = @\[ 10 * $WEIGHT1$ ]
+	}
+	modifier = {
+		owner = {
+			has_deficit = $RESOURCE2$
+		}
+		multiply = @\[ 10 * $WEIGHT2$ ]
+	}
+	modifier = {
+		owner = {
+			has_deficit = $RESOURCE3$
+		}
+		multiply = @\[ 10 * $WEIGHT3$ ]
+	}
+}
+
+giga_complex_drone_no_resource_weight = {
+	[[FACTOR]] # stop failure on 2 resources
+	base = @complex_drone_job_weight
+
+	[[AMENITIES]
+		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_amenities_mult|
+	]
+
+	modifier = {
+		factor = 0.9
+		exists = owner
+		years_passed < 1
+		owner = { has_valid_civic = civic_machine_assimilator }
+		has_trait = trait_cybernetic
+	}
+
+	[[STICKY]
+		modifier = {
+			factor = $STICKY$
+			has_job = $JOB$
+		}
+	]
+}
+
+giga_researcher_drone_weight = {
+	base = @complex_drone_job_weight
+
+	mult = value:job_weights_research_modifier|JOB|$JOB$|
+
+	modifier = {
+		factor = 0.9
+		exists = owner
+		years_passed < 1
+		owner = { has_valid_civic = civic_machine_assimilator }
+		has_trait = trait_cybernetic
+	}
+}
+
+############################################################################
+# Modifiers
+
+# weight mult for jobs conditionally producing trade value
+giga_trade_weight = {
+	weight = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_trade_mult|
+}
+
+# weight mult for jobs conditionally producing amenities
+giga_amenities_weight = {
+	weight = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_amenities_mult|
+}
+
+# weight mult for balancing jobs primarily producing amenities
+giga_amenities_dynamic_weight = {
+	base = 1
+
+	modifier = {
+		factor = 0.1
+		NOT = { has_job = $JOB$ }
+		exists = planet
+		planet = {
+			free_amenities > 5
+		}
+	}
+
+	modifier = {
+		factor = 5
+		NOT = { has_job = $JOB$ }
+		exists = planet
+		planet = {
+			free_amenities < 2
+		}
+	}
+}
+
+# weight mult for lithoids and robots on food producing jobs
+giga_food_weight = {
+	base = 1
+
+	modifier = {
+		factor = 0.9
+		owner = {
+			is_robot_empire = yes
+		}
+	}
+
+	modifier = {
+		factor = 0.5
+		has_trait = trait_lithoid
+
+		owner = {
+			is_lithoid_empire = yes
+			has_monthly_income = {
+				resource = food
+				value >= 0
+			}
+		}
+	}
+}
+
+# weight mult for battle thrall jobs
+giga_battle_thrall_weight = {
+	base = 1
+
+	modifier = {
+		factor = 10
+		is_enslaved = yes
+		has_slavery_type = { type = slavery_military }
+	}
+}
+
+# weight mult for jobs which provide armies
+giga_army_weight = {
+	base = 1
+
+	modifier = {
+		factor = 10
+		exists = planet
+		planet = { has_modifier = martial_law }
+	}
+	modifier = {
+		factor = 2
+		has_trait = trait_resilient
+	}
+	modifier = {
+		factor = 2
+		has_trait = trait_very_strong
+	}
+	modifier = {
+		factor = 1.5
+		has_trait = trait_strong
+	}
+	modifier = {
+		factor = 0.5
+		has_trait = trait_weak
+	}
+	modifier = {
+		factor = 1.1
+		has_trait = trait_cybernetic
+	}
+	modifier = {
+		factor = 2
+		has_trait = trait_presapient_earthbound
+	}
+	modifier = {
+		factor = 1.1
+		has_trait = trait_limited_regeneration
+	}
+	modifier = {
+		factor = 0
+		species = { can_be_soldier = no }
+	}
+	modifier = {
+		factor = 2
+		has_trait = trait_lithoid
+	}
+}
+
+# weight mult for jobs considered priests to give them spiritualist alignment
+giga_priest_weight = {
+	base = 1
+
+	modifier = {
+		factor = 2
+		exists = owner
+		owner = { has_civic = civic_exalted_priesthood }
+	}
+	multiply = value:giga_spiritualist_weight|JOB|$JOB$|
+}
+
+# weight mult for spiritualust aligned jobs (included in giga_priest_weight)
+giga_spiritualist_weight = {
+	base = 1
+
+	modifier = {
+		factor = 1.2
+		has_ethic = ethic_spiritualist # pop ethics, not country, so no fanatic
+	}
+	modifier = {
+		factor = 0.1
+		has_ethic = ethic_materialist
+		NOT = { has_job = $JOB$ }
+	}
+}
+
+# weight mult for militartist aligned jobs
+giga_militarist_weight = {
+	base = 1
+	
+	modifier = {
+		factor = 1.2
+		has_ethic = ethic_militarist # pop ethics, not country, so no fanatic
+	}
+	modifier = {
+		factor = 0.1
+		has_ethic = ethic_pacifist
+		NOT = { has_job = $JOB$ }
+	}
+}

@@ -1,0 +1,548 @@
+@counter = giga_stellar_ring_value
+
+@size = giga_stellar_ring_size # beware: used later in the script by name due to an intentional parser limitation
+@prev_size = prev.giga_stellar_ring_size
+@fromfrom_size = fromfrom.giga_stellar_ring_size
+
+@marker = giga_stellar_ring_asteroid
+@root_marker = giga_stellar_ring_base
+@modifier = giga_stellar_ring_asteroid
+
+@gas = giga_stellar_ring_gas
+@motes = giga_stellar_ring_motes
+@crystals = giga_stellar_ring_crystals
+@zro = giga_stellar_ring_zro
+@dark_matter = giga_stellar_ring_dark_matter
+@living_metal = giga_stellar_ring_living_metal
+@nanites = giga_stellar_ring_nanites
+@iodizium = giga_stellar_ring_iodizium
+@supertensiles = giga_stellar_ring_supertensiles
+
+# platform
+stellar_ring_habitat_0 = { 
+	entity = construction_platform_entity
+	construction_entity = construction_platform_entity
+	construction_blocks_and_blocked_by = multi_stage_type
+	portrait = GFX_megastructure_construction_background
+	place_entity_on_planet_plane = no
+	entity_offset = { x = 0 y = -20 }
+	prerequisites = { giga_tech_stellar_ring_habitat }
+
+	build_time = 1800
+	resources = {
+		category = giga_megastructures
+		cost = {
+			alloys = 5000
+			unity = @giga_big_mega_start_unity_cost
+			influence = 200
+		}
+		upkeep = { energy = 5 }
+	}
+
+	potential = {
+
+	}
+
+	possible = {
+		exists = starbase
+		custom_tooltip = { fail_text = "requires_inside_border"						is_inside_border = from }
+		custom_tooltip = { fail_text = "requires_surveyed_system"					giga_system_is_surveyed = yes }
+
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "must_build_around_asteroid"			is_asteroid = yes is_moon = no }
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no is_colony = no }
+			custom_tooltip = { fail_text = "requires_no_existing_orbital"		solar_system = { not = { has_star_flag = has_giga_stellar_ring_habitat } } }
+		}
+	}
+
+	ai_weight = {
+		weight = value:giga_ai_base_mega
+
+		mult = value:giga_ai_core_territory
+		mult = value:giga_ai_prevent_spam|MEGA|stellar_ring_habitat|
+		mult = value:giga_ai_unlocks_galwonders
+		mult = value:giga_ai_overpopulation_boost
+
+		modifier = {
+			mult = 0.01
+			not = {
+				any_system_planet = {
+					is_colony = yes
+					exists = owner
+					owner = {
+						is_same_empire = root.space_owner
+					}
+				}
+			}
+		}
+
+		modifier = {
+			mult = 5
+			count_system_planet = {
+				count > 4
+				limit = {
+					is_colony = yes
+					exists = owner
+					owner = {
+						is_same_empire = root.space_owner
+					}
+				}
+			}
+		}
+
+		modifier = {
+			mult = 2
+			any_system_planet = {
+				is_planet_class = pc_habitat
+			}
+		}
+
+		modifier = {
+			mult = 5
+			from = {
+				has_valid_civic = civic_machine_servitor
+			}
+		}
+
+		modifier = {
+			mult = 0.5
+			count_system_planet = {
+				count < 3
+				limit = {
+					is_asteroid = yes
+					is_moon = no
+					nor = { 
+						has_planet_flag = megastructure 
+						has_planet_flag = has_megastructure 
+					}
+				}
+			}
+		}
+
+		modifier = {
+			mult = 3
+			count_system_planet = {
+				count > 4
+				limit = {
+					is_asteroid = yes
+					is_moon = no
+					nor = { 
+						has_planet_flag = megastructure 
+						has_planet_flag = has_megastructure 
+					}
+				}
+			}
+		}
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		
+		fromfrom.planet = {
+			giga_set_has_mega_flag = yes
+			save_event_target_as = giga_planet
+		}
+
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_stellar_ring_habitat years = 20 }
+			country_event = { id = giga_dialog.13601 }	# Notification
+			change_variable = { which = giga_current_stellar_ring value = 1 }
+		}
+	}
+}
+
+# gather asteroids
+stellar_ring_habitat_1 = { 
+	entity = construction_platform_entity
+	construction_entity = construction_platform_entity
+	construction_blocks_and_blocked_by = multi_stage_type
+	portrait = GFX_megastructure_construction_background
+	place_entity_on_planet_plane = no
+	entity_offset = { x = 0 y = -20 }
+	upgrade_from = { stellar_ring_habitat_0 }
+	prerequisites = { giga_tech_stellar_ring_habitat }
+
+	build_time = 1800
+	resources = {
+		category = giga_megastructures
+		cost = {
+			trigger = {
+				is_scope_valid = yes
+				is_scope_type = megastructure
+			}
+			energy = 1000
+			multiplier = value:giga_orbital_asteroid_count
+		}
+		# preview energy cost
+		cost = { energy = 3000 }
+		cost = {
+			trigger = {
+				is_scope_valid = yes
+				is_scope_type = megastructure
+			}
+			energy = -3000
+		}
+		cost = {
+			minerals = 15000
+			unity = @giga_mega_unity_cost
+		}
+		upkeep = { energy = 10 }
+	}
+
+	on_build_start = {
+		# mark every viable asteroid
+		every_system_planet = {
+			limit = {
+				or = {
+					and = {
+						# unused asteroids, orbiting stars
+						# (don't eat guilli's ring sites please)
+						is_asteroid = yes
+						is_moon = no
+						is_colony = no
+						nor = {
+							has_planet_flag = has_megastructure
+							has_planet_flag = megastructure
+							has_anomaly = yes
+							has_planet_flag = giga_remove_planet
+							and = {
+								exists = archaeological_site
+								archaeological_site = {
+									is_site_completed = no
+								}
+							}
+						}
+					}
+					is_same_value = fromfrom.planet
+				}
+			}
+
+			set_planet_flag = has_megastructure
+			set_planet_flag = @marker
+			add_modifier = { modifier = @modifier }
+		}
+		# mark the root
+		fromfrom.planet = {
+			set_planet_flag = @root_marker
+		}
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+
+		# set up variables
+		fromfrom = {
+			set_variable = { which = @counter value = 0 }
+
+			set_variable = { which = @gas value = 0 }
+			set_variable = { which = @motes value = 0 }
+			set_variable = { which = @crystals value = 0 }
+			set_variable = { which = @iodizium value = 0 }
+			set_variable = { which = @supertensiles value = 0 }
+		}
+
+		# prevent any more being built in this system
+		set_star_flag = has_giga_stellar_ring_habitat
+
+		# clear all asteroid belts
+		set_asteroid_belt = {
+			radius = 0
+		}
+
+		# consume all marked bodies, tally value
+		every_system_planet = {
+			limit = {
+				has_planet_flag = @marker
+			}
+			if = {
+				limit = {
+					exists = orbital_station
+				}
+				orbital_station = {
+					dismantle = yes
+				}
+			}
+
+			fromfrom = {
+				# score from asteroid
+				change_variable = { which = @counter value = prev.value:giga_orbital_asteroid_value }
+
+				# tally up strategic deposits for mines later
+				change_variable = { which = @gas 			value = prev.value:giga_count_resource|resource|exotic_gases| }
+				change_variable = { which = @motes 			value = prev.value:giga_count_resource|resource|volatile_motes| }
+				change_variable = { which = @crystals 		value = prev.value:giga_count_resource|resource|rare_crystals| }
+
+				change_variable = { which = @zro 			value = prev.value:giga_count_resource|resource|sr_zro| }
+				change_variable = { which = @dark_matter 	value = prev.value:giga_count_resource|resource|sr_dark_matter| }
+				change_variable = { which = @living_metal 	value = prev.value:giga_count_resource|resource|sr_living_metal| }
+				change_variable = { which = @nanites		value = prev.value:giga_count_resource|resource|nanites| }
+
+				change_variable = { which = @iodizium 		value = prev.value:giga_count_resource|resource|sr_iodizium| }
+				change_variable = { which = @supertensiles 	value = prev.value:giga_count_resource|resource|giga_sr_amb_megaconstruction| }
+			}
+
+			if = {
+				limit = {
+					not = { is_same_value = fromfrom.planet }
+				}
+				giga_remove_planet = yes
+			} 
+		}
+
+		# convert values to statistics
+		fromfrom = {
+
+			set_variable = {
+				which = @size
+				value = value:giga_orbital_size_calculation
+			}
+
+			planet = {
+				# force set entity too, to override the change animation
+				change_pc = pc_giga_orbital_site
+				set_planet_entity = { entity = giga_hidden }
+				reset_planet = yes
+				clear_deposits = yes
+				clear_planet_modifiers = yes
+
+				set_planet_flag = megastructure
+				set_name = GIGA_ORBITAL_ANCHOR_NAME
+				set_planet_size = @prev_size
+				remove_modifier = @marker
+
+				save_event_target_as = giga_planet
+			}
+		}
+
+		from = {
+			country_event = { id = giga_dialog.13602 }	# Notification
+		}
+	}
+
+	ai_weight = { factor = value:giga_ai_base_continue }
+}
+
+# build structure
+stellar_ring_habitat_2 = { 
+	entity = giga_orbital_habitat_frame_mega_entity
+	construction_entity = giga_orbital_habitat_frame_mega_entity
+	portrait = GFX_megastructure_construction_background
+	upgrade_from = { stellar_ring_habitat_1 }
+	entity_offset = { x = 0 y = 0 }
+	place_entity_on_planet_plane = yes
+	prerequisites = { giga_tech_stellar_ring_habitat }
+	scales_with_planet = yes
+
+	build_time = 1800
+	resources = {
+		category = giga_megastructures
+		cost = {
+			trigger = {
+				is_scope_valid = yes
+				is_scope_type = megastructure
+				is_variable_set = giga_stellar_ring_size
+			}
+			alloys = 300
+			multiplier = @size
+		}
+		# preview alloy cost
+		cost = { alloys = 7500 }
+		cost = {
+			trigger = {
+				is_scope_valid = yes
+				is_scope_type = megastructure
+			}
+			alloys = -7500
+		}
+		cost = {
+			unity = @giga_mega_unity_cost
+		}
+		upkeep = { energy = 20 }
+	}
+
+	ai_weight = { factor = value:giga_ai_base_continue }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+		}
+		from = {
+			country_event = { id = giga_dialog.13603 }	# Notification
+		}
+	}
+}
+
+# install plates
+stellar_ring_habitat_3 = { 
+	entity = giga_orbital_habitat_mega_entity
+	construction_entity = giga_orbital_habitat_mega_entity
+	portrait = GFX_megastructure_construction_background
+	upgrade_from = { stellar_ring_habitat_2 }
+	entity_offset = { x = 0 y = 0 }
+	place_entity_on_planet_plane = yes
+	prerequisites = { giga_tech_stellar_ring_habitat }
+	scales_with_planet = yes
+
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		cost = {
+			trigger = {
+				is_scope_valid = yes
+				is_scope_type = megastructure
+				is_variable_set = giga_stellar_ring_size
+			}
+			alloys = 300
+			multiplier = @size
+		}
+		# preview alloy cost
+		cost = { alloys = 7500 }
+		cost = {
+			trigger = {
+				is_scope_valid = yes
+				is_scope_type = megastructure
+			}
+			alloys = -7500
+		}
+		cost = {
+			unity = @giga_mega_unity_cost
+		}
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+
+		fromfrom.planet = {
+			clear_planet_modifiers = yes
+			change_pc = pc_giga_orbital
+			set_planet_size = @fromfrom_size
+			set_planet_entity = { entity = giga_orbital_habitat_entity graphical_culture = root.from }
+
+			set_surveyed = { surveyed = yes surveyor = from }
+			set_all_comms_surveyed = yes
+			set_planet_flag = forbid_guillis_planet_modifiers
+			set_planet_flag = megastructure
+			set_planet_flag = prevent_anomaly
+			remove_planet_flag = has_megastructure # we ARE the mega now
+
+			reset_planet = yes
+			clear_deposits = yes
+
+			##################
+
+			giga_apply_stellar_ring_bonus_to_system = yes
+
+			fromfrom = {
+				while = { count = @gas 				prev = { add_deposit = d_hab_gas_1 					} }
+				while = { count = @motes 			prev = { add_deposit = d_hab_mote_1 				} }
+				while = { count = @crystals 		prev = { add_deposit = d_hab_crystal_1 				} }
+				while = { count = @zro 				prev = { add_deposit = d_hab_zro_1 					} }
+				while = { count = @dark_matter 		prev = { add_deposit = d_hab_dark_matter_1 			} }
+				while = { count = @living_metal 	prev = { add_deposit = d_hab_living_metal_1 		} }
+				while = { count = @nanites 			prev = { add_deposit = d_hab_nanites_1 				} }
+				while = { count = @iodizium 		prev = { add_deposit = d_giga_hab_iodizium_1 		} }
+				while = { count = @supertensiles	prev = { add_deposit = d_giga_hab_supertensiles_1 	} }
+			}
+
+			giga_start_ai_colony_if_safe = yes
+
+			set_name = {
+				key = GIGA_ORBITAL_PLANET_NAME
+				variable_string = [from.from.System.GetName]
+			}
+
+			save_event_target_as = giga_planet
+		}
+
+		from = {
+			set_country_flag = has_built_or_repaired_megastructure # allows galactic wonders
+			country_event = { id = giga_dialog.13604 }	# Notification
+		}
+
+		remove_megastructure = fromfrom
+	}
+
+	ai_weight = { factor = value:giga_ai_base_continue }
+}
+
+# ruined
+stellar_ring_habitat_ruined = { 
+	entity = giga_orbital_habitat_damaged_mega_entity
+	construction_entity = giga_orbital_habitat_damaged_mega_entity
+	portrait = GFX_megastructure_construction_background
+	entity_offset = { x = 0 y = 0 }
+	place_entity_on_planet_plane = yes
+	potential = { always = no }
+
+	resources = {
+		category = giga_megastructures
+	}
+}
+
+# restored
+stellar_ring_habitat_restored = { 
+	entity = ""
+	#construction_entity = giga_orbital_habitat_mega_entity
+	portrait = GFX_megastructure_construction_background
+	entity_offset = { x = 0 y = 0 }
+	place_entity_on_planet_plane = yes
+	upgrade_from = { stellar_ring_habitat_ruined }
+
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = 10000 } # same as ringworld segment
+	}
+
+	possible = {
+		hidden_trigger = { exists = from }
+		from = { has_technology = tech_mega_engineering }
+		custom_tooltip = { fail_text = "requires_surveyed_system"					giga_system_is_surveyed = yes }
+	}
+
+	ai_weight = {
+		weight = value:giga_ai_base_repairs
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+
+		spawn_planet = {
+			class = pc_giga_orbital
+			size = 18
+			location = fromfrom
+
+			init_effect = {
+				set_surveyed = { surveyed = yes surveyor = from }
+				set_all_comms_surveyed = yes
+				set_planet_flag = forbid_guillis_planet_modifiers
+				set_planet_flag = megastructure
+				set_planet_flag = prevent_anomaly
+
+				giga_apply_stellar_ring_bonus_to_system = yes
+
+				giga_start_ai_colony_if_safe = yes
+
+				set_name = {
+					key = GIGA_ORBITAL_PLANET_NAME
+					variable_string = [from.from.System.GetName]
+				}
+
+				save_event_target_as = giga_planet
+			}
+		}
+
+		from = {
+			set_country_flag = has_built_or_repaired_megastructure # allows galactic wonders
+			country_event = { id = giga_dialog.13606 }	# Notification
+		}
+		
+		remove_megastructure = fromfrom
+	}
+}

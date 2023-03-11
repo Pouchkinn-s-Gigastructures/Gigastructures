@@ -1,0 +1,222 @@
+# Overwritten to add isolated systems
+can_enter_system_by_jump = {
+	custom_tooltip = {
+		#success_text = "debug: can jump"
+		# is commented out in vanilla, doesn't seem to do anything either way
+		fail_text = cannot_jump_to_system
+
+		# Sealed system
+		OR = {
+			NOT = { has_star_flag = sealed_system }
+			AND = {
+				root = { has_country_flag = entered_sealed_system }
+				has_star_flag = sealed_system
+			}
+		}
+
+		# L-Cluster/Compound_Cluster
+		NOR = {
+			has_star_flag = lcluster
+			has_star_flag = ehof_compound_system
+			has_star_flag = giga_core_03
+			cohesive_system = yes
+			urmazin_system = yes
+			everchanging_system = yes
+			katzen_jump_blocked_system = yes
+			has_star_flag = maginot_anti_jump_star # Maginot World subspace disruption
+			has_star_flag = siegfried_anti_jump_star # Katzen version
+		}
+	}
+}
+
+# this = starbase, megastructure or planet
+can_orbitable_repair_ships = {
+	OR = {
+		AND = {
+			is_scope_type = starbase
+			OR = {
+				has_starbase_size >= starbase_starport
+				has_starbase_size = juggernaut
+				has_starbase_size = enclave_mercenary_station
+			}
+			fleet = {
+				is_disabled = no
+			}
+		}
+		AND = {
+			is_scope_type = megastructure
+			OR = {
+				is_megastructure_type = mega_shipyard_1
+				is_megastructure_type = mega_shipyard_2
+				is_megastructure_type = mega_shipyard_3
+				is_megastructure_type = the_vat_1
+				is_megastructure_type = the_vat_2
+				is_megastructure_type = the_vat_3
+				is_megastructure_type = the_vat_4
+			}
+		}
+	}
+}
+
+# Overwritten to add sphere
+can_orbital_bombard = {
+	exists = from.owner
+	NOT = {
+		any_controlled_ship = {
+			is_ship_size = colossus
+		}
+	}
+	OR = {
+		AND = {
+			ROOT.CONTROLLER = {
+				NOT = { has_communications = FROM.OWNER }
+			}
+			FROM.OWNER = {
+				NOT = { is_country_type = primitive }
+			}
+		}
+		AND = {
+			ROOT.CONTROLLER = {
+				NOR = {
+					has_policy_flag = interference_passive
+					has_policy_flag = interference_active
+				}
+			}
+			FROM.OWNER = { is_country_type = primitive }
+		}
+		ROOT.CONTROLLER = { is_at_war_with = FROM.CONTROLLER }
+		FROM = { is_planet_class = pc_infested }
+		FROM.CONTROLLER = {
+			OR = {
+				is_country_type = swarm
+				is_country_type = ai_empire
+				is_country_type = cybrex_empire
+				is_country_type = compound_empire
+				is_country_type = sbtg_stellarborne_empire
+				is_country_type = void_lifeforms_1
+				is_country_type = void_lifeforms_2
+				is_country_type = katzenartig_imperium
+				AND = {
+					is_country_type = awakened_marauders
+					ROOT.CONTROLLER = { is_hostile = prev }
+				}
+			}
+		}
+		ROOT.CONTROLLER = {
+			OR = {
+				is_country_type = extradimensional
+				is_country_type = extradimensional_2
+				is_country_type = extradimensional_3
+				is_country_type = swarm
+				is_country_type = ai_empire
+				is_country_type = cybrex_empire
+				is_country_type = dormant_marauders
+				is_country_type = marauder_raiders
+				is_country_type = ruined_marauders
+				is_country_type = gray_goo
+				is_country_type = vol
+				is_country_type = compound_empire
+				is_country_type = sbtg_stellarborne_empire
+				is_country_type = void_lifeforms_1
+				is_country_type = void_lifeforms_2
+				is_country_type = acot_crazed_stellarite
+				is_country_type = katzenartig_imperium
+				AND = {
+					is_country_type = awakened_marauders
+					FROM.CONTROLLER = { is_hostile = prev }
+				}
+			}
+		}
+		AND = {
+    	    from.controller = {
+    	        is_country_type = faction
+    	        NOT = { is_same_value = root.controller }
+    	    }
+    	    from.owner = {
+    	        is_same_value = root.controller
+    	    }
+		}
+	}
+}
+
+#Jublio
+ai_should_restrict_system = {
+	OR = {
+		AND = {
+			NOT = { has_global_flag = katzenartig_imperium_happened }
+			OR = {
+				has_global_flag = katzenartig_always
+				has_global_flag = katzenartig_deathwish
+				has_global_flag = katzenartig_stellarite
+				has_global_flag = katzenartig_improbable
+			}
+			has_star_flag = flusion_system
+			event_target:gigaflusion = {
+				exists = owner
+				owner = { is_country_type = primitive }
+			}
+		}
+		AND = {
+			root = { is_country_type = fallen_empire }
+			exists = owner
+			owner = { is_country_type = awakened_marauders }
+		}
+		AND = {
+			root = { is_country_type = awakened_marauders }
+			exists = owner
+			owner = { is_country_type = fallen_empire }
+		}
+		AND = {
+			root = {
+				OR = {
+					is_country_type = fallen_empire
+					is_country_type = awakened_marauders
+				}
+			}
+			has_star_flag = guardian
+			any_fleet_in_system = {
+				exists = owner
+				owner = {
+					is_guardian_country = yes
+				}
+			}
+		}
+		AND = {
+			root = {
+				OR = {
+					is_crisis_faction = yes
+					is_country_type = awakened_fallen_empire
+				}
+			}
+			has_star_flag = guardian
+			any_fleet_in_system = {
+				exists = owner
+				owner = {
+					is_country_type = guardian_fortress
+				}
+			}
+		}
+	}
+}
+
+#Check if it is possible to build orbital stations on this planet
+# overwritten to stop the AI spamming paluushia with observation posts
+#this: planet
+#root: country
+can_planet_support_orbital_station = {
+	custom_tooltip = {
+		fail_text = "ORBITAL_STATION_ALREADY_EXISTS"
+		has_any_megastructure = no
+		NOT = { has_planet_flag = has_megastructure }
+	}
+	custom_tooltip = {
+		fail_text = "paluushia_no_ai_observation"
+		or = {
+			and = {
+				exists = root
+				root = { is_ai = no }
+			}
+			not = { has_planet_flag = paluushia }
+		}
+	}
+}

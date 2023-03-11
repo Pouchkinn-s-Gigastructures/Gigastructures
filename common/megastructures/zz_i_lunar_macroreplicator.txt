@@ -1,0 +1,478 @@
+lunar_macroreplicator_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_lunar_assembly }
+
+	build_time = 1800
+	resources = {
+		category = giga_lunar_macroreplicator
+		cost = {
+			alloys = 5000
+			influence = 100
+			unity = @giga_giga_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|5000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_giga_unity_cost| }
+		upkeep = { energy = 5 }
+	}
+
+	potential = {
+		has_technology = giga_tech_lunar_assembly
+		NOT = { has_global_flag = warmoon_disabled }
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+		}
+	}
+
+	ai_weight = {
+		weight = value:giga_ai_base_giga
+
+		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|400|MIN|0.5|
+		mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|50|MIN|0.1|
+		mult = value:giga_ai_core_territory
+		mult = value:giga_ai_militarist_plus
+		mult = value:giga_ai_weight_savings|CATEGORY|military|RESOURCE|alloys|AMOUNT|65000|
+
+		modifier = { factor = 10	from = { has_country_flag = pangalactic_defense_league } }
+		modifier = { factor = 2		from = { has_federation = yes federation = { has_federation_type = military_federation } } }
+		modifier = { factor = 1.5	from = { is_homicidal = yes } }
+		modifier = { factor = 2		from = { is_at_war = yes } }
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = {
+			country_event = { id = giga_printer.1010 }	# Notification
+		}
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			giga_set_has_mega_flag = yes
+		}
+		
+		# replace this with the "real" upgrade path
+		spawn_megastructure = {
+			type = lunar_macroreplicator_0_real
+			owner = from
+			planet = fromfrom.planet
+		}
+		remove_megastructure = fromfrom
+	}
+}
+
+lunar_macroreplicator_0_real = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_lunar_assembly }
+
+	build_time = 1800
+	resources = {
+		category = giga_lunar_macroreplicator
+		cost = {
+			alloys = 5000
+			influence = 100
+			unity = @giga_giga_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|5000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_giga_unity_cost| }
+		upkeep = { energy = 5 }
+	}
+
+	potential = { always = no }
+	possible = { always = no }
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+		}
+	}
+
+	ai_weight = {
+		weight = 0
+	}
+}
+
+lunar_macroreplicator_1 = {
+	entity = "war_moon_printer_stage_1_entity"
+	construction_entity = "war_moon_printer_stage_1_entity"
+	portrait = "GFX_megastructure_macroreplicator"
+	upgrade_from = { lunar_macroreplicator_0_real }
+	place_entity_on_planet_plane = no
+
+	build_time = 3600
+	resources = {
+		category = giga_gigastructures
+		cost = { 
+			alloys = 25000
+			rare_crystals = 250
+			volatile_motes = 250
+			exotic_gases = 250
+			unity = @giga_giga_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|25000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_giga_unity_cost| }
+		upkeep = {
+			energy = 200
+			alloys = 25
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
+	possible = { from = { has_technology = giga_tech_lunar_assembly } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = { country_event = { id = giga_printer.1011 } }	# Notification
+	}
+}
+
+lunar_macroreplicator_1_fake = {
+	entity = "war_moon_printer_stage_1_entity"
+	construction_entity = "war_moon_printer_stage_1_entity"
+	portrait = "GFX_megastructure_macroreplicator"
+	upgrade_from = { lunar_macroreplicator_0 }
+	place_entity_on_planet_plane = no
+
+	build_time = 3600
+	resources = {
+		category = giga_gigastructures
+		cost = { 
+			alloys = 25000
+			rare_crystals = 250
+			volatile_motes = 250
+			exotic_gases = 250
+			unity = @giga_giga_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|25000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_giga_unity_cost| }
+		upkeep = {
+			energy = 200
+			alloys = 25
+		}
+	}
+
+	potential = { always = no }
+	possible = { always = no }
+}
+
+lunar_macroreplicator_2 = {
+	entity = "war_moon_printer_empty_entity"
+	construction_entity = "war_moon_printer_stage_2_construction_entity"
+	portrait = "GFX_megastructure_macroreplicator"
+	upgrade_from = { lunar_macroreplicator_1 }
+	place_entity_on_planet_plane = no
+
+	build_time = 3600
+	resources = {
+		category = giga_gigastructures
+		cost = {
+			alloys = 35000
+			rare_crystals = 1000
+			volatile_motes = 1000
+			exotic_gases = 1000
+			unity = @giga_giga_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|35000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_giga_unity_cost| }
+		upkeep = {
+			energy = 400
+			alloys = 50
+		}
+	}
+
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
+	possible = { from = { has_technology = giga_tech_lunar_assembly } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = { 
+			#if = {
+			#	limit = {
+			#		NOT = { has_country_flag = just_assembled_warmoon }
+			#	}
+				country_event = { id = giga_printer.1012 }	# Notification
+			#}
+			#else_if = {
+			#	limit = { has_country_flag = just_assembled_warmoon }
+			#	remove_country_flag = just_assembled_warmoon
+			#}
+		}
+
+		# set to ready state
+		fromfrom = {
+			upgrade_megastructure_to = lunar_macroreplicator_ready
+			finish_upgrade = yes
+		}
+	}
+}
+
+lunar_macroreplicator_2_fake = {
+	entity = "war_moon_printer_empty_entity"
+	construction_entity = "war_moon_printer_stage_2_construction_entity"
+	portrait = "GFX_megastructure_macroreplicator"
+	upgrade_from = { lunar_macroreplicator_1_fake }
+	place_entity_on_planet_plane = no
+
+	build_time = 3600
+	resources = {
+		category = giga_gigastructures
+		cost = {
+			alloys = 35000
+			rare_crystals = 1000
+			volatile_motes = 1000
+			exotic_gases = 1000
+			unity = @giga_giga_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|35000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_giga_unity_cost| }
+		upkeep = {
+			energy = 400
+			alloys = 50
+		}
+	}
+
+	potential = { always = no }
+	possible = { always = no }
+}
+
+lunar_macroreplicator_ready = {
+	entity = "war_moon_printer_empty_entity"
+	construction_entity = "war_moon_printer_empty_entity"
+	portrait = "GFX_megastructure_macroreplicator"
+	upgrade_from = { 
+		lunar_macroreplicator_2 
+		lunar_macroreplicator_make_moon
+	}
+	place_entity_on_planet_plane = no
+	upgrade_desc = hide
+
+	build_time = 0
+	resources = {
+		category = giga_gigastructures
+		upkeep = {
+			energy = 400
+			alloys = 50
+		}
+	}
+
+	potential = { always = no }
+	possible = { always = no }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+
+	on_build_complete = {}
+}
+
+lunar_macroreplicator_make_moon = {
+	entity = "war_moon_printer_full_entity"
+	construction_entity = "war_moon_printer_printing_entity"
+	portrait = "GFX_megastructure_macroreplicator"
+	upgrade_from = { 
+		lunar_macroreplicator_2 # legacy, debug
+		lunar_macroreplicator_ready
+	}
+	place_entity_on_planet_plane = no
+
+	build_time = 7200
+	resources = {
+		category = giga_megastructures
+		cost = {
+			energy = 20000
+			alloys = 30000
+			sr_solar_energy = 7
+			unity = @giga_mega_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|30000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+		upkeep = {
+			energy = 400
+			alloys = 50
+		}
+	}
+
+	potential = { 
+		NOT = { has_global_flag = warmoon_disabled }
+		OR = {
+			check_variable = { which = giga_warmoon_cap value = 0 }						# No Cap
+			check_variable = { which = giga_current_warmoon value < giga_warmoon_cap }
+		}
+	}
+	
+	possible = { 
+		from = { has_technology = giga_tech_lunar_assembly }
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					check_variable = { which = giga_warmoon_cap value = 0 }						# No Cap
+					check_variable = { which = giga_current_warmoon value < giga_warmoon_cap }
+				}
+			}
+		}
+	}
+
+	ai_weight = { 
+		weight = value:giga_ai_base_mega
+		
+		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|800|MIN|0.25|
+		mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|250|MIN|0.1|
+		mult = value:giga_ai_unlocks_galwonders
+		mult = value:giga_ai_prevent_spam|MEGA|war_moon|
+		mult = value:giga_ai_build_low_priority
+		mult = value:giga_ai_cap_availability_boost
+		mult = value:giga_ai_weight_savings|CATEGORY|military|RESOURCE|alloys|AMOUNT|20000|
+		mult = value:giga_ai_militarist_plus
+
+		modifier = { factor = 10	from = { has_country_flag = pangalactic_defense_league } }
+		modifier = { factor = 2		from = { has_federation = yes federation = { has_federation_type = military_federation } } }
+		modifier = { factor = 1.5	from = { is_homicidal = yes } }
+		modifier = { factor = 2		from = { is_at_war = yes } }
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_war_moon_print
+		from = {
+			#set_country_flag = just_assembled_warmoon
+			country_event = { id = giga_printer.1000 scopes = {	from = fromfrom.planet } }	# Notification
+			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_73
+					}
+				}
+				set_country_flag = giga_achievement_73
+				set_timed_country_flag = { flag = giga_achievement_73_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+
+		create_fleet = {
+			name = "Attack Moon"
+			settings = { spawn_debris = no }
+			effect = {
+				set_owner = prev
+				create_ship = {
+					name = "Attack Moon"
+					random_existing_design = giga_massive_planet
+					effect = {
+						set_ship_flag = random
+						add_modifier = {
+							modifier = printed_celestial_warship
+							days = -1
+						}
+						set_name = {
+							key = "war_moon_printed_ship_name"
+						}
+					}
+				}
+				set_formation_scale = 2
+				set_location = fromfrom
+			}
+		}
+
+		fromfrom = {
+			upgrade_megastructure_to = lunar_macroreplicator_ready
+			finish_upgrade = yes
+		}
+	}
+}
+
+lunar_macroreplicator_make_moon_fake = {
+	entity = "war_moon_printer_full_entity"
+	construction_entity = "war_moon_printer_printing_entity"
+	portrait = "GFX_megastructure_macroreplicator"
+	upgrade_from = { 
+		lunar_macroreplicator_2_fake
+	}
+	place_entity_on_planet_plane = no
+
+	build_time = 7200
+	resources = {
+		category = giga_megastructures
+		cost = {
+			energy = 20000
+			alloys = 30000
+			sr_solar_energy = 7
+			unity = @giga_mega_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|30000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+		upkeep = {
+			energy = 400
+			alloys = 50
+		}
+	}
+
+	potential = { always = no }
+	possible = { always = no }
+}
+
+#cracker#
+
+moon_printer_orbital_mass_harvester_0 = {
+	entity = "cracker_ring1_entity"
+	construction_entity = "cracker_ring1_entity"
+	portrait = "GFX_megastructure_planetdismantler"
+	place_entity_on_planet_plane = no
+	show_in_outliner = no
+
+	potential = { always = no }
+	possible = { always = no }
+
+	resources = { category = giga_kilostructures }
+}
+
+moon_printer_orbital_mass_harvester_1 = {
+	entity = "planet_cracker_entity"
+	construction_entity = "cracker_construction_op_entity"
+	portrait = "GFX_megastructure_planetdismantler"
+	place_entity_on_planet_plane = yes
+	show_in_outliner = no
+
+	upgrade_from = { moon_printer_orbital_mass_harvester_0 }
+
+	build_time = 720
+
+	potential = { NOT = { has_global_flag = giga_celestial_printing_moon_disabled } }
+	possible = { from = { has_technology = giga_tech_planetary_matter_harvesting } }
+
+	resources = {
+		category = giga_kilostructures
+		upkeep = {
+			energy = 50
+		}
+	}
+
+	on_build_complete = {
+		fromfrom.planet = { save_global_event_target_as = planet_being_harvested_for_printing }
+		from = {
+			country_event = { id = giga_printer.1001 }
+		}
+	}
+}

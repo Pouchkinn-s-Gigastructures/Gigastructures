@@ -1,0 +1,245 @@
+namespace = compound_situation
+
+# Blokkat Abort
+country_event = {
+	id = compound_situation.1
+	is_triggered_only = yes
+
+	picture = GFX_evt_vortex
+	title = compound_situation.1.title
+	desc = compound_situation.1.desc
+
+	trigger = {
+		NOT = { has_country_flag = compound_situation_evt1open }
+	}
+
+	option = {
+		name = compound_situation.1.a
+		custom_tooltip = compound_situation.1.a.tooltip
+		hidden_effect = {
+			event_target:compound_situation_evt = {
+				abort_situation = this
+			}
+		}
+	}
+
+	option = {
+		name = compound_situation.1.b
+		hidden_effect = {
+			remove_country_flag = compound_situation_evt1open
+		}
+	}
+
+	immediate = {
+		set_country_flag = compound_situation_evt1open
+		event_target:compound_situation_evt = {
+			switch = {
+				trigger = current_stage
+				stage_1 = {
+					if = { limit = { has_situation_flag = qnm1_approach_decided }
+						set_situation_approach = compound_approach_qnm1
+					} else = {
+						set_situation_approach = compound_approach_wait
+					}
+				}
+				stage_2 = {
+					if = { limit = { has_situation_flag = qnm1_approach_decided }
+						set_situation_approach = compound_approach_qnm2
+					} else = {
+						set_situation_approach = compound_approach_wait
+					}
+				}
+				stage_3 = {
+					if = { limit = { has_situation_flag = qnm2_approach_passed }
+					set_situation_approach = compound_approach_qnm3
+					} else = {
+						set_situation_approach = compound_approach_wait
+					}
+				}
+			}
+		}
+	}
+}
+
+# Wait Stage 1 Complete
+country_event = {
+	id = compound_situation.2
+	is_triggered_only = yes
+
+	picture = GFX_evt_black_hole
+	title = compound_situation.2.title
+	desc = compound_situation.2.desc
+
+	option = {
+		name = compound_situation.2.a
+	}
+}
+
+# QNM Stage 1 Complete
+country_event = {
+	id = compound_situation.3
+	is_triggered_only = yes
+
+	picture = GFX_evt_black_hole
+	title = compound_situation.3.title
+	desc = compound_situation.3.desc
+
+	option = {
+		name = compound_situation.3.a
+		start_situation = {
+			type = compound_gimmeyaships
+			target = this
+		}
+	}
+
+	immediate = {
+		set_country_flag = qnm1_approach_decided
+	}
+}
+
+# QNM Stage 2 Passed
+country_event = {
+	id = compound_situation.4
+	is_triggered_only = yes
+
+	picture = GFX_evt_enclave_overlord
+	title = compound_situation.4.title
+	desc = compound_situation.4.desc
+
+	option = {
+		name = compound_situation.4.a
+hidden_effect = {
+	set_country_flag = giga_special_tech_compound_weapon_bypass
+}
+		add_research_option = tech_qnm_disruptors
+		add_research_option = tech_sm_autocannons
+	}
+}
+
+# QNM Stage 2 Failed
+country_event = {
+	id = compound_situation.5
+	is_triggered_only = yes
+
+	picture = GFX_evt_crisis_declared
+	title = compound_situation.5.title
+	desc = compound_situation.5.desc
+
+	option = {
+		name = compound_situation.5.a
+	}
+}
+
+# Wait Stage 2 Complete
+country_event = {
+	id = compound_situation.6
+	is_triggered_only = yes
+
+	picture = GFX_evt_clocks
+	title = compound_situation.6.title
+	desc = compound_situation.6.desc
+
+	option = {
+		name = compound_situation.6.a
+	}
+}
+
+# Count dead ships
+country_event = {
+	id = compound_situation.7
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_country_flag = compound_feed_in_progress
+	}
+
+	immediate = {
+		change_variable = {
+			which = compound_protoships_eaten
+			value = 1
+		}
+	}
+}
+
+# Progress bar math function
+situation_event = {
+	id = compound_situation.8
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		# Math to solve into p = progess bar (0 min - 100 max)
+		# x = compound_protoships_eaten 
+		# y = compound_protoships_tobeeaten
+		# p = (x / y) * 100
+
+		# blanks out progress bar
+		export_trigger_value_to_variable = {
+			trigger = situation_progress
+			variable = situation_progress_var
+		}
+		multiply_variable = {
+			which = situation_progress_var
+			value = -1
+		}
+		add_situation_progress = situation_progress_var
+
+		# do math stuff
+		set_variable = {
+			which = calc
+			value = 0
+		}
+		set_variable = {
+			which = calc
+			value = owner.compound_protoships_eaten
+		}
+		divide_variable = {
+			which = calc
+			value = owner.compound_protoships_tobeeaten
+		}
+		multiply_variable = {
+			which = calc
+			value = 100
+		}
+
+		add_situation_progress = calc
+	}
+}
+
+# Situation 1 Aborted (Someone else got there first)
+country_event = {
+	id = compound_situation.9
+	is_triggered_only = yes
+
+	picture = GFX_evt_wormhole
+	title = compound_situation.9.title
+	desc = compound_situation.9.desc
+	
+	option = {
+		name = compound_situation.9.a
+	}
+}
+
+# Situation 2 Finished
+country_event = {
+	id = compound_situation.10
+	is_triggered_only = yes
+
+	picture = GFX_evt_engineering_research
+	title = compound_situation.10.title
+	desc = compound_situation.10.desc
+	
+	option = {
+		name = compound_situation.10.a
+		custom_tooltip = compound_situation.10.a.tooltip
+		hidden_effect = {
+			every_situation = {
+				limit = {
+					is_situation_type = compound_situation
+				}
+				add_situation_progress = 20
+			}
+		}
+	}
+}

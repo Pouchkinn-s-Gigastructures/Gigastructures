@@ -1,0 +1,548 @@
+namespace = giga_ai_savings
+
+# monthly modifier update
+country_event = {
+	id = giga_ai_savings.001
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		is_ai = yes
+		has_country_flag = @giga_ai_savings_init
+		giga_is_playable_country = yes
+	}
+
+	immediate = {
+		set_variable = {
+			which = giga_ai_savings_stockpile_cap
+			value = value:giga_ai_savings_stockpile_threshold|RESOURCE|alloys|BASE|15000|
+		}
+
+		# invest 5% of total alloys if above 90% cap
+		if = {
+			limit = {
+				resource_stockpile_compare = {
+					resource = alloys
+					value > 1
+					mult = giga_ai_savings_stockpile_cap
+				}
+			}
+
+			set_variable = {
+				which = giga_ai_savings_stockpile_investment
+				value = value:giga_ai_savings_stockpile_fraction|RESOURCE|alloys|PERCENT|5|
+			}
+
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_ai_savings_stockpile_investment
+						value > 0
+					}
+				}
+
+				add_resource = {
+					alloys = -1
+					mult = giga_ai_savings_stockpile_investment
+				}
+
+				multiply_variable = {
+					which = giga_ai_savings_stockpile_investment
+					value = value:giga_ai_savings_multiplier|RESOURCE|alloys|
+				}
+
+				giga_ai_savings_invest = { RESOURCE = alloys AMOUNT = giga_ai_savings_stockpile_investment }
+			}
+		}
+
+		# invest 5% of alloy and unity income if it's above 100 and we have some in stock
+		if = {
+			limit = {
+				resource_income_compare = {
+					resource = alloys
+					value > 100
+				}
+				resource_stockpile_compare = {
+					resource = alloys
+					value > 2000
+				}
+			}
+
+			set_variable = {
+				which = giga_ai_savings_income_investment
+				value = value:giga_ai_savings_income_fraction|RESOURCE|alloys|PERCENT|5|
+			}
+
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_ai_savings_income_investment
+						value > 0
+					}
+				}
+
+				add_resource = {
+					alloys = -1
+					mult = giga_ai_savings_income_investment
+				}
+
+				multiply_variable = {
+					which = giga_ai_savings_income_investment
+					value = value:giga_ai_savings_multiplier|RESOURCE|alloys|
+				}
+
+				giga_ai_savings_invest = { RESOURCE = alloys AMOUNT = giga_ai_savings_income_investment }
+			}
+		}
+
+		if = {
+			limit = {
+				resource_income_compare = {
+					resource = unity
+					value > 100
+				}
+				resource_stockpile_compare = {
+					resource = unity
+					value > 100
+				}
+			}
+
+			set_variable = {
+				which = giga_ai_savings_income_investment
+				value = value:giga_ai_savings_income_fraction|RESOURCE|unity|PERCENT|2|
+			}
+
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_ai_savings_income_investment
+						value > 0
+					}
+				}
+
+				add_resource = {
+					unity = -1
+					mult = giga_ai_savings_income_investment
+				}
+
+				multiply_variable = {
+					which = giga_ai_savings_income_investment
+					value = value:giga_ai_savings_multiplier|RESOURCE|unity|
+				}
+
+				giga_ai_savings_invest = { RESOURCE = unity AMOUNT = giga_ai_savings_income_investment }
+			}
+		}
+		
+		giga_ai_savings_update_modifiers = yes # these might just be too much to deal with
+	}
+}
+
+# mega count and building update, for AI weights
+country_event = {
+	id = giga_ai_savings.002
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		# if build cap is unlimited, skip the calcs and treat it as always available
+		if = {
+			limit = {
+				has_global_flag = giga_buildcap_u
+			}
+
+			set_variable = {
+				which = giga_ai_get_build_limit
+				value = 1000
+			}
+			set_variable = {
+				which = giga_ai_get_currently_building
+				value = 0
+			}
+		}
+		# if build cap is job based, get the AI build cap already calculated if available
+		else_if = {
+			limit = {
+				has_global_flag = giga_buildcap_j
+			}
+			if = {
+				limit = {
+					is_ai = yes
+					is_variable_set = giga_amb_ai_limit
+				}
+				set_variable = {
+					which = giga_ai_get_build_limit
+					value = giga_amb_ai_limit
+				}
+			}
+			else = {
+				set_variable = {
+					which = giga_ai_get_build_limit
+					value = 1000
+				}
+			}
+			set_variable = {
+				which = giga_ai_get_currently_building
+				value = value:giga_ai_get_currently_building
+			}
+		}
+		# if the caps are any other way, calculate both
+		else = {
+			set_variable = {
+				which = giga_ai_get_build_limit
+				value = value:giga_ai_get_build_limit
+			}
+			set_variable = {
+				which = giga_ai_get_currently_building
+				value = value:giga_ai_get_currently_building
+			}
+		}
+
+		# calculate remaining build cap
+		set_variable = {
+			which = giga_ai_get_remaining_build_limit
+			value = giga_ai_get_build_limit
+		}
+		subtract_variable = {
+			which = giga_ai_get_remaining_build_limit
+			value = giga_ai_get_currently_building
+		}
+	}
+}
+
+# sequester non-stealable relics before capital planet capture
+country_event = {
+	id = giga_ai_savings.100
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		From = {
+			is_country_type = default
+		}
+		FromFrom = { is_capital = yes }
+		any_war = {
+			any_attacker = { is_same_value = root }
+			any_defender = { is_same_value = from }
+			NOT = {
+				using_war_goal = {
+					type = wg_take_galatron
+					owner = attacker
+				}
+			}
+		}
+	}
+
+	immediate = {
+		from = {
+			giga_hide_unstealable_relics = yes
+		}
+	}
+}
+
+# fire return event on delay after capital planet capture
+country_event = {
+	id = giga_ai_savings.101
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		From = {
+			is_country_type = default
+		}
+		FromFrom = { is_capital = yes }
+		any_war = {
+			any_attacker = { is_same_value = root }
+			any_defender = { is_same_value = from }
+			NOT = {
+				using_war_goal = {
+					type = wg_take_galatron
+					owner = attacker
+				}
+			}
+		}
+	}
+
+	immediate = {
+		from = {
+			# delay the restoration because the stealing event fires a second event after evaluation
+			country_event = {
+				id = giga_ai_savings.102
+				days = 5
+			}
+		}
+	}
+}
+
+# restore sequestered non-stealable relics
+country_event = {
+	id = giga_ai_savings.102
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		giga_restore_unstealable_relics = yes
+	}
+}
+
+# remove all non-stealable relics on country destruction to prevent transfer by guilli etc
+country_event = {
+	id = giga_ai_savings.103
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		giga_hide_unstealable_relics = yes
+	}
+}
+
+# remove all non-stealable relics on country integration to prevent any transfer
+country_event = {
+	id = giga_ai_savings.104
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		from = {
+			giga_hide_unstealable_relics = yes
+		}
+	}
+}
+
+# give the AI fake galactic wonders
+country_event = {
+	id = giga_ai_savings.200
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		is_ai = yes
+		is_country_type = default
+		has_galactic_wonders = no
+		has_technology = tech_mega_engineering
+		or = {
+			num_ascension_perks > 6
+			has_country_flag = has_built_or_repaired_megastructure
+			any_country = {
+				is_ai = no
+				has_galactic_wonders = yes
+			}
+		}
+	}
+
+	immediate = {
+		set_country_flag = giga_galactic_wonders_override
+
+		if = {
+			limit = {
+				has_utopia = yes
+				NOT = { has_technology = tech_ring_world }
+			}
+			add_research_option = tech_ring_world
+		}
+		if = {
+			limit = {
+				has_utopia = yes
+				NOT = { has_technology = tech_dyson_sphere }
+			}
+			add_research_option = tech_dyson_sphere
+		}
+		if = {
+			limit = {
+				has_megacorp = yes
+				NOT = { has_technology = tech_matter_decompressor }
+			}
+			add_research_option = tech_matter_decompressor
+		}
+	}
+}
+
+# give the AI fake gigastructural constructs
+country_event = {
+	id = giga_ai_savings.201
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		is_ai = yes
+		is_country_type = default
+		has_gigastructural_constructs = no
+		has_galactic_wonders = yes
+		has_technology = tech_mega_engineering
+		has_technology = tech_self_aware_logic
+		has_technology = tech_mine_dark_matter
+		has_technology = giga_tech_ringworld_titanic_2
+		or = {
+			num_ascension_perks > 7
+			has_country_flag = has_built_or_repaired_gigastructure
+			any_country = {
+				is_ai = no
+				has_gigastructural_constructs = yes
+			}
+		}
+	}
+
+	immediate = {
+		set_country_flag = giga_gigastructural_constructs_override
+
+		if = { limit = { NOT = { has_technology = giga_tech_hrae_mc } }				add_research_option = giga_tech_hrae_mc }
+		if = { limit = { NOT = { has_technology = giga_tech_ringworld_behemoth } }	add_research_option = giga_tech_ringworld_behemoth }
+		if = { limit = { NOT = { has_technology = giga_tech_matrioshka_brain_1 } }	add_research_option = giga_tech_matrioshka_brain_1 }
+	}
+}
+
+country_event = {
+	id = giga_ai_savings.1000
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		is_ai = yes
+		has_technology = tech_hyper_relays
+
+		not = { 
+			any_owned_megastructure = {
+				is_megastructure_type = giga_hyper_relay_ai_site
+			} 
+		}
+
+		resource_stockpile_compare = {
+			resource = alloys
+			value >= 5000
+			mult = value:scripted_modifier_mult|MODIFIER|megastructures_cost_mult|
+		}
+		resource_stockpile_compare = {
+			resource = rare_crystals
+			value >= 200
+			mult = value:scripted_modifier_mult|MODIFIER|megastructures_cost_mult|
+		}
+		resource_stockpile_compare = {
+			resource = influence
+			value >= 500
+			mult = value:scripted_modifier_mult|MODIFIER|megastructures_cost_mult|
+		}
+	}
+
+	immediate = {
+		#log = "RELAY EVENT @ [Root.GetName]"
+		random_list = {
+			1000 = {
+				# 0 to 1000 linear scaling with percentage
+				modifier = {
+					always = yes
+					multiply = value:giga_ai_relay_fraction
+				}
+
+				# set_variable = {
+				# 	which = relay_test_readout
+				# 	value = value:giga_ai_relay_fraction
+				# }
+
+				# log = "RELAY PULSE @ [Root.GetName]: no action, relay fraction: [Root.relay_test_readout]"
+			}
+			1 = {
+				# 100 to 0 linear scaling with percentage
+				modifier = {
+					always = yes
+					subtract = value:giga_ai_relay_fraction
+				}
+				modifier = {
+					always = yes
+					multiply = 100
+				}
+
+				#log = "RELAY PULSE @ [Root.GetName]: proceed"
+				# find a system
+				random_system_within_border = {
+					limit = {
+						# we control the system
+						exists = starbase
+						starbase = {
+							exists = controller
+							controller = {
+								is_same_empire = root
+							}
+						}
+						# no existing relay
+						not = {
+							any_system_megastructure = {
+								or = {
+									is_megastructure_type = hyper_relay
+									is_megastructure_type = hyper_relay_ruined
+									is_megastructure_type = hyper_relay_restored
+									is_megastructure_type = giga_hyper_relay_ai_site
+								}
+							}
+						}
+					}
+
+					# weight block from the mega
+					weights = {
+						weight = value:giga_ai_base_kilo
+
+						modifier = {
+							factor = 3
+							is_capital_system = yes
+						}
+				
+						modifier = {
+							factor = 1.5
+							any_neighbor_system = {
+								OR = {
+									has_megastructure = hyper_relay
+									has_megastructure = hyper_relay_restored
+								}
+							}
+						}
+				
+						modifier = {
+							factor = 1.5
+							any_system_planet = {
+								is_colony = yes
+							}
+						}
+				
+						# non-gestalt empires will prefer building along trade routes, since those connect colonies to the capital
+						# this may occasionally catch other empire's trade routes that clip our territory, but pirates will eventually appear there so it's fine
+						modifier = {
+							factor = 0.2
+							from = {
+								is_gestalt = no
+							}
+							is_capital_system = no
+							has_trade_route = no
+						}
+					}
+
+					# once we have a system actually do something
+					#log = "RELAY LOCATION @ [Root.GetName]: system picked = [this.GetName]"
+
+					spawn_megastructure = {
+						type = giga_hyper_relay_ai_site
+						owner = root
+						graphical_culture = root
+
+						orbit_distance = 200
+						orbit_angle = 30
+						random_pos = yes
+
+						init_effect = {
+							upgrade_megastructure_to = hyper_relay_restored
+							#log = "RELAY SPAWN @ [Root.GetName]: spawn in [prev.GetName]"
+						}
+					}
+
+					root = {
+						add_resource = {
+							alloys = -500
+							rare_crystals = -100
+							influence = -25
+
+							mult = value:scripted_modifier_mult|MODIFIER|megastructures_cost_mult|
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,291 @@
+#Dyson Sphere Site
+dyson_sphere_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	entity_offset = { x = -7 y = -7 }
+	prerequisites = { "tech_dyson_sphere" }
+
+	build_time = 1800
+	resources = {
+		category = giga_dyson_sphere
+		cost = {
+			alloys = 5000
+			unity = @giga_big_mega_start_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|5000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@giga_big_mega_start_unity_cost| }
+		upkeep = { energy = 5 }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = 5000 }
+		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @giga_big_mega_start_unity_cost }
+	}
+	on_build_cancel = {
+		giga_ai_savings_refund = { CATEGORY = important RESOURCE = alloys }
+		giga_ai_savings_refund = { CATEGORY = important RESOURCE = unity }
+	}
+
+	potential = {
+		NOT = { has_global_flag = vanilla_dyson_disabled }
+		OR = {
+			check_variable = { which = giga_vanilla_dyson_cap value = 0 }						# No Cap
+			check_variable = { which = giga_current_vanilla_dyson value < giga_vanilla_dyson_cap }
+		}
+	}
+
+	possible = {
+		exists = starbase
+		custom_tooltip = { fail_text = "requires_inside_border"			is_inside_border = from }
+		custom_tooltip = { fail_text = "requires_surveyed_system"		giga_system_is_surveyed = yes }
+		custom_tooltip = { fail_text = "requires_no_habitable_planets"	giga_any_hab_planets = no }
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					check_variable = { which = giga_vanilla_dyson_cap value = 0 }						# No Cap
+					check_variable = { which = giga_current_vanilla_dyson value < giga_vanilla_dyson_cap }
+				}
+			}
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"		planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "must_build_around_star"					is_star = yes }
+			custom_tooltip = { fail_text = "requires_no_anomaly"					has_anomaly = no }
+			custom_tooltip = { 
+				fail_text = "requires_standard_planet_class_o_star"			
+				OR = { 
+					giga_is_standard_star = yes
+					AND = {
+						is_planet_class = pc_giga_o_star 
+						from = { has_technology = giga_tech_dyson_o_star }
+					}
+				} 
+			}
+		}
+	}
+
+	ai_weight = {
+		weight = value:giga_ai_base_mega
+
+		mult = value:giga_ai_output|RESOURCE|energy|AMOUNT|4000|MIN|0.5|
+		mult = value:giga_ai_unlocks_gigastructures
+		mult = value:giga_ai_prevent_spam|MEGA|dyson_sphere|
+		mult = value:giga_ai_weight_savings|CATEGORY|important|RESOURCE|alloys|AMOUNT|20000|
+		mult = value:giga_ai_core_territory
+	}
+
+	on_build_complete = {
+		set_star_flag = dyson_sphere_built
+		every_system_planet = { limit = { has_modifier = terraforming_candidate }	remove_modifier = terraforming_candidate }
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_dyson_sphere years = 20 }
+			set_country_flag = built_dyson_sphere
+			change_variable = { which = giga_current_vanilla_dyson value = 1 }
+		}
+		if = {	limit = { fromfrom.planet = { is_planet_class = pc_giga_o_star } }	spawn_megastructure = { type = "dyson_sphere_0_o_star"			owner = from coords_from = fromfrom.planet } remove_megastructure = fromfrom }
+		if = {
+			limit = { has_global_flag = giga_dyson_scaling }
+			if = {		limit = { fromfrom.planet = { is_planet_class = pc_b_star } }		spawn_megastructure = { type = "dyson_sphere_0_b_star"			owner = from coords_from = fromfrom.planet } remove_megastructure = fromfrom }
+			else_if = {	limit = { fromfrom.planet = { is_planet_class = pc_m_giant_star } }	spawn_megastructure = { type = "dyson_sphere_0_m_giant_star"	owner = from coords_from = fromfrom.planet } remove_megastructure = fromfrom }
+			else_if = {	limit = { fromfrom.planet = { is_planet_class = pc_a_star } }		spawn_megastructure = { type = "dyson_sphere_0_a_star"			owner = from coords_from = fromfrom.planet } remove_megastructure = fromfrom }
+			else_if = {	limit = { fromfrom.planet = { is_planet_class = pc_f_star } }		spawn_megastructure = { type = "dyson_sphere_0_f_star"			owner = from coords_from = fromfrom.planet } remove_megastructure = fromfrom }
+			else_if = {	limit = { fromfrom.planet = { is_planet_class = pc_g_star } }		spawn_megastructure = { type = "dyson_sphere_0_g_star"			owner = from coords_from = fromfrom.planet } remove_megastructure = fromfrom }
+			else_if = {	limit = { fromfrom.planet = { is_planet_class = pc_k_star } }		spawn_megastructure = { type = "dyson_sphere_0_k_star"			owner = from coords_from = fromfrom.planet } remove_megastructure = fromfrom }
+			else_if = {	limit = { fromfrom.planet = { is_planet_class = pc_m_star } }		spawn_megastructure = { type = "dyson_sphere_0_m_star"			owner = from coords_from = fromfrom.planet } remove_megastructure = fromfrom }
+		}
+		fromfrom.planet = {
+			giga_set_has_mega_flag = yes
+			if = { limit = { has_orbital_station = yes } orbital_station = { dismantle = yes } }
+		}
+	}
+}
+
+#Dyson Sphere Frame
+dyson_sphere_1 = {
+	entity = "dyson_sphere_phase_01_entity"
+	construction_entity = "dyson_sphere_frame_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { dyson_sphere_0 }
+	prerequisites = { "tech_dyson_sphere" }
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+
+	build_time = @dyson_p1_buildtime_g_star
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = @dyson_p1_cost_alloys_g_star unity = @dyson_cost_unity_g_star }
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|@dyson_p1_cost_alloys_g_star| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@dyson_cost_unity_g_star| }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = @dyson_p1_cost_alloys_g_star }
+		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @dyson_cost_unity_g_star }
+	}
+}
+
+#Partial Dyson Sphere
+dyson_sphere_2 = {
+	entity = "dyson_sphere_phase_02_entity"
+	construction_entity = "dyson_sphere_part_1_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { dyson_sphere_1 }
+	prerequisites = { "tech_dyson_sphere" }
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+
+	build_time = @dyson_p2_buildtime_g_star
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = @dyson_p2_cost_alloys_g_star unity = @dyson_cost_unity_g_star }
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|@dyson_p2_cost_alloys_g_star| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@dyson_cost_unity_g_star| }
+		produces = { energy = @dyson_p2_produces_energy_g_star }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = @dyson_p2_cost_alloys_g_star }
+		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @dyson_cost_unity_g_star }
+	}
+}
+
+#Partial Dyson Sphere
+dyson_sphere_3 = {
+	entity = "dyson_sphere_phase_03_entity"
+	construction_entity = "dyson_sphere_part_2_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { dyson_sphere_2 }
+	prerequisites = { "tech_dyson_sphere" }
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+
+	build_time = @dyson_p3_buildtime_g_star
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = @dyson_p3_cost_alloys_g_star unity = @dyson_cost_unity_g_star }
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|@dyson_p3_cost_alloys_g_star| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@dyson_cost_unity_g_star| }
+		produces = { energy = @dyson_p3_produces_energy_g_star }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = @dyson_p3_cost_alloys_g_star }
+		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @dyson_cost_unity_g_star }
+	}
+}
+
+#Partial Dyson Sphere
+dyson_sphere_4 = {
+	entity = "dyson_sphere_phase_04_entity"
+	construction_entity = "dyson_sphere_part_3_entity"
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { dyson_sphere_3 }
+	prerequisites = { "tech_dyson_sphere" }
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+
+	build_time = @dyson_p4_buildtime_g_star
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = @dyson_p4_cost_alloys_g_star unity = @dyson_cost_unity_g_star }
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|@dyson_p4_cost_alloys_g_star| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@dyson_cost_unity_g_star| }
+		produces = { energy = @dyson_p4_produces_energy_g_star }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = @dyson_p4_cost_alloys_g_star }
+		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @dyson_cost_unity_g_star }
+	}
+}
+
+#Dyson Sphere
+dyson_sphere_5 = {
+	entity = "dyson_sphere_phase_05_entity"
+	construction_entity = "dyson_sphere_part_4_entity"
+	portrait = "GFX_megastructure_dyson_sphere_background"
+	upgrade_from = { dyson_sphere_4 }
+	prerequisites = { "tech_dyson_sphere" }
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	show_prereqs = yes
+
+	build_time = @dyson_p5_buildtime_g_star
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = @dyson_p5_cost_alloys_g_star unity = @dyson_cost_unity_g_star }
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|@dyson_p5_cost_alloys_g_star| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@dyson_cost_unity_g_star| }
+		produces = { energy = @dyson_p5_produces_energy_g_star }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = @dyson_p5_cost_alloys_g_star }
+		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @dyson_cost_unity_g_star }
+	}
+
+	on_build_complete = {
+		from = {
+			set_country_flag = has_built_or_repaired_megastructure
+			set_country_flag = has_built_or_repaired_gigastructure	# Triggers Gigastructural Constructs
+		}
+		every_system_planet = {
+			if = {		limit = { is_planet_class = pc_barren }											change_pc = pc_barren_cold }
+			else_if = {	limit = { OR = { is_planet_class = pc_molten	is_planet_class = pc_toxic } }	change_pc = pc_frozen }
+		}
+	}
+}
+
+# Ruined Dyson Sphere
+dyson_sphere_ruined = {
+	entity = "dyson_sphere_destroyed_entity"
+	portrait = "GFX_megastructure_construction_background"
+	potential = { always = no }
+}
+
+# Restored Dyson Sphere
+dyson_sphere_restored = {
+	entity = "dyson_sphere_phase_05_entity"
+	construction_entity = "dyson_sphere_part_4_entity"
+	portrait = "GFX_megastructure_dyson_sphere_background"
+	upgrade_from = { dyson_sphere_ruined }
+
+	build_time = @dyson_r_buildtime_g_star
+	resources = {
+		category = giga_megastructures
+		cost = { alloys = @dyson_r_cost_alloys_g_star unity = @dyson_cost_unity_g_star }
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|@dyson_r_cost_alloys_g_star| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@dyson_cost_unity_g_star| }
+		produces = { energy = @dyson_r_produces_energy_g_star }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = @dyson_r_cost_alloys_g_star }
+		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @dyson_cost_unity_g_star }
+		fromfrom = { set_graphical_culture = root.from }
+	}
+
+	possible = {
+		exists = from
+		from = { has_technology = tech_mega_engineering }
+	}
+
+	ai_weight = { factor = value:giga_ai_base_repairs } # If we can build it, we will build it
+	on_build_complete = {
+		every_system_planet = {
+			if = {		limit = { has_modifier = terraforming_candidate }								remove_modifier = terraforming_candidate }
+			if = {		limit = { is_planet_class = pc_barren }											change_pc = pc_barren_cold }
+			else_if = {	limit = { OR = { is_planet_class = pc_molten	is_planet_class = pc_toxic } }	change_pc = pc_frozen }
+		}
+		giga_remove_system_debris = yes
+		from = {
+			set_country_flag = has_built_or_repaired_gigastructure	# Triggers Gigastructural Constructs
+			country_event = { id = utopia.2011 }
+		}
+		fromfrom.planet = {
+			giga_set_has_mega_flag = yes
+		}
+	}
+}
