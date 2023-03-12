@@ -1,6 +1,6 @@
-name="Gigastructural Engineering & More (DEBUG)"
-version="3.6.*"
-supported_version="3.6.*"
+name="Gigastructural Engineering & More (CANIS MINOR)"
+version="3.7.*"
+supported_version="3.7.*"
 tags={
 	"Gameplay"
 	"Megastructures"
