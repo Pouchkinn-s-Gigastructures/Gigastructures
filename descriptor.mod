@@ -1,4 +1,4 @@
-name="Gigastructural Engineering & More (CANIS MINOR)"
+name="Gigastructural Engineering & More (DEBUG)"
 version="3.7.*"
 supported_version="3.7.*"
 tags={
