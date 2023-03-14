@@ -26,14 +26,35 @@ event = {
 		}
 
 		random_list = {
-			40 = {}
+			40 = {
+				modifier = {
+					add = 10
+					has_global_flag = ring_gargantuan_disabled
+				}
+				modifier = {
+					add = 20
+					has_global_flag = ring_behemoth_disabled
+				}
+				modifier = {
+					add = 30
+					has_global_flag = ring_titanic_disabled
+				}
+			}
 			# titanic Ring System
 			30 = {
+				modifier = {
+					subtract = 30
+					has_global_flag = ring_titanic_disabled
+				}
 				if = {
 					limit = { NOT = { any_system = { has_star_flag = ruined_titanic_ring_system } } }
 					random_system = {
 						limit = {
 							NOR = {
+								is_fe_cluster = yes 
+								any_neighbor_system = {
+									is_fe_cluster = yes
+								}
 								has_star_flag = giga_inner
 								has_star_flag = giga_outer_01
 								has_star_flag = giga_outer_02
@@ -55,12 +76,20 @@ event = {
 				}
 			}
 			20 = {
+				modifier = {
+					subtract = 20
+					has_global_flag = ring_behemoth_disabled
+				}
 				# behemoth Ring System
 				if = {
 					limit = { NOT = { any_system = { has_star_flag = ruined_behemoth_ring_system } } }
 					random_system = {
 						limit = {
 							NOR = {
+								is_fe_cluster = yes 
+								any_neighbor_system = {
+									is_fe_cluster = yes
+								}
 								has_star_flag = giga_inner
 								has_star_flag = giga_outer_01
 								has_star_flag = giga_outer_02
@@ -82,12 +111,20 @@ event = {
 				}
 			}
 			10 = {
+				modifier = {
+					subtract = 10
+					has_global_flag = ring_gargantuan_disabled
+				}
 				# Gargantuan Ring System
 				if = {
 					limit = { NOT = { any_system = { has_star_flag = ruined_gargantuan_ring_system } } }
 					random_system = {
 						limit = {
 							NOR = {
+								is_fe_cluster = yes 
+								any_neighbor_system = {
+									is_fe_cluster = yes
+								}
 								has_star_flag = giga_inner
 								has_star_flag = giga_outer_01
 								has_star_flag = giga_outer_02
@@ -1207,6 +1244,32 @@ country_event = { #It splits lol
 			which = giga_current_systemcraft
 			value = 1
 		}
+		subtract_variable = {
+			which = giga_current_systemcraft_finished
+			value = 1
+		}
+		if = {
+			limit = {
+				check_variable = {
+					which = giga_current_systemcraft_finished
+					value = 0
+				}
+				NOT = {
+					any_owned_megastructure = {
+						OR = {
+							is_megastructure_type = nicoll_beam_cooldown
+							is_megastructure_type = nicoll_beam_menu
+							is_megastructure_type = nicoll_beam_ready
+							is_megastructure_type = nicoll_beam_firing
+							is_megastructure_type = quasi_stellar_obliterator_5
+							is_megastructure_type = quasi_stellar_obliterator_6
+							is_megastructure_type = quasi_stellar_obliterator_firing_1
+						}
+					}
+				}
+			}
+			remove_country_flag = giga_has_active_hyperweapon
+		}
 		create_message = {
             type = WAR_SYSTEM_DESTROYED
             localization = MESSAGE_WAR_SYSTEM_DESTROYED_DESC
@@ -2322,7 +2385,10 @@ event = {
 		every_country = { clear_giga_mega_balance_modifiers = yes }
 
 		every_country = {
-			limit = { is_ai = yes }
+			limit = { 
+				is_ai = yes 
+				giga_country_gets_bank = yes
+			}
 
 			# init savings account stuff if we need it
 			giga_ai_savings_init = yes
@@ -2375,7 +2441,12 @@ event = {
 		}
 
 		every_country = {
-			limit = { is_ai = no }
+			limit = { 
+				OR = {
+					is_ai = no 
+					giga_country_gets_bank = no
+				}
+			}
 
 			if = {
 				limit = { has_relic = r_giga_ai_savings }
@@ -2422,4 +2493,152 @@ event = {
 			}
 		}
 	}
+}
+
+country_event = {
+    id = giga_mega.8200
+    is_triggered_only = yes
+    hide_window = yes
+
+    trigger = {#Only people who are valid to be able to potentially have the cb used on or against them will have systemcraft counting
+		ehof_default_country = yes
+    }
+
+    immediate = {
+		set_variable = { #Fully recounting
+			which = giga_current_systemcraft_finished
+			value = 0
+		}
+		every_owned_ship = {
+			limit = { is_ship_size = giga_systemcraft }
+			root = {
+				change_variable = {
+					which = giga_current_systemcraft_finished
+					value = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = giga_has_active_hyperweapon
+				check_variable = {
+					which = giga_current_systemcraft_finished
+					value = 0
+				}
+				NOT = {
+					any_owned_megastructure = {
+						OR = {
+							is_megastructure_type = nicoll_beam_cooldown
+							is_megastructure_type = nicoll_beam_menu
+							is_megastructure_type = nicoll_beam_ready
+							is_megastructure_type = nicoll_beam_firing
+							is_megastructure_type = quasi_stellar_obliterator_5
+							is_megastructure_type = quasi_stellar_obliterator_6
+							is_megastructure_type = quasi_stellar_obliterator_firing_1
+						}
+					}
+				}
+			}
+			remove_country_flag = giga_has_active_hyperweapon
+		}
+		else_if = {
+			limit = {
+				OR = {
+					check_variable = {
+						which = giga_current_systemcraft_finished
+						value > 0
+					}
+					any_owned_megastructure = {
+						OR = {
+							is_megastructure_type = nicoll_beam_cooldown
+							is_megastructure_type = nicoll_beam_menu
+							is_megastructure_type = nicoll_beam_ready
+							is_megastructure_type = nicoll_beam_firing
+							is_megastructure_type = quasi_stellar_obliterator_5
+							is_megastructure_type = quasi_stellar_obliterator_6
+							is_megastructure_type = quasi_stellar_obliterator_firing_1
+						}
+					}
+				} 				
+				NOT = { has_country_flag = giga_has_active_hyperweapon }
+			}
+			set_country_flag = giga_has_active_hyperweapon
+		}
+    }
+}
+
+# Fired by on_system_lost
+# From = system
+# FromFrom = country (new owner)
+# This = country (previous owner)
+country_event = {
+    id = giga_mega.8300
+    is_triggered_only = yes
+    hide_window = yes
+
+    trigger = {
+		ehof_default_country = yes
+		has_country_flag = giga_has_active_hyperweapon
+		fromfrom = {
+			ehof_default_country = yes
+		}
+		from = {
+			any_system_megastructure = {
+				OR = {
+					is_megastructure_type = nicoll_beam_cooldown
+					is_megastructure_type = nicoll_beam_menu
+					is_megastructure_type = nicoll_beam_ready
+					is_megastructure_type = nicoll_beam_firing
+					is_megastructure_type = quasi_stellar_obliterator_5
+					is_megastructure_type = quasi_stellar_obliterator_6
+					is_megastructure_type = quasi_stellar_obliterator_firing_1
+				}
+			}
+		}
+    }
+
+    immediate = {
+		if = {
+			limit = {
+				NOT = { fromfrom = { has_country_flag = giga_has_active_hyperweapon } }
+				from = {
+					any_system_megastructure = {
+						OR = { 					
+							is_megastructure_type = nicoll_beam_cooldown
+							is_megastructure_type = nicoll_beam_menu
+							is_megastructure_type = nicoll_beam_ready
+							is_megastructure_type = nicoll_beam_firing
+							is_megastructure_type = quasi_stellar_obliterator_5
+							is_megastructure_type = quasi_stellar_obliterator_6
+							is_megastructure_type = quasi_stellar_obliterator_firing_1
+						}
+					}
+				}
+			}
+			fromfrom = { set_country_flag = giga_has_active_hyperweapon }
+		}
+		if = {
+			limit = {
+				has_country_flag = giga_has_active_hyperweapon
+				check_variable = {
+					which = giga_current_systemcraft_finished
+					value = 0
+				}
+				NOT = {
+					any_owned_megastructure = {
+						OR = {
+							is_megastructure_type = nicoll_beam_cooldown
+							is_megastructure_type = nicoll_beam_menu
+							is_megastructure_type = nicoll_beam_ready
+							is_megastructure_type = nicoll_beam_firing
+							is_megastructure_type = quasi_stellar_obliterator_5
+							is_megastructure_type = quasi_stellar_obliterator_6
+							is_megastructure_type = quasi_stellar_obliterator_firing_1
+						}
+					}
+				}
+			}
+			remove_country_flag = giga_has_active_hyperweapon
+		}
+    }
 }

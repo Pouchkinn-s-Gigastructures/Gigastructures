@@ -1,0 +1,899 @@
+# this file overwrites pre-ftl diplomatic actions to add a country flag check which prevents them from appearing at all
+# having such a flag lets us have our own custom actions for special primitive ages
+# In a future patch, this might be vanilla behaviour, fingers crossed.
+
+@diplo_flag = custom_preftl_diplomacy
+
+## Pre-FTL diplo actions
+
+# Reveal Presence (set Awareness to Full)
+action_reveal_presence = {
+	icon = "GFX_diplomacy_reveal_presence"
+	auto_accepted = yes
+	sound = fc_ui_reveal_yourself_button
+	
+	potential = {
+		hidden_trigger = {
+			is_country_type = default
+			from = {
+				is_country_type = primitive
+				NOT = { has_country_flag = @diplo_flag }
+				NOT = { current_awareness_level = full }
+			}
+		}
+	}
+
+	possible = {
+		custom_tooltip = {
+			fail_text = "requires_not_ongoing_singularity_situation"
+			NOT = {
+				any_situation = { is_situation_type = situation_pre_ftl_singularity }
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_not_ongoing_observation_event_chain"
+			NOT = {
+				from = {
+					any_situation = {
+						has_situation_flag = has_ongoing_observation_event_chain
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_fanatic_purifiers"
+			OR = {
+				is_same_species = from
+				NOT = { has_valid_civic = civic_fanatic_purifiers	}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_fanatic_purifiers"
+			OR = {
+				is_same_species = from
+				from = { NOT = { has_valid_civic = civic_fanatic_purifiers } }
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_devouring_swarm"
+			NOT = { has_valid_civic = civic_hive_devouring_swarm	}
+		}
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_devouring_swarm"
+			from = { NOT = { has_valid_civic = civic_hive_devouring_swarm } }
+		}
+		if = {
+			limit = { from = { has_valid_civic = civic_inwards_perfection } }
+			if = {
+				limit = {
+					has_intel = {
+						who = from
+						intel = civics
+					}
+				}
+				custom_tooltip = {
+					fail_text = requires_recipient_not_inward_perfection
+					always = no
+				}
+			}
+			else = {
+				custom_tooltip = {
+					fail_text = diplo_action_no_low_intel
+					always = no
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_inward_perfection"
+			NOT = { has_valid_civic = civic_inwards_perfection }
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_machine_terminator"
+			OR = {
+				is_same_species = from
+				NOT = { has_civic = civic_machine_terminator }
+				AND = {
+					has_civic = civic_machine_terminator
+					from = {
+						OR = {
+							has_country_flag = synthetic_empire
+							has_authority = auth_machine_intelligence
+						}
+					}
+				}
+			}
+		}
+		# When actor is organic, requires target is not exterminator
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_machine_terminator"
+			OR = {
+				is_same_species = from
+				from = { NOT = { has_civic = civic_machine_terminator } }
+				AND = {
+					from = { has_civic = civic_machine_terminator }
+					OR = {
+						has_country_flag = synthetic_empire
+						has_authority = auth_machine_intelligence
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "ACTION_CANNOT_INTERFERE_POLICY"
+			NOT = { has_policy_flag = interference_not_allowed }
+		}
+		if = {
+			limit = {
+				has_policy_flag = interference_subtle
+				from = { NOT = { current_awareness_level = high } }
+			}
+			custom_tooltip = {
+				fail_text = "ACTION_CANNOT_LOW_AWARENESS"
+				always = no
+			}
+		}
+	}
+	
+	on_accept = {
+		from = {
+			switch = {
+				trigger = current_awareness_level
+				none = {
+					capital_scope = {
+						add_modifier = {
+							modifier = culture_shock_diplomacy
+							years = 50
+						}
+					}
+				}
+				low = {
+					capital_scope = {
+						add_modifier = {
+							modifier = culture_shock_diplomacy
+							years = 30
+						}
+					}
+				}
+				medium = {
+					capital_scope = {
+						add_modifier = {
+							modifier = culture_shock_diplomacy
+							years = 15
+						}
+					}
+				}
+				high = {
+					capital_scope = {
+						add_modifier = {
+							modifier = culture_shock_diplomacy
+							years = 5
+						}
+					}
+				}
+			}
+		}
+		hidden_effect = {
+			country_event = { id = first_contact.6000 scopes = { from = from } }
+		}
+	}
+	
+	should_ai_propose = {
+		weight = 0
+
+		modifier = {
+			add = 1
+			has_ai_personality_behaviour = uplifter
+		}
+	}
+}
+
+# Societal Guidance (shifts ethic)
+action_societal_enlightenment = {
+	icon = "GFX_diplomacy_societal_enlightenment"
+	diplo_view_acceptance_icon = yes
+	AI_acceptance_base_value = -50
+	action_type = negative
+	potential = {
+		hidden_trigger = {
+			OR = {
+				has_utopia = yes
+				has_first_contact_dlc = yes
+			}
+			is_country_type = default
+			from = {
+				is_country_type = primitive
+				NOT = { has_country_flag = @diplo_flag }
+				NOR = { 
+					is_under_societal_enlightenment = root
+					has_country_flag = solarpunk_country
+				}
+				current_awareness_level = full
+			}
+		}
+	}
+
+	possible = {
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_invaded"
+			NOT = { is_hostile = from }
+		}
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_fotd_seperatist"
+			from = { NOT = { has_country_flag =  fotd_seperatist_country@root } }
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_fanatic_purifiers"
+			OR = {
+				is_same_species = from
+				NOT = { has_valid_civic = civic_fanatic_purifiers	}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_fanatic_purifiers"
+			OR = {
+				is_same_species = from
+				from = { NOT = { has_valid_civic = civic_fanatic_purifiers } }
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_gestalt_consciousness"
+			NOT = { has_ethic = ethic_gestalt_consciousness	}
+		}
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_gestalt_consciousness"
+			from = { NOT = { has_ethic = ethic_gestalt_consciousness } }
+		}
+		custom_tooltip = {
+			if = {
+				limit = { from = { has_valid_civic = civic_inwards_perfection } }
+				if = {
+					limit = {
+						has_intel = {
+							who = from
+							intel = civics
+						}
+					}
+					custom_tooltip = {
+						fail_text = requires_recipient_not_inward_perfection
+						always = no
+					}
+				}
+				else = {
+					custom_tooltip = {
+						fail_text = diplo_action_no_low_intel
+						always = no
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_inward_perfection"
+			NOT = { has_valid_civic = civic_inwards_perfection }
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_machine_terminator"
+			OR = {
+				is_same_species = from
+				NOT = { has_civic = civic_machine_terminator }
+				AND = {
+					has_civic = civic_machine_terminator
+					from = {
+						OR = {
+							has_country_flag = synthetic_empire
+							has_authority = auth_machine_intelligence
+						}
+					}
+				}
+			}
+		}
+		# When actor is organic, requires target is not exterminator
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_machine_terminator"
+			OR = {
+				is_same_species = from
+				from = { NOT = { has_civic = civic_machine_terminator } }
+				AND = {
+					from = { has_civic = civic_machine_terminator }
+					OR = {
+						has_country_flag = synthetic_empire
+						has_authority = auth_machine_intelligence
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "ACTION_CANNOT_INTERFERE_POLICY"
+			OR = { 
+				has_policy_flag = interference_subtle
+				has_policy_flag = interference_active
+			}
+		}
+	}
+	
+	on_accept = {
+		hidden_effect = {
+			from = {
+				set_country_flag = preftl_societal_enlightenment_pact
+				set_country_flag = preftl_societal_enlightenment_pact_with@root
+				capital_scope.observation_outpost = {
+					set_event_locked = yes
+				}
+			}
+		}
+	}
+	
+
+	should_ai_propose = {
+		weight = 0
+
+		modifier = {
+			add = 1
+			has_ai_personality_behaviour = uplifter
+		}
+	}
+
+	ai_acceptance = {
+		modifier = {
+			add = -100
+			capital_scope = {
+				has_modifier = culture_shock_diplomacy
+			}
+			desc = NO_DIPLOMATIC_CULTURE_SHOCK
+		}
+		modifier = {
+			add = -1000
+			capital_scope = {
+				has_modifier = pre_ftl_distrustful
+			}
+			desc = pre_ftl_distrustful
+		}
+	}
+}
+
+# Break existing social enlightenment pact
+action_stop_societal_enlightenment = {
+	icon = "GFX_diplomacy_societal_enlightenment"
+	auto_accepted = yes
+	should_show_auto_accept_message_recipient = yes
+	action_type = positive
+	potential = {
+		hidden_trigger = {
+			is_country_type = default
+			from = {
+				is_country_type = primitive
+				NOT = { has_country_flag = @diplo_flag }
+				is_under_societal_enlightenment = root
+			}
+		}
+	}
+
+	on_accept = {
+		hidden_effect = {
+			from = {
+				remove_country_flag = preftl_societal_enlightenment_pact
+				remove_country_flag = preftl_societal_enlightenment_pact_with@root
+				if = {
+					limit = {
+						NOR = {
+							has_country_flag = preftl_societal_enlightenment_pact
+							has_country_flag = open_technological_enlightenment_pact
+							capital_scope.observation_outpost = {
+								has_modifier = preftl_action_trade_pact
+							}
+						}
+					}
+					capital_scope.observation_outpost = {
+						set_event_locked = no
+					}
+				}
+			}
+		}
+	}
+}
+
+# Open Technological Enlightment (tech progress ++)
+action_open_technological_enlightenment = {
+	icon = "GFX_diplomacy_open_technological_enlightenment"
+	diplo_view_acceptance_icon = yes
+	AI_acceptance_base_value = -50
+	action_type = positive
+	potential = {
+		hidden_trigger = {
+			is_country_type = default
+			from = {
+				is_country_type = primitive
+				NOT = { has_country_flag = @diplo_flag }
+				current_awareness_level = full
+				NOR = {
+					is_under_open_technological_enlightenment = root
+					has_country_flag = solarpunk_country
+				}
+			}
+		}
+	}
+
+	possible = {
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_invaded"
+			NOT = { is_hostile = from }
+		}
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_fotd_seperatist"
+			from = { NOT = { has_country_flag =  fotd_seperatist_country@root } }
+		}
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_tech_frozen"
+			from = { NOT = { has_country_flag =  tech_frozen } }
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_fanatic_purifiers"
+			OR = {
+				is_same_species = from
+				NOT = { has_valid_civic = civic_fanatic_purifiers	}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_fanatic_purifiers"
+			OR = {
+				is_same_species = from
+				from = { NOT = { has_valid_civic = civic_fanatic_purifiers } }
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_devouring_swarm"
+			NOT = { has_valid_civic = civic_hive_devouring_swarm	}
+		}
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_devouring_swarm"
+			from = { NOT = { has_valid_civic = civic_hive_devouring_swarm } }
+		}
+		if = {
+			limit = { from = { has_valid_civic = civic_inwards_perfection } }
+			if = {
+				limit = {
+					has_intel = {
+						who = from
+						intel = civics
+					}
+				}
+				custom_tooltip = {
+					fail_text = requires_recipient_not_inward_perfection
+					always = no
+				}
+			}
+			else = {
+				custom_tooltip = {
+					fail_text = diplo_action_no_low_intel
+					always = no
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_inward_perfection"
+			NOT = { has_valid_civic = civic_inwards_perfection }
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_machine_terminator"
+			OR = {
+				is_same_species = from
+				NOT = { has_civic = civic_machine_terminator }
+				AND = {
+					has_civic = civic_machine_terminator
+					from = {
+						OR = {
+							has_country_flag = synthetic_empire
+							has_authority = auth_machine_intelligence
+						}
+					}
+				}
+			}
+		}
+		# When actor is organic, requires target is not exterminator
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_machine_terminator"
+			OR = {
+				is_same_species = from
+				from = { NOT = { has_civic = civic_machine_terminator } }
+				AND = {
+					from = { has_civic = civic_machine_terminator }
+					OR = {
+						has_country_flag = synthetic_empire
+						has_authority = auth_machine_intelligence
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_machine_terminator"
+			OR = {
+				is_same_species = from
+				from = { NOT = { has_civic = civic_machine_terminator } }
+				AND = {
+					from = { has_civic = civic_machine_terminator }
+					OR = {
+						has_country_flag = synthetic_empire
+						has_authority = auth_machine_intelligence
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "ACTION_CANNOT_INTERFERE_POLICY"
+			OR = { 
+				has_policy_flag = interference_subtle
+				has_policy_flag = interference_active
+			}
+		}
+		custom_tooltip = {
+			fail_text = "ACTION_CANNOT_ENLIGHTEN_POLICY"
+			has_policy_flag = enlightenment_allowed
+		}
+	}
+	
+	on_accept = {
+		hidden_effect = {
+			from = {
+				set_country_flag = open_technological_enlightenment_pact
+				# set a flag necessary for the Enlightened Times achievement
+				if = {
+					limit = {
+						pre_ftl_ancient_era = yes
+					}
+					set_country_flag = started_enlightening_from_ancient_era
+				}
+				capital_scope.observation_outpost = {
+					set_event_locked = yes
+				}
+			}
+		}
+	}
+	
+	should_ai_propose = {
+		weight = 0
+
+		modifier = {
+			add = 1
+			has_ai_personality_behaviour = uplifter
+		}
+	}
+
+	ai_acceptance = {
+		modifier = {
+			add = -100
+			capital_scope = {
+				has_modifier = culture_shock_diplomacy
+			}
+			desc = NO_DIPLOMATIC_CULTURE_SHOCK
+		}
+		modifier = {
+			add = -1000
+			capital_scope = {
+				has_modifier = pre_ftl_distrustful
+			}
+			desc = pre_ftl_distrustful
+		}
+	}
+}
+
+action_stop_open_technological_enlightenment = {
+	icon = "GFX_diplomacy_open_technological_enlightenment"
+	auto_accepted = yes
+	should_show_auto_accept_message_recipient = yes
+	action_type = negative
+	
+	potential = {
+		hidden_trigger = {
+			is_country_type = default
+			from = {
+				is_country_type = primitive
+				NOT = { has_country_flag = @diplo_flag }
+				is_under_open_technological_enlightenment = root
+			}
+		}
+	}
+	
+	on_accept = {
+		hidden_effect = {
+			from = {
+				remove_country_flag = open_technological_enlightenment_pact
+				if = {
+					limit = {
+						has_country_flag = started_enlightening_from_ancient_era
+					}
+					remove_country_flag = started_enlightening_from_ancient_era
+				}
+				if = {
+					limit = {
+						NOR = {
+							has_country_flag = preftl_societal_enlightenment_pact
+							has_country_flag = open_technological_enlightenment_pact
+							capital_scope.observation_outpost = {
+								has_modifier = preftl_action_trade_pact
+							}
+						}
+					}
+					capital_scope.observation_outpost = {
+						set_event_locked = no
+					}
+				}
+			}
+		}
+	}
+}
+
+# Stratified Technological Enlightment (tech progress +)
+# action_stratified_technological_enlightenment = {
+# 	icon = "GFX_diplomacy_stratified_technological_enlightenment"
+# 	auto_accepted = yes
+# 	#AI_acceptance_base_value = -50
+# 	action_type = negative
+# 	potential = {
+# 		hidden_trigger = {
+# 			is_country_type = default
+# 			from = {
+# 				is_country_type = primitive
+# 				NOT = {
+# 					is_under_stratified_technological_enlightenment = root
+# 					current_awareness_level = none
+# 					current_awareness_level = low
+# 				}
+# 			}
+# 		}
+# 	}
+	
+# 	on_accept = {
+# 		hidden_effect = {
+# 		}
+# 	}
+	
+# 	should_ai_propose = {
+# 	}
+# }
+
+# action_stop_stratified_technological_enlightenment = {
+# 	icon = "GFX_diplomacy_stratified_technological_enlightenment"
+# 	auto_accepted = yes
+# 	action_type = positive
+	
+# 	potential = {
+# 		hidden_trigger = {
+# 			is_country_type = default
+# 			from = {
+# 				is_country_type = primitive
+# 				is_under_stratified_technological_enlightenment = root
+# 				NOT = {
+# 					current_awareness_level = none
+# 					current_awareness_level = low
+# 				}
+# 			}
+# 		}
+# 	}
+	
+# 	on_accept = {
+# 		hidden_effect = {
+# 		}
+# 	}
+	
+# 	should_ai_propose = {
+# 	}
+# }
+
+# Trade deal, increases output of observation stations
+action_pre_ftl_trade = {
+	icon = "GFX_diplomacy_pre_ftl_trade"
+	diplo_view_acceptance_icon = yes
+	AI_acceptance_base_value = -50
+	action_type = positive
+	potential = {
+		hidden_trigger = {
+			has_first_contact_dlc = yes
+			is_country_type = default
+			from = {
+				is_country_type = primitive
+				NOT = { has_country_flag = @diplo_flag }
+				NOT = { has_pre_ftl_trade = root }
+				current_awareness_level = full
+				NOT = { has_country_flag =  fotd_seperatist_country@root }
+			}
+		}
+	}
+	
+	possible = {
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_invaded"
+			NOT = { is_hostile = from }
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_fanatic_purifiers"
+			OR = {
+				is_same_species = from
+				NOT = { has_valid_civic = civic_fanatic_purifiers }
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_fanatic_purifiers"
+			OR = {
+				is_same_species = from
+				from = { NOT = { has_valid_civic = civic_fanatic_purifiers } }
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_devouring_swarm"
+			NOT = { has_valid_civic = civic_hive_devouring_swarm }
+		}
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_devouring_swarm"
+			from = { NOT = { has_valid_civic = civic_hive_devouring_swarm } }
+		}
+		if = {
+			limit = { from = { has_valid_civic = civic_inwards_perfection } }
+			if = {
+				limit = {
+					has_intel = {
+						who = from
+						intel = civics
+					}
+				}
+				custom_tooltip = {
+					fail_text = requires_recipient_not_inward_perfection
+					always = no
+				}
+			}
+			else = {
+				custom_tooltip = {
+					fail_text = diplo_action_no_low_intel
+					always = no
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_inward_perfection"
+			NOT = { has_valid_civic = civic_inwards_perfection }
+		}
+		custom_tooltip = {
+			fail_text = "requires_actor_not_machine_terminator"
+			OR = {
+				is_same_species = from
+				NOT = { has_civic = civic_machine_terminator }
+				AND = {
+					has_civic = civic_machine_terminator
+					from = {
+						OR = {
+							has_country_flag = synthetic_empire
+							has_authority = auth_machine_intelligence
+						}
+					}
+				}
+			}
+		}
+		# When actor is organic, requires target is not exterminator
+		custom_tooltip = {
+			fail_text = "requires_recipient_not_machine_terminator"
+			OR = {
+				is_same_species = from
+				from = { NOT = { has_civic = civic_machine_terminator } }
+				AND = {
+					from = { has_civic = civic_machine_terminator }
+					OR = {
+						has_country_flag = synthetic_empire
+						has_authority = auth_machine_intelligence
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "ACTION_CANNOT_INTERFERE_POLICY"
+			OR = { 
+				has_policy_flag = interference_subtle
+				has_policy_flag = interference_active
+			}
+		}
+	}
+
+	on_accept = {
+		hidden_effect = {
+			from = {
+				capital_scope.observation_outpost = {
+					add_modifier = {
+						modifier = preftl_action_trade_pact
+					}
+				}
+				capital_scope.observation_outpost = {
+					set_event_locked = yes
+				}
+			}
+		}
+	}
+	
+	should_ai_propose = {
+		weight = 0
+
+		modifier = {
+			add = 1
+			has_ai_personality_behaviour = uplifter
+		}
+
+		modifier = {
+			add = 1
+			has_corporate_government = yes
+		}
+	}
+
+	ai_acceptance = {
+		modifier = {
+			add = -100
+			capital_scope = {
+				has_modifier = culture_shock_diplomacy
+			}
+			desc = NO_DIPLOMATIC_CULTURE_SHOCK
+		}
+		modifier = {
+			add = -1000
+			capital_scope = {
+				has_modifier = pre_ftl_distrustful
+			}
+			desc = pre_ftl_distrustful
+		}
+	}
+}
+
+# Break trade agreement
+action_stop_pre_ftl_trade = {
+	icon = "GFX_diplomacy_pre_ftl_trade"
+	auto_accepted = yes
+	should_show_auto_accept_message_recipient = yes
+	action_type = negative
+	
+	potential = {
+		hidden_trigger = {
+			is_country_type = default
+			from = {
+				is_country_type = primitive
+				NOT = { has_country_flag = @diplo_flag }
+				has_pre_ftl_trade = root
+			}
+		}
+	}
+	
+	on_accept = {
+		hidden_effect = {
+			from = {
+				capital_scope.observation_outpost = {
+					remove_modifier = preftl_action_trade_pact
+				}
+				if = {
+					limit = {
+						NOR = {
+							has_country_flag = preftl_societal_enlightenment_pact
+							has_country_flag = open_technological_enlightenment_pact
+							capital_scope.observation_outpost = {
+								has_modifier = preftl_action_trade_pact
+							}
+						}
+					}
+					capital_scope.observation_outpost = {
+						set_event_locked = no
+					}
+				}
+			}
+		}
+	}
+}
+
+# this one is fine still
+# # Used to open the Pre FTL's Homeworld
+# action_open_pre_ftl_homeworld = {
+# 	auto_accepted = yes
+# 	requires_actor_independence = no
+# 	requires_recipient_independence = no
+# 	action_type = neutral
+	
+# 	potential = {
+# 		hidden_trigger = {
+# 			is_country_type = default
+# 			from = {
+# 				is_country_type = primitive
+# 			}
+# 		}
+# 	}
+# }

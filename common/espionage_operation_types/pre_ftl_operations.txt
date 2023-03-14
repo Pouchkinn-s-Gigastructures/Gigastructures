@@ -1,0 +1,783 @@
+# overwrite which adds a country flag check to disable these operations so they can be replaced by custom behaviours
+# fingers crossed this will be baseline later
+
+@espionage_flag = custom_preftl_espionage
+
+###### FILE CONTENT
+
+@diff_t0 = 4
+@diff_t1 = 5
+@diff_t2 = 6
+@diff_t3 = 7
+@diff_t4 = 8
+@diff_t5 = 9
+@diff_t6 = 10
+@diff_t7 = 11
+@diff_t8 = 12
+@diff_t9 = 13
+
+@operationTargetedByTimer = 10800 # 30 years, during which the effects of an operation may be felt by select Spy Network events
+
+# this = operation
+# from = operation target
+
+operation_increase_awareness = {
+	target = none
+	categories = { op_cat_infiltration op_cat_diplomacy }
+	picture = GFX_evt_communication_event
+	desc = operation_increase_awareness_desc
+	stages = 4
+
+	resources = {
+		category = operations
+		cost = {
+			trigger = {
+				owner = {
+					has_appearance_modding_technology = no
+				}
+			}
+			influence = 45
+		}
+		cost = {
+			trigger = {
+				owner = {
+					has_appearance_modding_technology = yes
+				}
+			}
+			influence = 25
+		}
+		upkeep = {
+			energy = 6
+		}
+	}
+	spy_power_cost = 15
+
+	potential = {
+		target = {
+			is_primitive = yes
+			NOT = { has_country_flag = @espionage_flag }
+			NOR = {
+				current_awareness_level = full
+				has_country_flag = fotd_seperatist_country@root.owner
+				has_country_flag = solarpunk_country
+			}
+		}
+		has_first_contact_dlc = yes
+	}
+	allow = {
+		custom_tooltip = {
+			is_running_espionage_operation = no
+			fail_text = operation_one_at_a_time
+		}
+		custom_tooltip = {
+			owner = {
+				OR = {
+					has_policy_flag = interference_subtle
+					has_policy_flag = interference_active
+				}
+			}
+			fail_text = operation_wrong_interference_policy
+		}
+		custom_tooltip = {
+			target = {
+				capital_scope = {
+					has_observation_outpost = yes
+					observation_outpost_owner = { is_same_value = root.owner }
+				}
+			}
+			fail_text = operation_requires_observation_outpost
+		}
+	}
+	abort = {
+		OR = {
+			target = {
+				OR = {
+					is_primitive = no
+					current_awareness_level = full
+					capital_scope = {
+						has_observation_outpost = no
+					}
+				}
+			}
+			owner = {
+				NOR = {
+					has_policy_flag = interference_subtle
+					has_policy_flag = interference_active
+				}
+			}
+		}
+	}
+
+	stage = {
+		difficulty = @diff_t1
+		icon = GFX_espionage_chapter_icon_surveillance
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t0
+		icon = GFX_espionage_chapter_icon_motion
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t0
+		icon = GFX_espionage_chapter_icon_motion
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t0
+		icon = GFX_espionage_chapter_icon_success
+		event = preftl_operation.1025
+	}
+
+	on_roll_failed = {
+		pre_ftl_espionage_operation_on_roll_failed = { RANDOM_EVENTS = operation_random_events_pre_ftl }
+	}
+	on_create = {
+		target = {
+			set_timed_country_flag = {
+				flag = preftl_espionage_operation_targeted_by@root.owner #Used in random Spy Network events
+				days = @operationTargetedByTimer
+			}
+		}
+	}
+}
+
+operation_spread_disinformation = {
+	target = none
+	categories = { op_cat_infiltration op_cat_diplomacy }
+	picture = GFX_evt_spymaster
+	desc = operation_spread_disinformation_desc
+	stages = 4
+
+	resources = {
+		category = operations
+		cost = {
+			trigger = {
+				owner = {
+					has_appearance_modding_technology = no
+				}
+			}
+			influence = 45
+		}
+		cost = {
+			trigger = {
+				owner = {
+					has_appearance_modding_technology = yes
+				}
+			}
+			influence = 25
+		}
+		upkeep = {
+			energy = 6
+		}
+	}
+	spy_power_cost = 15
+
+	potential = {
+		target = {
+			is_primitive = yes
+			NOT = { has_country_flag = @espionage_flag }
+			NOR = {
+				has_country_flag = fotd_seperatist_country@root.owner
+				current_awareness_level = none
+				current_awareness_level = full
+				has_country_flag = solarpunk_country
+			}
+		}
+		has_first_contact_dlc = yes
+	}
+	allow = {
+		custom_tooltip = {
+			is_running_espionage_operation = no
+			fail_text = operation_one_at_a_time
+		}
+		custom_tooltip = {
+			owner = {
+				NOT = {
+					has_policy_flag = interference_not_allowed
+				}
+			}
+			fail_text = operation_wrong_interference_policy
+		}
+		custom_tooltip = {
+			target = {
+				capital_scope = {
+					has_observation_outpost = yes
+					observation_outpost_owner = { is_same_value = root.owner }
+				}
+			}
+			fail_text = operation_requires_observation_outpost
+		}
+	}
+
+	abort = {
+		OR = {
+			target = {
+				OR = {
+					is_primitive = no
+					current_awareness_level = none
+					current_awareness_level = full
+					capital_scope = {
+						has_observation_outpost = no
+					}
+				}
+			}
+			custom_tooltip = {
+				owner = {
+					has_policy_flag = interference_not_allowed
+				}
+			}
+		}
+	}
+
+	stage = {
+		difficulty = @diff_t3
+		icon = GFX_espionage_chapter_icon_document
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t2
+		icon = GFX_espionage_chapter_icon_surveillance
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t2
+		icon = GFX_espionage_chapter_icon_motion
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t2
+		icon = GFX_espionage_chapter_icon_target
+		event = preftl_operation.1035
+	}
+
+	on_roll_failed = {
+		pre_ftl_espionage_operation_on_roll_failed = { RANDOM_EVENTS = operation_random_events_pre_ftl }
+	}
+	on_create = {
+		target = {
+			set_timed_country_flag = {
+				flag = preftl_espionage_operation_targeted_by@root.owner #Used in random Spy Network events
+				days = @operationTargetedByTimer
+			}
+		}
+	}
+}
+
+operation_plant_advanced_knowledge = {
+	target = none
+	categories = { op_cat_infiltration op_cat_technology }
+	picture = GFX_evt_friendly_enlightenment
+	desc = operation_plant_advanced_knowledge_desc
+	stages = 4
+
+	resources = {
+		category = operations
+		cost = {
+			trigger = {
+				owner = {
+					has_appearance_modding_technology = no
+				}
+			}
+			influence = 30
+		}
+		cost = {
+			trigger = {
+				owner = {
+					has_appearance_modding_technology = yes
+				}
+			}
+			influence = 20
+		}
+		upkeep = {
+			energy = 7
+		}
+	}
+	spy_power_cost = 20
+
+	potential = {
+		target = {
+			is_primitive = yes
+			NOT = { has_country_flag = @espionage_flag }
+			NOR = {
+				has_country_flag = fotd_seperatist_country@root.owner
+				has_country_flag = solarpunk_country
+			}
+		}
+	}
+	allow = {
+		custom_tooltip = {
+			is_running_espionage_operation = no
+			fail_text = operation_one_at_a_time
+		}
+		custom_tooltip = {
+			owner = {
+				OR = {
+					has_policy_flag = interference_subtle
+					has_policy_flag = interference_active
+				}
+			}
+			fail_text = operation_wrong_interference_policy
+		}
+		custom_tooltip = {
+			owner = {
+				OR = {
+					has_policy_flag = enlightenment_covert_only
+					has_policy_flag = enlightenment_allowed
+				}
+			}
+			fail_text = operation_wrong_enlightenment_policy
+		}
+		custom_tooltip = {
+			target = {
+				capital_scope = {
+					has_observation_outpost = yes
+					observation_outpost_owner = { is_same_value = root.owner }
+				}
+			}
+			fail_text = operation_requires_observation_outpost
+		}
+	}
+	abort = {
+		OR = {
+			owner = {
+				OR = {
+					has_policy_flag = interference_not_allowed
+					has_policy_flag = interference_aggressive
+					has_policy_flag = enlightenment_not_allowed
+				}
+			}
+			target = {
+				OR = {
+					is_primitive = no
+					has_country_flag = organic_singularity_communion # Converted from regular to hive pre-FTL
+					capital_scope = {
+						has_observation_outpost = no
+					}
+				}
+			}
+		}
+	}
+
+	stage = {
+		difficulty = @diff_t2
+		icon = GFX_espionage_chapter_icon_document
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t3
+		icon = GFX_espionage_chapter_icon_document
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t3
+		icon = GFX_espionage_chapter_icon_document
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t4
+		icon = GFX_espionage_chapter_icon_document
+		event = preftl_operation.1045
+	}
+
+	on_roll_failed = {
+		pre_ftl_espionage_operation_on_roll_failed = { RANDOM_EVENTS = operation_random_events_pre_ftl }
+	}
+	on_create = {
+		target = {
+			set_timed_country_flag = {
+				flag = preftl_espionage_operation_targeted_by@root.owner # Used in random Spy Network events
+				days = @operationTargetedByTimer
+			}
+		}
+	}
+}
+
+operation_indoctrinate_society = {
+	target = none
+	categories = { op_cat_infiltration op_cat_government }
+	picture = GFX_evt_friendly_infiltration
+	desc = operation_indoctrinate_society_desc
+	stages = 4
+
+	resources = {
+		category = operations
+		cost = {
+			trigger = {
+				owner = {
+					has_appearance_modding_technology = no
+				}
+			}
+			influence = 55
+		}
+		cost = {
+			trigger = {
+				owner = {
+					has_appearance_modding_technology = yes
+				}
+			}
+			influence = 35
+		}
+		upkeep = {
+			energy = 7
+		}
+	}
+	spy_power_cost = 30
+
+	potential = {
+		target = {
+			is_primitive = yes
+			NOT = { has_country_flag = @espionage_flag }
+			NOR = {
+				has_country_flag = fotd_seperatist_country@root.owner
+				has_country_flag = solarpunk_country
+				has_ethic = ethic_gestalt_consciousness
+			}
+		}
+		OR = {
+			has_utopia = yes
+			has_first_contact_dlc = yes
+		}
+	}
+	allow = {
+		custom_tooltip = {
+			is_running_espionage_operation = no
+			fail_text = operation_one_at_a_time
+		}
+		custom_tooltip = {
+			owner = {
+				NOT = {
+					has_policy_flag = interference_not_allowed
+				}
+			}
+			fail_text = operation_wrong_interference_policy
+		}
+		custom_tooltip = {
+			target = {
+				capital_scope = {
+					has_observation_outpost = yes
+					observation_outpost_owner = { is_same_value = root.owner }
+				}
+			}
+			fail_text = operation_requires_observation_outpost
+		}
+		custom_tooltip = {
+			target = {
+				NOT = { has_same_ethos = root }
+			}
+			fail_text = operation_same_ethos
+		}
+		custom_tooltip = {
+			owner = {
+				is_gestalt = no
+			}
+			fail_text = operation_gestalt_cant_indoctrinate
+		}
+	}
+	abort = {
+		OR = {
+			owner = {
+				has_policy_flag = interference_not_allowed
+			}
+			target = {
+				OR = {
+					is_primitive = no
+					has_country_flag = organic_singularity_communion # Converted from regular to hive pre-FTL
+					capital_scope = {
+						has_observation_outpost = no
+					}
+				}
+			}
+		}
+	}
+
+	stage = {
+		difficulty = @diff_t1
+		icon = GFX_espionage_chapter_icon_surveillance
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t3
+		icon = GFX_espionage_chapter_icon_document
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t3
+		icon = GFX_espionage_chapter_icon_motion
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t4
+		icon = GFX_espionage_chapter_icon_target
+		event = preftl_operation.1015
+	}
+
+	on_roll_failed = {
+		pre_ftl_espionage_operation_on_roll_failed = { RANDOM_EVENTS = operation_random_events_pre_ftl }
+	}
+	on_create = {
+		target = {
+			set_timed_country_flag = {
+				flag = preftl_espionage_operation_targeted_by@root.owner #Used in random Spy Network events
+				days = @operationTargetedByTimer
+			}
+		}
+	}
+}
+
+operation_infiltrate_government = {
+	target = none
+	categories = { op_cat_infiltration op_cat_government }
+	picture = GFX_evt_hostile_infiltration
+	desc = operation_infiltrate_government_desc
+	stages = 3
+
+	resources = {
+		category = operations
+		cost = {
+			trigger = {
+				owner = {
+					has_appearance_modding_technology = no
+				}
+			}
+			influence = 60
+		}
+		cost = {
+			trigger = {
+				owner = {
+					has_appearance_modding_technology = yes
+				}
+			}
+			influence = 40
+		}
+		upkeep = {
+			energy = 8
+		}
+	}
+	spy_power_cost = 40
+
+	potential = {
+		target = {
+			is_primitive = yes
+			NOT = { has_country_flag = @espionage_flag }
+			NOR = {
+				is_hive_empire = yes
+				has_country_flag = fotd_seperatist_country@root.owner
+				has_country_flag = solarpunk_country
+			}
+		}
+		owner = {
+			is_regular_empire = yes
+		}
+	}
+	allow = {
+		custom_tooltip = {
+			target = {
+				has_pre_ftl_age = early_space_age
+			}
+			fail_text = operation_wrong_tech_level
+		}
+		custom_tooltip = {
+			is_running_espionage_operation = no
+			fail_text = operation_one_at_a_time
+		}
+		custom_tooltip = {
+			owner = {
+				OR = {
+					has_policy_flag = interference_active
+					has_policy_flag = interference_aggressive
+				}
+			}
+			fail_text = operation_wrong_interference_policy
+		}
+		custom_tooltip = {
+			target = {
+				capital_scope = {
+					has_observation_outpost = yes
+					observation_outpost_owner = { is_same_value = root.owner }
+				}
+			}
+			fail_text = operation_requires_observation_outpost
+		}
+		custom_tooltip = {
+			owner = {
+				NOT = { has_country_flag = failed_infiltration@root.target }
+			}
+			fail_text = operation_failed_infiltration
+		}
+	}
+	abort = {
+		OR = {
+			owner = {
+				NOR = {
+					has_policy_flag = interference_active
+					has_policy_flag = interference_aggressive
+				}
+			}
+			target = {
+				OR = {
+					is_primitive = no
+					has_country_flag = organic_singularity_communion # Converted from regular to hive pre-FTL
+					capital_scope = {
+						has_observation_outpost = no
+					}
+				}
+			}
+		}
+	}
+
+	stage = {
+		difficulty = @diff_t3
+		icon = GFX_espionage_chapter_icon_document
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t2
+		icon = GFX_espionage_chapter_icon_motion
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t4
+		icon = GFX_espionage_chapter_icon_target
+		event = preftl_operation.1000
+	}
+	on_roll_failed = {
+		pre_ftl_espionage_operation_on_roll_failed = { RANDOM_EVENTS = operation_random_events_pre_ftl }
+	}
+	on_create = {
+		target = {
+			set_timed_country_flag = {
+				flag = preftl_espionage_operation_targeted_by@root.owner #Used in random Spy Network events
+				days = @operationTargetedByTimer
+			}
+		}
+	}
+}
+
+operation_infiltrate_hive = {
+	target = none
+	categories = { op_cat_infiltration op_cat_government }
+	picture = GFX_evt_hostile_infiltration
+	desc = operation_infiltrate_hive_desc
+	stages = 3
+
+	resources = {
+		category = operations
+		cost = {
+			trigger = {
+				owner = {
+					has_appearance_modding_technology = no
+				}
+			}
+			influence = 60
+		}
+		cost = {
+			trigger = {
+				owner = {
+					has_appearance_modding_technology = yes
+				}
+			}
+			influence = 40
+		}
+		upkeep = {
+			energy = 8
+		}
+	}
+	spy_power_cost = 40
+
+	potential = {
+		target = {
+			is_primitive = yes
+			NOT = { has_country_flag = @espionage_flag }
+			is_hive_empire = yes
+			NOR = {
+				has_country_flag = fotd_seperatist_country@root.owner
+				has_country_flag = solarpunk_country
+			}
+		}
+		owner = {
+			is_hive_empire = yes
+		}
+	}
+	allow = {
+		custom_tooltip = {
+			target = {
+				has_pre_ftl_age = early_space_age
+			}
+			fail_text = operation_wrong_tech_level
+		}
+		custom_tooltip = {
+			is_running_espionage_operation = no
+			fail_text = operation_one_at_a_time
+		}
+		custom_tooltip = {
+			owner = {
+				OR = {
+					has_policy_flag = interference_active
+					has_policy_flag = interference_aggressive
+				}
+			}
+			fail_text = operation_wrong_interference_policy
+		}
+		custom_tooltip = {
+			target = {
+				capital_scope = {
+					has_observation_outpost = yes
+					observation_outpost_owner = { is_same_value = root.owner }
+				}
+			}
+			fail_text = operation_requires_observation_outpost
+		}
+		custom_tooltip = {
+			owner = {
+				NOT = { has_country_flag = failed_infiltration@root.target }
+			}
+			fail_text = operation_failed_infiltration
+		}
+	}
+	abort = {
+		OR = {
+			owner = {
+				NOR = {
+					has_policy_flag = interference_active
+					has_policy_flag = interference_aggressive
+				}
+			}
+			target = {
+				OR = {
+					is_primitive = no
+					capital_scope = {
+						has_observation_outpost = no
+					}
+				}
+			}
+		}
+	}
+
+	stage = {
+		difficulty = @diff_t3
+		icon = GFX_espionage_chapter_icon_document
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t2
+		icon = GFX_espionage_chapter_icon_motion
+		event = preftl_operation.100
+	}
+	stage = {
+		difficulty = @diff_t4
+		icon = GFX_espionage_chapter_icon_target
+		event = preftl_operation.1060
+	}
+	on_roll_failed = {
+		pre_ftl_espionage_operation_on_roll_failed = { RANDOM_EVENTS = operation_random_events_pre_ftl_gestalt_gestalt }
+	}
+	on_create = {
+		target = {
+			set_timed_country_flag = {
+				flag = preftl_espionage_operation_targeted_by@root.owner #Used in random Spy Network events
+				days = @operationTargetedByTimer
+			}
+		}
+	}
+}

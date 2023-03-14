@@ -1,0 +1,2080 @@
+namespace = giga_vat_events
+#Defined up here so its easier to change ALL counts for ALL vats
+#main vat/leviathans
+@grow_01_growth_count 		= 1 #Drake
+@grow_02_growth_count 		= 1	#wraith
+@grow_03_growth_count 		= 1 #Matriarch
+@grow_04_growth_count 		= 1 #Stellarite
+@grow_05_growth_count 		= 1 #Voidspawn
+@grow_06_growth_count		= 2 #Queen
+@grow_07_growth_count		= 10 #Tiyanki Oxen
+@grow_08_growth_count		= 5 #Amoebas
+@grow_09_growth_count		= 10 #Swarmlings
+@grow_10_growth_count		= 1 #Toxic God
+############################################################################################################################################
+################################################################## vat_01 ##################################################################
+############################################################################################################################################
+#VAT 1 Growth tracker
+#All vats use essentually the same tracking/spawning method, just with different names for events/variables
+planet_event = { #Start event and Sanity check
+	id = giga_vat_events.14001 
+	is_triggered_only = yes 
+	hide_window = yes 
+	trigger = { vat_01_check = yes } 
+	immediate = {
+		solar_system = { 
+			random_system_megastructure = { 
+				limit = { vat_01_chk = yes } 
+				set_variable = { which = the_vat_01_time_passed value = 1}
+				set_variable = { which = the_vat_01_percent value = 1 }
+				set_variable = { which = giga_the_vat_01_timer value = giga_vat_01_grow_time}
+				#life is pain
+			} 
+		}
+		if = { #Quick sanity check / pause exploit prevention
+			limit = { NOT = { root = { has_planet_flag = giga_vat_pause_protection_01 } } }
+			root = { set_timed_planet_flag = {flag = giga_vat_pause_protection_01 days = 1 } }
+			planet_event = { 
+				id = giga_vat_events.14002 
+				days = 1
+			}  
+		}
+	} 
+}
+
+planet_event = { #Recursive daily check until it reaches a value = build time
+	id = giga_vat_events.14002 
+	is_triggered_only = yes 
+	hide_window = yes 
+	trigger = { vat_01_check = yes } 
+	immediate = { 
+		solar_system = { 
+			random_system_megastructure = {
+				limit = {vat_01_chk = yes} 
+				if = {
+					limit = { check_variable = { which = giga_the_vat_01_timer value > 0 } }
+					change_variable = { which = the_vat_01_time_passed value = 1}
+					
+					root = { 
+						planet_event = {
+							id = giga_vat_events.14002 
+							days = 1
+						}
+					}
+					set_variable = { which = giga_the_vat_01_timer value = giga_vat_01_grow_time }
+					divide_variable = { which = giga_the_vat_01_timer value = value:giga_vat_timer_math }
+					round_variable = giga_the_vat_01_timer
+					set_variable = { which = the_vat_01_pixel value = the_vat_01_time_passed }
+					divide_variable	= { which = the_vat_01_pixel value = giga_the_vat_01_timer }
+					set_variable = { which = the_vat_01_percent value = the_vat_01_pixel }
+					multiply_variable = { which = the_vat_01_percent value = 100}
+					multiply_variable = { which = the_vat_01_pixel value = 192} 
+					subtract_variable = { which = giga_the_vat_01_timer value = the_vat_01_time_passed}
+					ceiling_variable = the_vat_01_pixel
+					floor_variable = the_vat_01_percent
+				} else_if = {
+					limit = { check_variable = { which = giga_the_vat_01_timer value <= 0 } }
+					clear_variable = the_vat_01_pixel
+					clear_variable = the_vat_01_time_passed
+					set_variable = { which = the_vat_01_pixel value = 0 }
+					root = {				
+						planet_event = {
+							id = giga_vat_events.10000
+						}
+					}
+				}
+			} 
+		}
+	} 
+}
+#Event that spawns the ships
+planet_event = {
+	id = giga_vat_events.10000
+	is_triggered_only = yes
+	hide_window = yes
+	trigger = { 
+		vat_01_check = yes 
+	}
+
+	immediate = {
+		# save owner
+		solar_system = {
+			random_system_megastructure = {
+				limit = { vat_01_chk = yes }
+				owner = { save_event_target_as = giga_vat_owner }
+			}
+		}
+
+		# spawn chosen clone
+		if = {#Ether Drake
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_01_chk = yes
+						has_megastructure_flag = giga_vat_01_grow_01
+					}
+				}
+			}
+			create_fleet = {#Ether Drake
+				name = "NAME_Giga_Dragon"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_01_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Dragon"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {#Wraith
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_01_chk = yes
+						has_megastructure_flag = giga_vat_01_grow_02
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Wraith"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_02_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Wraith"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {#Tiyanki Matriarch
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_01_chk = yes
+						has_megastructure_flag = giga_vat_01_grow_03
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Tiyanki"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_03_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Tiyanki"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {#Stellarite Devourer
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_01_chk = yes
+						has_megastructure_flag = giga_vat_01_grow_04
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Stellarite"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_04_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Stellarite"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {#Voidspawn
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_01_chk = yes
+						has_megastructure_flag = giga_vat_01_grow_05
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Voidspawn"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_05_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Voidspawn"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {#Prethoryn queens
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_01_chk = yes
+						has_megastructure_flag = giga_vat_01_grow_06
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Queen"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_06_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Queen"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {#Swarm Warriors
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_01_chk = yes
+						has_megastructure_flag = giga_vat_01_grow_07
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Tiyanki_Small"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_07_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Tiyanki_Small"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {#broodmothers
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_01_chk = yes
+						has_megastructure_flag = giga_vat_01_grow_08
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Amoeba"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_08_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Amoeba"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {#swarmlings
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_01_chk = yes
+						has_megastructure_flag = giga_vat_01_grow_09
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Small"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_09_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Small"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		} 
+		else_if = {#Toxic god
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_01_chk = yes
+						has_megastructure_flag = giga_vat_01_grow_10
+					}
+				}
+			}
+			if = { #if you somehow escaped the flag previously then take this L
+				limit = { exists = owner}
+				owner = { set_country_flag = giga_vat_live_god }
+			}
+			create_fleet = {
+				name = "NAME_Giga_Deity"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_10_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Deity"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+
+
+		# Merge into other vat created fleets
+		last_created_fleet = {
+			if = {
+				limit = {
+					solar_system = {
+						any_fleet_in_system = {
+							NOT = { is_same_value = prevprev }
+							has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+						}
+					}
+				}
+				solar_system = {
+					random_fleet_in_system = {
+						limit = {
+							NOT = { is_same_value = prevprev }
+							has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+						}
+						save_event_target_as = giga_merge_vat_fleets
+					}
+				}
+				queue_actions = {
+					find_closest_fleet = {
+						found_fleet = {
+							merge_fleet = {
+								target = event_target:giga_merge_vat_fleets
+								allow_ftl = no
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# clear vat flags and reset
+		solar_system = {
+			random_system_megastructure = {
+				limit = { vat_01_chk = yes }
+				if = {
+					limit = {
+						check_variable = { which = giga_vat_01_grow_amount value > 1 }
+						has_megastructure_flag = giga_vat_01_in_use
+						NOT = { has_megastructure_flag = giga_vat_01_grow_10 }
+					}
+					subtract_variable = { which = giga_vat_01_grow_amount value = 1 }
+					set_variable = { which = the_vat_01_pixel value = 1}
+					set_variable = { which = the_vat_01_percent value = 1}
+					clear_variable = the_vat_01_time_passed
+					planet = {
+						planet_event = { id = giga_vat_events.14001 }
+					}
+				 } 
+				else_if = {#Gotta triple check so no smelly boi spam
+					limit = { check_variable = { which = giga_vat_01_grow_amount value > 1 } 
+						has_megastructure_flag = giga_vat_01_in_use
+						has_megastructure_flag = giga_vat_01_grow_10 
+						exists = owner
+					}
+					owner = { 
+						add_resource = { food = 1 multiplier = value:giga_vat_cancel_refund|WHO2|prev|VAT|01|RESOURCE|food| }
+						add_resource = { energy = 1 multiplier = value:giga_vat_cancel_refund|WHO2|prev|VAT|01|RESOURCE|energy| }
+						add_resource = { exotic_gases = 1 multiplier = value:giga_vat_cancel_refund|WHO2|prev|VAT|01|RESOURCE|gas| }
+					}
+					giga_the_vat_01_clear = yes
+				 } else = {
+					giga_the_vat_01_clear = yes
+				}
+			}
+		}
+	}
+}
+
+############################################################################################################################################
+################################################################## vat_02 ##################################################################
+############################################################################################################################################
+planet_event = { 
+	id = giga_vat_events.24001 
+	is_triggered_only = yes 
+	hide_window = yes 
+	trigger = { vat_02_check = yes } 
+	immediate = {
+		solar_system = { 
+			random_system_megastructure = { 
+				limit = { vat_02_chk = yes } 
+				set_variable = { which = the_vat_02_time_passed value = 1}
+				set_variable = { which = the_vat_02_percent value = 1 }
+				set_variable = { which = giga_the_vat_02_timer value = giga_vat_02_grow_time}
+			} 
+		}
+		if = { #Quick sanity check / pause exploit prevention
+			limit = { NOT = { root = { has_planet_flag = giga_vat_pause_protection_02 } } }
+			root = { set_timed_planet_flag = {flag = giga_vat_pause_protection_02 days = 1 } }
+			planet_event = { 
+				id = giga_vat_events.24002 
+				days = 1
+			}  
+		}
+	} 
+}
+
+planet_event = { 
+	id = giga_vat_events.24002 
+	is_triggered_only = yes 
+	hide_window = yes 
+	trigger = { vat_02_check = yes } 
+	immediate = { 
+		solar_system = { 
+			random_system_megastructure = {
+				limit = {vat_02_chk = yes} 
+				if = {
+					limit = { check_variable = { which = giga_the_vat_02_timer value > 0 } }
+					change_variable = { which = the_vat_02_time_passed value = 1}
+					
+					root = { 
+						planet_event = {
+							id = giga_vat_events.24002 
+							days = 1
+						}
+					}
+					set_variable = { which = giga_the_vat_02_timer value = giga_vat_02_grow_time}
+					divide_variable = { which = giga_the_vat_02_timer value = value:giga_vat_timer_math }
+					round_variable = giga_the_vat_02_timer
+					set_variable = { which = the_vat_02_pixel value = the_vat_02_time_passed }
+					divide_variable	= { which = the_vat_02_pixel value = giga_the_vat_02_timer }
+					set_variable = { which = the_vat_02_percent value = the_vat_02_pixel }
+					multiply_variable = { which = the_vat_02_percent value = 100}
+					multiply_variable = { which = the_vat_02_pixel value = 192} 
+					subtract_variable = { which = giga_the_vat_02_timer value = the_vat_02_time_passed}
+					ceiling_variable = the_vat_02_pixel
+					floor_variable = the_vat_02_percent
+				} else_if = {
+					limit = { check_variable = { which = giga_the_vat_02_timer value <= 0 } }
+					clear_variable = the_vat_02_pixel
+					clear_variable = the_vat_02_time_passed
+					set_variable = { which = the_vat_02_pixel value = 0 }
+					root = {				
+						planet_event = {
+							id = giga_vat_events.20000
+						}
+					}
+				}
+			} 
+		}
+	} 
+}
+planet_event = {
+	id = giga_vat_events.20000
+	is_triggered_only = yes
+	hide_window = yes
+	trigger = { vat_02_check = yes }
+
+	immediate = {
+		# save owner
+		solar_system = {
+			random_system_megastructure = {
+				limit = { vat_02_chk = yes }
+				owner = { save_event_target_as = giga_vat_owner }
+			}
+		}
+
+		# spawn chosen clone
+		if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_02_chk = yes
+						has_megastructure_flag = giga_vat_02_grow_06
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Queen"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_06_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Queen"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_02_chk = yes
+						has_megastructure_flag = giga_vat_02_grow_07
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Tiyanki_Small"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_07_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Tiyanki_Small"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_02_chk = yes
+						has_megastructure_flag = giga_vat_02_grow_08
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Amoeba"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_08_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Amoeba"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_02_chk = yes
+						has_megastructure_flag = giga_vat_02_grow_09
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Small"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_09_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Small"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+
+		# Merge into other vat created fleets
+		last_created_fleet = {
+			if = {
+				limit = {
+					solar_system = {
+						any_fleet_in_system = {
+							NOT = { is_same_value = prevprev }
+							has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+						}
+					}
+				}
+				solar_system = {
+					random_fleet_in_system = {
+						limit = {
+							NOT = { is_same_value = prevprev }
+							has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+						}
+						save_event_target_as = giga_merge_vat_fleets
+					}
+				}
+				queue_actions = {
+					find_closest_fleet = {
+						found_fleet = {
+							merge_fleet = {
+								target = event_target:giga_merge_vat_fleets
+								allow_ftl = no
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# clear vat flags
+		solar_system = {
+			random_system_megastructure = {
+				limit = { vat_02_chk = yes }
+				if = {
+					limit = {
+						check_variable = { which = giga_vat_02_grow_amount value > 1 }
+						has_megastructure_flag = giga_vat_02_in_use
+					}
+					subtract_variable = { which = giga_vat_02_grow_amount value = 1 }
+					set_variable = { which = the_vat_02_pixel value = 1}
+					set_variable = { which = the_vat_02_percent value = 1}
+					clear_variable = the_vat_02_time_passed
+					planet = {
+						planet_event = { id = giga_vat_events.24001 }
+					}
+				 }
+				else = {
+					giga_the_vat_02_clear = yes
+				}
+			}
+		}
+	}
+}
+
+############################################################################################################################################
+################################################################## vat_03 ##################################################################
+############################################################################################################################################
+planet_event = { 
+	id = giga_vat_events.34001 
+	is_triggered_only = yes 
+	hide_window = yes 
+	trigger = { vat_03_check = yes } 
+	immediate = {
+		solar_system = { 
+			random_system_megastructure = { 
+				limit = { vat_03_chk = yes } 
+				set_variable = { which = the_vat_03_time_passed value = 1}
+				set_variable = { which = the_vat_03_percent value = 1 }
+				set_variable = { which = giga_the_vat_03_timer value = giga_vat_03_grow_time}
+			} 
+		}
+		if = { #Quick sanity check / pause exploit prevention
+			limit = { NOT = { root = { has_planet_flag = giga_vat_pause_protection_03 } } }
+			root = { set_timed_planet_flag = {flag = giga_vat_pause_protection_03 days = 1 } }
+			planet_event = { 
+				id = giga_vat_events.34002 
+				days = 1
+			}  
+		}
+	} 
+}
+
+planet_event = { 
+	id = giga_vat_events.34002 
+	is_triggered_only = yes 
+	hide_window = yes 
+	trigger = { vat_03_check = yes } 
+	immediate = { 
+		solar_system = { 
+			random_system_megastructure = {
+				limit = {vat_03_chk = yes} 
+				if = {
+					limit = { check_variable = { which = giga_the_vat_03_timer value > 0 } }
+					change_variable = { which = the_vat_03_time_passed value = 1}
+					
+					root = { 
+						planet_event = {
+							id = giga_vat_events.34002 
+							days = 1
+						}
+					}
+					set_variable = { which = giga_the_vat_03_timer value = giga_vat_03_grow_time}
+					divide_variable = { which = giga_the_vat_03_timer value = value:giga_vat_timer_math }
+					round_variable = giga_the_vat_03_timer
+					set_variable = { which = the_vat_03_pixel value = the_vat_03_time_passed }
+					divide_variable	= { which = the_vat_03_pixel value = giga_the_vat_03_timer }
+					set_variable = { which = the_vat_03_percent value = the_vat_03_pixel }
+					multiply_variable = { which = the_vat_03_percent value = 100}
+					multiply_variable = { which = the_vat_03_pixel value = 192} 
+					subtract_variable = { which = giga_the_vat_03_timer value = the_vat_03_time_passed}
+					ceiling_variable = the_vat_03_pixel
+					floor_variable = the_vat_03_percent
+				} else_if = {
+					limit = { check_variable = { which = giga_the_vat_03_timer value <= 0 } }
+					clear_variable = the_vat_03_pixel
+					clear_variable = the_vat_03_time_passed
+					set_variable = { which = the_vat_03_pixel value = 0 }
+					root = {				
+						planet_event = {
+							id = giga_vat_events.30000
+						}
+					}
+				}
+			} 
+		}
+	} 
+}
+planet_event = {
+	id = giga_vat_events.30000
+	is_triggered_only = yes
+	hide_window = yes
+	trigger = { vat_03_check = yes }
+
+	immediate = {
+		# save owner
+		solar_system = {
+			random_system_megastructure = {
+				limit = { vat_03_chk = yes }
+				owner = { save_event_target_as = giga_vat_owner }
+			}
+		}
+
+		# spawn chosen clone
+		if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_03_chk = yes
+						has_megastructure_flag = giga_vat_03_grow_06
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Queen"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_06_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Queen"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_03_chk = yes
+						has_megastructure_flag = giga_vat_03_grow_07
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Tiyanki_Small"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_07_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Tiyanki_Small"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_03_chk = yes
+						has_megastructure_flag = giga_vat_03_grow_08
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Amoeba"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_08_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Amoeba"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_03_chk = yes
+						has_megastructure_flag = giga_vat_03_grow_09
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Small"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_09_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Small"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+
+		# Merge into other vat created fleets
+		last_created_fleet = {
+			if = {
+				limit = {
+					solar_system = {
+						any_fleet_in_system = {
+							NOT = { is_same_value = prevprev }
+							has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+						}
+					}
+				}
+				solar_system = {
+					random_fleet_in_system = {
+						limit = {
+							NOT = { is_same_value = prevprev }
+							has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+						}
+						save_event_target_as = giga_merge_vat_fleets
+					}
+				}
+				queue_actions = {
+					find_closest_fleet = {
+						found_fleet = {
+							merge_fleet = {
+								target = event_target:giga_merge_vat_fleets
+								allow_ftl = no
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# clear vat flags
+		solar_system = {
+			random_system_megastructure = {
+				limit = { vat_03_chk = yes }
+				if = {
+					limit = {
+						check_variable = { which = giga_vat_03_grow_amount value > 1 }
+						has_megastructure_flag = giga_vat_03_in_use
+					}
+					subtract_variable = { which = giga_vat_03_grow_amount value = 1 }
+					set_variable = { which = the_vat_03_pixel value = 1}
+					set_variable = { which = the_vat_03_percent value = 1}
+					clear_variable = the_vat_03_time_passed
+					planet = {
+						planet_event = { id = giga_vat_events.34001 }
+					}
+				 }
+				else = {
+					giga_the_vat_03_clear = yes
+				}
+			}
+		}
+	}
+}
+
+############################################################################################################################################
+################################################################## vat_04 ##################################################################
+############################################################################################################################################
+planet_event = { 
+	id = giga_vat_events.44001 
+	is_triggered_only = yes 
+	hide_window = yes 
+	trigger = { vat_04_check = yes } 
+	immediate = {
+		solar_system = { 
+			random_system_megastructure = { 
+				limit = { vat_04_chk = yes } 
+				set_variable = { which = the_vat_04_time_passed value = 1}
+				set_variable = { which = the_vat_04_percent value = 1 }
+				set_variable = { which = giga_the_vat_04_timer value = giga_vat_04_grow_time}
+			} 
+		}
+		if = { #Quick sanity check / pause exploit prevention
+			limit = { NOT = { root = { has_planet_flag = giga_vat_pause_protection_04 } } }
+			root = { set_timed_planet_flag = {flag = giga_vat_pause_protection_04 days = 1 } }
+			planet_event = { 
+				id = giga_vat_events.44002 
+				days = 1
+			}  
+		}
+	} 
+}
+
+planet_event = { 
+	id = giga_vat_events.44002 
+	is_triggered_only = yes 
+	hide_window = yes 
+	trigger = { vat_04_check = yes } 
+	immediate = { 
+		solar_system = { 
+			random_system_megastructure = {
+				limit = {vat_04_chk = yes} 
+				if = {
+					limit = { check_variable = { which = giga_the_vat_04_timer value > 0 } }
+					change_variable = { which = the_vat_04_time_passed value = 1}
+					
+					root = { 
+						planet_event = {
+							id = giga_vat_events.44002 
+							days = 1
+						}
+					}
+					set_variable = { which = giga_the_vat_04_timer value = giga_vat_04_grow_time}
+					divide_variable = { which = giga_the_vat_04_timer value = value:giga_vat_timer_math }
+					round_variable = giga_the_vat_04_timer
+					set_variable = { which = the_vat_04_pixel value = the_vat_04_time_passed }
+					divide_variable	= { which = the_vat_04_pixel value = giga_the_vat_04_timer }
+					set_variable = { which = the_vat_04_percent value = the_vat_04_pixel }
+					multiply_variable = { which = the_vat_04_percent value = 100}
+					multiply_variable = { which = the_vat_04_pixel value = 192} 
+					subtract_variable = { which = giga_the_vat_04_timer value = the_vat_04_time_passed}
+					ceiling_variable = the_vat_04_pixel
+					floor_variable = the_vat_04_percent
+				} else_if = {
+					limit = { check_variable = { which = giga_the_vat_04_timer value <= 0} }
+					clear_variable = the_vat_04_pixel
+					clear_variable = the_vat_04_time_passed
+					set_variable = { which = the_vat_04_pixel value = 0 }
+					root = {				
+						planet_event = {
+							id = giga_vat_events.40000
+						}
+					}
+				}
+			} 
+		}
+	} 
+}
+planet_event = {
+	id = giga_vat_events.40000
+	is_triggered_only = yes
+	hide_window = yes
+	trigger = { vat_04_check = yes }
+
+	immediate = {
+		# save owner
+		solar_system = {
+			random_system_megastructure = {
+				limit = { vat_04_chk = yes }
+				owner = { save_event_target_as = giga_vat_owner }
+			}
+		}
+
+		# spawn chosen clone
+		if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_04_chk = yes
+						has_megastructure_flag = giga_vat_04_grow_06
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Queen"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_06_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Queen"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_04_chk = yes
+						has_megastructure_flag = giga_vat_04_grow_07
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Tiyanki_Small"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_07_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Tiyanki_Small"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_04_chk = yes
+						has_megastructure_flag = giga_vat_04_grow_08
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Amoeba"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_08_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Amoeba"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_04_chk = yes
+						has_megastructure_flag = giga_vat_04_grow_09
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Small"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_09_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Small"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+
+		# Merge into other vat created fleets
+		last_created_fleet = {
+			if = {
+				limit = {
+					solar_system = {
+						any_fleet_in_system = {
+							NOT = { is_same_value = prevprev }
+							has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+						}
+					}
+				}
+				solar_system = {
+					random_fleet_in_system = {
+						limit = {
+							NOT = { is_same_value = prevprev }
+							has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+						}
+						save_event_target_as = giga_merge_vat_fleets
+					}
+				}
+				queue_actions = {
+					find_closest_fleet = {
+						found_fleet = {
+							merge_fleet = {
+								target = event_target:giga_merge_vat_fleets
+								allow_ftl = no
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# clear vat flags
+		solar_system = {
+			random_system_megastructure = {
+				limit = { vat_04_chk = yes }
+				if = {
+					limit = {
+						check_variable = { which = giga_vat_04_grow_amount value > 1 }
+						has_megastructure_flag = giga_vat_04_in_use
+					}
+					subtract_variable = { which = giga_vat_04_grow_amount value = 1 }
+					set_variable = { which = the_vat_04_pixel value = 1}
+					set_variable = { which = the_vat_04_percent value = 1}
+					clear_variable = the_vat_04_time_passed
+					planet = {
+						planet_event = { id = giga_vat_events.44001 }
+					}
+				 }
+				else = {
+					giga_the_vat_04_clear = yes
+				}
+			}
+		}
+	}
+}
+############################################################################################################################################
+################################################################## vat_05 ##################################################################
+############################################################################################################################################
+planet_event = { 
+	id = giga_vat_events.54001 
+	is_triggered_only = yes 
+	hide_window = yes 
+	trigger = { vat_05_check = yes } 
+	immediate = {
+		solar_system = { 
+			random_system_megastructure = { 
+				limit = { vat_05_chk = yes } 
+				set_variable = { which = the_vat_05_time_passed value = 1}
+				set_variable = { which = the_vat_05_percent value = 1}
+				set_variable = { which = giga_the_vat_05_timer value = giga_vat_02_grow_time}
+			} 
+		}
+		if = { #Quick sanity check / pause exploit prevention
+			limit = { NOT = { root = { has_planet_flag = giga_vat_pause_protection_05 } } }
+			root = { set_timed_planet_flag = {flag = giga_vat_pause_protection_05 days = 1 } }
+			planet_event = { 
+				id = giga_vat_events.54002 
+				days = 1
+			}  
+		}
+	} 
+}
+
+planet_event = { 
+	id = giga_vat_events.54002 
+	is_triggered_only = yes 
+	hide_window = yes 
+	trigger = { vat_05_check = yes } 
+	immediate = {
+		solar_system = { 
+			random_system_megastructure = {
+				limit = {vat_05_chk = yes} 
+				if = {
+					limit = { check_variable = { which = giga_the_vat_05_timer value > 0} }
+					change_variable = { which = the_vat_05_time_passed value = 1}
+					
+					root = { 
+						planet_event = {
+							id = giga_vat_events.54002 
+							days = 1
+						}
+					}
+					set_variable = { which = giga_the_vat_05_timer value = giga_vat_05_grow_time}
+					divide_variable = {which = giga_the_vat_05_timer value = value:giga_vat_timer_math}
+					round_variable = giga_the_vat_05_timer
+					set_variable = { which = the_vat_05_pixel value = the_vat_05_time_passed }
+					divide_variable	= { which = the_vat_05_pixel value = giga_the_vat_05_timer }
+					set_variable = { which = the_vat_05_percent value = the_vat_05_pixel }
+					multiply_variable = { which = the_vat_05_percent value = 100}
+					multiply_variable = { which = the_vat_05_pixel value = 192} 
+					subtract_variable = { which = giga_the_vat_05_timer value = the_vat_05_time_passed}
+					ceiling_variable = the_vat_05_pixel
+					floor_variable = the_vat_05_percent
+				} else_if = {
+					limit = { check_variable = { which = giga_the_vat_05_timer value <= 0 } }
+					clear_variable = the_vat_05_pixel
+					clear_variable = the_vat_05_time_passed
+					set_variable = { which = the_vat_05_pixel value = 0 }
+					root = {				
+						planet_event = {
+							id = giga_vat_events.50000
+						}
+					}
+				}
+			} 
+		}
+	} 
+}
+planet_event = {
+	id = giga_vat_events.50000
+	is_triggered_only = yes
+	hide_window = yes
+	trigger = { vat_05_check = yes }
+
+	immediate = {
+		# save owner
+		solar_system = {
+			random_system_megastructure = {
+				limit = { vat_05_chk = yes }
+				owner = { save_event_target_as = giga_vat_owner }
+			}
+		}
+
+		# spawn chosen clone
+		if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_05_chk = yes
+						has_megastructure_flag = giga_vat_05_grow_06
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Queen"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_06_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Queen"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_05_chk = yes
+						has_megastructure_flag = giga_vat_05_grow_07
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Tiyanki_Small"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_07_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Tiyanki_Small"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_05_chk = yes
+						has_megastructure_flag = giga_vat_05_grow_08
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Amoeba"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_08_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Amoeba"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_05_chk = yes
+						has_megastructure_flag = giga_vat_05_grow_09
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Small"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_09_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Small"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+
+		# Merge into other vat created fleets
+		last_created_fleet = {
+			if = {
+				limit = {
+					solar_system = {
+						any_fleet_in_system = {
+							NOT = { is_same_value = prevprev }
+							has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+						}
+					}
+				}
+				solar_system = {
+					random_fleet_in_system = {
+						limit = {
+							NOT = { is_same_value = prevprev }
+							has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+						}
+						save_event_target_as = giga_merge_vat_fleets
+					}
+				}
+				queue_actions = {
+					find_closest_fleet = {
+						found_fleet = {
+							merge_fleet = {
+								target = event_target:giga_merge_vat_fleets
+								allow_ftl = no
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# clear vat flags
+		solar_system = {
+			random_system_megastructure = {
+				limit = { vat_05_chk = yes }
+				if = {
+					limit = {
+						check_variable = { which = giga_vat_05_grow_amount value > 1 }
+						has_megastructure_flag = giga_vat_05_in_use
+					}
+					subtract_variable = { which = giga_vat_05_grow_amount value = 1 }
+					set_variable = { which = the_vat_05_pixel value = 1}
+					set_variable = { which = the_vat_05_percent value = 1}
+					clear_variable = the_vat_05_time_passed
+					planet = {
+						planet_event = { id = giga_vat_events.54001 }
+					}
+				 }
+				else = {
+					giga_the_vat_05_clear = yes
+				}
+			}
+		}
+	}
+}
+############################################################################################################################################
+################################################################## vat_06 ##################################################################
+############################################################################################################################################
+planet_event = { 
+	id = giga_vat_events.64001 
+	is_triggered_only = yes 
+	hide_window = yes 
+	trigger = { vat_06_check = yes } 
+	immediate = {
+		solar_system = { 
+			random_system_megastructure = { 
+				limit = { vat_06_chk = yes } 
+				set_variable = { which = the_vat_06_time_passed value = 1}
+				set_variable = { which = the_vat_06_percent value = 1}
+				set_variable = { which = giga_the_vat_06_timer value = giga_vat_06_grow_time}
+			} 
+		}
+		if = { #Quick sanity check / pause exploit prevention
+			limit = { NOT = { root = { has_planet_flag = giga_vat_pause_protection_06 } } }
+			root = { set_timed_planet_flag = {flag = giga_vat_pause_protection_06 days = 1 } }
+			planet_event = { 
+				id = giga_vat_events.64002 
+				days = 1
+			}  
+		}
+	} 
+}
+
+planet_event = { 
+	id = giga_vat_events.64002 
+	is_triggered_only = yes 
+	hide_window = yes 
+	trigger = { vat_06_check = yes } 
+	immediate = {
+		solar_system = { 
+			random_system_megastructure = {
+				limit = {vat_06_chk = yes} 
+				if = {
+					limit = { check_variable = { which = giga_the_vat_06_timer value > 0} }
+					change_variable = { which = the_vat_06_time_passed value = 1}
+					
+					root = { 
+						planet_event = {
+							id = giga_vat_events.64002 
+							days = 1
+						}
+					}
+					set_variable = { which = giga_the_vat_06_timer value = giga_vat_06_grow_time}
+					divide_variable = {which = giga_the_vat_06_timer value = value:giga_vat_timer_math}
+					round_variable = giga_the_vat_06_timer
+					set_variable = { which = the_vat_06_pixel value = the_vat_06_time_passed }
+					divide_variable	= { which = the_vat_06_pixel value = giga_the_vat_06_timer }
+					set_variable = { which = the_vat_06_percent value = the_vat_06_pixel }
+					multiply_variable = { which = the_vat_06_percent value = 100}
+					multiply_variable = { which = the_vat_06_pixel value = 192} 
+					subtract_variable = { which = giga_the_vat_06_timer value = the_vat_06_time_passed}
+					ceiling_variable = the_vat_06_pixel
+					floor_variable = the_vat_06_percent
+				} else_if = {
+					limit = { check_variable = { which = giga_the_vat_06_timer value <= 0 } }
+					clear_variable = the_vat_06_pixel
+					clear_variable = the_vat_06_time_passed
+					set_variable = { which = the_vat_06_pixel value = 0 }
+					root = {				
+						planet_event = {
+							id = giga_vat_events.60000
+						}
+					}
+				}
+			} 
+		}
+	} 
+}
+planet_event = {
+	id = giga_vat_events.60000
+	is_triggered_only = yes
+	hide_window = yes
+	trigger = { vat_06_check = yes }
+
+	immediate = {
+		# save owner
+		solar_system = {
+			random_system_megastructure = {
+				limit = { vat_06_chk = yes }
+				owner = { save_event_target_as = giga_vat_owner }
+			}
+		}
+
+		# spawn chosen clone
+		if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_06_chk = yes
+						has_megastructure_flag = giga_vat_06_grow_06
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Queen"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_06_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Queen"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_06_chk = yes
+						has_megastructure_flag = giga_vat_06_grow_07
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Tiyanki_Small"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_07_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Tiyanki_Small"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_06_chk = yes
+						has_megastructure_flag = giga_vat_06_grow_08
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Amoeba"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_08_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Amoeba"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_06_chk = yes
+						has_megastructure_flag = giga_vat_06_grow_09
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Small"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_09_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Small"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+
+		# Merge into other vat created fleets
+		last_created_fleet = {
+			if = {
+				limit = {
+					solar_system = {
+						any_fleet_in_system = {
+							NOT = { is_same_value = prevprev }
+							has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+						}
+					}
+				}
+				solar_system = {
+					random_fleet_in_system = {
+						limit = {
+							NOT = { is_same_value = prevprev }
+							has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+						}
+						save_event_target_as = giga_merge_vat_fleets
+					}
+				}
+				queue_actions = {
+					find_closest_fleet = {
+						found_fleet = {
+							merge_fleet = {
+								target = event_target:giga_merge_vat_fleets
+								allow_ftl = no
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# clear vat flags
+		solar_system = {
+			random_system_megastructure = {
+				limit = { vat_06_chk = yes }
+				if = {
+					limit = {
+						check_variable = { which = giga_vat_06_grow_amount value > 1 }
+						has_megastructure_flag = giga_vat_06_in_use
+					}
+					subtract_variable = { which = giga_vat_06_grow_amount value = 1 }
+					set_variable = { which = the_vat_06_pixel value = 1}
+					set_variable = { which = the_vat_06_percent value = 1}
+					clear_variable = the_vat_06_time_passed
+					planet = {
+						planet_event = { id = giga_vat_events.64001 }
+					}
+				 }
+				else = {
+					giga_the_vat_06_clear = yes
+				}
+			}
+		}
+	}
+}
+############################################################################################################################################
+################################################################## vat_07 ##################################################################
+############################################################################################################################################
+planet_event = { 
+	id = giga_vat_events.74001 
+	is_triggered_only = yes 
+	hide_window = yes 
+	trigger = { vat_07_check = yes } 
+	immediate = {
+		solar_system = { 
+			random_system_megastructure = { 
+				limit = { vat_07_chk = yes } 
+				set_variable = { which = the_vat_07_time_passed value = 1}
+				set_variable = { which = the_vat_07_percent value = 1}
+				set_variable = { which = giga_the_vat_07_timer value = giga_vat_07_grow_time}
+			} 
+		}
+		if = { #Quick sanity check / pause exploit prevention
+			limit = { NOT = { root = { has_planet_flag = giga_vat_pause_protection_07 } } }
+			root = { set_timed_planet_flag = {flag = giga_vat_pause_protection_07 days = 1 } }
+			planet_event = { 
+				id = giga_vat_events.74002 
+				days = 1
+			}  
+		}
+	} 
+}
+
+planet_event = { 
+	id = giga_vat_events.74002 
+	is_triggered_only = yes 
+	hide_window = yes 
+	trigger = { vat_07_check = yes } 
+	immediate = {
+		solar_system = { 
+			random_system_megastructure = {
+				limit = {vat_07_chk = yes} 
+				if = {
+					limit = { check_variable = { which = giga_the_vat_07_timer value > 0} }
+					change_variable = { which = the_vat_07_time_passed value = 1}
+					
+					root = { 
+						planet_event = {
+							id = giga_vat_events.74002 
+							days = 1
+						}
+					}
+					set_variable = { which = giga_the_vat_07_timer value = giga_vat_07_grow_time}
+					divide_variable = {which = giga_the_vat_07_timer value = value:giga_vat_timer_math}
+					round_variable = giga_the_vat_07_timer
+					set_variable = { which = the_vat_07_pixel value = the_vat_07_time_passed }
+					divide_variable	= { which = the_vat_07_pixel value = giga_the_vat_07_timer }
+					set_variable = { which = the_vat_07_percent value = the_vat_07_pixel }
+					multiply_variable = { which = the_vat_07_percent value = 100}
+					multiply_variable = { which = the_vat_07_pixel value = 192} 
+					subtract_variable = { which = giga_the_vat_07_timer value = the_vat_07_time_passed}
+					ceiling_variable = the_vat_07_pixel
+					floor_variable = the_vat_07_percent
+				} else_if = {
+					limit = { check_variable = { which = giga_the_vat_07_timer value <= 0 } }
+					clear_variable = the_vat_07_pixel
+					clear_variable = the_vat_07_time_passed
+					set_variable = { which = the_vat_07_pixel value = 0 }
+					root = {				
+						planet_event = {
+							id = giga_vat_events.70000
+						}
+					}
+				}
+			} 
+		}
+	} 
+}
+planet_event = {
+	id = giga_vat_events.70000
+	is_triggered_only = yes
+	hide_window = yes
+	trigger = { vat_07_check = yes }
+
+	immediate = {
+		# save owner
+		solar_system = {
+			random_system_megastructure = {
+				limit = { vat_07_chk = yes }
+				owner = { save_event_target_as = giga_vat_owner }
+			}
+		}
+
+		# spawn chosen clone
+		if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_07_chk = yes
+						has_megastructure_flag = giga_vat_07_grow_06
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Queen"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_06_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Queen"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = rootr
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_07_chk = yes
+						has_megastructure_flag = giga_vat_07_grow_07
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Tiyanki_Small"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_07_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Tiyanki_Small"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_07_chk = yes
+						has_megastructure_flag = giga_vat_07_grow_08
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Amoeba"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_08_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Amoeba"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				solar_system = {
+					any_system_megastructure = {
+						vat_07_chk = yes
+						has_megastructure_flag = giga_vat_07_grow_09
+					}
+				}
+			}
+			create_fleet = {
+				name = "NAME_Giga_Small"
+				settings = { spawn_debris = no }
+				effect = {
+					set_owner = event_target:giga_vat_owner
+					while = {
+						count = @grow_09_growth_count
+						create_ship = {
+							name = random
+							design = "NAME_Giga_Small"
+						}
+					}
+					set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+					set_location = root
+				}
+			}
+		}
+
+		# Merge into other vat created fleets
+		last_created_fleet = {
+			if = {
+				limit = {
+					solar_system = {
+						any_fleet_in_system = {
+							NOT = { is_same_value = prevprev }
+							has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+						}
+					}
+				}
+				solar_system = {
+					random_fleet_in_system = {
+						limit = {
+							NOT = { is_same_value = prevprev }
+							has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+						}
+						save_event_target_as = giga_merge_vat_fleets
+					}
+				}
+				queue_actions = {
+					find_closest_fleet = {
+						found_fleet = {
+							merge_fleet = {
+								target = event_target:giga_merge_vat_fleets
+								allow_ftl = no
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# clear vat flags
+		solar_system = {
+			random_system_megastructure = {
+				limit = { vat_07_chk = yes }
+				if = {
+					limit = {
+						check_variable = { which = giga_vat_07_grow_amount value > 1 }
+						has_megastructure_flag = giga_vat_07_in_use
+					}
+					subtract_variable = { which = giga_vat_07_grow_amount value = 1 }
+					set_variable = { which = the_vat_07_pixel value = 1}
+					set_variable = { which = the_vat_07_percent value = 1}
+					clear_variable = the_vat_07_time_passed
+					planet = {
+						planet_event = { id = giga_vat_events.74001 }
+					}
+				 }
+				else = {
+					giga_the_vat_07_clear = yes
+				}
+			}
+		}
+	}
+}
+
+################## VAT clone flags for killing VAT leviathans
+# made to fire from on_ship_destroyed_perp
+# This = owner of ship 1 (combatant)
+# From = owner of ship 2 (destroyed)
+# FromFrom = ship 1
+# FromFromFrom = ship 2
+country_event = {
+    id = giga_vat_events.90000
+    is_triggered_only = yes
+    hide_window = yes
+    trigger = {
+		fromfromfrom = {
+			giga_is_vat_leviathan = yes
+		}
+    }
+
+    immediate = {
+        if = {
+            limit = {
+                fromfromfrom = {
+                    is_ship_size = giga_space_dragon
+                }
+            }
+            this = {
+				#country_event = giga_vat_events.90010
+            	set_country_flag = giga_vat_can_clone_dragon
+            }
+        }
+        if = {
+            limit = {
+                fromfromfrom = {
+                    is_ship_size = giga_wraith
+                }
+            }
+            this = {
+				#country_event = giga_vat_events.90020
+                set_country_flag = giga_vat_can_clone_wraith
+            }
+        }
+        if = {
+            limit = {
+                fromfromfrom = {
+                    is_ship_size = giga_elder_tiyanki
+                }
+            }
+            this = {
+				#country_event = giga_vat_events.90030
+                set_country_flag = giga_vat_can_clone_tiyanki
+            }
+        }
+        if = {
+            limit = {
+                fromfromfrom = {
+                    is_ship_size = giga_stellarite
+                }
+            }
+            this = {
+				#country_event = giga_vat_events.90040
+                set_country_flag = giga_vat_can_clone_stellarite
+            }
+        }
+        if = {
+            limit = {
+                fromfromfrom = {
+                    is_ship_size = giga_voidspawn
+                }
+            }
+            this = {
+				#country_event = giga_vat_events.90050
+                set_country_flag = giga_vat_can_clone_voidspawn
+            }
+        }
+		if = {
+            limit = {
+                fromfromfrom = {
+                    is_ship_size = giga_toxic_god
+                }
+            }
+            this = {
+				#country_event = giga_vat_events.90060
+                set_country_flag = giga_vat_can_clone_toxic_god
+            }
+			from = {
+				remove_country_flag = giga_vat_live_god
+			}
+        }
+    }
+}
+#On fleet disband for toxic god take off live god
+country_event = {
+    id = giga_vat_events.90001
+    is_triggered_only = yes
+    hide_window = yes
+    trigger = {
+        from = {
+            giga_is_vat_leviathan = yes
+        }
+    }
+
+    immediate = {
+		if = {
+            limit = { from = { is_ship_size = giga_toxic_god } }
+			remove_country_flag = giga_vat_live_god
+        }
+    }
+}
+
+#Sanity check on yearly pulse to make sure you don't have the flag for the toxic god unless you have a toxic god
+country_event = {
+    id = giga_vat_events.90002
+    is_triggered_only = yes
+    hide_window = yes
+    trigger = {
+		has_country_flag = giga_vat_live_god
+    }
+
+    immediate = {
+		if = {
+            limit = { NOT = { any_owned_ship = { is_ship_size = giga_toxic_god} } } #Pre-checking this just to help not cause extra load when its not needed
+			if = { 
+				limit = { NOT = { any_owned_megastructure = { has_megastructure_flag = giga_vat_01_grow_10 has_megastructure_flag = giga_vat_01_in_use} } } 
+				remove_country_flag = giga_vat_live_god
+			} 
+		}
+    }
+}

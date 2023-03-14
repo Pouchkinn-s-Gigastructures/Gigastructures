@@ -14,7 +14,7 @@ country_event = {
 		}
 		else = {
 			event_target:aeternum_birch_world = {
-				add_district = district_void_birch_structure
+				add_district = district_giga_birch_void_structure
 			}
 		}
 		country_event = { id = giga_aeternum.1001 days = 2 }
@@ -72,9 +72,9 @@ country_event = {
 				add_district = district_giga_birch_physma
 			}
 			else = {
-				add_district = district_void_birch_extraction
-				add_district = district_void_birch_matrioshka
-				add_district = district_void_birch_nidavellir
+				add_district = district_giga_birch_void_orykta
+				add_district = district_giga_birch_void_physma
+				add_district = district_giga_birch_void_ktisma
 			}
 
 			katzen_clear_capitals = yes
@@ -171,9 +171,13 @@ country_event = {
 		}
 		hidden_effect = {
 			remove_country_flag = aeternum_diplomacy_engaged
+			save_global_event_target_as = aeternum_war_not_aet
 			declare_war = {
 				target = event_target:birch_aeternum
 				attacker_war_goal = wg_aeternum_defence
+				effect ={
+					save_global_event_target_as = aeternum_crusade
+				}
 			}
 			country_event = { id = giga_aeternum.2001 days = 15 }
 		}
@@ -190,9 +194,13 @@ country_event = {
 		}
 		hidden_effect = {
 			remove_country_flag = aeternum_diplomacy_engaged
+			save_global_event_target_as = aeternum_war_not_aet
 			declare_war = {
 				target = event_target:birch_aeternum
 				attacker_war_goal = wg_aeternum_defence
+				effect ={
+					save_global_event_target_as = aeternum_crusade
+				}
 			}
 			country_event = { id = giga_aeternum.2001 days = 15 }
 		}
@@ -570,7 +578,7 @@ country_event = {
 				name = "aeternum_chain_1"
 				desc = "aeternum_chain_1_desc"
 				event_chain = "aeternum_chain"
-				location = event_target:aeternum_birch_world.solar_system
+				location = event_target:aeternum_birch_world
 			}
 		}
 		hidden_effect = {
@@ -690,7 +698,7 @@ country_event = {
 				name = "aeternum_chain_1"
 				desc = "aeternum_chain_1_desc"
 				event_chain = "aeternum_chain"
-				location = event_target:aeternum_birch_world.solar_system
+				location = event_target:aeternum_birch_world
 			}
 			event_target:birch_aeternum = {
 				country_event = { id = giga_aeternum.5002 }
@@ -756,11 +764,11 @@ country_event = {
 							}
 						}
 					}
-					create_starbase = { #Make a starbase
-						size = starbase_citadel
-						owner = event_target:birch_aeternum
-					}
-					create_aeternum_home_citadel = yes
+					# create_starbase = { #Make a starbase
+					# 	size = starbase_citadel
+					# 	owner = event_target:birch_aeternum
+					# }
+					create_aeternum_citadel = yes
 				}
 			}
 		}
@@ -801,6 +809,15 @@ country_event = {
 		remove_global_flag = aeternum_awakening_started
 		set_global_flag = aeternum_awakening_ongoing
 		set_global_flag = early_aeternum_awakening
+		if = {
+			limit = {
+				OR = {
+					last_resolution_changed = resolution_pre_emptive_aeternum_war
+					last_resolution_changed = resolution_pre_emptive_aeternum_war_empire
+				}
+			}
+			save_global_event_target_as = aeternum_war_not_aet
+		}
 		every_country = {
 			limit = { is_ai = no }
 			country_event = { id = giga_aeternum.4001 } #inform the players
@@ -1067,11 +1084,11 @@ country_event = {
 							}
 						}
 					}
-					create_starbase = { #Make a starbase
-						size = starbase_citadel
-						owner = event_target:birch_aeternum
-					}
-					create_aeternum_home_citadel = yes
+					# create_starbase = { #Make a starbase
+					# 	size = starbase_citadel
+					# 	owner = event_target:birch_aeternum
+					# }
+					create_aeternum_citadel = yes
 				}
 			}
 		}
@@ -1186,10 +1203,10 @@ country_event = {
 							}
 						}
 					}
-					create_starbase = { #Make a starbase
-						size = starbase_citadel
-						owner = event_target:birch_aeternum
-					}
+					# create_starbase = { #Make a starbase
+					# 	size = starbase_aet
+					# 	owner = event_target:birch_aeternum
+					# }
 					create_aeternum_home_citadel = yes
 				}
 			}
@@ -1203,7 +1220,7 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		random_country = {
+		every_country = {
 			limit = {
 				is_ai = yes
 				OR = {
@@ -1214,11 +1231,29 @@ country_event = {
 				}
 				NOT = { is_at_war_with = event_target:birch_aeternum }
 			}
-			ROOT = {
-				declare_war = {
-					target = PREV
-					attacker_war_goal = "wg_aeternum_conquest"
-					name = "Aeternal Reclamation"
+			if = {
+				limit = {
+					exists = event_target:aeternum_crusade
+				}
+				join_war_on_side = {
+					war = event_target:aeternum_crusade
+					side = event_target:aeternum_war_not_aet
+				}
+			}
+			else = {
+				save_event_target_as = aet_war_selection
+				event_target:birch_aeternum = {
+					declare_war = {
+						target = event_target:aet_war_selection
+						attacker_war_goal = "wg_aeternum_conquest"
+						name = "Aeternal Reclamation"
+						effect ={
+							save_global_event_target_as = aeternum_crusade
+							event_target:aet_war_selection = {
+								save_global_event_target_as = aeternum_war_not_aet
+							}
+						}
+					}
 				}
 			}
 		}
@@ -1320,11 +1355,26 @@ country_event = {
 			remove_country_flag = aeternum_diplomacy_engaged
 			if = {
 				limit = { ROOT = { NOT = { is_at_war_with = event_target:birch_aeternum } } }
-				event_target:birch_aeternum = {
-					declare_war = {
-						target = ROOT
-						attacker_war_goal = "wg_aeternum_conquest"
-						name = "Aeternal Reclamation"
+				if = {
+					limit = { exists = event_target:aeternum_crusade }
+					join_war_on_side = {
+						war = event_target:aeternum_crusade
+						side = event_target:aeternum_war_not_aet
+					}
+				}
+				else = {
+					event_target:birch_aeternum = {
+						declare_war = {
+							target = ROOT
+							attacker_war_goal = "wg_aeternum_conquest"
+							name = "Aeternal Reclamation"
+							effect ={
+								save_global_event_target_as = aeternum_crusade
+								ROOT = {
+									save_global_event_target_as = aeternum_war_not_aet
+								}
+							}
+						}
 					}
 				}
 			}
@@ -1345,12 +1395,27 @@ country_event = {
 		hidden_effect = {
 			remove_country_flag = aeternum_diplomacy_engaged
 			if = {
-				limit = { ROOT = { NOT = { is_at_war_with = event_target:birch_aeternum } } }
-				event_target:birch_aeternum = {
-					declare_war = {
-						target = ROOT
-						attacker_war_goal = "wg_aeternum_conquest"
-						name = "Aeternal Reclamation"
+				limit = { ROOT = { NOR = { is_at_war_with = event_target:birch_aeternum is_same_empire = event_target:birch_aeternum } } }
+				if = {
+					limit = { exists = event_target:aeternum_crusade }
+					join_war_on_side = {
+						war = event_target:aeternum_crusade
+						side = event_target:aeternum_war_not_aet
+					}
+				}
+				else = {
+					event_target:birch_aeternum = {
+						declare_war = {
+							target = ROOT
+							attacker_war_goal = "wg_aeternum_conquest"
+							name = "Aeternal Reclamation"
+							effect ={
+								save_global_event_target_as = aeternum_crusade
+								ROOT = {
+									save_global_event_target_as = aeternum_war_not_aet
+								}
+							}
+						}
 					}
 				}
 			}
@@ -1367,11 +1432,26 @@ country_event = {
 			remove_country_flag = aeternum_diplomacy_engaged
 			if = {
 				limit = { ROOT = { NOT = { is_at_war_with = event_target:birch_aeternum } } }
-				event_target:birch_aeternum = {
-					declare_war = {
-						target = ROOT
-						attacker_war_goal = "wg_aeternum_conquest"
-						name = "Aeternal Reclamation"
+				if = {
+					limit = { exists = event_target:aeternum_crusade }
+					join_war_on_side = {
+						war = event_target:aeternum_crusade
+						side = event_target:aeternum_war_not_aet
+					}
+				}
+				else = {
+					event_target:birch_aeternum = {
+						declare_war = {
+							target = ROOT
+							attacker_war_goal = "wg_aeternum_conquest"
+							name = "Aeternal Reclamation"
+							effect ={
+								save_global_event_target_as = aeternum_crusade
+								ROOT = {
+									save_global_event_target_as = aeternum_war_not_aet
+								}
+							}
+						}
 					}
 				}
 			}
@@ -1388,11 +1468,26 @@ country_event = {
 			remove_country_flag = aeternum_diplomacy_engaged
 			if = {
 				limit = { ROOT = { NOT = { is_at_war_with = event_target:birch_aeternum } } }
-				event_target:birch_aeternum = {
-					declare_war = {
-						target = ROOT
-						attacker_war_goal = "wg_aeternum_conquest"
-						name = "Aeternal Reclamation"
+				if = {
+					limit = { exists = event_target:aeternum_crusade }
+					join_war_on_side = {
+						war = event_target:aeternum_crusade
+						side = event_target:aeternum_war_not_aet
+					}
+				}
+				else = {
+					event_target:birch_aeternum = {
+						declare_war = {
+							target = ROOT
+							attacker_war_goal = "wg_aeternum_conquest"
+							name = "Aeternal Reclamation"
+							effect ={
+								save_global_event_target_as = aeternum_crusade
+								ROOT = {
+									save_global_event_target_as = aeternum_war_not_aet
+								}
+							}
+						}
 					}
 				}
 			}
@@ -1409,11 +1504,26 @@ country_event = {
 			remove_country_flag = aeternum_diplomacy_engaged
 			if = {
 				limit = { ROOT = { NOT = { is_at_war_with = event_target:birch_aeternum } } }
-				event_target:birch_aeternum = {
-					declare_war = {
-						target = ROOT
-						attacker_war_goal = "wg_aeternum_conquest"
-						name = "Aeternal Reclamation"
+				if = {
+					limit = { exists = event_target:aeternum_crusade }
+					join_war_on_side = {
+						war = event_target:aeternum_crusade
+						side = event_target:aeternum_war_not_aet
+					}
+				}
+				else = {
+					event_target:birch_aeternum = {
+						declare_war = {
+							target = ROOT
+							attacker_war_goal = "wg_aeternum_conquest"
+							name = "Aeternal Reclamation"
+							effect ={
+								save_global_event_target_as = aeternum_crusade
+								ROOT = {
+									save_global_event_target_as = aeternum_war_not_aet
+								}
+							}
+						}
 					}
 				}
 			}
@@ -1448,6 +1558,16 @@ planet_event = { #colossus
 	immediate = {
 		destroy_colony = yes
 		change_pc = pc_shrouded
+		every_country = {
+			limit = {
+				has_event_chain = "aeternum_chain"
+			}
+			add_event_chain_counter = {
+				event_chain = "aeternum_chain"
+				counter = "aeternum_shroud_count"
+				amount = 1
+			}
+		}
 	}
 }
 
@@ -1462,6 +1582,7 @@ planet_event = { #bombing
 			habitable_structure = no
 			is_planet_class = pc_habitat
 			is_planet_class = pc_gigaorbital_ring
+			is_planet_class = pc_giga_elysium
 		}
 		from = { is_country_type = dormant_aeternum }
 	}
@@ -1505,9 +1626,28 @@ country_event = {
 					is_country_type = default
 					NOT = { is_at_war_with = event_target:birch_aeternum }
 				}
-				declare_war = {
-					target = event_target:birch_aeternum
-					attacker_war_goal = wg_aeternum_defence
+				join_war_on_side = {
+					war = event_target:aeternum_crusade
+					side = event_target:aeternum_war_not_aet
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_country = { 
+					has_completed_special_project_in_log = INVESTIGATE_AETERNUM_PLANETCRAFT 
+					NOT = { has_country_flag = analysed_aeternite_planetcraft } 
+				}
+			}
+			every_country = {#Failsafe
+				limit = { 
+					has_completed_special_project_in_log = INVESTIGATE_AETERNUM_PLANETCRAFT 
+					NOT = { has_country_flag = analysed_aeternite_planetcraft } 
+				}
+				set_country_flag = analysed_aeternite_planetcraft
+				while = {
+					count = 3 
+					increase_aeternite_intel = yes
 				}
 			}
 		}
@@ -1541,6 +1681,7 @@ country_event = {
 					}
 				}
 			}
+			set_update_modifiers_batch = begin
 			every_country = {
 				limit = {
 					NOT = { is_country = event_target:birch_aeternum }
@@ -1565,6 +1706,7 @@ country_event = {
 					}
 				}
 			}
+			set_update_modifiers_batch = end
 		}
 		if = {
 			limit = { has_global_flag = giga_core_aeternum_1 }
@@ -1602,7 +1744,8 @@ country_event = {
 				}
 			}
 		}
-		event_target:birch_aeternum = {
+		
+		event_target:birch_aeternum = { # 28/1/23 - Bread Changes
 			country_event = { id = giga_aeternum.4100 days = 30 } #do it again
 			if = { #resettle pops to alondia
 				limit = {
@@ -1611,46 +1754,150 @@ country_event = {
 						has_orbital_bombardment = no
 					}
 				}
-				every_owned_pop = {
+				set_update_modifiers_batch = begin
+				every_owned_planet = {
 					limit = {
-						planet = {
-							is_colony = yes
-							owner = { is_country_type = dormant_aeternum }
-							NOT = { is_planet_class = pc_birch }
-							has_ground_combat = no
-							has_orbital_bombardment = no
+						is_colony = yes
+						owner = { is_country_type = dormant_aeternum }
+						NOR = { 
+							is_planet_class = pc_birch 
+							is_planet_class = pc_void_birch #Lux aeternum no longer resettle the birch to the birch
 						}
+						has_ground_combat = no
+						has_orbital_bombardment = no
 					}
-					random = {
-						chance = 25
-						resettle_pop = {
-							pop = THIS
-							planet = event_target:aeternum_birch_world
-						}
-					}
-					if = { #shroud planets with less than 10 pops
-						limit = { planet = { count_owned_pop = { count < 10 } } }
-						planet = {
-							every_owned_pop = {
+
+					if = { #shroud planets with less than 30 pops
+						limit = { count_owned_pop = { count > 30 } } #Raised the colony clear cap so that it clears sooner, resulting in fewer bouts of monthly lag overall - Bread
+						every_owned_pop = {
+							limit = {
+								planet = {
+									is_colony = yes
+									owner = { is_country_type = dormant_aeternum }
+									NOR = { 
+										is_planet_class = pc_birch 
+										is_planet_class = pc_void_birch
+									}
+									has_ground_combat = no
+									has_orbital_bombardment = no
+								}
+							}
+							random = {
+								chance = 25
 								resettle_pop = {
 									pop = THIS
 									planet = event_target:aeternum_birch_world
 								}
 							}
-							destroy_colony = yes
+						}
+					}
+					if = {
+						limit = {  count_owned_pop = { count <= 30 } }
+						every_owned_pop = {
+							limit = {
+								planet = {
+									is_colony = yes
+									owner = { is_country_type = dormant_aeternum }
+									NOR = { 
+										is_planet_class = pc_birch 
+										is_planet_class = pc_void_birch
+									}
+									has_ground_combat = no
+									has_orbital_bombardment = no
+								}
+							}
+							resettle_pop = {
+								pop = THIS
+								planet = event_target:aeternum_birch_world
+							}
+						}
+						destroy_colony = yes
+						if = {
+							limit = { NOT = { is_artificial = yes }  }
 							change_pc = pc_shrouded
+						}
+						else_if = {
+							limit = { 		
+								is_giga_standard_ringworld = yes
+							}
+							change_pc = pc_ringworld_habitable_shrouded
+							if = {
+								limit = { has_planet_flag = giga_ringworld_gar }
+								set_planet_entity = { entity = "gargantuan_shrouded_habitable_sector_01_entity" graphical_culture = this }
+							}
+							else_if = {
+								limit = { has_planet_flag = giga_ringworld_beh } 
+								set_planet_entity = { entity = "behemoth_shrouded_habitable_sector_entity" graphical_culture = this }
+							}
+							else_if = {
+								limit = { has_planet_flag = giga_ringworld_tit } 
+								set_planet_entity = { entity = "titanic_shrouded_habitable_sector_entity" graphical_culture = this }
+							}
+							else = {
+								set_planet_entity = { entity = "vanilla_shrouded_habitable_entity" graphical_culture = this }
+							}
+						}
+						else_if = {
+							limit = { 		
+								is_planet_class = pc_squareworld_habitable
+							}
+							change_pc = pc_squareworld_shrouded_habitable #Not even the funny square is safe from me
+						}
+						else_if = {
+							limit = {
+								is_planet_class = pc_giga_penrose_habitable
+							}
+							change_pc = pc_giga_penrose_shrouded_habitable
+						}
+						else_if = {
+							limit = {
+								is_planet_class = pc_equatorial_shipyard
+							}
+							change_pc = pc_shrouded_equatorial_shipyard
+						}
+						else_if = {
+							limit = {
+								is_planet_class = pc_interstellar_ringworld_habitable
+							}
+							change_pc = pc_interstellar_shrouded_ringworld_habitable
+						}
+						else = { #kind of a stopgap until I can make proper shrouded habitable entities later
+							add_modifier = {
+								modifier = beacon_shrouded_habitable_structure
+								days = -1
+							}
+							create_ambient_object = {
+								type = aeternum_consecrated_shroud
+								location = this
+								use_3d_location = yes
+								entity_scale_to_size = yes
+							}
+						}
+						every_country = { #adds to the shroud counter, since apparently they shroud worlds from resettling also, and not only colossus. - Bread
+							limit = {
+								has_event_chain = "aeternum_chain"
+							}
+							add_event_chain_counter = {
+								event_chain = "aeternum_chain"
+								counter = "aeternum_shroud_count"
+								amount = 1
+							}
 						}
 					}
 				}
+				set_update_modifiers_batch = end
 			}
+
 			if = {
 				limit = { NOT = { has_country_flag = alondia_made_ships_recently } } # The birch world makes ships
 				event_target:aeternum_birch_world = {
 					random_list = {
 						50 = {
+							spawn_aeternite_troop_fleet = yes
 							spawn_aeternite_small_fleet = yes
 						}
 						50 = {
+							spawn_aeternite_troop_fleet = yes
 							spawn_aeternite_big_fleet = yes
 						}
 					}
@@ -1686,10 +1933,11 @@ country_event = {
 								}
 							}
 						}
-						create_starbase = { #Make a starbase
-							size = starbase_citadel
-							owner = event_target:birch_aeternum
-						}
+						# create_starbase = { #Make a starbase
+						# 	size = starbase_citadel
+						# 	owner = event_target:birch_aeternum
+						# }
+						create_aeternum_citadel = yes
 					}
 				}
 				set_timed_country_flag = {
@@ -2213,7 +2461,7 @@ country_event = {
 }
 
 #planetcraft analysed
-country_event = {
+ship_event = {
 	id = giga_aeternum.4131
 	title = "giga_aeternum.4131.name"
 	desc = "giga_aeternum.4131.desc"
@@ -2225,12 +2473,14 @@ country_event = {
 		name = "giga_aeternum.4131.a"
 		custom_tooltip = "giga_aeternum_3_intel_tooltip"
 		hidden_effect = {
-			set_country_flag = analysed_aeternite_planetcraft
-			while = {
-				count = 3
-				increase_aeternite_intel = yes
+			owner = {
+				set_country_flag = analysed_aeternite_planetcraft
+				while = {
+					count = 3
+					increase_aeternite_intel = yes
+				}
+				event_target:giga_temp_aet_planet = { destroy_ambient_object = this }
 			}
-			event_target:giga_temp_aet_planet = { destroy_ambient_object = this }
 		}
 	}
 }
@@ -2431,7 +2681,41 @@ country_event = {
 	}
 }
 
-#no more AAA
+# Aiondia gets bombed and the aeternum takes the L
+# This = Planet
+# From = Bombarder
+planet_event = {
+	id = giga_aeternum.43001
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_planet_flag = aeternum_birch_world
+		has_global_flag = aeternum_awakening_ongoing
+	}
+
+	immediate = {
+		# give_technology = { tech = giga_tech_birch_world_2 }
+		# give_technology = { tech = giga_tech_birch_world_3 }
+		# give_technology = { tech = giga_tech_birch_world_4 }
+		# set_country_flag = already_owned_aiondia 
+		remove_all_buildings = yes #Aiondia bombed out, so all the ruined buildings should go bye
+		set_global_flag = giga_aiondia_bombed
+		from = { 
+			save_global_event_target_as = aeternite_conqueror 
+			country_event = { id = giga_aeternum.4301 } #fall event
+			country_event = { id = giga_aeternum.4303 days = 15 }
+		}
+		every_country = {
+			limit = {
+				NOT = { is_country = event_target:aeternite_conqueror }
+			}
+			country_event = { id = giga_aeternum.4302 }
+		}
+	}
+}
+
+#AAA Won now go home
 country_event = {
 	id = giga_aeternum.8040
 	title = "giga_aeternum.8040.name"
@@ -2445,12 +2729,47 @@ country_event = {
 		custom_tooltip = "giga_aeternum.8040.a.tooltip"
 	}
 }
+#AAA lost/ all members left
+#This event should only fire in a very very few circumstances since its usually a gameover.
+country_event = {
+	id = giga_aeternum.8041
+	title = "giga_aeternum.8041.name"
+	desc = "giga_aeternum.8041.desc"
+	picture = GFX_evt_arguing_senate
+	show_sound = event_announcement
+	is_triggered_only = yes
 
+	option = {
+		name = "giga_aeternum.8041.a"
+		custom_tooltip = "giga_aeternum.8041.a.tooltip"
+	}
+}
+#AAA Disbanded in favor of empire
+country_event = {
+	id = giga_aeternum.8042
+	title = "giga_aeternum.8042.name"
+	desc = "giga_aeternum.8042.desc"
+	picture = GFX_evt_arguing_senate
+	show_sound = event_announcement
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_aeternum.8042.a"
+		custom_tooltip = "giga_aeternum.8042.a.tooltip"
+	}
+}
 #alondia falls!
 country_event = {
 	id = giga_aeternum.4301
 	title = "giga_aeternum.4301.name"
-	desc = "giga_aeternum.4301.desc"
+	desc = {
+		trigger = { NOT = { has_global_flag = giga_aiondia_bombed } }	
+		text = "giga_aeternum.4301.desc"
+	}
+	desc = {
+		trigger = { has_global_flag = giga_aiondia_bombed }
+		text = "giga_aeternum.4301.desc_bombed" #Aiondia got bombed, slightly different description
+	}
 	picture = GFX_evt_victorious_army
 	show_sound = event_celebration
 	is_triggered_only = yes
@@ -2488,7 +2807,14 @@ country_event = {
 country_event = {
 	id = giga_aeternum.4302
 	title = "giga_aeternum.4302.name"
-	desc = "giga_aeternum.4302.desc"
+	desc = {
+		trigger = { NOT = { has_global_flag = giga_aiondia_bombed } }	
+		text = "giga_aeternum.4302.desc"
+	}
+	desc = {
+		trigger = { has_global_flag = giga_aiondia_bombed }
+		text = "giga_aeternum.4302.desc_bombed" #Aiondia got bombed, slightly different description
+	}
 	picture = GFX_evt_victorious_army
 	show_sound = event_celebration
 	is_triggered_only = yes
@@ -2600,6 +2926,7 @@ country_event = {
 				limit = {
 					has_event_chain = aeternum_chain
 					NOR = {
+						has_special_project = INVESTIGATE_AETERNUM_FORGE
 						has_special_project = INVESTIGATE_AETERNUM_PLANETCRAFT
 						has_special_project = INVESTIGATE_AETERNUM_INTEL
 					}
@@ -2614,7 +2941,14 @@ country_event = {
 country_event = {
 	id = giga_aeternum.4305
 	title = "giga_aeternum.4305.name"
-	desc = "giga_aeternum.4305.desc"
+	desc = {
+		trigger = { NOT = { has_global_flag = giga_aiondia_bombed } }	
+		text = "giga_aeternum.4305.desc"
+	}
+	desc = {
+		trigger = { has_global_flag = giga_aiondia_bombed }
+		text = "giga_aeternum.4305.desc_bombed" #Aiondia got bombed, slightly different description
+	}
 	picture = GFX_evt_clocks
 	show_sound = event_mystic_reveal
 	is_triggered_only = yes
@@ -2666,6 +3000,7 @@ country_event = {
 		any_planet_within_border = {
 			is_colony = yes
 			has_planet_flag = aeternum_birch_world
+			planet_is_hostile = no
 		}
 	}
 
@@ -3503,27 +3838,32 @@ country_event = {
 		name = "giga_aeternum.4400.a"
 		custom_tooltip = "giga_aeternum.4400.a.tooltip"
 		if = {
-			limit = { has_country_flag = large_aiondia_exp }
-			random_list = {
-				1 = { add_resource = { minor_artifacts = 100 } hidden_effect = { change_variable = { which = aet_expedition_total_artifact_count value = 100 } } }
-				1 = { add_resource = { minor_artifacts = 150 } hidden_effect = { change_variable = { which = aet_expedition_total_artifact_count value = 150 } } }
-				1 = { add_resource = { minor_artifacts = 200 } hidden_effect = { change_variable = { which = aet_expedition_total_artifact_count value = 200 } } }
+			limit = {
+				has_ancrel = yes
 			}
-		}
-		if = {
-			limit = { has_country_flag = med_aiondia_exp }
-			random_list = {
-				1 = { add_resource = { minor_artifacts = 50 } hidden_effect = {  change_variable = { which = aet_expedition_total_artifact_count value = 50 } } }
-				1 = { add_resource = { minor_artifacts = 100 } hidden_effect = { change_variable = { which = aet_expedition_total_artifact_count value = 100 } } }
-				1 = { add_resource = { minor_artifacts = 150 } hidden_effect = { change_variable = { which = aet_expedition_total_artifact_count value = 150 } } }
+			if = {
+				limit = { has_country_flag = large_aiondia_exp }
+				random_list = {
+					1 = { add_resource = { minor_artifacts = 1000 } hidden_effect = { change_variable = { which = aet_expedition_total_artifact_count value = 1000 } } }
+					1 = { add_resource = { minor_artifacts = 1250 } hidden_effect = { change_variable = { which = aet_expedition_total_artifact_count value = 1250 } } }
+					1 = { add_resource = { minor_artifacts = 1500 } hidden_effect = { change_variable = { which = aet_expedition_total_artifact_count value = 1500 } } }
+				}
 			}
-		}
-		if = {
-			limit = { has_country_flag = small_aiondia_exp }
-			random_list = {
-				1 = { add_resource = { minor_artifacts = 25 } hidden_effect = { change_variable = { which = aet_expedition_total_artifact_count value = 25 } } }
-				1 = { add_resource = { minor_artifacts = 35 } hidden_effect = { change_variable = { which = aet_expedition_total_artifact_count value = 35 } } }
-				1 = { add_resource = { minor_artifacts = 50 } hidden_effect = {  change_variable = { which = aet_expedition_total_artifact_count value = 50 } } }
+			if = {
+				limit = { has_country_flag = med_aiondia_exp }
+				random_list = {
+					1 = { add_resource = { minor_artifacts = 500 } hidden_effect = {  change_variable = { which = aet_expedition_total_artifact_count value = 500 } } }
+					1 = { add_resource = { minor_artifacts = 750 } hidden_effect = { change_variable = { which = aet_expedition_total_artifact_count value = 750 } } }
+					1 = { add_resource = { minor_artifacts = 1000 } hidden_effect = { change_variable = { which = aet_expedition_total_artifact_count value = 1000 } } }
+				}
+			}
+			if = {
+				limit = { has_country_flag = small_aiondia_exp }
+				random_list = {
+					1 = { add_resource = { minor_artifacts = 250 } hidden_effect = { change_variable = { which = aet_expedition_total_artifact_count value = 250 } } }
+					1 = { add_resource = { minor_artifacts = 350 } hidden_effect = { change_variable = { which = aet_expedition_total_artifact_count value = 350 } } }
+					1 = { add_resource = { minor_artifacts = 500 } hidden_effect = {  change_variable = { which = aet_expedition_total_artifact_count value = 500 } } }
+				}
 			}
 		}
 		hidden_effect = {
@@ -3943,12 +4283,19 @@ country_event = {
 		add_resource = {
 			alloys = 10000
 			energy = 20000
-			minor_artifacts = 100
+		}
+		if = {
+			limit = {
+				has_ancrel = yes
+			}
+			add_resource = {
+				minor_artifacts = 500
+			}
 		}
 		hidden_effect = {
 			change_variable = {
 				which = aet_expedition_total_artifact_count
-				value = 100
+				value = 500
 			}
 			change_variable = {
 				which = aet_expedition_total_discovery_count
@@ -3968,14 +4315,19 @@ country_event = {
 			resource = engineering_research
 			value = 12
 		}
-		add_resource = {
-			minor_artifacts = 100
+		if = {
+			limit = {
+				has_ancrel = yes
+			}
+			add_resource = {
+				minor_artifacts = 500
+			}
 		}
 		hidden_effect = {
 			increase_aeternite_intel = yes
 			change_variable = {
 				which = aet_expedition_total_artifact_count
-				value = 100
+				value = 500
 			}
 			change_variable = {
 				which = aet_expedition_total_discovery_count
@@ -4281,7 +4633,14 @@ country_event = {
 		}
 		add_resource = {
 			alloys = 25000
-			minor_artifacts = 100
+		}
+		if = {
+			limit = {
+				has_ancrel = yes
+			}
+			add_resource = {
+				minor_artifacts = 500
+			}
 		}
 		hidden_effect = {
 			change_variable = {
@@ -4290,7 +4649,7 @@ country_event = {
 			}
 			change_variable = {
 				which = aet_expedition_total_artifact_count
-				value = 100
+				value = 500
 			}
 		}
 	}
@@ -4910,12 +5269,14 @@ country_event = {
 			alloys = 50000
 		}
 		event_target:aeternum_birch_world = {
+			set_update_modifiers_batch = begin #Helps reduce lag from making all the pops
 			while = {
 				count = 80
 				create_pop = {
 					species = event_target:aet_birch_civilisation
 				}
 			}
+			set_update_modifiers_batch = end
 		}
 		hidden_effect = {
 			if = { limit = { has_country_flag = aet_exp_civ_primitive } remove_country_flag = aet_exp_civ_primitive }
@@ -5243,7 +5604,7 @@ country_event = {
 	title = "giga_aeternum.43251.name"
 	desc = "giga_aeternum.43251.desc"
 	picture = GFX_evt_medieval_alien_civilization
-	show_sound = event_primitive_civilization
+	show_sound = event_pre_ftl_civilization
 	is_triggered_only = yes
 
 	immediate = {
@@ -5393,8 +5754,13 @@ country_event = {
 
 	option = {
 		name = "giga_aeternum.43253.a"
-		add_resource = {
-			minor_artifacts = 10
+		if = {
+			limit = {
+				has_ancrel = yes
+			}
+			add_resource = {
+				minor_artifacts = 100
+			}
 		}
 		hidden_effect = {
 			change_variable = {
@@ -5457,8 +5823,13 @@ country_event = {
 	option = {
 		name = "giga_aeternum.43241.a"
 		custom_tooltip = "giga_aeternum_1_intel_tooltip"
-		add_resource = {
-			minor_artifacts = 300
+		if = {
+			limit = {
+				has_ancrel = yes
+			}
+			add_resource = {
+				minor_artifacts = 1500
+			}
 		}
 		trigger = {
 			OR = {
@@ -5476,7 +5847,7 @@ country_event = {
 			increase_aeternite_intel = yes
 			change_variable = {
 				which = aet_expedition_total_artifact_count
-				value = 300
+				value = 1500
 			}
 			change_variable = {
 				which = aet_expedition_total_discovery_count
@@ -5492,8 +5863,13 @@ country_event = {
 	option = {
 		name = "giga_aeternum.43241.b"
 		custom_tooltip = "giga_aeternum_1_intel_tooltip"
-		add_resource = {
-			minor_artifacts = 100
+		if = {
+			limit = {
+				has_ancrel = yes
+			}
+			add_resource = {
+				minor_artifacts = 500
+			}
 		}
 		trigger = {
 			check_variable = {
@@ -5509,7 +5885,7 @@ country_event = {
 			increase_aeternite_intel = yes
 			change_variable = {
 				which = aet_expedition_total_artifact_count
-				value = 100
+				value = 500
 			}
 			change_variable = {
 				which = aet_expedition_total_discovery_count
@@ -6787,8 +7163,14 @@ country_event = {
 		every_system = { #remove captured systems
 			limit = {
 				has_star_flag = aeternum_already_counted
-				owner = {
-					NOT = { is_country_type = dormant_aeternum }
+				OR = {
+					AND = {
+						exists = owner
+						owner = {
+							NOT = { is_country_type = dormant_aeternum }
+						}
+					}
+					NOT = { exists = owner }
 				}
 			}
 			remove_star_flag = aeternum_already_counted
@@ -6932,7 +7314,7 @@ country_event = {
 		every_country = {
 			limit = { has_country_flag = is_in_anti_aeternite_alliance }
 			every_country = {
-				limit = { has_country_flag = is_in_anti_aeternite_alliance }
+				limit = { has_country_flag = is_in_anti_aeternite_alliance NOT = { is_same_empire = PREV } }
 				add_opinion_modifier = {
 					who = PREV
 					modifier = opinion_put_differences_aside_aeternum
@@ -6975,6 +7357,7 @@ country_event = { #New Galcom members join AAA
 
 	trigger = {
 		has_global_flag = galcom_anti_aeternite_league_formed
+		NOT = { is_active_resolution = resolution_custodian_form_empire }
 	}
 
 	immediate = {
@@ -7012,6 +7395,7 @@ country_event = { #Remove countries from AAA
 
 	trigger = {
 		has_global_flag = galcom_anti_aeternite_league_formed
+		NOT = { is_active_resolution = resolution_custodian_form_empire }
 	}
 
 	immediate = {
@@ -7095,7 +7479,7 @@ country_event = {
 							country_event = { id = giga_aeternum.8022 }
 						}
 						every_country = {
-							limit = { has_country_flag = is_in_anti_aeternite_alliance }
+							limit = { has_country_flag = is_in_anti_aeternite_alliance NOT = { is_same_empire = event_target:precursor_invited_to_aaa } }
 							add_opinion_modifier = {
 								who = event_target:precursor_invited_to_aaa
 								modifier = opinion_put_differences_aside_aeternum
@@ -7266,6 +7650,34 @@ event = {
 				}
 			}
 		}
+		else_if = {
+			limit = { #Its gone? stopped existing one way or another.
+				NOT = { is_active_resolution = resolution_custodian_form_empire }
+				NOT = { exists = event_target:anti_aeternite_federation } 
+				has_global_flag = galcom_anti_aeternite_league_formed 
+			} 
+			remove_global_flag = galcom_anti_aeternite_league_formed
+			every_country = {
+				if = {
+					limit = { has_country_flag = ai_no_leave_fed }
+					remove_country_flag = ai_no_leave_fed
+				}
+				remove_modifier = anti_aeternite_league_emergency
+				country_event = { id = giga_aeternum.8041 }	
+				every_country = {
+					limit = {
+						has_opinion_modifier = {
+							who = PREV
+							modifier = opinion_put_differences_aside_aeternum
+						}
+					}
+					remove_opinion_modifier = {
+						who = PREV
+						modifier = opinion_put_differences_aside_aeternum
+					}
+				}
+			}
+		}
 		else = {
 			event_target:anti_aeternite_federation = {
 				if = {
@@ -7287,6 +7699,9 @@ event = {
 				every_country = {
 					limit = {
 						is_galactic_community_member = yes
+						any_federation = {
+							has_federation_flag = anti_aeternite_alliance
+						}
 						OR = {
 							has_federation = no
 							federation = { NOT = { has_federation_flag = anti_aeternite_alliance } }
@@ -7319,6 +7734,53 @@ event = {
 }
 
 country_event = {
+	id = giga_aeternum.80241 #Imperium formation means it has to go and it has to be done on its own
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_global_flag = galcom_anti_aeternite_league_formed
+		last_resolution_changed = resolution_custodian_form_empire
+	}
+
+	immediate = {
+		remove_global_flag = galcom_anti_aeternite_league_formed
+		set_global_flag = giga_aaa_imperial_decree
+		every_country = {
+			limit = {
+				has_federation = yes
+				federation = { has_federation_flag = anti_aeternite_alliance }
+			}
+			remove_country_flag = is_in_anti_aeternite_alliance
+			if = {
+				limit = { has_federation = yes }
+				leave_alliance = { override_requirements = yes }
+			}
+			if = {
+				limit = { has_country_flag = ai_no_leave_fed }
+				remove_country_flag = ai_no_leave_fed
+			}
+			remove_modifier = anti_aeternite_league_emergency
+		}
+		every_country = {
+			country_event = { id = giga_aeternum.8042 }
+			every_country = {
+				limit = {
+					has_opinion_modifier = {
+						who = PREV
+						modifier = opinion_put_differences_aside_aeternum
+					}
+				}
+				remove_opinion_modifier = {
+					who = PREV
+					modifier = opinion_put_differences_aside_aeternum
+				}
+			}
+		}
+	}
+}
+
+country_event = {
 	id = giga_aeternum.8025
 	hide_window = yes
 	is_triggered_only = yes
@@ -7328,14 +7790,40 @@ country_event = {
 	immediate = {
 		remove_country_flag = is_in_anti_aeternite_alliance
 		remove_modifier = anti_aeternite_league_emergency
-		remove_from_galactic_community = yes 
+		if = {
+			limit = {
+				NOR = { 
+					is_galactic_custodian = yes 
+					AND = {
+						is_subject = yes
+						galactic_custodian = {
+							is_overlord_to = prev
+						}
+					}
+				}
+				any_galcom_member = {
+					NOT = { is_same_empire = prev }
+				}
+			}
+			remove_from_galactic_community = yes 
+		}
 	}
 }
 
 country_event = { #AAA attacks aeternum
 	id = giga_aeternum.8030
 	title = "giga_aeternum.8030.name"
-	desc = "giga_aeternum.8030.desc"
+	desc = {
+		trigger = { 
+			has_global_flag = galcom_anti_aeternite_league_formed 
+			NOT = { last_resolution_changed = resolution_pre_emptive_aeternum_war_empire } 
+		}	
+		text = "giga_aeternum.8030.desc"
+	}
+	desc = {
+		trigger = { last_resolution_changed = resolution_pre_emptive_aeternum_war_empire }
+		text = "giga_aeternum.8030.desc_empire" #The empire is coming for Aiondia
+	}
 	picture = GFX_evt_machine_space_battle
 	show_sound = event_ground_battle
 
@@ -7343,6 +7831,10 @@ country_event = { #AAA attacks aeternum
 
 	option = {
 		name = "giga_aeternum.8030.a"
+		trigger = {
+			has_global_flag = galcom_anti_aeternite_league_formed
+			NOT = { last_resolution_changed = resolution_pre_emptive_aeternum_war_empire } 
+		}
 		custom_tooltip = "giga_aeternum.8030.a.tooltip"
 		if = {
 			limit = { has_country_flag = is_in_anti_aeternite_alliance }
@@ -7352,6 +7844,22 @@ country_event = { #AAA attacks aeternum
 			}
 		}
 	}
+
+	option = {
+		name = "giga_aeternum.8030.b"
+		trigger = {
+			last_resolution_changed = resolution_pre_emptive_aeternum_war_empire
+		}
+		custom_tooltip = "giga_aeternum.8030.b.tooltip"
+		if = {
+			limit = { is_galactic_community_member = yes }
+			add_modifier = {
+				modifier = pre_emptive_aeternite_strike
+				days = 720
+			}
+		}
+	}
+
 }
 
 fleet_event = {
@@ -7513,7 +8021,7 @@ country_event = {
 		}
 		else = {
 			event_target:aeternum_birch_world = {
-				add_district = district_void_birch_structure
+				add_district = district_giga_birch_void_structure
 			}
 		}
 		country_event = { id = giga_aeternum.9992 days = 2 }
@@ -7532,14 +8040,14 @@ country_event = {
 
 			if = {
 				limit = { NOT = { has_global_flag = giga_core_aeternum_4 } }
-				add_district = district_giga_birch_extraction
+				add_district = district_giga_birch_orykta
 				add_district = district_giga_birch_ktisma
 				add_district = district_giga_birch_physma
 			}
 			else = {
-				add_district = district_void_birch_extraction
-				add_district = district_void_birch_matrioshka
-				add_district = district_void_birch_nidavellir
+				add_district = district_giga_birch_void_orykta
+				add_district = district_giga_birch_void_physma
+				add_district = district_giga_birch_void_ktisma
 			}
 
 			katzen_clear_capitals = yes
@@ -7585,5 +8093,55 @@ ship_event = {
 
 	immediate = {
 		destroy_ship = ROOT
+	}
+}
+# Citadel Cleanup
+# This = Ship
+# From = Disabler Ship
+ship_event = {
+	id = giga_aeternum.6100
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_ship_size = starbase_aet
+		owner = { is_country_type = dormant_aeternum }
+	}
+
+	immediate = {
+		solar_system = {
+			starbase = {
+				set_owner = prevprev.from.owner
+				set_starbase_size = starbase_citadel
+				set_starbase_module = {
+					slot = 1
+					module = gun_battery
+				}
+				set_starbase_module = {
+					slot = 2
+					module = gun_battery
+				}
+				set_starbase_module = {
+					slot = 3
+					module = gun_battery
+				}
+				set_starbase_module = {
+					slot = 4
+					module = gun_battery
+				}
+				set_starbase_module = {
+					slot = 5
+					module = hangar_bay
+				}
+				set_starbase_module = {
+					slot = 6
+					module = hangar_bay
+				}
+				set_starbase_building = {
+					slot = 1
+					building = target_uplink_computer
+				}
+			}
+		}
 	}
 }
