@@ -5059,17 +5059,17 @@ country_event = {
 
 	immediate = {
 		set_global_flag = giga_pouchkinn_engine_activated
-		every_system = {
-			limit = {
-				hyperlane_eligible = yes
-			}
-			every_neighbor_system = { remove_hyperlane_safe = { from = this to = prev } }
-			random_list = {
-				1 = { while = { count = 1 giga_generate_hyperlane = yes } }
-				1 = { while = { count = 2 giga_generate_hyperlane = yes } }
-				1 = { while = { count = 3 giga_generate_hyperlane = yes } }
-			}
+		get_galaxy_setup_value = {
+			which = giga_hyperlane_density
+			setting = num_hyperlanes
 		}
+		multiply_variable = {
+			which = giga_hyperlane_density
+			value = 4 #Turns all the pesky .25 increments into a full number
+		}
+		giga_hyperlane_obliteration = yes
+		clear_variable = giga_hyperlane_density
+		set_update_modifiers_batch = begin
 		every_galaxy_planet = {
 			limit = { is_colony = yes }
 			add_planet_devastation = 100
@@ -5115,6 +5115,191 @@ country_event = {
 				limit = { is_ai = no }
 				country_event = { id = giga_fallen_empire_misc.1043 days = 5 }
 			}
+		}
+		set_update_modifiers_batch = end
+		country_event = { id = giga_fallen_empire_misc.10261 days = 5 }
+	}
+}
+#Pouchkinn's brain is too big
+country_event = {
+	id = giga_fallen_empire_misc.10261
+	
+	trigger = {#If it survives with 0 islands this is unneccessary so don't even try
+		any_system = {
+			hyperlane_eligible = yes
+			NOT = {
+				distance = {
+					source = event_target:pouchkinn_big_brain
+					# type = hyperlane
+					use_bypasses = no
+					min_jumps = 1
+					max_jumps = 999
+				}
+			}
+		}
+	}
+
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	immediate = {#Finish the cleanup
+	set_spawn_system_batch = begin
+		every_system = {
+			limit = {
+				hyperlane_eligible = yes
+				NOT = {
+					distance = {
+						source = event_target:pouchkinn_big_brain
+						# type = hyperlane
+						use_bypasses = no
+						min_jumps = 1
+						max_jumps = 999
+					}
+				}
+			}
+			if = {
+				limit = {
+					NOR = {
+						any_neighbor_system = {
+							OR = {
+								has_star_flag = pouchkinn_connection
+								any_neighbor_system = {
+									OR = {
+										has_star_flag = pouchkinn_connection
+										any_neighbor_system = {
+											has_star_flag = pouchkinn_connection
+										}
+									}
+								}
+							}
+						}
+						has_star_flag = pouchkinn_connection
+					}
+				}
+				random_neighbor_system_euclidean = {
+					limit = {
+						hyperlane_eligible = yes
+						NOT = {
+							distance = {
+								source = event_target:pouchkinn_big_brain
+								# type = hyperlane
+								use_bypasses = no
+								min_jumps = 1
+								max_jumps = 999
+							}
+						}
+					}
+					add_hyperlane_safe = { from = prev to = this }
+					set_star_flag = pouchkinn_connection
+				}
+				every_neighbor_system = {
+					if = {
+						limit = { NOT = { has_star_flag = pouchkinn_connection } } 
+						set_star_flag = pouchkinn_connection
+					}
+					every_neighbor_system = {
+						if = {
+							limit = { NOT = { has_star_flag = pouchkinn_connection } }
+							set_star_flag = pouchkinn_connection
+						}
+					}
+				}
+				set_star_flag = pouchkinn_connection
+			}
+		}
+		set_spawn_system_batch = end
+		every_system = {
+			remove_star_flag = pouchkinn_connection
+		}
+		country_event = { id = giga_fallen_empire_misc.10262 days = 5 }# as many times as is needed until its right
+	}
+}
+
+country_event = {
+	id = giga_fallen_empire_misc.10262
+	
+	trigger = {
+		any_system = {
+			hyperlane_eligible = yes
+			NOT = {
+				distance = {
+					source = event_target:pouchkinn_big_brain
+					# type = hyperlane
+					use_bypasses = no
+					min_jumps = 1
+					max_jumps = 999
+				}
+			}
+		}
+	}
+
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	immediate = {#Finish the cleanup
+	set_spawn_system_batch = begin
+		every_system = {
+			limit = {
+				hyperlane_eligible = yes
+				NOT = {
+					distance = {
+						source = event_target:pouchkinn_big_brain
+						# type = hyperlane
+						use_bypasses = no
+						min_jumps = 1
+						max_jumps = 999
+					}
+				}
+			}
+			if = {
+				limit = {
+					NOR = {
+						any_neighbor_system = {
+							OR = {
+								has_star_flag = pouchkinn_connection
+								any_neighbor_system = {
+									OR = {
+										has_star_flag = pouchkinn_connection
+										any_neighbor_system = {
+											has_star_flag = pouchkinn_connection
+										}
+									}
+								}
+							}
+						}
+						has_star_flag = pouchkinn_connection
+					}
+				}
+				while = { 
+					count = 2
+					random_neighbor_system_euclidean = {
+						limit = {
+							hyperlane_eligible = yes
+						}
+						add_hyperlane_safe = { from = prev to = this }
+						set_star_flag = pouchkinn_connection
+					}
+				}
+				every_neighbor_system = {
+					if = {
+						limit = { NOT = { has_star_flag = pouchkinn_connection } } 
+						set_star_flag = pouchkinn_connection
+					}
+					every_neighbor_system = {
+						if = {
+							limit = { NOT = { has_star_flag = pouchkinn_connection } }
+							set_star_flag = pouchkinn_connection
+						}
+					}
+				}
+				set_star_flag = pouchkinn_connection
+			}
+		}
+		set_spawn_system_batch = end
+		every_system = {
+			remove_star_flag = pouchkinn_connection
 		}
 	}
 }
