@@ -907,6 +907,11 @@ annihilator_defend = {
 	if = { limit = { has_global_flag = sa_target_follow }	remove_global_flag = sa_target_follow }
 	set_global_flag = sa_target_defend
 
+	#Validate capital system is still capital
+	event_target:discoverer_country = {
+		capital_scope.solar_system = { save_global_event_target_as = discoverer_system }
+	}
+
 	# Save a target
 	event_target:discoverer_system = {
 		closest_system = {
@@ -928,16 +933,36 @@ annihilator_defend = {
 		if = {
 			limit = { 
 				NOR = { 
-					distance = { source = event_target:discoverer_system max_jumps = 10 } 
+					distance = { source = event_target:discoverer_system use_bypasses = yes max_jumps = 10 } 
 					distance = { source = event_target:discoverer_system same_solar_system = yes }
 				} 
-				
 			}
 			event_target:creators_country = {
 				set_global_flag = annihilator_shroud
 				destroy_annihilator = yes
 				country_event = { id = annihilator.005 days = @annihilator_shroud_time }	# Respawn Annihalor at discoverer capital
 			}
+		}
+	}
+	# Verify Defense location is within range of capital
+	if = {
+		limit = { 
+			exists = event_target:sa_defend_discoverer 
+			event_target:sa_defend_discoverer.solar_system = { #No longer a valid target for the annihilator because its too far
+				NOR = { 
+					distance = { source = event_target:discoverer_system use_bypasses = yes max_jumps = 10 } 
+					distance = { source = event_target:discoverer_system same_solar_system = yes }
+				} 
+			}
+		}
+		event_target:discoverer_system = {
+			star = { save_global_event_target_as = sa_defend_discoverer }
+		}
+	}
+	else_if = {
+		limit = {NOT = {exists = event_target:sa_defend_discoverer } } #No valid defense target? this shouldn't really ever happen but as a precaution
+		event_target:discoverer_system = {
+			star = { save_global_event_target_as = sa_defend_discoverer }
 		}
 	}
 
