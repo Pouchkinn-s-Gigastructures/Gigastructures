@@ -403,15 +403,13 @@ country_event = {
 				establish_communications_no_message = event_target:birch_aeternum
 			}
 			every_system = {
-				limit = { 
-					if ={
-						limit = { exists = space_owner }
-						space_owner = { is_country_type = dormant_aeternum } 
-					}
-					set_surveyed = {
-						surveyed = yes
-						surveyor = ROOT
-					}
+					limit = { 
+						exists = space_owner 
+						space_owner = { is_country_type = dormant_aeternum }
+					} 
+				set_surveyed = {
+					surveyed = yes
+					surveyor = ROOT
 				}
 			}
 		}
@@ -1228,7 +1226,7 @@ country_event = {
 					# 	size = starbase_aet
 					# 	owner = event_target:birch_aeternum
 					# }
-					create_aeternum_home_citadel = yes
+					create_aeternum_citadel = yes
 				}
 			}
 		}
@@ -2600,7 +2598,28 @@ country_event = {
 ship_event = {
 	id = giga_aeternum.4200
 	title = "giga_aeternum.4200.name"
-	desc = "giga_aeternum.4200.desc"
+	desc = {
+		text = giga_aeternum.4200.a.desc
+		trigger = {
+			OR = {
+				is_ship_class = shipclass_starbase #juggs
+				is_ship_class = shipclass_military
+				is_ship_class = shipclass_military_special
+				is_ship_class = shipclass_transport
+			}
+		}
+	}
+	desc = {
+		text = giga_aeternum.4200.b.desc
+		trigger = {
+			NOR = {
+				is_ship_class = shipclass_starbase #juggs
+				is_ship_class = shipclass_military
+				is_ship_class = shipclass_military_special
+				is_ship_class = shipclass_transport
+			}
+		}
+	}
 	picture = GFX_evt_binary_stars
 	show_sound = event_mystic_reveal
 	is_triggered_only = yes
@@ -2668,6 +2687,7 @@ country_event = {
 			remove_modifier = birch_world_grand_shield
 		}
 		hidden_effect = {
+			remove_country_flag = disrupting_alondia
 			if = {
 				limit = { NOT = { has_global_flag = giga_core_aeternum_4 } }
 				event_target:aeternum_birch_world = {
@@ -2680,6 +2700,96 @@ country_event = {
 				remove_modifier = disrupting_alondia_shield
 			}
 			set_global_flag = alondia_shield_gone
+		}
+	}
+}
+
+#Aeternum detection disruption
+country_event = {
+	id = giga_aeternum.4203
+	title = "giga_aeternum.4203.name"
+	desc = "giga_aeternum.4203.desc"
+	picture = GFX_evt_psionic_battle
+	show_sound = event_aeternum_intel_popup
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_aeternum.4203.a"
+		custom_tooltip = "giga_aeternum.4203.a_tooltip"
+		hidden_effect = {
+			add_modifier = {
+				modifier = disrupting_aiondia_detection
+				days = 1080
+			}
+			remove_country_flag = monitoring_aeternum
+			set_country_flag = disrupting_alondia #only able to hit detection or the shield, one at a time
+			country_event = { id = giga_aeternum.4204 days = 1080 }
+		}
+	}
+
+	option = {
+		name = "giga_aeternum.4203.b"
+		hidden_effect = {
+			remove_country_flag = monitoring_aeternum
+		}
+	}
+}
+
+#Rip Aeternum Detection capabilities
+country_event = {
+	id = giga_aeternum.4204
+	title = "giga_aeternum.4204.name"
+	desc = "giga_aeternum.4204.desc"
+	picture = GFX_evt_shroudwalker_enclave
+	show_sound = event_power_down
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_global_flag = aeternum_blind }
+		NOT = { has_global_flag = aeternum_vanquished }
+	}
+	immediate = {#Pocket sand go!
+		hidden_effect = {
+			event_target:aeternum_birch_world = {
+				solar_system = {
+					set_star_flag = storm_system
+					star = {
+						create_ambient_object = {
+							type = "aet_psi_storm_1"
+							location = this
+						}
+						last_created_ambient_object = {
+							set_location = {
+								target = prev
+								distance = 0
+								angle = random
+							}
+							set_ambient_object_flag = aet_psi_storm
+						}
+					}
+					add_modifier = {
+						modifier = blinding_storm
+					}
+				}
+			}
+			event_target:birch_aeternum = {
+				add_modifier = {
+					modifier = aeternum_blind
+					days = -1
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = "giga_aeternum.4204.a"
+		hidden_effect = {
+			remove_country_flag = disrupting_alondia
+			if = {
+				limit = { has_modifier = disrupting_aiondia_detection }
+				remove_modifier = disrupting_aiondia_detection
+			}
+			set_global_flag = aeternum_blind
 		}
 	}
 }
@@ -3010,6 +3120,7 @@ country_event = {
 		custom_tooltip = "giga_aeternum.4305.a.tooltip"
 		hidden_effect = {
 			country_event = { id = giga_aeternum.4312 days = 80 }
+			country_event = { id = giga_aeternum.4313 days = 140 }
 			country_event = { id = giga_aeternum.4320 days = 220 }
 		}
 	}
@@ -3332,6 +3443,793 @@ country_event = {
 	option = {
 		name = "giga_aeternum.4312.a"
 		custom_tooltip = "giga_aeternum.4312.a.tooltip"
+	}
+}
+
+#the beacon
+country_event = {
+	id = giga_aeternum.4313
+	title = "giga_aeternum.4313.name"
+	desc = { text = giga_aeternum.4313.desc trigger = { NOT = { has_global_flag = aeternum_blind } } }
+	desc = { text = giga_aeternum.4313.blind.desc trigger = { has_global_flag = aeternum_blind } }
+	picture = GFX_evt_surreal_visions
+	show_sound = event_mystic_reveal_light
+	is_triggered_only = yes
+
+	immediate = {
+		every_country = {
+			limit = { has_modifier = disrupting_aiondia_detection }
+			remove_modifier = disrupting_aiondia_detection
+			remove_country_flag = disrupting_alondia
+		}
+	}
+
+	option = {# you didn't blind them
+		trigger = {
+			NOT = { has_global_flag = aeternum_blind } 
+		}
+		name = "giga_aeternum.4313.a"
+		# custom_tooltip = "giga_aeternum.4313.a.tooltip"
+		hidden_effect = {
+			country_event = { id = giga_aeternum.4314 days = 30 }
+		}
+	}
+
+	option = {# you leave the siphons on
+		trigger = {
+			has_global_flag = aeternum_blind
+		}
+		name = "giga_aeternum.4313.b"
+		custom_tooltip = "giga_aeternum.4313.b.tooltip"
+		hidden_effect = {
+			set_country_flag = slow_storm_end
+			country_event = { id = giga_aeternum.4314 days = 1080 random = 60 }
+		}
+	}
+
+	option = {# you turn them off
+		trigger = {
+			has_global_flag = aeternum_blind
+		}
+		name = "giga_aeternum.4313.c"
+		custom_tooltip = "giga_aeternum.4313.c.tooltip"
+		hidden_effect = {
+			event_target:aeternum_birch_world = {
+				solar_system = { 
+					every_system_megastructure = {
+						limit = {
+							is_megastructure_type = psychic_hypersiphon_3_aeternum
+						}
+						set_timed_megastructure_flag = {
+							flag = siphon_disabled
+							days = 60
+						}
+					}
+				}
+			}
+			set_country_flag = quick_storm_end
+			country_event = { id = giga_aeternum.4314 days = 60 }
+		}
+	}
+
+}
+
+#It's Hungry
+country_event = {
+	id = giga_aeternum.4314
+	title = "giga_aeternum.4314.name"
+	desc = { text = giga_aeternum.4314.normal.desc trigger = { NOT = { has_global_flag = aeternum_blind } is_machine_empire = no } }
+	desc = { text = giga_aeternum.4314.machine.desc trigger = { NOT = { has_global_flag = aeternum_blind  } is_machine_empire = yes } }
+	desc = { text = giga_aeternum.4314.blind.desc trigger = { has_global_flag = aeternum_blind is_machine_empire = no } }
+	desc = { text = giga_aeternum.4314.machine.blind.desc trigger = { has_global_flag = aeternum_blind is_machine_empire = yes } }
+	picture = GFX_evt_zro_3
+	show_sound = event_mystic_reveal
+	is_triggered_only = yes
+
+	immediate = {
+		event_target:aeternum_birch_world = {
+			solar_system = { 
+				if = {
+					limit = {
+						has_global_flag = aeternum_blind
+					}
+					remove_star_flag = storm_system
+					every_ambient_object = {
+						limit = { has_ambient_object_flag = aet_psi_storm}
+						destroy_ambient_object = this
+					}
+					remove_modifier = blinding_storm
+				}
+			}
+		}
+	}
+
+	option = { #purifier
+		name = "giga_aeternum.4314.purifier.a"
+		custom_tooltip = "giga_aeternum.4314.a.tooltip"
+		trigger = {
+			is_gestalt = no
+			has_valid_civic = civic_fanatic_purifiers
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+			min = 10000
+			max = 100000
+		}
+		hidden_effect = {
+			dismantle_aiondia_listeningpost = yes
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.purifier.b"
+		custom_tooltip = "giga_aeternum.4314.b.tooltip"
+		trigger = {
+			is_gestalt = no
+			has_valid_civic = civic_fanatic_purifiers
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_starved
+			}
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.purifier.c"
+		custom_tooltip = "giga_aeternum.4314.c.tooltip"
+		trigger = {
+			is_gestalt = no
+			has_valid_civic = civic_fanatic_purifiers
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_feasts
+			}
+		}
+	}
+
+	option = { #spiritualist
+		name = "giga_aeternum.4314.spirit.a"
+		custom_tooltip = "giga_aeternum.4314.a.tooltip"
+		trigger = {
+			is_spiritualist = yes
+			is_homicidal = no
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+			min = 10000
+			max = 100000
+		}
+		hidden_effect = {
+			dismantle_aiondia_listeningpost = yes
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.spirit.b"
+		custom_tooltip = "giga_aeternum.4314.b.tooltip"
+		trigger = {
+			is_spiritualist = yes
+			is_homicidal = no
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_starved
+			}
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.spirit.c"
+		custom_tooltip = "giga_aeternum.4314.c.tooltip"
+		trigger = {
+			is_spiritualist = yes
+			is_homicidal = no
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_feasts
+			}
+		}
+	}
+	
+	option = { #materialist
+		name = "giga_aeternum.4314.material.a"
+		custom_tooltip = "giga_aeternum.4314.a.tooltip"
+		trigger = {
+			is_materialist = yes
+			is_homicidal = no
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+			min = 10000
+			max = 100000
+		}
+		hidden_effect = {
+			dismantle_aiondia_listeningpost = yes
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.material.b"
+		custom_tooltip = "giga_aeternum.4314.b.tooltip"
+		trigger = {
+			is_materialist = yes
+			is_homicidal = no
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_starved
+			}
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.material.c"
+		custom_tooltip = "giga_aeternum.4314.c.tooltip"
+		trigger = {
+			is_materialist = yes
+			is_homicidal = no
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_feasts
+			}
+		}
+	}
+	
+	option = { #Xenophobe
+		name = "giga_aeternum.4314.phobe.a"
+		custom_tooltip = "giga_aeternum.4314.a.tooltip"
+		trigger = {
+			is_xenophobe = yes
+			is_spiritualist = no
+			is_materialist = no
+			is_homicidal = no
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+			min = 10000
+			max = 100000
+		}
+		hidden_effect = {
+			dismantle_aiondia_listeningpost = yes
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.phobe.b"
+		custom_tooltip = "giga_aeternum.4314.b.tooltip"
+		trigger = {
+			is_xenophobe = yes
+			is_spiritualist = no
+			is_materialist = no
+			is_homicidal = no
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_starved
+			}
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.phobe.c"
+		custom_tooltip = "giga_aeternum.4314.c.tooltip"
+		trigger = {
+			is_xenophobe = yes
+			is_spiritualist = no
+			is_materialist = no
+			is_homicidal = no
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_feasts
+			}
+		}
+	}
+
+	option = { #Xenophile
+		name = "giga_aeternum.4314.phile.a"
+		custom_tooltip = "giga_aeternum.4314.a.tooltip"
+		trigger = {
+			is_xenophile = yes
+			is_spiritualist = no
+			is_materialist = no
+			is_homicidal = no
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+			min = 10000
+			max = 100000
+		}
+		hidden_effect = {
+			dismantle_aiondia_listeningpost = yes
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.phile.b"
+		custom_tooltip = "giga_aeternum.4314.b.tooltip"
+		trigger = {
+			is_xenophile = yes
+			is_spiritualist = no
+			is_materialist = no
+			is_homicidal = no
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_starved
+			}
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.phile.c"
+		custom_tooltip = "giga_aeternum.4314.c.tooltip"
+		trigger = {
+			is_xenophile = yes
+			is_spiritualist = no
+			is_materialist = no
+			is_homicidal = no
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_feasts
+			}
+		}
+	}
+
+	option = { #Egalitarian
+		name = "giga_aeternum.4314.egal.a"
+		custom_tooltip = "giga_aeternum.4314.a.tooltip"
+		trigger = {
+			is_egalitarian = yes
+			is_xenophobe = no
+			is_xenophile = no
+			is_spiritualist = no
+			is_materialist = no
+			is_homicidal = no
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+			min = 10000
+			max = 100000
+		}
+		hidden_effect = {
+			dismantle_aiondia_listeningpost = yes
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.egal.b"
+		custom_tooltip = "giga_aeternum.4314.b.tooltip"
+		trigger = {
+			is_egalitarian = yes
+			is_xenophobe = no
+			is_xenophile = no
+			is_spiritualist = no
+			is_materialist = no
+			is_homicidal = no
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_starved
+			}
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.egal.c"
+		custom_tooltip = "giga_aeternum.4314.c.tooltip"
+		trigger = {
+			is_egalitarian = yes
+			is_xenophobe = no
+			is_xenophile = no
+			is_spiritualist = no
+			is_materialist = no
+			is_homicidal = no
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_feasts
+			}
+		}
+	}
+
+	option = { #Authoritarian
+		name = "giga_aeternum.4314.auth.a"
+		custom_tooltip = "giga_aeternum.4314.a.tooltip"
+		trigger = {
+			is_authoritarian = yes
+			is_xenophobe = no
+			is_xenophile = no
+			is_spiritualist = no
+			is_materialist = no
+			is_homicidal = no
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+			min = 10000
+			max = 100000
+		}
+		hidden_effect = {
+			dismantle_aiondia_listeningpost = yes
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.auth.b"
+		custom_tooltip = "giga_aeternum.4314.b.tooltip"
+		trigger = {
+			is_authoritarian = yes
+			is_xenophobe = no
+			is_xenophile = no
+			is_spiritualist = no
+			is_materialist = no
+			is_homicidal = no
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_starved
+			}
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.auth.c"
+		custom_tooltip = "giga_aeternum.4314.c.tooltip"
+		trigger = {
+			is_authoritarian = yes
+			is_xenophobe = no
+			is_xenophile = no
+			is_spiritualist = no
+			is_materialist = no
+			is_homicidal = no
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_feasts
+			}
+		}
+	}
+
+	option = { #hive
+		name = "giga_aeternum.4314.hive.a"
+		custom_tooltip = "giga_aeternum.4314.a.tooltip"
+		trigger = {
+			is_hive_empire = yes
+			NOT = { has_valid_civic = civic_hive_devouring_swarm } 
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+			min = 10000
+			max = 100000
+		}
+		hidden_effect = {
+			dismantle_aiondia_listeningpost = yes
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.hive.b"
+		custom_tooltip = "giga_aeternum.4314.b.tooltip"
+		trigger = {
+			is_hive_empire = yes
+			NOT = { has_valid_civic = civic_hive_devouring_swarm } 
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_starved
+			}
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.hive.c"
+		custom_tooltip = "giga_aeternum.4314.c.tooltip"
+		trigger = {
+			is_hive_empire = yes
+			NOT = { has_valid_civic = civic_hive_devouring_swarm } 
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_feasts
+			}
+		}
+	}
+
+	option = { #Machine
+		name = "giga_aeternum.4314.machine.a"
+		custom_tooltip = "giga_aeternum.4314.a.tooltip"
+		trigger = {
+			is_machine_empire = yes
+			NOR = {
+				has_valid_civic = civic_machine_servitor
+				has_valid_civic = civic_machine_terminator
+				has_valid_civic = civic_machine_assimilator
+			}
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+			min = 10000
+			max = 100000
+		}
+		hidden_effect = {
+			dismantle_aiondia_listeningpost = yes
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.machine.b"
+		custom_tooltip = "giga_aeternum.4314.b.tooltip"
+		trigger = {
+			is_machine_empire = yes
+			NOR = {
+				has_valid_civic = civic_machine_servitor
+				has_valid_civic = civic_machine_terminator
+				has_valid_civic = civic_machine_assimilator
+			}
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_starved
+			}
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.machine.c"
+		custom_tooltip = "giga_aeternum.4314.c.tooltip"
+		trigger = {
+			is_machine_empire = yes
+			NOR = {
+				has_valid_civic = civic_machine_servitor
+				has_valid_civic = civic_machine_terminator
+				has_valid_civic = civic_machine_assimilator
+			}
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_feasts
+			}
+		}
+	}
+
+	option = { #asimilator
+		name = "giga_aeternum.4314.assimilator.a"
+		custom_tooltip = "giga_aeternum.4314.a.tooltip"
+		trigger = {
+			is_machine_empire = yes
+			has_valid_civic = civic_machine_assimilator
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+			min = 10000
+			max = 100000
+		}
+		hidden_effect = {
+			dismantle_aiondia_listeningpost = yes
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.assimilator.b"
+		custom_tooltip = "giga_aeternum.4314.b.tooltip"
+		trigger = {
+			is_machine_empire = yes
+			has_valid_civic = civic_machine_assimilator
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_starved
+			}
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.assimilator.c"
+		custom_tooltip = "giga_aeternum.4314.c.tooltip"
+		trigger = {
+			is_machine_empire = yes
+			has_valid_civic = civic_machine_assimilator
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_feasts
+			}
+		}
+	}
+
+	option = { #servitor
+		name = "giga_aeternum.4314.servitor.a"
+		custom_tooltip = "giga_aeternum.4314.a.tooltip"
+		trigger = {
+			is_machine_empire = yes
+			has_valid_civic = civic_machine_servitor
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+			min = 10000
+			max = 100000
+		}
+		hidden_effect = {
+			dismantle_aiondia_listeningpost = yes
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.servitor.b"
+		custom_tooltip = "giga_aeternum.4314.b.tooltip"
+		trigger = {
+			is_machine_empire = yes
+			has_valid_civic = civic_machine_servitor
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_starved
+			}
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.servitor.c"
+		custom_tooltip = "giga_aeternum.4314.c.tooltip"
+		trigger = {
+			is_machine_empire = yes
+			has_valid_civic = civic_machine_servitor
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_feasts
+			}
+		}
+	}
+
+	option = { #exterminator
+		name = "giga_aeternum.4314.exterminator.a"
+		custom_tooltip = "giga_aeternum.4314.a.tooltip"
+		trigger = {
+			is_machine_empire = yes
+			has_valid_civic = civic_machine_terminator
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+			min = 10000
+			max = 100000
+		}
+		hidden_effect = {
+			dismantle_aiondia_listeningpost = yes
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.exterminator.b"
+		custom_tooltip = "giga_aeternum.4314.b.tooltip"
+		trigger = {
+			is_machine_empire = yes
+			has_valid_civic = civic_machine_terminator
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_starved
+			}
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.exterminator.c"
+		custom_tooltip = "giga_aeternum.4314.c.tooltip"
+		trigger = {
+			is_machine_empire = yes
+			has_valid_civic = civic_machine_terminator
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_feasts
+			}
+		}
+	}
+
+	option = { #swarm
+		name = "giga_aeternum.4314.swarm.a"
+		custom_tooltip = "giga_aeternum.4314.a.tooltip"
+		trigger = {
+			is_hive_empire = yes
+			has_valid_civic = civic_hive_devouring_swarm
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+			min = 10000
+			max = 100000
+		}
+		hidden_effect = {
+			dismantle_aiondia_listeningpost = yes
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.swarm.b"
+		custom_tooltip = "giga_aeternum.4314.b.tooltip"
+		trigger = {
+			is_hive_empire = yes
+			has_valid_civic = civic_hive_devouring_swarm
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_starved
+			}
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.swarm.c"
+		custom_tooltip = "giga_aeternum.4314.c.tooltip"
+		trigger = {
+			is_hive_empire = yes
+			has_valid_civic = civic_hive_devouring_swarm
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_feasts
+			}
+		}
+	}
+
+	option = { #default
+		name = "giga_aeternum.4314.a"
+		custom_tooltip = "giga_aeternum.4314.a.tooltip"
+		trigger = {
+			NOR = {
+				is_hive_empire = yes
+				is_machine_empire = yes
+				is_authoritarian = yes
+				is_xenophile = yes
+				is_xenophobe = yes
+				is_spiritualist = yes
+				is_materialist = yes
+				is_homicidal = yes
+			}
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+			min = 10000
+			max = 100000
+		}
+		hidden_effect = {
+			dismantle_aiondia_listeningpost = yes
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.b"
+		custom_tooltip = "giga_aeternum.4314.b.tooltip"
+		trigger = {
+			NOR = {
+				is_hive_empire = yes
+				is_machine_empire = yes
+				is_authoritarian = yes
+				is_xenophile = yes
+				is_xenophobe = yes
+				is_spiritualist = yes
+				is_materialist = yes
+				is_homicidal = yes
+			}
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_starved
+			}
+		}
+	}
+	option = {
+		name = "giga_aeternum.4314.c"
+		custom_tooltip = "giga_aeternum.4314.c.tooltip"
+		trigger = {
+			NOR = {
+				is_hive_empire = yes
+				is_machine_empire = yes
+				is_authoritarian = yes
+				is_xenophile = yes
+				is_xenophobe = yes
+				is_spiritualist = yes
+				is_materialist = yes
+				is_homicidal = yes
+			}
+		}
+		hidden_effect = {
+			event_target:aeternum_birch_world.solar_system = {
+				set_star_flag = beacon_feasts
+			}
+		}
 	}
 }
 
@@ -6249,6 +7147,29 @@ country_event = {
 		}
 		hidden_effect = {
 			country_event = { id = giga_aeternum.4201 }
+		}
+	}
+
+	option = { #blow up the lighthouse
+		name = "giga_aeternum.3010.alondialisteningpost"
+		custom_tooltip = "aeternum_listeningpost_tooltip"
+		trigger = {
+			has_global_flag = aeternum_awakening_ongoing
+			NOT = { has_global_flag = aeternum_vanquished }
+			NOT = { any_country = { has_country_flag = disrupting_alondia } }
+			NOT = { has_global_flag = aeternum_blind }
+		}
+		allow = {
+			custom_tooltip = {
+				fail_text = "needs_10_aet_intel"
+				check_variable = {
+					which = aeternite_intel_count
+					value >= 10
+				}
+			}
+		}
+		hidden_effect = {
+			country_event = { id = giga_aeternum.4203 }
 		}
 	}
 
