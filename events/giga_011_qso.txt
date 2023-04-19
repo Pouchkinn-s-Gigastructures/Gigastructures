@@ -638,7 +638,7 @@ country_event = { #blast
 					set_planet_flag = quasistellar_impact
 					if = { #check if its a gaseous body
 						limit = {
-							is_planet_class = pc_gas_giant
+							giga_is_gas_giant = yes
 							giga_brown_dwarf = yes
 						}
 						change_pc = pc_metallic_hydrogen
@@ -662,12 +662,13 @@ country_event = { #blast
 							}
 						}
 					}
-					owner = {
-						declare_war = {
-							target = root
-							attacker_war_goal = "wg_end_threat_hyperweapon"
+					root = {
+						declare_war = { # You shot a QSO you don't get defender buffs
+							target = owner
+							attacker_war_goal = "wg_hyperweapon"
 						}
 					}
+
 				}
 			}
 		}
@@ -677,6 +678,37 @@ country_event = { #blast
 			upgrade_megastructure_to = quasi_stellar_marker_planet_firing
 		}
 		country_event = { id = giga_qso.105 days = 15 }	# Reset QSO
+		country_event = { id = giga_qso.1031 days = 10 } # Ends invalid war if country destroyed
+	}
+}
+
+country_event = {
+	id = giga_qso.1031
+	is_triggered_only = yes
+	hide_window = yes
+	trigger = {
+		any_war = {
+			using_war_goal = { type = wg_hyperweapon owner = attacker }
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_war = {
+					using_war_goal = { type = wg_hyperweapon owner = attacker }
+					NOT = { exists = defender } 
+				}
+			}
+			every_war = {
+				limit = {
+					using_war_goal = { type = wg_hyperweapon owner = attacker }
+					NOT = { exists = defender } 
+				}
+				save_event_target_as = end_this_war
+			}
+			set_truce = { target = event_target:end_this_war type = war }
+		}
 	}
 }
 
@@ -1385,10 +1417,10 @@ country_event = {
 						}
 					}
 				}
-				owner = {
+				root = {
 					declare_war = {
-						target = root
-						attacker_war_goal = "wg_end_threat_hyperweapon"
+						target = owner
+						attacker_war_goal = "wg_hyperweapon"
 					}
 				}
 			}
@@ -2753,6 +2785,8 @@ country_event = {
 	}
 
 	immediate = {
+		set_update_modifiers_batch = begin
+		set_country_flag = silence_destroy_event
 		every_owned_fleet = {	set_owner = event_target:pangalactic_federation_country }
 		every_owned_leader = {	set_owner = event_target:pangalactic_federation_country }
 		#every_owned_army = {	set_owner = event_target:pangalactic_federation_country }
@@ -2790,6 +2824,7 @@ country_event = {
 				country_event = { id = giga_fed.4003 days = 5 }
 			}
 		}
+		set_update_modifiers_batch = end
 	}
 }
 
