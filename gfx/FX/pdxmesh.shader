@@ -4541,3 +4541,29 @@ Effect PdxMeshMCPortraitSkinnedShadow
 	PixelShader = "PixelPdxMeshStandardShadow"
 	Defines = { "IS_SHADOW" }
 }
+
+PixelShader = {
+	MainCode PixelGigaDebug
+		ConstantBuffers = { Common, ShipConstants, Shadow }
+	[[
+		float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
+		{
+			float3 vColor = float3(0.2,0.2,0.2);
+
+			float3 vPos = In.vPos.xyz / In.vPos.w;
+
+			if (giga_debug_float4(SystemLightPosRadius, vPos.xz, int2(0,0))) {
+				vColor = float3(1.0, 0.0, 0.0);
+			}
+
+			return float4(vColor, 1.0);
+		}
+
+	]]
+}
+
+Effect GigaDebug
+{
+	VertexShader = "VertexPdxMeshStandard"
+	PixelShader = "PixelGigaDebug"
+}
