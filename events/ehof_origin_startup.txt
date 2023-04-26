@@ -13,10 +13,21 @@ event = {
 			limit = {
 				has_origin = origin_incohesive
 			}
-			set_country_flag = ehof_precursor_spawned
-			set_country_flag = starting_event			# go away
-			country_event = {
-				id = ehof_incohesive.2
+			if = {
+				limit = { is_ai = yes }
+				capital_scope.solar_system = { 
+					set_star_flag = gigas_new_planets 
+					set_star_flag = ehof_ai_reset
+				}
+				country_event = { id = ehof_incohesive.8} #dummy event to fix scope
+			}
+			else_if = {
+				limit = { is_ai = no }
+				set_country_flag = ehof_precursor_spawned
+				set_country_flag = starting_event			# go away
+				country_event = {
+					id = ehof_incohesive.2
+				}
 			}
 		}
 	}
@@ -263,22 +274,17 @@ country_event = {
 			limit = {
 				any_owned_ship = {
 					OR = {
-						is_ship_size = constructor
-						is_ship_size = science
-						is_ship_size = corvette
+						ehof_is_construction_ship = yes
+						ehof_is_science_ship = yes
+						is_ship_class = shipclass_military #Covers Cordyceptic military
 					}
 				}
 			}
+			set_location = event_target:ehofo_starbase.orbit
 			if = {
-				limit = {
-					exists = leader
-				}
-				leader = {
-					unassign_leader = this
-					save_global_event_target_as = ehofo_scientist
-				}
+				limit = { any_owned_ship = { is_ship_class = shipclass_military } }
+				set_home_base = event_target:ehofo_starbase
 			}
-			destroy_fleet = this
 		}
 		event_target:ehofo_new_world = {
 			change_pc = event_target:ehofo_old_world
@@ -326,50 +332,49 @@ country_event = {
 				assign_leader = event_target:ehofo_governor
 			}
 		}
-		create_fleet = {
-			effect = {
-				set_owner = prev
-				create_ship = {
-					name = random
-					random_existing_design = science
-				}
-				set_fleet_stance = evasive
-				#set_location = prev.capital_star
-				set_location = event_target:ehofo_new_system
-				set_leader = event_target:ehofo_scientist
-			}
-		}
-		create_fleet = {
-			effect = {
-				set_owner = prev
-				create_ship = {
-					name = random
-					random_existing_design = constructor
-				}
-				set_fleet_stance = evasive
-				set_location = event_target:ehofo_new_system
-			}
-		}
-		create_fleet = {
-			set_take_point = yes
-			effect = {
-				set_owner = prev
-				while = {
-					count = 3
-					create_ship = {
-						name = random
-						random_existing_design = corvette
-					}
-				}
-				set_location = event_target:ehofo_new_system
-			}
-		}
+		# create_fleet = {
+		# 	effect = {
+		# 		set_owner = prev
+		# 		create_ship = {
+		# 			name = random
+		# 			random_existing_design = science
+		# 		}
+		# 		set_fleet_stance = evasive
+		# 		#set_location = prev.capital_star
+		# 		set_location = event_target:ehofo_new_system
+		# 		set_leader = event_target:ehofo_scientist
+		# 	}
+		# }
+		# create_fleet = {
+		# 	effect = {
+		# 		set_owner = prev
+		# 		create_ship = {
+		# 			name = random
+		# 			random_existing_design = constructor
+		# 		}
+		# 		set_fleet_stance = evasive
+		# 		set_location = event_target:ehofo_new_system
+		# 	}
+		# }
+		# create_fleet = {
+		# 	set_take_point = yes
+		# 	effect = {
+		# 		set_owner = prev
+		# 		while = {
+		# 			count = 3
+		# 			create_ship = {
+		# 				name = random
+		# 				random_existing_design = corvette
+		# 			}
+		# 		}
+		# 		set_location = event_target:ehofo_new_system
+		# 	}
+		# }
 		clear_global_event_target = ehofo_old_world
 		clear_global_event_target = ehofo_old_system
 		clear_global_event_target = ehofo_new_world
 		clear_global_event_target = ehofo_new_system
 		clear_global_event_target = ehofo_starbase
-		clear_global_event_target = ehofo_scientist
 		clear_global_event_target = ehofo_governor
 		if = {
 			limit = {
@@ -771,6 +776,10 @@ system_event = {
 	id = ehof_incohesive.7
 	hide_window = yes
 	is_triggered_only = yes
+	trigger = {#don't remove survey data if owned (it means an AI was reset)
+		NOT = { exists = space_owner }
+	}
+
 	immediate = {
 		every_playable_country = {
 			prev = {
@@ -782,3 +791,18 @@ system_event = {
 		}
 	}
 }
+
+country_event = {
+	id = ehof_incohesive.8
+	hide_window = yes
+	is_triggered_only = yes
+	trigger = {
+		has_origin = origin_incohesive
+		is_ai = yes
+	}
+
+	immediate = {
+		giga_reset_ai_start = yes
+	}
+}
+

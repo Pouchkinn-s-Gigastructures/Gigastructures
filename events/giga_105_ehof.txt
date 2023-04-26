@@ -30,7 +30,7 @@ ship_event = {
 			}
 			if = {
 				limit = {
-					is_ship_size = science
+					ehof_is_science_ship = yes
 				}
 				controller = {
 					change_variable = {
@@ -41,7 +41,7 @@ ship_event = {
 			}
 			if = {
 				limit = {
-					is_ship_size = constructor
+					ehof_is_construction_ship = yes
 				}
 				controller = {
 					change_variable = {
@@ -164,7 +164,7 @@ fleet_event = {
 			set_ship_flag = ehof_already_counted
 			if = {
 				limit = {
-					is_ship_size = science
+					ehof_is_science_ship = yes
 				}
 				controller = {
 					change_variable = {
@@ -175,7 +175,7 @@ fleet_event = {
 			}
 			if = {
 				limit = {
-					is_ship_size = constructor
+					ehof_is_construction_ship = yes
 				}
 				controller = {
 					change_variable = {
@@ -302,7 +302,7 @@ fleet_event = {
 			remove_ship_flag = ehof_already_counted
 			if = {
 				limit = {
-					is_ship_size = science
+					ehof_is_science_ship = yes
 				}
 				controller = {
 					subtract_variable = {
@@ -313,7 +313,7 @@ fleet_event = {
 			}
 			if = {
 				limit = {
-					is_ship_size = constructor
+					ehof_is_construction_ship = yes
 				}
 				controller = {
 					subtract_variable = {
@@ -1082,13 +1082,14 @@ country_event = {
 							is_capital_system = yes
 						}
 					}
-					is_planet_habitable = no
+					is_artificial = no
+					is_colonizable = no
 					is_star = no
 					is_asteroid = no
 					has_anomaly = no
 					NOR = {
 						exists = archaeological_site
-						is_planet_class = pc_gas_giant
+						giga_is_gas_giant = yes
 					}
 				}
 			}
@@ -1100,13 +1101,14 @@ country_event = {
 							is_capital_system = yes
 						}
 					}
-					is_planet_habitable = no
+					is_artificial = no
+					is_colonizable = no
 					is_star = no
 					is_asteroid = no
 					has_anomaly = no
 					NOR = {
 						exists = archaeological_site
-						is_planet_class = pc_gas_giant
+						giga_is_gas_giant = yes
 					}
 				}
 				ehof_giga_new_create_rl_digsite = {
@@ -1290,6 +1292,34 @@ fleet_event = {
 										}
 									}
 								}
+							}	
+							else_if = {
+								limit = {
+									root.owner.capital_scope.solar_system = {
+										has_star_flag = lcluster
+									}
+								}
+								set_star_flag = lcluster #Needs to be made part of the Lcluster flag group so it doesn't get anymore unwanted friends
+								random_list = {
+									1 = {
+										while = {
+											count = 1
+											random_neighbor_system_euclidean = {
+												limit = {has_star_flag = lcluster }
+												add_hyperlane_safe = { from = prev to = this } 
+											}
+										}
+									}
+									1 = {
+										while = {
+											count = 2
+											random_neighbor_system_euclidean = {
+												limit = {has_star_flag = lcluster }
+												add_hyperlane_safe = { from = prev to = this } 
+											}
+										}
+									}
+								}
 							}
 							# else random non-core system
 							else = {
@@ -1346,6 +1376,34 @@ fleet_event = {
 										while = {
 											count = 2
 											giga_galactic_core_generate_hyperlane = yes
+										}
+									}
+								}
+							}
+							else_if = { #Lcluster start (even though we don't have one needed for compat)
+								limit = {
+									root.owner.capital_scope.solar_system = {
+										has_star_flag = lcluster
+									}
+								}
+								set_star_flag = lcluster #Needs to be made part of the Lcluster flag group so it doesn't get anymore unwanted friends
+								random_list = {
+									1 = {
+										while = {
+											count = 1
+											random_neighbor_system_euclidean = {
+												limit = {has_star_flag = lcluster }
+												add_hyperlane_safe = { from = prev to = this } 
+											}
+										}
+									}
+									1 = {
+										while = {
+											count = 2
+											random_neighbor_system_euclidean = {
+												limit = {has_star_flag = lcluster }
+												add_hyperlane_safe = { from = prev to = this } 
+											}
 										}
 									}
 								}
@@ -2291,7 +2349,7 @@ country_event = {
 					remove_ship_flag = ehof_already_counted
 					if = {
 						limit = {
-							is_ship_size = science
+							ehof_is_science_ship = yes
 						}
 						controller = {
 							subtract_variable = {
@@ -2302,7 +2360,7 @@ country_event = {
 					}
 					if = {
 						limit = {
-							is_ship_size = constructor
+							ehof_is_construction_ship = yes
 						}
 						controller = {
 							subtract_variable = {
@@ -2362,6 +2420,18 @@ country_event = {
 				auto_move_to_planet = {
 					target = event_target:ehof_destination_system.star
 					clear_auto_move_on_arrival = yes
+				}
+			}
+			every_ship_in_system = {
+				limit = {
+					has_ship_flag = ehof_eager_tp@root
+				}
+				remove_ship_flag = ehof_eager_tp@root
+				fleet = {
+					remove_auto_move_target = yes
+					set_fleet_stance = passive
+					set_location = event_target:ehof_destination_system.star # a little bit stupid but since subspace drives can't use bypasses hacky workarounds are needed
+					remove_fleet_flag =  eager_ehof@root
 				}
 			}
 		}
@@ -3846,7 +3916,7 @@ country_event = {
 					limit = {
 						is_any_ehof = yes
 					}
-					planet = {
+					system_star = {#The planet call here was invalid if a ruined ehof was repaired
 						giga_clear_has_mega_flag = {
 							MEGA = prev
 						}
@@ -3855,6 +3925,7 @@ country_event = {
 					}
 					remove_megastructure = this
 				}
+				giga_ehof_amb_reset = yes
 				star = {
 					change_pc = pc_black_hole
 				}
