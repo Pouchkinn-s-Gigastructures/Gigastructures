@@ -1414,6 +1414,7 @@ country_event = {
 					planet = { has_planet_flag = giga_mega_failure_occured_recently }
 					planet = { has_planet_flag = giga_mega_event_occured_recently   }
 				}
+				NOT = { solar_system = { has_star_flag = giga_galactic_center } }
 			}
 			# flip failure variable for chance calculation
 			planet = {
@@ -1935,7 +1936,34 @@ country_event = {
 country_event = {
 	id = giga_accelerator.160
 	title = "giga_accelerator.160.name"
-	desc = "giga_accelerator.160.desc"
+	desc = { 
+		text = "giga_accelerator.160.desc.b"  # No accelerator
+		trigger = {
+			event_target:accelerator_quasistar = { 
+				solar_system = {
+					NOR = {					
+						has_megastructure = particle_accelerator_0
+						has_megastructure = particle_accelerator_1
+						has_megastructure = particle_accelerator_1_manage
+					}
+				}
+			}
+		} 
+	}
+	desc = {
+		text = "giga_accelerator.160.desc.a"  #still has an accelerator
+		trigger = {
+			event_target:accelerator_quasistar = { 
+				solar_system = {
+					OR = {					
+						has_megastructure = particle_accelerator_0
+						has_megastructure = particle_accelerator_1
+						has_megastructure = particle_accelerator_1_manage
+					}
+				}
+			}
+		} 
+	}
 
 	location = event_target:accelerator_quasistar
 
@@ -1952,17 +1980,49 @@ country_event = {
 			days = 1800
 		}
 		event_target:accelerator_quasistar = {
-			add_deposit = d_physics_10
-			add_deposit = d_physics_10
-			add_deposit = d_physics_10
-			add_deposit = d_physics_10
+			if = {
+				limit = { NOT = { has_deposit_for = shipclass_mining_station } }
+				add_deposit = d_physics_10
+				add_deposit = d_physics_10
+				add_deposit = d_physics_10
+				add_deposit = d_physics_10
+			}
+
+			if = {
+				limit = { has_deposit_for = shipclass_mining_station }
+				hidden_effect = { clear_deposits = yes }
+				add_deposit = d_physics_10
+				add_deposit = d_physics_10
+				add_deposit = d_physics_10
+				add_deposit = d_physics_10
+			}
+
 			solar_system = {
 				every_system_planet = {
 					limit = {
 						is_planet_habitable = no
 						is_star = no
+						NOT = { has_deposit_for = shipclass_mining_station }
 					}
 					add_deposit = d_physics_6
+				}
+			}
+			hidden_effect = {
+				solar_system = {
+					if = { 
+						limit = { 
+							OR = {
+								has_megastructure = particle_accelerator_0
+								has_megastructure = particle_accelerator_1
+								has_megastructure = particle_accelerator_1_manage
+							}
+						}
+						root = {
+							add_resource = {
+								alloys = 4000
+							}
+						}
+					}
 				}
 			}
 		}
@@ -1993,9 +2053,6 @@ country_event = {
 				}
 				giga_clear_has_mega_flag = yes
 			}
-		}
-		add_resource = {
-			alloys = 4000
 		}
 		add_monthly_resource_mult = {
 			resource = physics_research

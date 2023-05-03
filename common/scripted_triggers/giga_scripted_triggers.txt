@@ -1,3 +1,8 @@
+#Scripted trigger to check for gigas prior to game start
+has_gigastructures = { 
+	always = yes 
+}
+
 has_gigastructural_constructs = {
 	or = {
 		and = {
@@ -15,13 +20,15 @@ ndb_can_target_system = {
 	annihilator_system = no
 	urmazin_system = no
 	everchanging_system = no
+
 	NOR = {
-		is_star_class = sc_black_hole
-	
 		has_star_flag = blokkat_system_being_stripmined
 	
 		has_star_flag = blokkat_stripmined_system
-	
+		and = {
+			exists = system_star
+			system_star = { giga_is_compact_star = yes }
+		}
 		any_fleet_in_system = {
 			exists = owner
 			owner = {
@@ -32,7 +39,7 @@ ndb_can_target_system = {
 	
 		any_ship_in_system = {
 			OR = {
-						is_ship_size = sofe_ancient_weapon
+				is_ship_size = sofe_ancient_weapon
 				is_ship_size = precursor_colossus
 				
 			}
@@ -131,6 +138,7 @@ giga_habitable_structure = {
 		is_giga_ringworld = yes
 		is_giga_habitat = yes
 		is_giga_habitable_gas_giant = yes
+		is_non_giga_habitat = yes
 		giga_is_birch_world = yes
 		is_planet_class = pc_equatorial_shipyard
 		is_planet_class = pc_virtual_reality
@@ -154,6 +162,7 @@ is_giga_standard_ringworld = { #This is basically just things from the standard 
 		is_planet_class = pc_ringworld_hive
 		is_planet_class = pc_ringworld_habitable
 		is_planet_class = pc_giga_maginot_ringworld
+		is_planetary_diversity_ringworld = yes
 	}
 }
 
@@ -176,6 +185,7 @@ is_giga_ringworld = {
 		is_planet_class = pc_ringworld_machine
 		is_planet_class = pc_ringworld_hive
 		is_planet_class = pc_squareworld_habitable
+		is_planetary_diversity_ringworld = yes
 	}
 }
 
@@ -191,6 +201,16 @@ is_giga_habitat = {
 		# old elysium
 		is_planet_class = pc_gigaorbital_ring
 		is_planet_class = pc_gigaorbital_ring_ruined
+	}
+}
+
+#Compat for PD planet habs, specifically asteroid habs as the normal planet habs are mostly able to be treated as normal planets
+is_non_giga_habitat = {
+	OR = {
+		has_planet_flag = giga_compat_hab
+		has_planet_flag = pdiceasteroidhab
+		has_planet_flag = pdcrystalasteroidhab
+		has_planet_flag = pdasteroidhab
 	}
 }
 
@@ -482,10 +502,9 @@ giga_can_be_war_moon = {
 	}
 	is_colony = no
 	OR = {
-		is_planet_class = pc_molten
-		is_planet_class = pc_barren
-		is_planet_class = pc_barren_cold
-		is_planet_class = pc_frozen
+		giga_is_frozen = yes
+		giga_is_barren_cn = yes
+		giga_is_molten = yes
 	}
 	is_moon = yes
 }
@@ -503,19 +522,13 @@ giga_can_be_war_planet = {
 		}
 	}
 	OR = {
-		is_planet_class = pc_barren
-		is_planet_class = pc_barren_cold
-		is_planet_class = pc_molten
-		is_planet_class = pc_toxic
-		is_planet_class = pc_frozen
+		giga_is_frozen = yes
+		giga_is_barren_cn = yes
+		giga_is_molten = yes
+		giga_is_toxic = yes
 	}
 }
 
-giga_gas_giant = {
-	OR = {
-		is_planet_class = pc_gas_giant
-	}
-}
 
 giga_is_wrecked_ship = {
 	or = {
@@ -731,6 +744,7 @@ giga_is_alderson_disk = {
 # merger of rules: feel free to overwrite this to add other relevant large habitable megas
 # but they will also require entries in the giga_ring_world_building_size script_value
 giga_has_ringworld_buildings = {
+	giga_is_frame_world = no
 	or = {
 		is_ringworld = yes
 		giga_is_birch_world = yes
@@ -812,11 +826,317 @@ giga_is_special_country_type = {
 #Helps cut down on lag from gigabank maths by not giving it to only to people who can actually use it
 giga_country_gets_bank = {
 	optimize_memory
+	giga_country_gets_bank_exclude = no
 	OR = {
 		is_country_type = default
 		is_country_type = fallen_empire
 		is_country_type = awakened_fallen_empire
+		giga_country_gets_bank_include = yes
 
 		giga_is_playable_country = yes
+	}
+}
+
+giga_country_gets_bank_exclude = {
+	optimize_memory
+	OR = {
+		#Don't give it to these nerds EVER and terminate before even getting to playable
+		#Exclusive list of vanilla country types to NEVER give it to
+		#No leviathans
+		is_guardian_country = yes
+		is_tiyanki_country_type = yes
+		is_amoeba_country_type = yes
+		is_crystal_country_type = yes
+		is_drone_country_type = yes
+		is_country_type = guardian_warden
+		is_country_type = ldragon_country
+		is_country_type = cloud
+		#No Crisis factions
+		is_country_type = gray_goo
+		is_country_type = swarm
+		is_country_type = extradimensional
+		is_country_type = extradimensional_2
+		is_country_type = extradimensional_3
+		is_country_type = ai_empire
+		is_country_type = dormant_marauders
+		is_country_type = ruined_marauders
+		is_country_type = awakened_marauders
+		#no caravaneers
+		is_country_type = caravaneer_home
+		is_country_type = caravaneer_fleet
+		is_country_type = global_event #No Never.
+		is_country_type = faction
+		is_country_type = origin_dragon
+		is_country_type = dragon_dummy
+		is_country_type = clutch_of_whelps
+		is_country_type = adversary
+		is_country_type = neutral_faction
+		is_country_type = nomad
+		is_country_type = pirate
+		is_country_type = primitive
+		is_country_type = rebel
+		is_country_type = ambient
+		is_country_type = enclave
+		is_country_type = enclave_mercenary
+		is_country_type = shroud
+		is_country_type = shroud_spirits
+		is_country_type = gdf
+		is_country_type = cybrex_empire
+		is_country_type = sentinels
+		is_country_type = gate_builders
+		is_country_type = gray
+		is_country_type = portal_holder
+		is_country_type = feral_prethoryn
+		is_country_type = feral_prethoryn_infighting
+		is_country_type = marauder_raiders
+		is_country_type = vol
+		is_country_type = ratlings
+		is_country_type = enigmatic_cache
+		is_country_type = mechanocalibrator
+		is_country_type = vluur
+		is_country_type = slavers_dummy
+		is_country_type = jaunting_traveler_dummy
+		is_country_type = debt_collectors
+	}
+}
+#To be on this list, a country type should have both construction AI and an economic module, if it doesn't meet both of those don't put it here
+giga_country_gets_bank_include = {
+	OR = {
+		is_country_type = ascended_empire
+		is_country_type = lost_empire
+	}
+}
+
+#Stops them from doing any of the really bad observation events
+giga_is_special_primitive = {
+	OR = {
+		has_country_flag = ezic_tropiana_country
+		has_country_flag = corrona_primitives
+		has_country_flag = giga_eaw_country
+		has_country_flag = flusion_primitives
+		has_country_flag = paluush_primitives
+		has_country_flag = excognitor_primitives
+		has_country_flag = dominion_primitives
+	}
+}
+
+###################################
+### Compat Planet type triggers ###
+###################################
+giga_is_katzenland = {
+	is_planet_class = pc_katzenland
+}
+giga_is_edge_of_eternity = {
+	is_planet_class = pc_giga_edge_of_eternity
+}
+
+### Uninhabitable planets ###
+
+#Gas giants
+giga_is_gas_giant = {
+	optimize_memory
+	OR = {
+		is_planet_class = pc_gas_giant
+		atw_is_gas_giant = yes
+
+		#These have been moved to a modifier
+		is_planet_class = pc_dwarf_gas_giant #This one was forgor? or atleast it seems like that
+		# is_planet_class = pc_cold_gas_giant
+		# is_planet_class = pc_cloudless_gas_giant
+		# is_planet_class = pc_hot_gas_giant
+	}
+}
+
+#toxic worlds
+giga_is_toxic = {
+	optimize_memory
+	OR = {
+		is_planet_class = pc_toxic
+		is_planet_class = pc_red_toxic
+		atw_is_toxic = yes
+		is_pd_toxic = yes #The rest of the uninhabitable PD triggers brought to you by Inny
+	}
+}
+
+#Molten worlds
+giga_is_molten = {
+	optimize_memory
+	OR = {
+		is_planet_class = pc_molten
+		atw_is_molten = yes
+		is_pd_molten = yes
+	}
+}
+
+#frozen
+giga_is_frozen = {
+	optimize_memory
+	OR = {
+		is_planet_class = pc_frozen
+		atw_is_frozen = yes
+	}
+}
+
+#Cold or normal barren
+giga_is_barren_cn = {
+	optimize_memory
+	OR = {
+		giga_is_barren = yes
+		giga_is_barren_cold = yes
+	}
+}
+
+giga_is_barren = {
+	optimize_memory
+	OR = {
+		is_planet_class = pc_barren
+		atw_is_barren = yes
+		is_pd_barren = yes
+	}
+}
+
+giga_is_barren_cold = {
+	optimize_memory
+	OR = {
+		is_planet_class = pc_barren_cold
+		atw_is_barren = yes
+		is_pd_barren_cold = yes
+	}
+}
+
+### Habitable worlds(pain) ###
+giga_is_alpine = { 
+	optimize_memory
+	OR = {
+		is_planet_class = pc_alpine
+		is_pd_alpine = yes
+		atw_is_alpine = yes
+	} 
+}
+
+giga_is_arctic = { 
+	optimize_memory
+	OR = {
+		is_planet_class = pc_arctic
+		is_pd_arctic = yes
+		atw_is_arctic = yes
+	} 
+}
+
+giga_is_arid = { 
+	optimize_memory
+	OR = {
+		is_planet_class = pc_arid
+		is_pd_arid = yes
+		atw_is_arid = yes
+	} 
+}
+
+giga_is_continental = { 
+	optimize_memory
+	OR = {
+		is_planet_class = pc_continental
+		is_pd_continental = yes
+		atw_is_continental = yes
+	} 
+}
+
+giga_is_desert = { 
+	optimize_memory
+	OR = {
+		is_planet_class = pc_desert
+		is_pd_desert = yes
+		atw_is_desert = yes
+	} 
+}
+
+giga_is_ocean = { 
+	optimize_memory
+	OR = {
+		is_planet_class = pc_ocean
+		is_planet_class = pc_giga_edge_of_eternity
+		is_pd_ocean = yes
+		is_pd_aquatics = yes
+		atw_is_ocean_basic = yes
+	} 
+}
+
+giga_is_savannah = { 
+	optimize_memory
+	OR = {
+		is_planet_class = pc_savannah
+		is_pd_savannah = yes
+		atw_is_savannah = yes 
+	} 
+}
+
+giga_is_tropical = { 
+	optimize_memory
+	OR = {
+		is_planet_class = pc_tropical
+		is_pd_tropical = yes
+		atw_is_tropical = yes
+	} 
+}
+
+giga_is_tundra = { 
+	optimize_memory
+	OR = {
+		is_planet_class = pc_tundra
+		is_pd_tundra = yes
+		atw_is_tundra = yes
+	} 
+}
+#Lifeless worlds from terraforming megas
+giga_is_lifeless = {
+	optimize_memory
+	OR = {
+		is_planet_class = pc_ll_foggy
+		is_planet_class = pc_ll_temperate
+		is_planet_class = pc_ll_torrid
+	}
+}
+
+giga_is_hive = {
+	optimize_memory
+	OR = {
+		is_planet_class = pc_hive
+		is_pd_hive_world = yes
+	}
+}
+
+giga_is_machine = {
+	optimize_memory
+	OR = {
+		is_planet_class = pc_machine
+		is_pd_machine = yes
+	}
+}
+
+giga_is_gaia = { 
+	optimize_memory
+	OR = {
+		is_planet_class = pc_gaia
+		is_pd_gaia = yes
+		atw_is_gaia = yes
+	} 
+}
+
+giga_is_nuked = { 
+	optimize_memory
+	OR = {
+		is_planet_class = pc_nuked
+		is_planet_class = pc_katzenland
+		is_pd_nuked = yes
+	} 
+
+}
+
+giga_is_arcology = {
+	optimize_memory
+	OR = {
+		is_planet_class = pc_flusion_gaia_ecu
+		is_planet_class = pc_city
+		is_pd_arcology = yes
 	}
 }
