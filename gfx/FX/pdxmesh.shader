@@ -4628,6 +4628,22 @@ Effect PdxMeshMCPortraitSkinnedShadow
 	Defines = { "IS_SHADOW" }
 }
 
+Effect PdxMeshMCPortrait128Skinned
+{
+	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
+	PixelShader = "PixelMCPortrait"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+	RasterizerState = "RasterizerStateNoCulling"
+	Defines = { "SIZE_128" }
+}
+
+Effect PdxMeshMCPortrait128SkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
 PixelShader = {
 	MainCode PixelGigaDebug
 		ConstantBuffers = { Common, ShipConstants, Shadow }

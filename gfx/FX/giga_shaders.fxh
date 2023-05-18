@@ -667,7 +667,22 @@ PixelShader = {
 		{
 			float2 uv = In.vUV0;
 
-			uv = nearestSampleUV_AA(uv, 64.0, 1.5);
+			float size = 64.0;
+
+			#ifdef SIZE_128
+			size = 128.0;
+			#endif
+			#ifdef SIZE_256
+			size = 256.0;
+			#endif
+			#ifdef SIZE_32
+			size = 32.0;
+			#endif
+			#ifdef SIZE_16
+			size = 16.0;
+			#endif
+
+			uv = nearestSampleUV_AA(uv, size, 1.5);
 
 			float4 UVLod = float4( uv, 0.0, PortraitMipLevel * 0.35 );
 
