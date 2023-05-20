@@ -6,6 +6,7 @@ Includes = {
 	"tiled_pointlights.fxh"
 	"pdxmesh_samplers.fxh"
 	"pdxmesh_ship.fxh"
+	//"giga_debug.fxh"
 }
 
 #//Omni Shaders (EHOF/Kreitani)
@@ -345,10 +346,44 @@ PixelShader = {
 
 			vDiffuse.rgb = max(vGradient.rgb * vDiffuse.r, vDiffuse.ggg);
 
-			//float shift = (In.vPos.x * 0.005) % 1;
-			//vDiffuse.rgb = ApplyHue(vDiffuse.rgb, shift * 2 * 3.14159);
-
 			return float4( ToGamma( vDiffuse.rgb ), vDiffuse.a );
+		}
+
+	]]
+}
+
+#// rainbow blokkat
+PixelShader = {
+	MainCode PixelRainbowBlokkatAnim
+		ConstantBuffers = { PortraitCommon, EigthKind, Shadow }
+	[[
+		float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
+		{
+		    // Chassis pattern, passed as normal map
+			float4 UVLod = float4( (In.vUV0), 0.0, PortraitMipLevel * 0.35 );
+			float4 vDiffuse = tex2Dlod( NormalMap, UVLod );
+
+			// Colour map, passed as diffuse so the portrait selector can swap it
+            //float shift = (In.vPos.x * 0.0065) % 1;
+            float shift = vUVAnimationTime;
+            float4 UVGrad = float4( shift, 0.0625, 0.0, 0.0 );
+			float4 vGradient;
+			if( CustomDiffuseTexture > 0.5f ) {
+				vGradient = tex2Dlod( PortraitCharacter, UVGrad );
+			} else {
+				vGradient = tex2Dlod( DiffuseMap, UVGrad );
+			}
+			vGradient.rgb = ToLinear(vGradient.rgb);
+
+            // recolour chassis with the colour map
+			vDiffuse.rgb = max(vGradient.rgb * vDiffuse.r, vDiffuse.ggg);
+
+			return vDiffuse;
+
+			/*if (giga_debug_number(vUVAnimationTime, In.vUV0 * 3000, int2(1,1))) {
+			    return float4(0.0,0.0,0.0,1.0);
+			}
+			return float4(0.6,0.6,0.6,1.0);*/
 		}
 
 	]]
