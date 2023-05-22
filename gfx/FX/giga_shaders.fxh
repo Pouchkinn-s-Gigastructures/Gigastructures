@@ -362,10 +362,13 @@ PixelShader = {
 		    // Chassis pattern, passed as normal map
 			float4 UVLod = float4( (In.vUV0), 0.0, PortraitMipLevel * 0.35 );
 			float4 vDiffuse = tex2Dlod( NormalMap, UVLod );
+			float4 vMasks = tex2Dlod( SpecularMap, UVLod );
 
 			// Colour map, passed as diffuse so the portrait selector can swap it
             //float shift = (In.vPos.x * 0.0065) % 1;
             float shift = vUVAnimationTime;
+            shift += vMasks.b;
+
             float4 UVGrad = float4( shift, 0.0625, 0.0, 0.0 );
 			float4 vGradient;
 			if( CustomDiffuseTexture > 0.5f ) {
@@ -376,7 +379,9 @@ PixelShader = {
 			vGradient.rgb = ToLinear(vGradient.rgb);
 
             // recolour chassis with the colour map
-			vDiffuse.rgb = max(vGradient.rgb * vDiffuse.r, vDiffuse.ggg);
+			float3 recoloured = max(vGradient.rgb * vDiffuse.r, vDiffuse.ggg);
+
+			vDiffuse.rgb = lerp(vDiffuse.rgb, recoloured, vMasks.r);
 
 			return vDiffuse;
 
