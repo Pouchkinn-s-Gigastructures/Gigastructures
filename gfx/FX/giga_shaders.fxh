@@ -6,6 +6,7 @@ Includes = {
 	"tiled_pointlights.fxh"
 	"pdxmesh_samplers.fxh"
 	"pdxmesh_ship.fxh"
+	//"giga_debug.fxh"
 }
 
 #//Omni Shaders (EHOF/Kreitani)
@@ -345,10 +346,49 @@ PixelShader = {
 
 			vDiffuse.rgb = max(vGradient.rgb * vDiffuse.r, vDiffuse.ggg);
 
-			//float shift = (In.vPos.x * 0.005) % 1;
-			//vDiffuse.rgb = ApplyHue(vDiffuse.rgb, shift * 2 * 3.14159);
-
 			return float4( ToGamma( vDiffuse.rgb ), vDiffuse.a );
+		}
+
+	]]
+}
+
+#// rainbow blokkat
+PixelShader = {
+	MainCode PixelRainbowBlokkatAnim
+		ConstantBuffers = { PortraitCommon, EigthKind, Shadow }
+	[[
+		float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
+		{
+		    // Chassis pattern, passed as normal map
+			float4 UVLod = float4( (In.vUV0), 0.0, PortraitMipLevel * 0.35 );
+			float4 vDiffuse = tex2Dlod( NormalMap, UVLod );
+			float4 vMasks = tex2Dlod( SpecularMap, UVLod );
+
+			// Colour map, passed as diffuse so the portrait selector can swap it
+            //float shift = (In.vPos.x * 0.0065) % 1;
+            float shift = vUVAnimationTime;
+            shift += vMasks.b;
+
+            float4 UVGrad = float4( shift, 0.0625, 0.0, 0.0 );
+			float4 vGradient;
+			if( CustomDiffuseTexture > 0.5f ) {
+				vGradient = tex2Dlod( PortraitCharacter, UVGrad );
+			} else {
+				vGradient = tex2Dlod( DiffuseMap, UVGrad );
+			}
+			vGradient.rgb = ToLinear(vGradient.rgb);
+
+            // recolour chassis with the colour map
+			float3 recoloured = max(vGradient.rgb * vDiffuse.r, vDiffuse.ggg);
+
+			vDiffuse.rgb = lerp(vDiffuse.rgb, recoloured, vMasks.r);
+
+			return vDiffuse;
+
+			/*if (giga_debug_number(vUVAnimationTime, In.vUV0 * 3000, int2(1,1))) {
+			    return float4(0.0,0.0,0.0,1.0);
+			}
+			return float4(0.6,0.6,0.6,1.0);*/
 		}
 
 	]]
@@ -667,7 +707,22 @@ PixelShader = {
 		{
 			float2 uv = In.vUV0;
 
-			uv = nearestSampleUV_AA(uv, 64.0, 1.5);
+			float size = 64.0;
+
+			#ifdef SIZE_128
+			size = 128.0;
+			#endif
+			#ifdef SIZE_256
+			size = 256.0;
+			#endif
+			#ifdef SIZE_32
+			size = 32.0;
+			#endif
+			#ifdef SIZE_16
+			size = 16.0;
+			#endif
+
+			uv = nearestSampleUV_AA(uv, size, 1.5);
 
 			float4 UVLod = float4( uv, 0.0, PortraitMipLevel * 0.35 );
 
