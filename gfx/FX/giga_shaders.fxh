@@ -6,7 +6,7 @@ Includes = {
 	"tiled_pointlights.fxh"
 	"pdxmesh_samplers.fxh"
 	"pdxmesh_ship.fxh"
-	//"giga_debug.fxh"
+	#//"giga_debug.fxh"
 }
 
 #//Omni Shaders (EHOF/Kreitani)
@@ -359,36 +359,51 @@ PixelShader = {
 	[[
 		float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
 		{
+		    float3 pos = In.vSphere;
+
 		    // Chassis pattern, passed as normal map
 			float4 UVLod = float4( (In.vUV0), 0.0, PortraitMipLevel * 0.35 );
 			float4 vDiffuse = tex2Dlod( NormalMap, UVLod );
 			float4 vMasks = tex2Dlod( SpecularMap, UVLod );
 
-			// Colour map, passed as diffuse so the portrait selector can swap it
-            //float shift = (In.vPos.x * 0.0065) % 1;
-            float shift = vUVAnimationTime;
-            shift += vMasks.b;
+			// gradient sample scale passed as UV direction X
+			float outerGradientScale = vUVAnimationDir.x;
+			float innerGradientScale = vUVAnimationDir.y;
 
-            float4 UVGrad = float4( shift, 0.0625, 0.0, 0.0 );
-			float4 vGradient;
-			if( CustomDiffuseTexture > 0.5f ) {
-				vGradient = tex2Dlod( PortraitCharacter, UVGrad );
-			} else {
-				vGradient = tex2Dlod( DiffuseMap, UVGrad );
-			}
-			vGradient.rgb = ToLinear(vGradient.rgb);
+			// Colour map, passed as diffuse so the portrait selector can swap it
+            float outerShift = vUVAnimationTime;
+            outerShift += vMasks.b * outerGradientScale;
+
+            float innerShift = vUVAnimationTime + 0.5 + pos.x * 0.01 + pos.y * 0.02;
+            innerShift += vMasks.b * innerGradientScale;
+
+            float4 UVOuterGrad = float4( outerShift, 0.25, 0.0, 0.0 );
+            float4 UVInnerGrad = float4( innerShift, 0.75, 0.0, 0.0 );
+
+            float4 vOuterGradient;
+            float4 vInnerGradient;
+            if( CustomDiffuseTexture > 0.5f ) {
+                vOuterGradient = tex2Dlod( PortraitCharacter, UVOuterGrad );
+                vInnerGradient = tex2Dlod( PortraitCharacter, UVInnerGrad );
+            } else {
+                vOuterGradient = tex2Dlod( DiffuseMap, UVOuterGrad );
+                vInnerGradient = tex2Dlod( DiffuseMap, UVInnerGrad );
+            }
+
+			//vOuterGradient.rgb = ToLinear(vOuterGradient.rgb);
+			//vInnerGradient.rgb = ToLinear(vInnerGradient.rgb);
 
             // recolour chassis with the colour map
-			float3 recoloured = max(vGradient.rgb * vDiffuse.r, vDiffuse.ggg);
+			float3 recolouredOuter = max(vOuterGradient.rgb * vDiffuse.r, vDiffuse.ggg);
+			float3 recolouredInner = max(vInnerGradient.rgb * vDiffuse.r, vDiffuse.ggg);
+
+			float3 recoloured = lerp(recolouredOuter, recolouredInner, vMasks.g);
 
 			vDiffuse.rgb = lerp(vDiffuse.rgb, recoloured, vMasks.r);
 
 			return vDiffuse;
 
-			/*if (giga_debug_number(vUVAnimationTime, In.vUV0 * 3000, int2(1,1))) {
-			    return float4(0.0,0.0,0.0,1.0);
-			}
-			return float4(0.6,0.6,0.6,1.0);*/
+			//return float4(abs(pos.x) % 1.0, abs(pos.y) % 1.0, abs(pos.z) % 1.0, 1.0);
 		}
 
 	]]
