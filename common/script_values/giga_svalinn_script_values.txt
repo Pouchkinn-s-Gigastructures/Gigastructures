@@ -1,9 +1,166 @@
 # Svalinn Defense Installation calculations
 
-# calculate x
-svalinn_something = {
-	base = 1
+# calculate half of the euclidean distance to a system Y from a system X
+giga_calculate_half_of_distance = {
+	base = 0
 
-	multiply = 2
+	complex_trigger_modifier = {
+		trigger = distance
+		parameters = {
+			source = $system_target_scope$
+			type = euclidean
+		}
+		mode = add
+	}
+
+	divide = 2
+}
+
+# since you can't use a variable some places, this makes a script value from a variable
+# does not work for PARAMs tho, so sad
+# VAR = value to export
+giga_export_variable_value = {
+	base = 0
+	set = this.$VAR$
+}
+
+# abs(x)
+# VAL = x
+giga_abs_value = {
+	base = 0
+	set = value:$VAL$
+	abs = yes 
+}
+
+# x^2
+# VAL = x
+giga_x_squared_value = {
+	base = 0
+	set = value:$VAL$
+	pow = 2 
+}
+
+# VAL = angle in radians
+giga_radian_to_degrees = {
+	base = 0
+	set = value:$VAL$
+	multiply = 180
+	divide = @pi
+}
+
+# approximation function for arccos (yes we need this, it's horrible)
+# results in radians
+# use as arccos(x) by calling 
+# value:giga_approximate_arccos|VAL|x|
+# where x=1 - this must be a number
+# VAL is used as the function variable name
+giga_approximate_arccos = {
+	base = 0
+	set = value:giga_arccos_first_steps|VAL|$VAL$|
+	subtract = value:giga_arccos_step_9|VAL|$VAL$|
+	add = value:giga_arccos_step_10|VAL|$VAL$|
+}
+
+# see adapted function
+giga_arccos_first_steps = {
+	base = 0
+	set = -0.0187293
+	multiply = value:giga_abs_value|VAL|$VAL$|
+	add = 0.0742610
+	multiply = value:giga_abs_value|VAL|$VAL$|
+	subtract = 0.2121144
+	multiply = value:giga_abs_value|VAL|$VAL$|
+	add = 1.5707288
+	multiply = value:giga_arccos_step_8|VAL|$VAL$|
+}
+
+# sqrt(1.0 - |x|)
+giga_arccos_step_8 = {
+	base = 1
+	subtract = value:giga_abs_value|VAL|$VAL$|
+	square_root = yes
+}
+
+# negate = 1 if x<0, 0 if x>0
+giga_arccos_negate = {
+	base = 0
+	modifier = {
+		check_variable = {
+			which = event_target:global_event_country.giga_zero
+			value > value:$VAL$
+		}
+		weight = 1
+	}
+}
+
+# 2 * negate * ret
+giga_arccos_step_9 = {
+	base = 2
+	multiply = value:giga_arccos_negate|VAL|$VAL$|
+	multiply = value:giga_arccos_first_steps|VAL|$VAL$|
+}
+
+# negate * pi
+giga_arccos_step_10 = {
+	base = @pi
+	multiply = value:giga_arccos_negate|VAL|$VAL$|
+}
+
+# the arccos function adapted
+#def arccos_approx(x):
+#    negate = float(x < 0)
+#    x = abs(x)
+#    ret = -0.0187293
+#    ret = ret * x
+#    ret = ret + 0.0742610
+#    ret = ret * x
+#    ret = ret - 0.2121144
+#    ret = ret * x
+#    ret = ret + 1.5707288
+#    ret = ret * np.sqrt(1.0-x)
+#    ret = ret - 2 * negate * ret
+#    return negate * 3.14159265358979 + ret
+
+
+# use for arccos: calculating angles on a triangle
+# allows triangulating angle for systems
+# see https://www.calculator.net/triangle-calculator.html?vc=&vx=100&vy=30&va=&vz=120&vb=&angleunits=d&x=51&y=10
+# takes $a$, $b$, $c$ which are side lengths
+giga_calculate_angle_A = {
+	base = 0
+	# arccos[(b^2 + c^2 - a^2) / (2bc)]
+	set = value:giga_approximate_arccos|VAL|giga_calculate_angle_A_function_value|
+}
+giga_calculate_angle_A_function_value = {
+	base = 0
+	set = value:giga_calculate_angle_A_numerator
+	divide = value:giga_calculate_angle_A_denominator
+}
+giga_calculate_angle_A_numerator = {
+	base = 0
+	set = value:giga_x_squared_value|VAL|giga_triangle_side_b_value|
+	add = value:giga_x_squared_value|VAL|giga_triangle_side_c_value|
+	subtract = value:giga_x_squared_value|VAL|giga_triangle_side_a_value|
+}
+giga_calculate_angle_A_denominator = {
+	base = 2
+	multiply = value:giga_triangle_side_b_value
+	multiply = value:giga_triangle_side_c_value
+}
+
+# you can't use variables in PARAMs, it just uses the variable name string
+# so this is a hardcoded variable export
+giga_triangle_side_a_value = {
+	set = root.giga_svalinn_triangle_side_a
+}
+giga_triangle_side_b_value = {
+	set = root.giga_svalinn_triangle_side_b
+}
+giga_triangle_side_c_value = {
+	set = root.giga_svalinn_triangle_side_c
+}
+
+giga_test_180 = {
+	set = 180
 }
 
