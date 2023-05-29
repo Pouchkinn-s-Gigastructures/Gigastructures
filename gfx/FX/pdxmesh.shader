@@ -4586,11 +4586,17 @@ Effect PdxMeshRainbowBlokkatPortraitSkinnedShadow
 	Defines = { "IS_SHADOW" }
 }
 
-Effect PdxMeshRainbowBlokkatPortraitAnimateUVSkinned
+Effect GigaBlokkatAnimateUVSkinned
 {
 	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
-	PixelShader = "PixelRainbowBlokkatAnim"
+	PixelShader = "GigaBlokkat"
 	BlendState = "BlendStateAlphaBlendWriteAlpha";
+}
+Effect GigaBlokkatAnimateUVSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
 }
 
 Effect PdxMeshMarchPortrait

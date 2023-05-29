@@ -354,11 +354,12 @@ PixelShader = {
 
 #// rainbow blokkat
 PixelShader = {
-	MainCode PixelRainbowBlokkatAnim
+	MainCode GigaBlokkat
 		ConstantBuffers = { PortraitCommon, EigthKind, Shadow }
 	[[
 		float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
 		{
+		    // model space coords
 		    float3 pos = In.vSphere;
 
 		    // Chassis pattern, passed as normal map
@@ -374,12 +375,15 @@ PixelShader = {
             float outerShift = vUVAnimationTime;
             outerShift += vMasks.b * outerGradientScale;
 
+            // inner shift is perturbed by model space coords, to make the textures less obvious
             float innerShift = vUVAnimationTime + 0.5 + pos.x * 0.01 + pos.y * 0.02;
             innerShift += vMasks.b * innerGradientScale;
 
+            // the top half of the gradient image is the outside, bottom half is inside
             float4 UVOuterGrad = float4( outerShift, 0.25, 0.0, 0.0 );
             float4 UVInnerGrad = float4( innerShift, 0.75, 0.0, 0.0 );
 
+            // get the gradient textures
             float4 vOuterGradient;
             float4 vInnerGradient;
             if( CustomDiffuseTexture > 0.5f ) {
@@ -390,20 +394,21 @@ PixelShader = {
                 vInnerGradient = tex2Dlod( DiffuseMap, UVInnerGrad );
             }
 
-			//vOuterGradient.rgb = ToLinear(vOuterGradient.rgb);
-			//vInnerGradient.rgb = ToLinear(vInnerGradient.rgb);
+            // need to adjust the gradient textures for... whatever reason, thanks game
+            vOuterGradient.rgb = ToGamma(vOuterGradient.rgb);
+            vInnerGradient.rgb = ToGamma(vInnerGradient.rgb);
 
             // recolour chassis with the colour map
 			float3 recolouredOuter = max(vOuterGradient.rgb * vDiffuse.r, vDiffuse.ggg);
 			float3 recolouredInner = max(vInnerGradient.rgb * vDiffuse.r, vDiffuse.ggg);
 
+            // mix insides and outsides
 			float3 recoloured = lerp(recolouredOuter, recolouredInner, vMasks.g);
 
+            // mix recoloured with base
 			vDiffuse.rgb = lerp(vDiffuse.rgb, recoloured, vMasks.r);
 
 			return vDiffuse;
-
-			//return float4(abs(pos.x) % 1.0, abs(pos.y) % 1.0, abs(pos.z) % 1.0, 1.0);
 		}
 
 	]]
