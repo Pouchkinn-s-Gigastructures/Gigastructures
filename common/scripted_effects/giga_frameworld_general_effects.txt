@@ -291,7 +291,7 @@ giga_frameworld_expand_deposit = {
 giga_frameworld_recalculate_outpost_bonus = {
 	if = {
 		limit = {
-			has_origin = origin_frameworld # check here for situations like systems changing hands so we don't need to know which side is frameworld
+			giga_has_frameworld_origin = yes # check here for situations like systems changing hands so we don't need to know which side is frameworld
 		}
 		
 		# move value to old value
@@ -339,7 +339,8 @@ giga_frameworld_recalculate_outpost_bonus = {
 					}
 				}
 			}
-			
+
+			# TODO future version: remove this in whole since it won't be added any more
 			# remove the modifier if we already have it
 			if = {
 				limit = {
@@ -349,17 +350,43 @@ giga_frameworld_recalculate_outpost_bonus = {
 			}
 			
 			# set the modifier if we have more than 0 outposts
+			#if = {
+			#	limit = {
+			#		check_variable = {
+			#			which = giga_frameworld_outpost_count
+			#			value > 0
+			#		}
+			#	}
+			#
+			#	add_modifier = {
+			#		modifier = frameworld_outpost_bonus
+			#		multiplier = giga_frameworld_outpost_count
+			#	}
+			#}
+
 			if = {
 				limit = {
 					check_variable = {
 						which = giga_frameworld_outpost_count
 						value > 0
 					}
+					not = {
+						any_situation = {
+							is_situation_type = giga_situation_frameworld_outposts
+						}
+					}
 				}
-				
-				add_modifier = {
-					modifier = frameworld_outpost_bonus
-					multiplier = giga_frameworld_outpost_count
+				random_owned_planet = {
+					limit = {
+						has_planet_flag = giga_frameworld@prev
+					}
+
+					prev = {
+						start_situation = {
+							type = giga_situation_frameworld_outposts
+							target = prev
+						}
+					}
 				}
 			}
 			
@@ -446,7 +473,7 @@ giga_frameworld_wreck_outpost = {
 
 # this = planet
 giga_frameworld_create_outpost = {
-	[[WHO] if = { limit = { $WHO$ = { has_origin = origin_frameworld } } ]
+	[[WHO] if = { limit = { $WHO$ = { giga_has_frameworld_origin = yes } } ]
 
 	giga_frameworld_set_outpost_flags = yes
 	giga_frameworld_remove_outpost_wrecks = yes
@@ -474,38 +501,42 @@ giga_frameworld_create_outpost_holder_colony = {
 	giga_frameworld_create_outpost_country = yes
 	
 	# god damn this bug where it eats the sector sucks, save whether we have a sector and a governor
-	if = { 
-		limit = {
-			exists = space_owner.capital_scope
-		}
-		
-		space_owner.capital_scope = {
-			if = {
-				limit = {
-					exists = sector
-					exists = prev.sector
-					sector = {
-						is_same_value = prevprev.sector
-					}
-				}
-				set_planet_flag = frameworld_reassign_sector
-				
-				if = {
-					limit = {
-						exists = sector.sector_capital.leader
-					}
-					sector.sector_capital.leader = {
-						save_event_target_as = frameworld_leader
-					}
-					set_planet_flag = frameworld_reassign_leader
-				}
-			}
-		}
-	}
+	#if = {
+	#	limit = {
+	#		exists = space_owner.capital_scope
+	#	}
+	#
+	#	space_owner.capital_scope = {
+	#		if = {
+	#			limit = {
+	#				exists = sector
+	#				exists = prev.sector
+	#				sector = {
+	#					is_same_value = prevprev.sector
+	#				}
+	#			}
+	#			set_planet_flag = frameworld_reassign_sector
+	#
+	#			if = {
+	#				limit = {
+	#					exists = sector.sector_capital.leader
+	#				}
+	#				sector.sector_capital.leader = {
+	#					save_event_target_as = frameworld_leader
+	#				}
+	#				set_planet_flag = frameworld_reassign_leader
+	#			}
+	#		}
+	#	}
+	#}
 	
 	# do the actual colony lol
 	create_colony = {
 		owner = space_owner
+		species = event_target:frameworld_outpost_species
+	}
+	create_pop = {
+		species = event_target:frameworld_outpost_species
 	}
 
 	# fire colonised actions for the frameworld nation
@@ -513,10 +544,14 @@ giga_frameworld_create_outpost_holder_colony = {
 		on_action = on_colonized
 	}
 
-	# put this before set owner because it destroys the colony as of 3.6...
-	# every_owned_pop = {
-	# 	kill_pop = yes
-	# }
+	# 3.6 means we need a pop on the planet or the colony gets deleted a day later
+	# even if the country type is allowed to have pop-less colonies... BUT only on habitable worlds...
+	every_owned_pop = {
+		kill_pop = yes
+	}
+	create_pop = {
+		species = event_target:frameworld_outpost_species
+	}
 
 	set_owner = event_target:frameworld_outpost_country
 	set_controller = event_target:frameworld_outpost_country
@@ -529,44 +564,71 @@ giga_frameworld_create_outpost_holder_colony = {
 	}
 	
 	# fix the sector if it would've collapsed - most of this damn effect is working around the bug
-	if = { 
-		limit = {
-			exists = space_owner.capital_scope
-		}
-		
-		space_owner.capital_scope = {
-			if = {
-				limit = {
-					has_planet_flag = frameworld_reassign_sector
-				}
-				set_sector_capital = yes
-				remove_planet_flag = frameworld_reassign_sector
-				
-				if = {
-					limit = {
-						has_planet_flag = frameworld_reassign_leader
-					}
-					assign_leader = event_target:frameworld_leader
-					remove_planet_flag = frameworld_reassign_leader
-				}
-			}
-		}
-	}
+	#if = {
+	#	limit = {
+	#		exists = space_owner.capital_scope
+	#	}
+	#
+	#	space_owner.capital_scope = {
+	#		if = {
+	#			limit = {
+	#				has_planet_flag = frameworld_reassign_sector
+	#			}
+	#			set_sector_capital = yes
+	#			remove_planet_flag = frameworld_reassign_sector
+	#
+	#			if = {
+	#				limit = {
+	#					has_planet_flag = frameworld_reassign_leader
+	#				}
+	#				assign_leader = event_target:frameworld_leader
+	#				remove_planet_flag = frameworld_reassign_leader
+	#			}
+	#		}
+	#	}
+	#}
 }
 
 giga_frameworld_create_outpost_country = {
+	# create species first
 	if = {
 		limit = {
 			not = {
-				#exists = event_target:frameworld_outpost_country
-				any_country = {
-					is_country_type = frameworld_outpost_country_type
-				}
+				exists = event_target:frameworld_outpost_species
 			}
 		}
-		
+
+		create_species = {
+			class = MACHINE
+			name = "NAME_frameworld_outpost_species"
+
+			portrait = robot1
+
+			traits = {
+				trait = trait_mechanical
+			}
+
+			effect = {
+				save_global_event_target_as = frameworld_outpost_species
+			}
+		}
+	}
+
+	# then the country, independently so we get the species in loaded saves
+	if = {
+		limit = {
+			not = {
+				exists = event_target:frameworld_outpost_country
+				#any_country = {
+				#	is_country_type = frameworld_outpost_country_type
+				#}
+			}
+		}
+
 		create_country = {
 			type = frameworld_outpost_country_type
+
+			species = event_target:frameworld_outpost_species
 			
 			name = "NAME_frameworld_outpost_country"
 
@@ -606,6 +668,8 @@ giga_frameworld_create_outpost_country = {
 				set_faction_hostility = {
 					set_friendly = yes
 				}
+
+				set_graphical_culture = ai_01
 			}
 		}
 	}
