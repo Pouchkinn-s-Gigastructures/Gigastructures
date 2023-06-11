@@ -62,7 +62,7 @@ event = {
 								has_star_flag = giga_galactic_center
 							}
 						}
-						spawn_system = { initializer = "ring_world_titanic_init_01" }
+						spawn_system = { initializer = "ring_world_titanic_init_01" hyperlane = no }
 					}
 				}
 				random_system = {
@@ -97,7 +97,7 @@ event = {
 								has_star_flag = giga_galactic_center
 							}
 						}
-						spawn_system = { initializer = "ring_world_behemoth_init_01" }
+						spawn_system = { initializer = "ring_world_behemoth_init_01" hyperlane = no }
 					}
 				}
 				random_system = {
@@ -132,7 +132,7 @@ event = {
 								has_star_flag = giga_galactic_center
 							}
 						}
-						spawn_system = { initializer = "ring_world_gargantuan_init_01" }
+						spawn_system = { initializer = "ring_world_gargantuan_init_01" hyperlane = no }
 					}
 				}
 				random_system = {
@@ -1090,56 +1090,44 @@ planet_event = {
 			}
 
 			# Remove all hyperlanes
+			set_spawn_system_batch = begin
 			every_system = {
 				limit = {
-					NOR = {
-						is_star_class = sc_blokkat_stripmined
-						any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
-					}
 					distance = {
 						source = prev
 						max_jumps = 4
 						use_bypasses = no
 					}
-				}
-				every_neighbor_system = { remove_hyperlane_safe = { from = this to = prev } }
-				set_star_flag = has_no_hyperlane
-			}
-
-			# Add new hyperlanes
-			every_system = {
-				limit = {
-					has_star_flag = has_no_hyperlane
+					hyperlane_eligible = yes
 					NOR = {
 						is_star_class = sc_blokkat_stripmined
 						any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
 					}
 				}
-				while = {
-					limit = {
-						event_target:penrose_detonator = {
-							any_owned_fleet = {
-								exists = solar_system
-								solar_system = { NOT = { has_star_flag = has_no_hyperlane } }
-								NOT = { can_access_system = prevprev }
-							}
-						}
-					}
-					random_system = {
-						limit = { has_star_flag = has_no_hyperlane }
-						remove_star_flag = has_no_hyperlane
-						set_star_flag = has_new_hyperlane
-						random_list = {
-							1 = { while = { count = 1 giga_generate_hyperlane = yes } }
-							1 = { while = { count = 2 giga_generate_hyperlane = yes } }
-						}
-					}
-				}
+				isolate_system = yes
+				set_star_flag = has_no_hyperlane
 			}
+			set_spawn_system_batch = end
 
+
+			# Add new hyperlanes
+			while = { count = 3 giga_generate_hyperlane = yes }
+			save_event_target_as = hyperlane_check_system
 			every_system = {
-				limit = { has_star_flag = has_new_hyperlane }
-				remove_star_flag = has_new_hyperlane
+				limit = {
+					NOT = { is_same_value = event_target:penrose_bomb_hyperlanes }
+					has_star_flag = has_no_hyperlane
+					NOR = {
+						is_star_class = sc_blokkat_stripmined
+						any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
+					}
+					hyperlane_eligible = yes
+				}
+				while = { count = 3 giga_reconnect_system_normal = yes} #3 passes to reconnect the systems, should be more than enough
+			}
+			every_system = {
+				limit = { has_star_flag = has_no_hyperlanes }
+				remove_star_flag = has_no_hyperlanes
 			}
 		}
 	}
