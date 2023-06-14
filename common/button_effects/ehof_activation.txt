@@ -709,21 +709,21 @@ ehofsa = {
 	effect = {}
 }
 
-ehofsa_left = {
-	potential = {
-		hidden_trigger = {
-			exists = from
-			from = {
-				check_variable = { which = ehof_phase value >= 1 }
-				exists = event_target:urmazin_country
-				has_country_flag = ehof_traders_first_time
+# ehofsa_left = {
+# 	potential = {
+# 		hidden_trigger = {
+# 			exists = from
+# 			from = {
+# 				check_variable = { which = ehof_phase value >= 1 }
+# 				exists = event_target:urmazin_country
+# 				has_country_flag = ehof_traders_first_time
 				
-			}
-		}
-	}
-	allow = { hidden_trigger = { always = yes } }
-	effect = {}
-}
+# 			}
+# 		}
+# 	}
+# 	allow = { hidden_trigger = { always = yes } }
+# 	effect = {}
+# }
 
 ehofsa_right = {
 	potential = {
@@ -746,13 +746,32 @@ ehofsa_traders = {
 		hidden_trigger = {
 			exists = from
 			from = {
-				exists = event_target:urmazin_country
-				has_country_flag = ehof_traders_first_time
-				has_country_flag = giga_diplo_buttons
+				has_country_flag = gigas_diplo_engaged
+				OR = {
+					AND = {
+						exists = event_target:urmazin_country
+						has_country_flag = ehof_traders_first_time
+					}
+					check_variable = { which = ehof_phase value >= 1 }
+				}
+				NOT = { has_country_flag = giga_diplo_sa_buttons } 
+
 			}
 		}
 	}
-	allow = { hidden_trigger = { NOT = { has_global_flag = compound_invasion_ongoing } } }
+	allow = { 
+		custom_tooltip = {
+			fail_text = "giga_traders_scared"
+			NOT = { has_global_flag = compound_invasion_ongoing }
+		}
+		custom_tooltip = {
+			fail_text = "giga_not_contacted"
+			from = { 				
+				exists = event_target:urmazin_country
+				has_country_flag = ehof_traders_first_time
+			}
+		}
+	}
 	effect = {
 		custom_tooltip = "ehof_traders_tooltip"
 		hidden_effect = { from = { country_event = { id = ehof_mega_trader.006 } } }
@@ -913,14 +932,18 @@ ehofsa_toggle_diplo = {
 			exists = from
 			from = {
 				OR = {
-					has_country_flag = gigas_diplo_engaged
+					AND = {
+						from = { check_variable = { which = ehof_phase value >= 1 } }
+						has_country_flag = gigas_diplo_engaged
+					}
 					is_discoverer = yes
 				}
-			}
+			} 
 		}
 	}
 	allow = { #only allow to swap between if both are true
-		hidden_trigger = {
+		custom_tooltip = {
+			fail_text = "giga_no_contacts"			
 			from = {
 				has_country_flag = gigas_diplo_engaged
 				is_discoverer = yes
@@ -930,15 +953,16 @@ ehofsa_toggle_diplo = {
 	effect = { 
 		if = {
 			limit = {
-				from = { has_country_flag = giga_diplo_buttons }
+				from = { NOT = { has_country_flag = giga_diplo_sa_buttons } }
 			}
-			custom_tooltip = "giga_toggle_diplomacy_sa" hidden_effect = { from = { remove_country_flag = giga_diplo_buttons } } 
+			custom_tooltip = "giga_toggle_diplomacy_sa" hidden_effect = { from = { set_country_flag = giga_diplo_sa_buttons } } 
+			break = yes
 		}
 		if = {
 			limit = {
-				from = { NOT = { has_country_flag = giga_diplo_buttons } }
+				from = { has_country_flag = giga_diplo_sa_buttons }
 			}
-			custom_tooltip = "giga_toggle_diplomacy_sa" hidden_effect = { from = { set_country_flag = giga_diplo_buttons } } 
+			custom_tooltip = "giga_toggle_diplomacy_sa" hidden_effect = { from = { remove_country_flag = giga_diplo_sa_buttons } } 
 		}
 	}
 }
@@ -950,8 +974,24 @@ no_ehof_sa = {
 		hidden_trigger = {
 			exists = from
 			from = {
-				check_variable = { which = ehof_phase value <= 0 }
-				is_discoverer = yes
+				check_variable = { which = ehof_phase value >= 1 }
+				NOT = { giga_has_ehof_mega = yes }
+			}
+		}
+	}
+	allow = { hidden_trigger = { always = yes } }
+	effect = { custom_tooltip = "no_ehof_sa_tooltip" }
+}
+
+ehof_button_panel = {
+	potential = {
+		hidden_trigger = {
+			exists = from
+			from = { 
+				OR = {
+					check_variable = { which = ehof_phase value >= 1 } 
+					is_discoverer = yes #Somehow lost ehof_phase while being SA discoverer?
+				}
 			}
 		}
 	}
@@ -1174,7 +1214,7 @@ sa_defend = {
 			exists = from
 			from = { 
 				is_discoverer = yes 
-				NOT = { has_country_flag = giga_diplo_buttons }
+				has_country_flag = giga_diplo_sa_buttons
 			}
 		}
 	}
@@ -1198,7 +1238,7 @@ sa_defend_highlight = {
 			exists = from
 			from = { 
 				is_discoverer = yes 
-				NOT = { has_country_flag = giga_diplo_buttons }
+				has_country_flag = giga_diplo_sa_buttons
 			}
 		}
 	}
@@ -1222,7 +1262,7 @@ sa_sphere = {
 			exists = from
 			from = { 
 				is_discoverer = yes 
-				NOT = { has_country_flag = giga_diplo_buttons }
+				has_country_flag = giga_diplo_sa_buttons
 			}
 		}
 	}
@@ -1240,7 +1280,7 @@ sa_sphere_highlight = {
 			exists = from
 			from = { 
 				is_discoverer = yes 
-				NOT = { has_country_flag = giga_diplo_buttons }
+				has_country_flag = giga_diplo_sa_buttons
 			}
 		}
 	}
@@ -1258,7 +1298,7 @@ sa_follow = {
 			exists = from
 			from = { 
 				is_discoverer = yes 
-				NOT = { has_country_flag = giga_diplo_buttons }
+				has_country_flag = giga_diplo_sa_buttons
 			}
 		}
 	}
@@ -1276,7 +1316,7 @@ sa_follow_highlight = {
 			exists = from
 			from = { 
 				is_discoverer = yes 
-				NOT = { has_country_flag = giga_diplo_buttons }
+				has_country_flag = giga_diplo_sa_buttons
 			}
 		}
 	}
@@ -1294,7 +1334,7 @@ sa_attack = {
 			exists = from
 			from = { 
 				is_discoverer = yes 
-				NOT = { has_country_flag = giga_diplo_buttons }
+				has_country_flag = giga_diplo_sa_buttons
 			}
 		}
 	}
@@ -1312,7 +1352,7 @@ sa_attack_highlight = {
 			exists = from
 			from = { 
 				is_discoverer = yes 
-				NOT = { has_country_flag = giga_diplo_buttons }
+				has_country_flag = giga_diplo_sa_buttons
 			}
 		}
 	}
@@ -1329,7 +1369,7 @@ sa_comm = {
 			exists = from
 			from = { 
 				is_discoverer = yes 
-				NOT = { has_country_flag = giga_diplo_buttons }
+				has_country_flag = giga_diplo_sa_buttons
 			}
 		}
 	}
