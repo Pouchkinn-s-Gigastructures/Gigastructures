@@ -1016,6 +1016,18 @@ giga_is_edge_of_eternity = {
 
 ### Uninhabitable planets ###
 
+#master list of all basic uninhabitable world types
+giga_is_uninhabitable = {
+	optimize_memory
+	OR = {
+		giga_is_molten = yes
+		giga_is_frozen = yes
+		giga_is_barren_cn = yes
+		giga_is_toxic = yes
+		giga_is_gas_giant = yes
+	}
+}
+
 #Gas giants
 giga_is_gas_giant = {
 	optimize_memory
@@ -1222,5 +1234,114 @@ giga_is_arcology = {
 		is_planet_class = pc_flusion_gaia_ecu
 		is_planet_class = pc_city
 		is_pd_arcology = yes
+	}
+}
+
+# used in can_get_external_leader_pool_candidate rule overwrite
+# This = country, Country that wants to get an external leader
+# From = country, country that we are trying to get from
+giga_can_get_external_leader_pool_candidate = {
+	if = {
+		limit = {
+			giga_can_get_external_leader_pool_candidate_katzen = yes
+		}
+		giga_can_get_external_leader_pool_candidate_katzen = yes
+	}
+	else = {
+		custom_tooltip = {
+			text = frameworld_blank
+			always = no
+		}
+	}
+}
+giga_can_get_external_leader_pool_candidate_katzen = {
+	custom_tooltip = {
+		text = giga_katzen_external_leader_trigger
+		and = {
+			exists = event_target:flusion_primitives_country
+			has_country_flag = allied_to_kaiser
+			from = {
+				is_same_empire = event_target:flusion_primitives_country
+			}
+		}
+	}
+}
+
+# used in the overwrite of ai_should_restrict_system in rules
+# this = system
+# root = country
+giga_ai_should_restrict_system = {
+	or = {
+		# AI should avoid pre-ftl flusion to make sure the guaranteed kaiser doesn't get curbstomped as a pre-ftl
+		AND = {
+			NOT = { has_global_flag = katzenartig_imperium_happened }
+			OR = {
+				has_global_flag = katzenartig_always
+				has_global_flag = katzenartig_deathwish
+				has_global_flag = katzenartig_stellarite
+				has_global_flag = katzenartig_improbable
+			}
+			has_star_flag = flusion_system
+			event_target:gigaflusion = {
+				exists = owner
+				owner = { is_country_type = primitive }
+			}
+		}
+
+		# kaiser should avoid fallen and awakened empires unless he's at war with them
+		# this should finally stop him not caring about borders
+		and = {
+			root = {
+				is_country_type = katzenartig_imperium
+			}
+			exists = owner
+			owner = {
+				or = {
+					is_country_type = fallen_empire
+					is_country_type = awakened_fallen_empire
+				}
+				not = { is_at_war_with = root }
+			}
+		}
+	}
+}
+
+# used in can_generate_leader_from_pop rule overwrite
+# should only prevent civilian leaders since the military ones are governred by a different trigger
+#Root = country
+#This = pop
+giga_kaiser_prevent_civilian_candidates = {
+	if = {
+		limit = {
+			exists = owner
+			owner = {
+				is_country_type = katzenartig_imperium
+			}
+		}
+		root = {
+			is_country_type = katzenartig_imperium
+		}
+	}
+}
+
+# used in can_generate_military_leader_from_pop rule overwrite
+# should make sure external candidates drawn from the imperium are only katzen
+#Root = country
+#This = pop
+giga_kaiser_only_katzen_military_candidates = {
+	if = {
+		limit = {
+			exists = owner
+			owner = {
+				is_country_type = katzenartig_imperium
+			}
+			exists = event_target:flusion_katzens
+		}
+		or = {
+			root = {
+				is_country_type = katzenartig_imperium
+			}
+			is_same_species = event_target:flusion_katzens
+		}
 	}
 }
