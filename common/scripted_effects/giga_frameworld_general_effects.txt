@@ -432,6 +432,24 @@ giga_frameworld_recalculate_outpost_bonus = {
 
 giga_frameworld_set_outpost_flags = {
 	set_planet_flag = giga_frameworld_outpost
+
+	# if this is a world which should not be terravored by default
+	if = {
+		limit = {
+			or = {
+				has_modifier = holy_planet
+
+				is_planet_class = pc_relic # dunno if this is even viable but just in case
+
+				# rare resources
+				has_resource = { type = minor_artifacts amount > 0 }
+				has_resource = { type = sr_dark_matter amount > 0 }
+				has_resource = { type = sr_zro amount > 0 }
+				has_resource = { type = nanites amount > 0 }
+			}
+		}
+		set_planet_flag = giga_frameworld_outpost_stripmine_mode_deny
+	}
 }
 
 giga_frameworld_remove_outpost_wrecks = {
@@ -457,6 +475,7 @@ giga_frameworld_remove_outpost_wrecks = {
 giga_frameworld_wreck_outpost = {
 	[[WHO] set_owner = $WHO$ ]
 	upgrade_megastructure_to = frameworld_outpost_wreck_0
+	finish_upgrade = yes
 	[[CULTURE] set_graphical_culture = $CULTURE$ ]
 	
 	[[NOCOLONY]]
@@ -557,6 +576,7 @@ giga_frameworld_create_outpost_holder_colony = {
 	set_controller = event_target:frameworld_outpost_country
 	remove_all_buildings = yes
 	add_building = building_frameworld_outpost
+	set_colony_type = col_frameworld_planetary_outpost
 
 	# fire colony started event for the OUTPOST nation, for compat stuff
 	fire_on_action = {
@@ -1298,41 +1318,120 @@ frameworld_audit_unity1_effect = {
 			rare_crystals = -50
 		}
 	}
-	
-	remove_building = building_uplink_node
-	remove_building = building_uplink_node
-	add_district = district_giga_frameworld_simulation
+
+	if = {
+		limit = {
+			owner = {
+				is_machine_empire = yes
+			}
+		}
+		remove_building = building_uplink_node
+		remove_building = building_uplink_node
+		add_district = district_giga_frameworld_simulation
+	}
+	else_if = {
+		limit = {
+			owner = {
+				is_hive_empire = yes
+			}
+		}
+		remove_building = building_hive_node
+		remove_building = building_hive_node
+		add_district = district_giga_frameworld_synapse
+	}
+	else = {
+		remove_building = building_bureaucratic_1
+		remove_building = building_bureaucratic_1
+		add_district = district_giga_frameworld_administrative
+	}
 }
 
 frameworld_audit_unity2_effect = {
-	remove_building = building_network_junction
-	add_district = district_giga_frameworld_simulation
+	if = {
+		limit = {
+			owner = {
+				is_machine_empire = yes
+			}
+		}
+		remove_building = building_network_junction
+		add_district = district_giga_frameworld_simulation
+	}
+	else_if = {
+		limit = {
+			owner = {
+				is_hive_empire = yes
+			}
+		}
+		remove_building = building_hive_cluster
+		add_district = district_giga_frameworld_synapse
+	}
+	else = {
+		remove_building = building_bureaucratic_2
+		add_district = district_giga_frameworld_administrative
+	}
 }
 
 frameworld_audit_unity3_effect = {
-	remove_building = building_system_conflux
-	add_district = district_giga_frameworld_simulation
-	add_district = district_giga_frameworld_simulation
+	if = {
+		limit = {
+			owner = {
+				is_machine_empire = yes
+			}
+		}
+		remove_building = building_system_conflux
+		add_district = district_giga_frameworld_simulation
+	}
+	else_if = {
+		limit = {
+			owner = {
+				is_hive_empire = yes
+			}
+		}
+		remove_building = building_hive_confluence
+		add_district = district_giga_frameworld_synapse
+		add_district = district_giga_frameworld_synapse
+	}
+	else = {
+		remove_building = building_bureaucratic_3
+		add_district = district_giga_frameworld_administrative
+		add_district = district_giga_frameworld_administrative
+	}
 }
 
 frameworld_audit_energygrid1_effect = {
 	owner = {
 		add_resource = {
-			minerals = -300
-			alloys = -100
+			minerals = -200
+		}
+		if ={
+			limit = {
+				is_machine_empire = yes
+			}
+			add_resource = {
+				minerals = -100
+				alloys = -100
+			}
 		}
 	}
 	
-	frameworld_audit_remove_drone_storage = yes
+	frameworld_audit_remove_housing_building = yes
 	add_building = building_energy_grid
 }
 
 frameworld_audit_energygrid2_effect = {
 	owner = {
 		add_resource = {
-			minerals = -900
-			alloys = -150
+			minerals = -600
 			exotic_gases = -50
+		}
+		if ={
+			limit = {
+				is_machine_empire = yes
+			}
+			add_resource = {
+				minerals = -300
+				alloys = -150
+			}
 		}
 	}
 	
@@ -1343,21 +1442,37 @@ frameworld_audit_energygrid2_effect = {
 frameworld_audit_mineralhub1_effect = {
 	owner = {
 		add_resource = {
-			minerals = -300
-			alloys = -100
+			minerals = -200
+		}
+		if ={
+			limit = {
+				is_machine_empire = yes
+			}
+			add_resource = {
+				minerals = -100
+				alloys = -100
+			}
 		}
 	}
 	
-	frameworld_audit_remove_drone_storage = yes
+	frameworld_audit_remove_housing_building = yes
 	add_building = building_mineral_purification_plant
 }
 
 frameworld_audit_mineralhub2_effect = {
 	owner = {
 		add_resource = {
-			minerals = -900
-			alloys = -150
+			minerals = -600
 			volatile_motes = -50
+		}
+		if ={
+			limit = {
+				is_machine_empire = yes
+			}
+			add_resource = {
+				minerals = -300
+				alloys = -150
+			}
 		}
 	}
 	
@@ -1372,8 +1487,18 @@ frameworld_audit_supercomputer_effect = {
 		}
 	}
 	
-	frameworld_audit_remove_drone_storage = yes
-	add_building = building_supercomputer
+	frameworld_audit_remove_housing_building = yes
+	if = {
+		limit = {
+			owner = {
+				is_gestalt = yes
+			}
+		}
+		add_building = building_supercomputer
+	}
+	else = {
+		add_building = building_institute
+	}
 }
 
 frameworld_audit_hydroponics_effect = {
@@ -1522,23 +1647,81 @@ frameworld_audit_sanctuary3_effect = {
 ###############################################################################################################
 ### clearing
 
-frameworld_audit_remove_drone_storage = {
+frameworld_audit_remove_housing_building = {
 	if = {
 		limit = {
 			free_building_slots = 0
 		}
 		if = {
 			limit = {
-				has_building = building_drone_storage
+				exists = owner
+				owner = {
+					is_machine_empire = yes
+				}
 			}
-			remove_building = building_drone_storage
+
+			if = {
+				limit = {
+					has_building = building_drone_storage
+				}
+				remove_building = building_drone_storage
+			}
+			else = {
+				if = {
+					limit = {
+						has_building = building_drone_megastorage
+					}
+					remove_building = building_drone_megastorage
+				}
+			}
+
+		}
+		else_if = {
+			limit = {
+				exists = owner
+				owner = {
+					is_hive_empire = yes
+				}
+			}
+
+			if = {
+				limit = {
+					has_building = building_hive_warren
+				}
+				remove_building = building_hive_warren
+			}
+			else = {
+				if = {
+					limit = {
+						has_building = building_expanded_warren
+					}
+					remove_building = building_expanded_warren
+				}
+			}
+
 		}
 		else = {
 			if = {
 				limit = {
-					has_building = building_drone_megastorage
+					or = {
+						has_building = building_luxury_residence
+						has_building = building_communal_housing
+					}
 				}
-				remove_building = building_drone_megastorage
+				remove_building = building_luxury_residence
+				remove_building = building_communal_housing
+			}
+			else = {
+				if = {
+					limit = {
+						or = {
+							has_building = building_paradise_dome
+							has_building = building_communal_housing_large
+						}
+					}
+					remove_building = building_paradise_dome
+					remove_building = building_communal_housing_large
+				}
 			}
 		}
 	}
