@@ -111,6 +111,13 @@ country_event = {
 			value = 0
 		}
 
+		#event_target:giga_global_situation_country = {
+		#	start_situation = {
+		#		type = giga_situation_frameworld_planet_effects
+		#		target = prev.capital_scope
+		#	}
+		#}
+
 		# associate this country with a specific frame
 		set_country_flag = giga_frameworld@capital_scope
 
@@ -425,12 +432,7 @@ country_event = {
 	desc = {
 		trigger = { 
 			event_target:giga_planet = { 
-				count_deposit = { 
-					count > 1 
-					limit = {
-						is_deposit_type = d_frameworld_expanded_infrastructure
-					} 
-				} 
+				has_planet_flag = frameworld_expanded_infrastructure_2
 			} 
 		}
 		text = giga_frameworld_origin.012.desc.2
@@ -438,12 +440,7 @@ country_event = {
 	desc = {
 		trigger = { 
 			event_target:giga_planet = { 
-				count_deposit = { 
-					count = 1 
-					limit = {
-						is_deposit_type = d_frameworld_expanded_infrastructure
-					} 
-				} 
+				not = { has_planet_flag = frameworld_expanded_infrastructure_2}
 			} 
 		}
 		text = giga_frameworld_origin.012.desc
@@ -509,39 +506,45 @@ country_event = {
 				}
 				add_modifier = {
 					modifier = frameworld_conquered
-					days = -1
+					clear_on_owner_change = yes
 				}
 			}
-			
+
 			# resettle pops to the homeworld
-			while = {
-				# 5% or 4, whichever is more
-				count = value:giga_frameworld_resettlement_count
-				random_owned_pop = {
-					resettle_pop = {
-						pop = this
-						planet = event_target:target_frameworld
+			if = {
+				limit = {
+					owner = {
+						is_at_war = no
+					}
+				}
+				while = {
+					# 5% or 4, whichever is more
+					count = value:giga_frameworld_resettlement_count
+					random_owned_pop = {
+						resettle_pop = {
+							pop = this
+							planet = event_target:target_frameworld
+						}
 					}
 				}
 			}
-			
+
 			# if there are no pops left, clear out the planet and place an outpost
 			if = {
 				limit = {
 					num_pops = 0
 				}
 				
-				remove_all_buildings = yes
-				remove_all_districts = yes
-				remove_modifier = frameworld_conquered
-				destroy_colony = yes
+				#remove_all_buildings = yes
+				#remove_all_districts = yes
+				#destroy_colony = yes
 				
 				if = {
 					limit = {
 						can_have_frameworld_outpost = yes
 					}
 					set_planet_flag = frameworld_built_outpost
-					giga_frameworld_create_outpost = { WHO = root }
+					giga_frameworld_create_outpost = { WHO = root RESETTLED = yes}
 					root = {
 						giga_frameworld_recalculate_outpost_bonus = yes
 					}
@@ -803,6 +806,29 @@ country_event = {
 			value = @tier1researchreward
 			min = @tier1researchmin
 			max = @tier1researchmax
+		}
+	}
+}
+
+### apply overextension debuff to other planets
+planet_event = {
+	id = giga_frameworld_origin.108
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		from = {
+			giga_has_frameworld_origin = yes
+		}
+		not = {
+			has_planet_flag = giga_frameworld@from
+		}
+	}
+
+	immediate = {
+		add_modifier = {
+			modifier = frameworld_conquered
+			clear_on_owner_change = yes
 		}
 	}
 }
@@ -1416,7 +1442,7 @@ country_event = {
 			if = {
 				limit = {
 					event_target:frameworld = {
-						has_deposit = d_frameworld_maginot
+						has_planet_flag = frameworld_maginot
 					}
 				}
 

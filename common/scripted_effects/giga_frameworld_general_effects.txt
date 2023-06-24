@@ -340,30 +340,6 @@ giga_frameworld_recalculate_outpost_bonus = {
 				}
 			}
 
-			# TODO future version: remove this in whole since it won't be added any more
-			# remove the modifier if we already have it
-			if = {
-				limit = {
-					has_modifier = frameworld_outpost_bonus
-				}
-				remove_modifier = frameworld_outpost_bonus
-			}
-			
-			# set the modifier if we have more than 0 outposts
-			#if = {
-			#	limit = {
-			#		check_variable = {
-			#			which = giga_frameworld_outpost_count
-			#			value > 0
-			#		}
-			#	}
-			#
-			#	add_modifier = {
-			#		modifier = frameworld_outpost_bonus
-			#		multiplier = giga_frameworld_outpost_count
-			#	}
-			#}
-
 			if = {
 				limit = {
 					check_variable = {
@@ -481,7 +457,8 @@ giga_frameworld_wreck_outpost = {
 	[[NOCOLONY]]
 	[[!NOCOLONY]
 	planet = {
-		remove_all_buildings = yes
+		#remove_all_buildings = yes
+		remove_building = building_frameworld_outpost
 		every_owned_pop = {
 			kill_pop = yes
 		}
@@ -510,7 +487,7 @@ giga_frameworld_create_outpost = {
 		giga_frameworld_update_system_icon = yes
 	}
 	
-	giga_frameworld_create_outpost_holder_colony = yes
+	giga_frameworld_create_outpost_holder_colony = [[RESETTLED] { RESETTLED = yes }] [[!RESETTLED] yes ]
 
 	[[WHO] } ]
 }
@@ -548,20 +525,48 @@ giga_frameworld_create_outpost_holder_colony = {
 	#		}
 	#	}
 	#}
-	
-	# do the actual colony lol
-	create_colony = {
-		owner = space_owner
-		species = event_target:frameworld_outpost_species
+
+	# count up cities
+	set_variable = {
+		which = frameworld_outpost_cities
+		value = value:giga_num_districts|district|district_city|
 	}
-	create_pop = {
-		species = event_target:frameworld_outpost_species
+	change_variable = {
+		which = frameworld_outpost_cities
+		value = value:giga_num_districts|district|district_hive|
+	}
+	change_variable = {
+		which = frameworld_outpost_cities
+		value = value:giga_num_districts|district|district_nexus|
+	}
+	change_variable = {
+		which = frameworld_outpost_cities
+		value = value:giga_num_districts|district|district_city_katzen|
+	}
+	change_variable = {
+		which = frameworld_outpost_cities
+		value = value:giga_num_districts|district|district_flusion_city|
 	}
 
-	# fire colonised actions for the frameworld nation
-	fire_on_action = {
-		on_action = on_colonized
+	add_modifier = {
+		modifier = frameworld_building_wreck_fix
+		days = 3
 	}
+
+	# do the actual colony lol
+	[[!RESETTLED]
+		create_colony = {
+			owner = space_owner
+			species = event_target:frameworld_outpost_species
+		}
+		create_pop = {
+			species = event_target:frameworld_outpost_species
+		}
+		# fire colonised actions for the frameworld nation
+		#fire_on_action = {
+		#	on_action = on_colonized
+		#}
+	]
 
 	# 3.6 means we need a pop on the planet or the colony gets deleted a day later
 	# even if the country type is allowed to have pop-less colonies... BUT only on habitable worlds...
@@ -574,7 +579,7 @@ giga_frameworld_create_outpost_holder_colony = {
 
 	set_owner = event_target:frameworld_outpost_country
 	set_controller = event_target:frameworld_outpost_country
-	remove_all_buildings = yes
+	#remove_all_buildings = yes
 	add_building = building_frameworld_outpost
 	set_colony_type = col_frameworld_planetary_outpost
 
@@ -582,6 +587,17 @@ giga_frameworld_create_outpost_holder_colony = {
 	fire_on_action = {
 		on_action = on_colonization_started
 	}
+
+	# add placeholder cities
+	while = {
+		count = frameworld_outpost_cities
+		add_district = district_giga_frameworld_outpost
+	}
+	clear_variable = frameworld_outpost_cities
+
+	validate_planet_buildings_and_districts = yes
+
+	remove_modifier = frameworld_building_wreck_fix
 	
 	# fix the sector if it would've collapsed - most of this damn effect is working around the bug
 	#if = {
@@ -1516,7 +1532,7 @@ frameworld_audit_refinery_effect = {
 frameworld_audit_sanctuary1_effect = {
 	if = {
 		limit = {
-			has_deposit = d_frameworld_advanced_sanctuary
+			has_planet_flag = frameworld_advanced_sanctuary
 		}
 		
 		remove_building = building_organic_sanctuary
@@ -1535,7 +1551,7 @@ frameworld_audit_sanctuary1_effect = {
 frameworld_audit_sanctuary2_effect = {
 	if = {
 		limit = {
-			has_deposit = d_frameworld_advanced_sanctuary
+			has_planet_flag = frameworld_advanced_sanctuary
 		}
 		
 		remove_building = building_organic_paradise
@@ -1779,7 +1795,7 @@ frameworld_audit_upgrade_advanced_city_effect = {
 				is_machine_empire = yes
 			}
 		}
-		add_deposit = d_frameworld_advanced_city
+		add_deposit = d_frameworld_advanced_nexus
 		owner = {
 			add_resource = {
 				minerals = -10000
@@ -1800,7 +1816,7 @@ frameworld_audit_upgrade_advanced_city_effect = {
 		}
 	}
 	else = {
-		add_deposit = d_frameworld_advanced_city_ecu
+		add_deposit = d_frameworld_advanced_city
 		owner = {
 			add_resource = {
 				minerals = -20000
@@ -1829,6 +1845,7 @@ frameworld_audit_upgrade_advanced_industrial_effect = {
 	}
 	
 	add_deposit = d_frameworld_advanced_industrial
+	set_planet_flag = frameworld_advanced_industrial
 	validate_planet_buildings_and_districts = yes
 	set_timed_planet_flag = {
 		flag = frameworld_ai_upgrade_cooldown
@@ -1844,6 +1861,7 @@ frameworld_audit_upgrade_advanced_sanctuary_effect = {
 	}
 	
 	add_deposit = d_frameworld_advanced_sanctuary
+	set_planet_flag = frameworld_advanced_sanctuary
 	validate_planet_buildings_and_districts = yes
 	set_timed_planet_flag = {
 		flag = frameworld_ai_upgrade_cooldown
@@ -1861,6 +1879,7 @@ frameworld_audit_upgrade_gaia_effect = {
 	}
 	
 	add_deposit = d_frameworld_gaia
+	set_planet_flag = frameworld_gaia
 	set_timed_planet_flag = {
 		flag = frameworld_ai_upgrade_cooldown
 		days = 3000
@@ -1877,6 +1896,7 @@ frameworld_audit_upgrade_computing_complex_effect = {
 	}
 	
 	add_deposit = d_frameworld_computing_complex
+	set_planet_flag = frameworld_computing_complex
 	set_timed_planet_flag = {
 		flag = frameworld_ai_upgrade_cooldown
 		days = 3000
@@ -1892,6 +1912,16 @@ frameworld_audit_upgrade_expanded_infrastructure_effect = {
 	}
 	
 	add_deposit = d_frameworld_expanded_infrastructure
+	if = {
+		limit = {
+			has_planet_flag = frameworld_expanded_infrastructure_1
+		}
+		set_planet_flag = frameworld_expanded_infrastructure_2
+	}
+	else = {
+		set_planet_flag = frameworld_expanded_infrastructure_1
+	}
+
 	set_timed_planet_flag = {
 		flag = frameworld_ai_upgrade_cooldown
 		days = 3000
@@ -1910,6 +1940,7 @@ frameworld_audit_upgrade_maginot = {
 	planet_event = {
 		id = giga_frameworld_origin.1002
 	}
+	set_planet_flag = frameworld_maginot
 
 	# add_deposit = d_frameworld_maginot
 	# giga_frameworld_spawn_maginot_defensive_stations = {

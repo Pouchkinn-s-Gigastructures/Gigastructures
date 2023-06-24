@@ -34,7 +34,7 @@ giga_frameworld_penrose = {
 		}
 		is_planet_class = pc_giga_frameworld
 		not = {
-			has_planet_flag = frameworld_penrose
+			has_planet_flag = frameworld_penrose_started
 		}
 	}
 	
@@ -54,7 +54,7 @@ giga_frameworld_penrose = {
 
 		hidden_effect = {
 			set_planet_flag = frameworld_upgrade
-			set_planet_flag = frameworld_penrose
+			set_planet_flag = frameworld_penrose_started
 			
 			solar_system = {
 				spawn_megastructure = {
@@ -113,7 +113,7 @@ giga_frameworld_decompressor = {
 		}
 		is_planet_class = pc_giga_frameworld
 		not = {
-			has_planet_flag = frameworld_decompressor
+			has_planet_flag = frameworld_decompressor_started
 		}
 	}
 	
@@ -133,7 +133,7 @@ giga_frameworld_decompressor = {
 
 		hidden_effect = {
 			set_planet_flag = frameworld_upgrade
-			set_planet_flag = frameworld_decompressor
+			set_planet_flag = frameworld_decompressor_started
 			
 			solar_system = {
 				spawn_megastructure = {
@@ -218,7 +218,7 @@ giga_frameworld_advanced_city = {
 		is_planet_class = pc_giga_frameworld
 		nor = {
 			has_planet_flag = frameworld_advanced_city
-			has_deposit = d_frameworld_advanced_city
+			has_deposit = d_frameworld_advanced_nexus
 		}
 	}
 	
@@ -249,11 +249,11 @@ giga_frameworld_advanced_city = {
 				}
 			}
 			custom_tooltip = giga_frameworld_advanced_nexus_effect
-			add_deposit = d_frameworld_advanced_city
+			add_deposit = d_frameworld_advanced_nexus
 		}
 		else = {
 			custom_tooltip = giga_frameworld_advanced_city_effect
-			add_deposit = d_frameworld_advanced_city_ecu
+			add_deposit = d_frameworld_advanced_city
 		}
 		
 		hidden_effect = {
@@ -343,7 +343,7 @@ giga_frameworld_advanced_industrial = {
 		}
 		is_planet_class = pc_giga_frameworld
 		not = {
-			has_deposit = d_frameworld_advanced_industrial
+			has_planet_flag = frameworld_advanced_industrial
 		}
 	}
 	
@@ -362,6 +362,7 @@ giga_frameworld_advanced_industrial = {
 
 		hidden_effect = {
 			add_deposit = d_frameworld_advanced_industrial
+			set_planet_flag = frameworld_advanced_industrial
 			validate_planet_buildings_and_districts = yes
 		}
 
@@ -420,7 +421,7 @@ giga_frameworld_advanced_sanctuary = {
 		}
 		is_planet_class = pc_giga_frameworld
 		not = {
-			has_deposit = d_frameworld_advanced_sanctuary
+			has_planet_flag = frameworld_advanced_sanctuary
 		}
 	}
 	
@@ -439,6 +440,7 @@ giga_frameworld_advanced_sanctuary = {
 
 		hidden_effect = {
 			add_deposit = d_frameworld_advanced_sanctuary
+			set_planet_flag = frameworld_advanced_sanctuary
 			validate_planet_buildings_and_districts = yes
 		}
 
@@ -499,7 +501,7 @@ giga_frameworld_gaia = {
 		}
 		is_planet_class = pc_giga_frameworld
 		not = {
-			has_deposit = d_frameworld_gaia
+			has_planet_flag = frameworld_gaia
 		}
 	}
 	
@@ -515,6 +517,9 @@ giga_frameworld_gaia = {
 	effect = {
 		custom_tooltip = giga_frameworld_upgrade_desc
 		add_deposit = d_frameworld_gaia
+		hidden_effect = {
+			set_planet_flag = frameworld_gaia
+		}
 
 		save_event_target_as = giga_planet
 		hidden_effect = { owner = { country_event = { id = giga_frameworld_origin.010 } } }
@@ -576,7 +581,7 @@ giga_frameworld_computing_complex = {
 		}
 		is_planet_class = pc_giga_frameworld
 		not = {
-			has_deposit = d_frameworld_computing_complex
+			has_planet_flag = frameworld_computing_complex
 		}
 	}
 	
@@ -592,6 +597,9 @@ giga_frameworld_computing_complex = {
 	effect = {
 		custom_tooltip = giga_frameworld_upgrade_desc
 		add_deposit = d_frameworld_computing_complex
+		hidden_effect = {
+			set_planet_flag = frameworld_computing_complex
+		}
 
 		save_event_target_as = giga_planet
 		hidden_effect = { owner = { country_event = { id = giga_frameworld_origin.011 } } }
@@ -633,27 +641,22 @@ giga_frameworld_expand_infrastructure = {
 			giga_has_frameworld_origin = yes
 		}
 		is_planet_class = pc_giga_frameworld
-		or = {
-			and = { 
-				# if we have either tech and no expansions done
-				owner = {
-					or = {
-						has_technology = giga_tech_orbital_arcologies
-						has_technology = giga_tech_ringworld_gargantuan_2
-					}
-				}
-				not = { has_deposit = d_frameworld_expanded_infrastructure }
+		if = {
+			limit = {
+				# if we already have upgrade 1
+				has_planet_flag = frameworld_expanded_infrastructure_1
 			}
-			and = { 
-				# or we have both techs and one expansion done
-				owner = {
-					has_technology = giga_tech_orbital_arcologies
-					has_technology = giga_tech_ringworld_gargantuan_2
-				}
-				count_deposits = {
-					count = 1
-					type = d_frameworld_expanded_infrastructure
-				}
+
+			# check for allowing upgrade 2
+			owner = {
+				has_technology = giga_tech_ringworld_gargantuan_2
+			}
+			not = { has_planet_flag = frameworld_expanded_infrastructure_2 }
+		}
+		else = {
+			# if we don't, check for upgrade 1
+			owner = {
+				has_technology = giga_tech_orbital_arcologies
 			}
 		}
 	}
@@ -670,6 +673,18 @@ giga_frameworld_expand_infrastructure = {
 	effect = {
 		custom_tooltip = giga_frameworld_upgrade_desc
 		add_deposit = d_frameworld_expanded_infrastructure
+
+		hidden_effect = {
+			if = {
+				limit = {
+					has_planet_flag = frameworld_expanded_infrastructure_1
+				}
+				set_planet_flag = frameworld_expanded_infrastructure_2
+			}
+			else = {
+				set_planet_flag = frameworld_expanded_infrastructure_1
+			}
+		}
 
 		save_event_target_as = giga_planet
 		hidden_effect = { owner = { country_event = { id = giga_frameworld_origin.012 } } }
@@ -733,7 +748,7 @@ giga_frameworld_maginot = {
 		}
 		is_planet_class = pc_giga_frameworld
 		not = {
-			has_deposit = d_frameworld_maginot
+			has_planet_flag = frameworld_maginot
 		}
 	}
 	
@@ -752,6 +767,9 @@ giga_frameworld_maginot = {
 		custom_tooltip = giga_frameworld_maginot_effect
 
 		add_deposit = d_frameworld_maginot
+		hidden_effect = {
+			set_planet_flag = frameworld_maginot
+		}
 
 		custom_tooltip = frameworld_line
 		custom_tooltip = giga_frameworld_upgrade_upkeep
