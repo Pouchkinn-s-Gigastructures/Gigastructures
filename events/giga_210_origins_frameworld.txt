@@ -125,6 +125,9 @@ country_event = {
 			# associate the frameworld with the country too
 			set_planet_flag = giga_frameworld@root
 
+			# clear the conquered modifier which apparently gets executed BEFORE the start event
+			remove_modifier = frameworld_conquered
+
 			# fix the entity
 			giga_frameworld_update_entity_with_fallback = {
 				WHO = root
@@ -498,6 +501,7 @@ country_event = {
 				is_occupied_flag = no
 			}
 
+			# add overextension if it's missing
 			if = {
 				limit = {
 					not = {
@@ -510,12 +514,20 @@ country_event = {
 				}
 			}
 
-			# resettle pops to the homeworld
+			# remove resettlement block if we're not at war
 			if = {
 				limit = {
-					owner = {
-						is_at_war = no
-					}
+					root = { is_at_war = no }
+					has_modifier = frameworld_conquered_no_resettle
+				}
+				remove_modifier = frameworld_conquered_no_resettle
+			}
+
+			# resettle pops to the homeworld
+			# if we're not blocked by war or recent acquisition, anyway...
+			if = {
+				limit = {
+					not = { has_modifier = frameworld_conquered_no_resettle }
 				}
 				while = {
 					# 5% or 4, whichever is more
@@ -829,6 +841,19 @@ planet_event = {
 		add_modifier = {
 			modifier = frameworld_conquered
 			clear_on_owner_change = yes
+		}
+
+		if = {
+			limit = {
+				from = {
+					is_at_war = yes
+				}
+			}
+			add_modifier = {
+				modifier = frameworld_conquered_no_resettle
+				clear_on_owner_change = yes
+				years = 5 # this many years of no resettlement while at war
+			}
 		}
 	}
 }
