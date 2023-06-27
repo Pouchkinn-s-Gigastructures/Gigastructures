@@ -177,6 +177,10 @@ country_event = {
 			add_deposit = d_giga_job_upkeep
 			
 			##### replace districts
+			add_modifier = {
+				modifier = frameworld_building_wreck_fix
+				days = 3
+			}
 
 			# city
 			while = {
@@ -208,9 +212,28 @@ country_event = {
 				limit = {
 					has_district = district_industrial
 				}
-				add_district = district_giga_frameworld_industrial
+				if = {
+					# alternate factory-foundry for normal empires
+					limit = {
+						owner = { is_gestalt = no }
+					}
+					if = {
+						limit = { not = { has_planet_flag = foundry_next }}
+						add_district = district_giga_frameworld_factory
+						set_planet_flag = foundry_next
+					}
+					else = {
+						add_district = district_giga_frameworld_foundry
+						remove_planet_flag = foundry_next
+					}
+				}
+				else = {
+					# all foundry for gestalts, servitor can rely on their starting sanctuary
+					add_district = district_giga_frameworld_foundry
+				}
 				remove_district = district_industrial
 			}
+			remove_planet_flag = foundry_next
 			
 			# energy
 			while = {
@@ -240,9 +263,19 @@ country_event = {
 			}
 			
 			#####
+			remove_modifier = frameworld_building_wreck_fix
 			
 			# get rid of any bad districts or buildings which can't be supported
 			validate_planet_buildings_and_districts = yes
+
+			# fix unemployed pops from the initial district shuffle
+			every_owned_pop = {
+				limit = {
+					is_unemployed = yes
+				}
+				clear_pop_category = yes
+			}
+			check_planet_employment = yes
 
 			# set the maintenance mod on
 			giga_frameworld_apply_expanded_maintenance_modifier = yes

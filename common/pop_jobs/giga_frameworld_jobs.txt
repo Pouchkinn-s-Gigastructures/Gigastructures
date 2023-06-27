@@ -1,9 +1,180 @@
 
-# unemployment filler job for the frameworld
+# unemployment filler for regular frameworld
+frame_maintenance_worker = {
+	category = worker
+	condition_string = WORKER_JOB_TRIGGER
+	building_icon = building_maintenance_depot
+	clothes_texture_index = 2
+	icon = giga_birch_ktisma_worker
+
+	possible_pre_triggers = {
+		has_owner = yes
+		is_being_purged = no
+		is_being_assimilated = no
+		is_sapient = yes
+	}
+
+	possible_precalc = can_fill_worker_job
+
+	resources = {
+		category = planet_jobs
+
+		# main upkeep resource
+		produces = {
+			trigger = { is_robot_pop = no is_lithoid = no }
+			food = 0.5
+
+			multiplier = planet.value:giga_job_scaling_plus_base
+		}
+		produces = {
+			trigger = { is_lithoid = yes }
+			minerals = 0.5
+
+			multiplier = planet.value:giga_job_scaling_plus_base
+		}
+		produces = {
+			trigger = { is_robot_pop = yes }
+			energy = 0.5
+
+			multiplier = planet.value:giga_job_scaling_plus_base
+		}
+	}
+
+	planet_modifier = {
+		planet_jobs_productive_upkeep_mult = 0.0025
+		planet_jobs_productive_produces_mult = 0.0025
+	}
+
+	# base organic growth
+	triggered_planet_modifier = {
+		potential = {
+			owner = { is_synthetic_empire = no }
+		}
+		giga_pop_growth_speed_extra_add = -0.125
+	}
+	triggered_planet_modifier = {
+		potential = {
+			owner = { is_synthetic_empire = no }
+			planet = {
+				free_housing < 0
+			}
+		}
+		giga_pop_growth_speed_extra_add = -0.125
+	}
+
+	# organic growth with no alternative
+	triggered_planet_modifier = {
+		potential = {
+			owner = { is_synthetic_empire = no }
+			planet = {
+				giga_planet_has_robot_assembly_facilities = no
+				giga_planet_has_cloning_assembly_facilities = no
+				giga_planet_has_zombie_assembly_facilities = no
+			}
+		}
+		giga_pop_growth_speed_extra_add = -0.125
+	}
+	triggered_planet_modifier = {
+		potential = {
+			owner = { is_synthetic_empire = no }
+			planet = {
+				free_housing < 0
+				giga_planet_has_robot_assembly_facilities = no
+				giga_planet_has_cloning_assembly_facilities = no
+				giga_planet_has_zombie_assembly_facilities = no
+			}
+		}
+		giga_pop_growth_speed_extra_add = -0.125
+	}
+
+	# robot assembly
+	triggered_planet_modifier = {
+		potential = {
+			owner = { is_synthetic_empire = no }
+			planet = {
+				giga_planet_has_robot_assembly_facilities = yes
+				giga_planet_has_cloning_assembly_facilities = no
+				giga_planet_has_zombie_assembly_facilities = no
+			}
+		}
+		planet_pop_assembly_add = -0.125
+	}
+	triggered_planet_modifier = {
+		potential = {
+			owner = { is_synthetic_empire = no }
+			planet = {
+				free_housing < 0
+				giga_planet_has_robot_assembly_facilities = yes
+				giga_planet_has_cloning_assembly_facilities = no
+				giga_planet_has_zombie_assembly_facilities = no
+			}
+		}
+		planet_pop_assembly_add = -0.125
+	}
+
+	# organic assembly
+	triggered_planet_modifier = {
+		potential = {
+			owner = { is_synthetic_empire = no }
+			planet = {
+				or = {
+					giga_planet_has_cloning_assembly_facilities = yes
+					giga_planet_has_zombie_assembly_facilities = yes
+				}
+			}
+		}
+		planet_pop_assembly_organic_add = -0.125
+	}
+	triggered_planet_modifier = {
+		potential = {
+			owner = { is_synthetic_empire = no }
+			planet = {
+				free_housing < 0
+				or = {
+					giga_planet_has_cloning_assembly_facilities = yes
+					giga_planet_has_zombie_assembly_facilities = yes
+				}
+			}
+		}
+		planet_pop_assembly_organic_add = -0.125
+	}
+
+	# synth assembly
+	triggered_planet_modifier = {
+		potential = {
+			owner = { is_synthetic_empire = yes }
+		}
+		giga_pop_growth_speed_extra_add = -0.25
+	}
+	triggered_planet_modifier = {
+		potential = {
+			owner = { is_synthetic_empire = yes }
+			planet = {
+				free_housing < 0
+			}
+		}
+		giga_pop_growth_speed_extra_add = -0.25
+	}
+
+	weight = {
+		weight = @special_job_weight
+
+		modifier = {
+			factor = -10000
+
+			planet = {
+				not = {
+					has_modifier = frameworld_expanded_maintenance_protocol
+				}
+			}
+		}
+	}
+}
+
+# unemployment filler job for gestalt frameworld
 frame_maintenance_drone = {
 	category = simple_drone
 	condition_string = DRONE_JOB_TRIGGER
-	#is_capped_by_modifier = no
 	building_icon = building_maintenance_depot
 	icon = maintenance_drone
 
@@ -14,6 +185,8 @@ frame_maintenance_drone = {
 		is_being_assimilated = no
 		is_sapient = yes
 	}
+
+	possible_precalc = can_fill_drone_job
 
 	resources = {
 		category = planet_jobs
@@ -50,12 +223,12 @@ frame_maintenance_drone = {
 		}
 	}
 
-	possible_precalc = can_fill_drone_job
-
 	planet_modifier = {
 		planet_jobs_productive_upkeep_mult = 0.0025
 		planet_jobs_productive_produces_mult = 0.0025
 	}
+
+	# machine assembly
 	triggered_planet_modifier = {
 		potential = {
 			exists = owner
@@ -63,7 +236,7 @@ frame_maintenance_drone = {
 				is_machine_empire = yes
 			}
 		}
-		planet_pop_assembly_add = -0.25
+		planet_pop_assembly_add = -0.125
 	}
 	triggered_planet_modifier = {
 		potential = {
@@ -75,9 +248,64 @@ frame_maintenance_drone = {
 				free_housing < 0
 			}
 		}
-		planet_pop_assembly_add = -0.25
+		planet_pop_assembly_add = -0.125
 	}
 
+	# machine non-crucible
+	triggered_planet_modifier = {
+		potential = {
+			exists = owner
+			owner = {
+				is_machine_empire = yes
+			}
+			planet = {
+				not = { has_modifier = frameworld_crucible }
+			}
+		}
+		planet_pop_assembly_add = -0.125
+	}
+	triggered_planet_modifier = {
+		potential = {
+			exists = owner
+			owner = {
+				is_machine_empire = yes
+			}
+			planet = {
+				free_housing < 0
+				not = { has_modifier = frameworld_crucible }
+			}
+		}
+		planet_pop_assembly_add = -0.125
+	}
+
+	# machine crucible
+	triggered_planet_modifier = {
+		potential = {
+			exists = owner
+			owner = {
+				is_machine_empire = yes
+			}
+			planet = {
+				has_modifier = frameworld_crucible
+			}
+		}
+		giga_pop_growth_speed_extra_add = -0.125
+	}
+	triggered_planet_modifier = {
+		potential = {
+			exists = owner
+			owner = {
+				is_machine_empire = yes
+			}
+			planet = {
+				free_housing < 0
+				has_modifier = frameworld_crucible
+			}
+		}
+		giga_pop_growth_speed_extra_add = -0.125
+	}
+
+	# hives
 	triggered_planet_modifier = {
 		potential = {
 			exists = owner
@@ -167,6 +395,113 @@ frame_maintenance_overseer = {
 	}
 }
 
+frameworld_defender = {
+	category = worker
+	condition_string = SOLDIER_JOB_TRIGGER
+	building_icon = building_stronghold
+	clothes_texture_index = 4
+	icon = soldier
+
+	country_modifier = {
+		country_naval_cap_add = 6
+	}
+
+	resources = {
+		category = planet_soldiers
+		produces = {
+			unity = 3
+		}
+	}
+
+	triggered_country_modifier = {
+		potential = {
+			exists = planet
+			planet = {
+				exists = owner
+				owner = { has_technology = "tech_ground_defense_planning" }
+			}
+		}
+		modifier = {
+			country_naval_cap_add = 3
+		}
+	}
+
+	triggered_country_modifier = {
+		potential = {
+			exists = owner
+			owner = {
+				any_owned_leader = {
+					is_councilor = yes
+					has_trait = leader_trait_bellicose
+				}
+			}
+		}
+
+		modifier = {
+			country_naval_cap_add = 2
+		}
+		mult = value:bellicose_naval_cap
+	}
+
+	pop_modifier = {
+		pop_defense_armies_add = 5
+	}
+
+	triggered_pop_modifier = {
+		potential = {
+			exists = owner
+			owner = {
+				any_owned_leader = {
+					is_councilor = yes
+					has_trait = leader_trait_bellicose
+				}
+			}
+		}
+
+		modifier = {
+			pop_defense_armies_add = 1
+		}
+		mult = value:bellicose_naval_cap
+	}
+
+	triggered_planet_modifier = {
+		modifier = {
+			planet_stability_add = 1
+		}
+		mult = planet.modifier:job_soldier_stability_add
+	}
+
+	triggered_planet_modifier = {
+		potential = {
+			has_councilor = { COUNCILOR = "councilor_private_military_companies" }
+		}
+
+		modifier = {
+			planet_stability_add = @councilor_private_military_companies_stability
+		}
+
+		mult = value:councilor_level|TYPE|councilor_private_military_companies|
+	}
+
+	possible_pre_triggers = {
+		has_owner = yes
+		is_being_purged = no
+		is_being_assimilated = no
+		is_sapient = yes
+	}
+
+	possible = {
+		soldier_job_check_trigger = yes
+		owner = { is_gestalt = no }
+	}
+
+	weight = {
+		weight = value:giga_worker_weight|JOB|frame_defender|RESOURCE|unity|
+		multiply = 100
+		multiply = value:giga_army_weight
+	}
+}
+
 # special warrior drone which spawns much stronger armies
 frameworld_defender_drone = {
 	category = simple_drone
@@ -175,7 +510,14 @@ frameworld_defender_drone = {
 	icon = warrior_drone
 
 	country_modifier = {
-		country_naval_cap_add = 10
+		country_naval_cap_add = 6
+	}
+
+	resources = {
+		category = planet_soldiers
+		produces = {
+			unity = 3
+		}
 	}
 
 	triggered_country_modifier = {
@@ -186,7 +528,7 @@ frameworld_defender_drone = {
 			}
 		}
 		modifier = {
-			country_naval_cap_add = 5
+			country_naval_cap_add = 3
 		}
 	}
 
@@ -195,17 +537,10 @@ frameworld_defender_drone = {
 	}
 
 	triggered_planet_modifier = {
-		potential = {
-			planet = {
-				OR = {
-					has_modifier = compliance_protocols
-					has_modifier = hunter_killer_drones
-				}
-			}
-		}
 		modifier = {
-			planet_stability_add = 10
+			planet_stability_add = 1
 		}
+		mult = planet.modifier:job_soldier_stability_add
 	}
 
 	possible_pre_triggers = {
@@ -217,13 +552,6 @@ frameworld_defender_drone = {
 	}
 
 	possible_precalc = can_fill_drone_job
-
-	resources = {
-		category = planet_jobs
-		produces = {
-			unity = 3
-		}
-	}
 
 	weight = {
 		weight = value:giga_menial_drone_weight|JOB|frameworld_defender_drone|RESOURCE|unity|
