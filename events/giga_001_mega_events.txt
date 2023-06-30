@@ -570,68 +570,324 @@ planet_event = {
 ####################################
 ### Automated Stripmine ############
 ####################################
-planet_event = {
-	id = giga_mega.301
+# planet_event = {
+# 	id = giga_mega.301
+# 	hide_window = yes
+# 	is_triggered_only = yes
+
+# 	immediate = {
+# 		planet_event = { id = giga_mega.302 days = 720 }
+# 		change_planet_size = -1
+# 	}
+# }
+
+situation_event = {
+	id = giga_mega.304
+	hide_window = yes
+	is_triggered_only = yes
+	situation = this
+
+	trigger = {
+		situation_progress >= 50 #don't even check until crust is cleared
+	}
+
+	immediate = {
+		set_variable = { which = stripmine_checkup value = value:giga_stripmine_checkup }
+		if = {
+			limit = {
+				check_variable = {
+					which = stripmine_checkup
+					value >= 1
+				}
+			}
+			target = { 
+				giga_stripmine_size_drop = yes 
+			}
+		}
+		clear_variable = stripmine_checkup
+	}
+}
+
+# planet_event = {
+# 	id = giga_mega.302
+# 	hide_window = yes
+# 	is_triggered_only = yes
+
+# 	immediate = {
+# 		if = {
+# 			limit = { planet_size = 5 }
+# 			set_planet_flag = reached_inner_core
+# 			if = {
+# 				limit = {
+# 					exists = solar_system.owner
+# 				}
+# 				solar_system.owner = {  }
+# 			}
+# 		}
+# 		else_if = {
+# 			limit = { planet_size > 2 }
+# 			change_planet_size = -1
+# 			planet_event = { id = giga_mega.302 days = 720 }
+# 		}
+# 	}
+# }
+
+#on_size_stripmined
+#this = planet
+#From = stripmine
+#fromfrom = situation
+planet_event = { #general Deposit Gatekeeper
+	id = giga_mega.3021
+	picture = GFX_evt_physics_cache
+	show_sound = event_sensor_ping
 	hide_window = yes
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = { from = { has_megastructure_flag = stripmine_reached_crust } } 
+	}
+
 	immediate = {
-		planet_event = { id = giga_mega.302 days = 720 }
-		change_planet_size = -1
-		if = {
-			limit = { has_modifier = pd_diamond }
-			change_pc = pc_strip_mined
-			set_planet_flag = pc_diamond
-			# add_modifier = { modifier = "giga_pd_diamond_planet" days = -1 }
-		}
-		else_if = {
-			limit = { has_modifier = pd_chthonian }
-			change_pc = pc_strip_mined
-			set_planet_flag = pc_chthonian
-			# add_modifier = { modifier = "giga_pd_chthonian_planet" days = -1 }
-		}
-		else_if = {
-			limit = { has_modifier = pd_ethane_ocean }
-			change_pc = pc_strip_mined
-			set_planet_flag = pc_ethane_ocean
-			# add_modifier = { modifier = "giga_pd_ethane_planet" days = -1 }
+		save_event_target_as = giga_planet
+		from = { # Basically the whole thing needs to be executed from the megastructure, but there is no "megastructure_event"
+			if = {
+				limit = { exists = owner}
+				owner = { country_event = { id = giga_dialog.3306 days = 1 scopes = { from = prev fromfrom = prevprev } } }#Notify owner
+			}
+			random_list = {
+				64 = { # minerals 
+					set_megastructure_flag = new_mineral_deposit
+					if = {
+						limit = { NOT = { has_megastructure_flag = stripmine_rich_minerals_deposit } }
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_mineral_deposit_value 
+							min = 10 
+							max = 50 
+							rounded = yes 
+						}
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_rich_mineral_deposit_length 
+							min = 2 
+							max = 6 
+							rounded = yes 
+						}
+						set_megastructure_flag = stripmine_rich_minerals_deposit
+					}
+					else = {
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_deposit_value_increment 
+							min = 10 
+							max = 50 
+							rounded = yes 
+						}
+						set_variable_to_random_value = {
+							 which = gigas_stripmine_deposit_length_increment 
+							 min = 1 
+							 max = 3 
+							 rounded = yes 
+							}
+						change_variable = {
+							which = gigas_stripmine_mineral_deposit_value 
+							value = gigas_stripmine_deposit_value_increment
+						}
+						change_variable = {
+							which = gigas_stripmine_rich_mineral_deposit_length
+							value = gigas_stripmine_deposit_length_increment
+						}
+						clear_variable = gigas_stripmine_deposit_length_increment
+						clear_variable = gigas_stripmine_deposit_value_increment
+					}
+
+				} 
+				5 = { # alloys
+					set_megastructure_flag = new_alloy_deposit
+					if = {
+						limit = { NOT = { has_megastructure_flag = stripmine_alloy_deposit } }
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_alloy_deposit_value 
+							min = 5 
+							max = 25 
+							rounded = yes 
+						}
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_alloy_deposit_length 
+							min = 2
+							max = 3 
+							rounded = yes 
+						}
+						set_megastructure_flag = stripmine_alloy_deposit
+					}
+					else = {
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_deposit_value_increment 
+							min = 5 
+							max = 25 
+							rounded = yes 
+						}
+						set_variable_to_random_value = {
+							which = gigas_stripmine_deposit_length_increment 
+							min = 1 
+							max = 3 
+							rounded = yes 
+						}
+						change_variable = {
+							which = gigas_stripmine_alloy_deposit_value 
+							value = gigas_stripmine_deposit_value_increment
+						}
+						change_variable = {
+							which = gigas_stripmine_alloy_deposit_length
+							value = gigas_stripmine_deposit_length_increment
+						}
+						clear_variable = gigas_stripmine_deposit_length_increment
+						clear_variable = gigas_stripmine_deposit_value_increment
+					}
+				} 
+				10 = { # gas
+					set_megastructure_flag = new_gas_deposit
+					if = {
+						limit = { NOT = { has_megastructure_flag = stripmine_gas_deposit } }
+						set_variable_to_random_value = { which = gigas_stripmine_gas_deposit_value min = 1 max = 10 rounded = yes }
+						set_variable_to_random_value = { which = gigas_stripmine_gas_deposit_length min = 1 max = 5 rounded = yes }
+						set_megastructure_flag = stripmine_gas_deposit
+					}
+					else = {
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_deposit_value_increment 
+							min = 1 
+							max = 10 
+							rounded = yes 
+						}
+						set_variable_to_random_value = {
+							which = gigas_stripmine_deposit_length_increment 
+							min = 1 
+							max = 2 
+							rounded = yes 
+						}
+						change_variable = {
+							which = gigas_stripmine_gas_deposit_value 
+							value = gigas_stripmine_deposit_value_increment
+						}
+						change_variable = {
+							which = gigas_stripmine_gas_deposit_length
+							value = gigas_stripmine_deposit_length_increment
+						}
+						clear_variable = gigas_stripmine_deposit_length_increment
+						clear_variable = gigas_stripmine_deposit_value_increment
+					}
+				} 
+				10 = { # motes
+					set_megastructure_flag = new_motes_deposit
+					if = {
+						limit = { NOT = { has_megastructure_flag = stripmine_motes_deposit } }
+						set_variable_to_random_value = { which = gigas_stripmine_motes_deposit_value min = 1 max = 10 rounded = yes }
+						set_variable_to_random_value = { which = gigas_stripmine_motes_deposit_length min = 1 max = 5 rounded = yes }
+						set_megastructure_flag = stripmine_motes_deposit
+					}
+					else = {
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_deposit_value_increment 
+							min = 1 
+							max = 10 
+							rounded = yes 
+						}
+						set_variable_to_random_value = {
+							which = gigas_stripmine_deposit_length_increment 
+							min = 1 
+							max = 2 
+							rounded = yes 
+						}
+						change_variable = {
+							which = gigas_stripmine_motes_deposit_value 
+							value = gigas_stripmine_deposit_value_increment
+						}
+						change_variable = {
+							which = gigas_stripmine_motes_deposit_length
+							value = gigas_stripmine_deposit_length_increment
+						}
+						clear_variable = gigas_stripmine_deposit_length_increment
+						clear_variable = gigas_stripmine_deposit_value_increment
+					}
+				} 
+				10 = { # crystals
+					set_megastructure_flag = new_crystal_deposit
+					if = {
+						limit = { NOT = { has_megastructure_flag = stripmine_crystal_deposit } }
+						set_variable_to_random_value = { which = gigas_stripmine_crystal_deposit_value min = 1 max = 10 rounded = yes }
+						set_variable_to_random_value = { which = gigas_stripmine_crystal_deposit_length min = 1 max = 5 rounded = yes }
+						set_megastructure_flag = stripmine_crystal_deposit
+					}
+					else = {
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_deposit_value_increment 
+							min = 1 
+							max = 10 
+							rounded = yes 
+						}
+						set_variable_to_random_value = {
+							which = gigas_stripmine_deposit_length_increment 
+							min = 1 
+							max = 2 
+							rounded = yes 
+						}
+						change_variable = {
+							which = gigas_stripmine_crystal_deposit_value 
+							value = gigas_stripmine_deposit_value_increment
+						}
+						change_variable = {
+							which = gigas_stripmine_crystal_deposit_length
+							value = gigas_stripmine_deposit_length_increment
+						}
+						clear_variable = gigas_stripmine_deposit_length_increment
+						clear_variable = gigas_stripmine_deposit_value_increment
+					}
+				} 
+				1 = { # tensiles
+					modifier = { factor = 0 NOT = { has_global_flag = @giga_amb_flag } }
+					set_megastructure_flag = new_tensile_deposit # Look ma, the mega makes supertensiles
+					if = {
+						limit = { NOT = { has_megastructure_flag = stripmine_supertensile_deposit } }
+						set_variable_to_random_value = { which = gigas_stripmine_supertensile_deposit_value min = 3 max = 15 rounded = yes }
+						set_variable_to_random_value = { which = gigas_stripmine_supertensile_deposit_length min = 1 max = 3 rounded = yes }
+						set_megastructure_flag = stripmine_supertensile_deposit
+					}
+					else = {
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_deposit_value_increment 
+							min = 2 
+							max = 8 
+							rounded = yes 
+						}
+						change_variable = {
+							which = gigas_stripmine_supertensile_deposit_value 
+							value = gigas_stripmine_deposit_value_increment
+						}
+						change_variable = {
+							which = gigas_stripmine_supertensile_deposit_length
+							value = 1
+						}
+						clear_variable = gigas_stripmine_deposit_value_increment
+					}
+				} 
+			}
 		}
 	}
 }
 
 planet_event = {
-	id = giga_mega.302
+	id = giga_mega.303
 	hide_window = yes
 	is_triggered_only = yes
 
 	immediate = {
+		change_planet_size = -1
+		change_pc = pc_core_mined
+		set_planet_flag = depletedstripmine
+		giga_clear_has_mega_flag = yes
 		if = {
-			limit = { planet_size = 5 }
-			set_planet_flag = reached_inner_core
-			if = {
-				limit = {
-					exists = solar_system.owner
-				}
-				solar_system.owner = { country_event = { id = giga_dialog.3304 days = 1 } }
+			limit = {
+				exists = solar_system.owner
 			}
-		}
-
-		if = {
-			limit = { planet_size = 2 }
-			change_pc = pc_core_mined
-			set_planet_flag = depletedstripmine
-			giga_clear_has_mega_flag = yes
-			if = {
-				limit = {
-					exists = solar_system.owner
-				}
-				solar_system.owner = { country_event = { id = giga_dialog.3305 days = 1 } }
-			}
-		}
-		else_if = {
-			limit = { planet_size > 2 }
-			change_planet_size = -1
-			planet_event = { id = giga_mega.302 days = 720 }
+			solar_system.owner = { country_event = { id = giga_dialog.3305 days = 1 } }
 		}
 	}
 }
