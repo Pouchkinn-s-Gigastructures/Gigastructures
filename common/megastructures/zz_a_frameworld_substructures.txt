@@ -1,3 +1,82 @@
+# outpost construction
+
+# due to triggered costs not working in the build menu, this is the easiest way to get the different costs
+# luckily since we want to replace them to prevent infinite loops anyway, we can entirely avoid needing to have them
+# listed in the upgrade section of the main outpost!
+
+# regular empire
+frameworld_outpost_construction = {
+	inline_script = {
+		script = megastructures/frameworld/outpost_construction
+
+		cost = "alloys = 200
+		food = 200
+		consumer_goods = 200
+		influence = 50"
+
+		potential = "is_gestalt = no
+		is_lithoid_empire = no"
+	}
+}
+
+# regular empire (lithoid)
+frameworld_outpost_construction_lithoid = {
+	inline_script = {
+		script = megastructures/frameworld/outpost_construction
+
+		cost = "alloys = 200
+		minerals = 200
+		consumer_goods = 200
+		influence = 50"
+
+		potential = "is_gestalt = no
+		is_lithoid_empire = yes"
+	}
+}
+
+# hive
+frameworld_outpost_construction_hive = {
+	inline_script = {
+		script = megastructures/frameworld/outpost_construction
+
+		cost = "alloys = 200
+		food = 500
+		influence = 50"
+
+		potential = "is_hive_empire = yes
+		is_lithoid_empire = no"
+	}
+}
+
+# hive (lithoid)
+frameworld_outpost_construction_hive_lithoid = {
+	inline_script = {
+		script = megastructures/frameworld/outpost_construction
+
+		cost = "alloys = 200
+		minerals = 500
+		influence = 50"
+
+		potential = "is_hive_empire = yes
+		is_lithoid_empire = yes"
+	}
+}
+
+# machines
+frameworld_outpost_construction_machine = {
+	inline_script = {
+		script = megastructures/frameworld/outpost_construction
+
+		cost = "alloys = 400
+		influence = 50"
+
+		potential = "is_machine_empire = yes"
+	}
+}
+
+########################################################################################################################
+# outpost proper
+
 frameworld_outpost_0 = {
 	entity = "giga_frameworld_outpost_entity"
 	construction_entity = "giga_frameworld_outpost_entity"
@@ -8,6 +87,13 @@ frameworld_outpost_0 = {
 	show_in_outliner = no
 
 	build_time = 720
+
+	upgrade_from = {
+		# frameworld_outpost_construction # don't do this lmao, it causes an infinite loop - this is specifically what you were trying to avoid dunkass
+		frameworld_outpost_marked_0
+		frameworld_outpost_wreck_1
+	}
+
 	resources = {
 		category = frameworld_outposts
 		cost = {
@@ -18,123 +104,21 @@ frameworld_outpost_0 = {
 			energy = 5 
 		}
 
-		# oh boy this is... a lot, you can find all the math behind this over in
-		# common/scipt_values/giga_frameworld_outpost_values.txt
-		# but beware, there's a LOT going on in there to generate these numbers!
-		produces = { minerals = 1 				multiplier = value:giga_frameworld_outpost_raw_output|JOB|miners|CATEGORY|worker|RESOURCE|minerals| }
-		produces = { energy = 1					multiplier = value:giga_frameworld_outpost_raw_output|JOB|technician|CATEGORY|worker|RESOURCE|energy| }
-		produces = { food = 1 					multiplier = value:giga_frameworld_outpost_raw_output|JOB|farmers|CATEGORY|worker|RESOURCE|food| }
-		
-		produces = { alloys = 1					multiplier = value:giga_frameworld_outpost_advanced_output|JOB|metallurgists|CATEGORY|specialist|RESOURCE|alloys| }
-		produces = { consumer_goods = 1 		multiplier = value:giga_frameworld_outpost_advanced_output|JOB|artisans|CATEGORY|specialist|RESOURCE|consumer_goods| }
+		# resource production logic, centralised
+		inline_script = megastructures/frameworld/outpost_production
+	}
 
-		produces = { physics_research = 1 		multiplier = value:giga_frameworld_outpost_science_output|JOB|researchers|CATEGORY|specialist|RESOURCE|physics_research| }
-		produces = { society_research = 1 		multiplier = value:giga_frameworld_outpost_science_output|JOB|researchers|CATEGORY|specialist|RESOURCE|society_research| }
-		produces = { engineering_research = 1 	multiplier = value:giga_frameworld_outpost_science_output|JOB|researchers|CATEGORY|specialist|RESOURCE|engineering_research| }
-
-		produces = { unity = 1 					multiplier = value:giga_frameworld_outpost_unity_output|JOB|administrators|CATEGORY|specialist|RESOURCE|unity| }
-
-		produces = { exotic_gases = 1 			multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|worker|RESOURCE|exotic_gases| }
-		produces = { volatile_motes = 1 		multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|worker|RESOURCE|volatile_motes| }
-		produces = { rare_crystals = 1 			multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|worker|RESOURCE|rare_crystals| }
-
-		produces = { sr_dark_matter = 1 		multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|specialist|RESOURCE|sr_dark_matter| }
-		produces = { sr_zro = 1 				multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|specialist|RESOURCE|sr_zro| }
-		produces = { sr_living_metal = 1 		multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|specialist|RESOURCE|sr_living_metal| }
-		produces = { nanites = 1 				multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|specialist|RESOURCE|nanites| }
-	
-		produces = {
-			trigger = { has_ancrel = yes }
-			minor_artifacts = 1 				multiplier = value:giga_frameworld_outpost_rare_output|JOB|researchers|CATEGORY|specialist|RESOURCE|minor_artifacts|
-		}
-		produces = {
-			trigger = { has_global_flag = @giga_amb_flag }
-			giga_sr_amb_megaconstruction = 1	multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|worker|RESOURCE|giga_sr_amb_megaconstruction|
-		}
+	country_modifier = {
+		giga_frameworld_outpost_count = 1
 	}
 
 	potential = {
-		has_origin = origin_frameworld
-	}
-
-	possible = { exists = starbase		custom_tooltip = { fail_text = "requires_inside_border" is_inside_border = from } }
-
-	placement_rules = {
-		planet_possible = {
-			can_have_frameworld_outpost = yes
-		}
+		#giga_has_frameworld_origin = yes
+		always = no
 	}
 
 	ai_weight = {
-    	weight = 100000 # VERY important, we should always build if possible
-	}
-
-	on_build_complete = {
-		from = {
-			save_event_target_as = outpost_owner
-		}
-
-    	fromfrom.planet = {
-			# new outpost pops effect
-			if = {
-				limit = {
-					event_target:outpost_owner = { has_origin = origin_frameworld } # minor sanity check
-					not = { has_planet_flag = giga_frameworld_outpost_pops }
-				}
-
-				set_planet_flag = giga_frameworld_outpost_pops
-
-				# add pops to home equal to bonus pops for colonies
-				event_target:outpost_owner = {
-					random_owned_planet = {
-						limit = {
-							has_planet_flag = giga_frameworld@event_target:outpost_owner
-						}
-						save_event_target_as = giga_frameworld
-
-						# add pops equal to colony pop bonus
-						set_update_modifiers_batch = begin
-						while = {
-							count = value:giga_frameworld_outpost_pops|WHO|event_target:outpost_owner|WHERE|fromfrom.planet|
-
-							create_pop = {
-								species = event_target:outpost_owner
-							}
-						}
-						set_update_modifiers_batch = end
-					}
-				}
-			}
-			# end pops
-
-			giga_frameworld_set_outpost_flags = yes
-
-			giga_frameworld_create_outpost_holder_colony = yes
-		}
-		from = {
-			giga_frameworld_recalculate_outpost_bonus = yes
-
-			# if this is our first outpost, fire off a notification event
-			if = {
-				limit = {
-					not = { has_country_flag = first_colony }
-				}
-				set_country_flag = first_colony
-				country_event = {
-					id = giga_frameworld_origin.107
-					scopes = {
-						from = fromfrom.planet
-					}
-				}
-			}
-
-			# send notification if pops were spawned
-			# takes a lot of scopes from right here so don't use elsewhere
-			giga_frameworld_outpost_message = yes
-		}
-		fromfrom.solar_system = {
-			giga_frameworld_update_system_icon = yes
-		}
+    	weight = 0
 	}
 }
 
@@ -151,6 +135,12 @@ frameworld_outpost_marked_0 = {
 	bypass_type = giga_frameworld_outpost_icon
 
 	build_time = 720
+
+	upgrade_from = {
+		frameworld_outpost_0
+		frameworld_outpost_wreck_1
+	}
+
 	resources = {
 		category = frameworld_outposts
 		cost = {
@@ -161,57 +151,25 @@ frameworld_outpost_marked_0 = {
 			energy = 5 
 		}
 
-		# oh boy this is... a lot, you can find all the math behind this over in
-		# common/scipt_values/giga_frameworld_outpost_values.txt
-		# but beware, there's a LOT going on in there to generate these numbers!
-		produces = { minerals = 1 				multiplier = value:giga_frameworld_outpost_raw_output|JOB|miners|CATEGORY|worker|RESOURCE|minerals| }
-		produces = { energy = 1					multiplier = value:giga_frameworld_outpost_raw_output|JOB|technician|CATEGORY|worker|RESOURCE|energy| }
-		produces = { food = 1 					multiplier = value:giga_frameworld_outpost_raw_output|JOB|farmers|CATEGORY|worker|RESOURCE|food| }
-		
-		produces = { alloys = 1					multiplier = value:giga_frameworld_outpost_advanced_output|JOB|metallurgists|CATEGORY|specialist|RESOURCE|alloys| }
-		produces = { consumer_goods = 1 		multiplier = value:giga_frameworld_outpost_advanced_output|JOB|artisans|CATEGORY|specialist|RESOURCE|consumer_goods| }
+		# resource production logic, centralised
+		inline_script = megastructures/frameworld/outpost_production
+	}
 
-		produces = { physics_research = 1 		multiplier = value:giga_frameworld_outpost_science_output|JOB|researchers|CATEGORY|specialist|RESOURCE|physics_research| }
-		produces = { society_research = 1 		multiplier = value:giga_frameworld_outpost_science_output|JOB|researchers|CATEGORY|specialist|RESOURCE|society_research| }
-		produces = { engineering_research = 1 	multiplier = value:giga_frameworld_outpost_science_output|JOB|researchers|CATEGORY|specialist|RESOURCE|engineering_research| }
-
-		produces = { unity = 1 					multiplier = value:giga_frameworld_outpost_unity_output|JOB|administrators|CATEGORY|specialist|RESOURCE|unity| }
-
-		produces = { exotic_gases = 1 			multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|worker|RESOURCE|exotic_gases| }
-		produces = { volatile_motes = 1 		multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|worker|RESOURCE|volatile_motes| }
-		produces = { rare_crystals = 1 			multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|worker|RESOURCE|rare_crystals| }
-
-		produces = { sr_dark_matter = 1 		multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|specialist|RESOURCE|sr_dark_matter| }
-		produces = { sr_zro = 1 				multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|specialist|RESOURCE|sr_zro| }
-		produces = { sr_living_metal = 1 		multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|specialist|RESOURCE|sr_living_metal| }
-		produces = { nanites = 1 				multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|specialist|RESOURCE|nanites| }
-
-		produces = {
-			trigger = { has_ancrel = yes }
-			minor_artifacts = 1 				multiplier = value:giga_frameworld_outpost_rare_output|JOB|researchers|CATEGORY|specialist|RESOURCE|minor_artifacts|
-		}
-		produces = {
-			trigger = { has_global_flag = @giga_amb_flag }
-			giga_sr_amb_megaconstruction = 1	multiplier = value:giga_frameworld_outpost_rare_output|JOB|sr_miners|CATEGORY|worker|RESOURCE|giga_sr_amb_megaconstruction|
-		}
+	country_modifier = {
+		giga_frameworld_outpost_count = 1
 	}
 
 	potential = {
 		always = no # special version with marker, updated by event
 	}
 
-	possible = { exists = starbase		custom_tooltip = { fail_text = "requires_inside_border" is_inside_border = from } }
-
-	placement_rules = {
-		planet_possible = {
-			can_have_frameworld_outpost = yes
-		}
-	}
-
 	ai_weight = {
     	weight = 0
 	}
 }
+
+########################################################################################################################
+# outpost wrecks
 
 frameworld_outpost_wreck_0 = {
 	entity = "giga_frameworld_outpost_destroyed_entity"
@@ -220,9 +178,8 @@ frameworld_outpost_wreck_0 = {
 	place_entity_on_planet_plane = no
 	construction_blocks_and_blocked_by = none
 
-
 	build_time = 0
-
+	
 	upgrade_from = {
 		frameworld_outpost_0
 		frameworld_outpost_marked_0
@@ -230,12 +187,6 @@ frameworld_outpost_wreck_0 = {
 	upgrade_desc = hide
 
 	potential = {
-		#not = {
-		#	and = {
-		#		exists = owner
-		#		owner = { has_origin = origin_frameworld }
-		#	}
-		#}
 		always = no
 	}
 	
@@ -265,7 +216,7 @@ frameworld_outpost_wreck_1 = {
 	}
 
 	potential = {
-		has_origin = origin_frameworld
+		giga_has_frameworld_origin = yes
 	}
 
 	upgrade_from = {
@@ -278,15 +229,19 @@ frameworld_outpost_wreck_1 = {
 	}
 
 	on_build_complete = {
-		if = { limit = { from = { has_origin = origin_frameworld } }  
+		if = { limit = { from = { giga_has_frameworld_origin = yes } }
 
 			fromfrom = {
 				planet = {
-					giga_frameworld_create_outpost = { WHO = fromfrom.owner } # replace with a proper outpost on completion
+					giga_frameworld_create_outpost_holder_colony = yes
 				}
 
-				# wreck removal dealt with in the create outpost effect
-				#delete_megastructure = this
+				upgrade_megastructure_to = frameworld_outpost_0
+				finish_upgrade = yes
+
+				solar_system = {
+					giga_frameworld_update_system_icon = yes
+				}
 			}
 
 			from = {
@@ -297,10 +252,64 @@ frameworld_outpost_wreck_1 = {
 		else = {
 			fromfrom = {
 				upgrade_megastructure_to = frameworld_outpost_wreck_0
+				finish_upgrade = yes
 			}
 		}
 	}
 }
+
+########################################################################################################################
+# outpost disassembly
+
+frameworld_outpost_deconstruction = {
+	entity = "giga_frameworld_outpost_entity"
+	construction_entity = "giga_frameworld_outpost_entity"
+	construction_blocks_and_blocked_by = none
+	portrait = "GFX_megastructure_construction_background"
+	show_galactic_map_icon = no
+	place_entity_on_planet_plane = no
+	show_in_outliner = no
+
+	build_time = 20
+
+	upgrade_from = {
+		frameworld_outpost_0
+		frameworld_outpost_marked_0
+	}
+
+	resources = {
+		category = frameworld_outposts
+	}
+
+	potential = {
+		always = no
+	}
+
+	ai_weight = {
+		weight = 0
+	}
+
+	on_build_complete = {
+		fromfrom = {
+			planet = {
+				remove_all_buildings = yes
+				every_owned_pop = {
+					kill_pop = yes
+				}
+				destroy_colony = yes
+			}
+
+			remove_megastructure = this
+
+			solar_system = {
+				giga_frameworld_update_system_icon = yes
+			}
+		}
+	}
+}
+
+########################################################################################################################
+# asteroid harvest
 
 frameworld_harvest_0 = {
 	entity = ""
@@ -321,7 +330,7 @@ frameworld_harvest_0 = {
 	}
 	
 	potential = {
-    	has_origin = origin_frameworld
+    	giga_has_frameworld_origin = yes
 		#always = yes
 	}
 	
@@ -445,30 +454,11 @@ frameworld_harvest_0 = {
 			}
 		}
 		remove_megastructure = fromfrom
-		
-		# # deal with the asteroid
-    	# fromfrom.planet = {
-		# 	giga_frameworld_remove_asteroid = yes
-		# }
-    
-    	# # remove the structure since this is a process instead
-    	# remove_megastructure = fromfrom
-    
-    
-		# from = {
-		# 	# country_event =  { id = utopia.61 } # placeholder, this is the habitat complete event
-			
-		# 	# using this until I can be sure event targets work how I want
-		# 	capital_scope = {
-        # 		add_deposit = d_frameworld_asteroid
-        # 		add_deposit = d_frameworld_expansion
-		# 		change_planet_size = 1
-		# 		giga_frameworld_update_entity_with_fallback = yes
-		# 		frameworld_conduct_audit_check_ai = yes
-		# 	}
-		# }
 	}
 }
+
+########################################################################################################################
+# habitat salvaging
 
 frameworld_salvage_habitat_0 = {
 	entity = ""
@@ -489,7 +479,7 @@ frameworld_salvage_habitat_0 = {
 	}
 	
 	potential = {
-    	has_origin = origin_frameworld
+    	giga_has_frameworld_origin = yes
 		has_technology = tech_habitat_1
 	}
 	
@@ -593,33 +583,11 @@ frameworld_salvage_habitat_0 = {
 			}
 		}
 		remove_megastructure = fromfrom
-
-		# # clean up the habitat
-		# fromfrom.planet = {
-		# 	giga_frameworld_remove_asteroid = yes
-		# }
-
-    	# # remove the structure since this is a process instead
-    	# remove_megastructure = fromfrom
-    
-    	# from = {
-		# 	# country_event =  { id = utopia.61 } # placeholder, this is the habitat complete event
-			
-		# 	# using this until I can be sure event targets work how I want
-		# 	capital_scope = {
-		# 		while = {
-		# 			count = fromfrom.planet.trigger:planet_size
-
-		# 			add_deposit = d_frameworld_habitat
-        # 			add_deposit = d_frameworld_expansion
-		# 			change_planet_size = 1
-		# 		}
-		# 		giga_frameworld_update_entity_with_fallback = yes
-		# 		frameworld_conduct_audit_check_ai = yes
-		# 	}
-		# }
 	}
 }
+
+########################################################################################################################
+# upgrades
 
 ### Penrose sphere upgrade
 
@@ -696,12 +664,13 @@ frameworld_penrose_2 = {
 				is_planet_class = pc_giga_frameworld
 			}
 			add_deposit = d_frameworld_penrose
+			set_planet_flag = frameworld_penrose
 			validate_planet_buildings_and_districts = yes
 			remove_planet_flag = frameworld_upgrade
 			
 			if = {
 				limit = {
-					has_deposit = d_frameworld_decompressor
+					has_planet_flag = frameworld_decompressor
 				}
 				fromfrom.planet = {
 					create_ambient_object = {
@@ -795,12 +764,13 @@ frameworld_decompressor_2 = {
 				is_planet_class = pc_giga_frameworld
 			}
 			add_deposit = d_frameworld_decompressor
+			set_planet_flag = frameworld_decompressor
 			validate_planet_buildings_and_districts = yes
 			remove_planet_flag = frameworld_upgrade
 
 			if = {
 				limit = {
-					has_deposit = d_frameworld_penrose
+					has_planet_flag = frameworld_penrose
 				}
 				fromfrom.planet = {
 					create_ambient_object = {

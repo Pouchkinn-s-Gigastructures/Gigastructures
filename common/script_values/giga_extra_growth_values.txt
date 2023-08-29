@@ -1,0 +1,124 @@
+# planet scope
+giga_calculate_planet_capacity = {
+    weight = trigger:free_district_slots
+    multiply = $per_district$
+
+    add = trigger:num_pops
+    add = trigger:free_housing
+
+    add = modifier:planet_carry_cap_add
+
+    max = 500 # hard cap apparently
+}
+
+# planet scope
+giga_calculate_extra_growth_base = {
+    weight = trigger:num_pops
+
+    subtract = value:giga_calculate_extra_growth_internal|planet_capacity|$planet_capacity$|
+    subtract = 1
+
+    multiply = 0.125
+    max = 1
+
+    multiply = modifier:giga_pop_growth_speed_extra_add
+
+    # if we're overcrowded, stop entirely
+    modifier = {
+        free_housing <= -5
+        max = 0
+    }
+}
+
+# planet scope
+giga_calculate_extra_growth_internal = {
+    weight = trigger:num_pops
+    square = yes
+    divide = $planet_capacity$
+}
+
+# situation scope
+giga_calculate_extra_growth_required = {
+    base = 0
+
+    modifier = {
+        exists = target
+        exists = target.owner
+
+        add = target.owner.trigger:num_pops
+    }
+    multiply = growth_required_scaling
+
+    add = 100
+}
+
+# situation scope
+giga_calculate_extra_growth_modifiers = {
+    base = 0
+
+    modifier = {
+        exists = target
+        [[!reduction]
+        add = target.modifier:pop_growth_speed
+        ]
+        [[reduction]
+            add = target.modifier:pop_growth_speed_reduction
+        ]
+    }
+
+    modifier = {
+        exists = event_target:giga_extra_growth_species@this
+        event_target:giga_extra_growth_species@this = {
+            is_lithoid = no
+        }
+        exists = target
+        [[!reduction]
+            add = target.modifier:biological_pop_growth_speed
+        ]
+        [[reduction]
+            add = target.modifier:biological_pop_growth_speed_reduction
+        ]
+    }
+
+    modifier = {
+        exists = event_target:giga_extra_growth_species@this
+        event_target:giga_extra_growth_species@this = {
+            is_lithoid = yes
+        }
+        exists = target
+        [[!reduction]
+            add = target.modifier:lithoid_pop_growth_speed
+        ]
+        [[reduction]
+            add = target.modifier:lithoid_pop_growth_speed_reduction
+        ]
+    }
+}
+
+# situation scope
+giga_calculate_extra_growth_total = {
+    weight = base_growth
+
+    multiply = value:giga_one_plus|val|growth_modifiers|
+
+    multiply = value:giga_ai_one_minus|VAL|growth_reductions|
+
+    # minimum growth to prevent huge month count
+    min = 0.3
+
+    # halt growth if the base value is 0
+    modifier = {
+        check_variable = {
+            which = base_growth
+            value <= 0
+        }
+        max = 0
+    }
+}
+
+giga_calculate_extra_growth_eta = {
+    weight = growth_required
+    subtract = current_growth
+    divide = total_growth
+    ceiling = yes
+}

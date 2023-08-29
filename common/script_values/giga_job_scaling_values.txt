@@ -1,0 +1,180 @@
+
+# Job scaling and density offset calculations
+
+########################################################################################################################
+# Job scaling
+
+giga_job_scaling_per_building = {
+    base = 0
+
+    complex_trigger_modifier = {
+        trigger = num_buildings
+        parameters = {
+            type = $BUILDING$
+        }
+        mode = weight
+    }
+
+    multiply = modifier:giga_planet_job_size
+}
+
+giga_job_scaling_country_modifier = {
+    base = 0
+
+    modifier = {
+        exists = owner
+        weight = owner.modifier:$MODIFIER$
+    }
+
+    multiply = modifier:giga_planet_job_size
+}
+
+giga_job_scaling_plus_base = {
+    base = 1
+    add = modifier:giga_planet_job_size
+}
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+# Density scaling
+
+giga_planet_density_offset_modifier_by_pops = {
+    weight = modifier:$modifier$
+    subtract = modifier:giga_$modifier$_offset
+    [[countCountry]
+        modifier = {
+            exists = owner
+            subtract = owner.modifier:giga_$modifier$_offset
+        }
+    ]
+    [[positiveOnly]
+        min = 0
+    ]
+    [[negativeOnly]
+        max = 0
+    ]
+    multiply = value:giga_planet_desnity_by_pops|pops|$pops|200$|
+}
+
+giga_planet_density_offset_modifier_by_districts = {
+    weight = modifier:$modifier$
+    subtract = modifier:giga_$modifier$_offset
+    [[countCountry]
+        modifier = {
+            exists = owner
+            subtract = owner.modifier:giga_$modifier$_offset
+        }
+    ]
+    [[positiveOnly]
+        min = 0
+    ]
+    [[negativeOnly]
+        max = 0
+    ]
+    multiply = value:giga_planet_desnity_by_districts|districts|$districts|25$|
+}
+
+######################################################
+
+giga_planet_density_offset_jobs_by_pops = {
+    complex_trigger_modifier = {
+        trigger = num_assigned_jobs
+        parameters = {
+            job = $job$
+        }
+        mode = weight
+    }
+    multiply = value:giga_planet_desnity_by_pops|pops|$pops|200$|
+}
+
+giga_planet_density_offset_jobs_by_districts = {
+    complex_trigger_modifier = {
+        trigger = num_assigned_jobs
+        parameters = {
+            job = $job$
+        }
+        mode = weight
+    }
+    multiply = value:giga_planet_desnity_by_districts|districts|$districts|25$|
+}
+
+######################################################
+
+giga_planet_density_offset_trait_by_pops = {
+    complex_trigger_modifier = {
+        trigger = count_owned_pop
+        parameters = {
+            limit = {
+                has_trait = $trait$
+            }
+        }
+        mode = weight
+    }
+    multiply = value:giga_planet_desnity_by_pops|pops|$pops|200$|
+}
+
+giga_planet_density_offset_trait_by_districts = {
+    complex_trigger_modifier = {
+        trigger = count_owned_pop
+        parameters = {
+            limit = {
+                has_trait = $trait$
+            }
+        }
+        mode = weight
+    }
+    multiply = value:giga_planet_desnity_by_districts|districts|$districts|25$|
+}
+
+######################################################
+
+giga_planet_density_offset_trigger_by_pops = {
+    weight = trigger:$trigger$
+    multiply = value:giga_planet_desnity_by_pops|pops|$pops|200$|
+}
+
+giga_planet_density_offset_trigger_by_districts = {
+    weight = trigger:$trigger$
+    multiply = value:giga_planet_desnity_by_districts|districts|$districts|25$|
+}
+
+########################################################################################################################
+# by pop count
+
+giga_planet_desnity_by_pops = {
+    weight = 1
+    subtract = value:giga_planet_density_by_pops_inner_1|pops|$pops$|
+    multiply = -1
+}
+
+giga_planet_density_by_pops_inner_1 = {
+    weight = 1
+    divide = value:giga_planet_density_by_pops_inner_2|pops|$pops$|
+}
+
+giga_planet_density_by_pops_inner_2 = {
+    weight = trigger:num_pops
+    divide = $pops$ # diminish for every this many pops
+    min = 1
+}
+
+######################################################
+# by district count
+
+giga_planet_desnity_by_districts = {
+    weight = 1
+    subtract = value:giga_planet_density_by_districts_inner_1|districts|$districts$|
+    multiply = -1
+}
+
+giga_planet_density_by_districts_inner_1 = {
+    weight = 1
+    divide = value:giga_planet_density_by_districts_inner_2|districts|$districts$|
+}
+
+giga_planet_density_by_districts_inner_2 = {
+    weight = trigger:num_districts
+    divide = $districts$ # diminish for every this many districts
+    min = 1
+}
