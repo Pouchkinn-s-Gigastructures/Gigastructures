@@ -4065,7 +4065,24 @@ Effect PdxMeshTerraAnimateUVSkinnedShadow
 
 
 # // Additions
+# // Engineering Test Site Shield
+Effect PdxMeshAlphaAdditiveECB
+{
+	VertexShader = "VertexPdxMeshStandard"
+	PixelShader = "PixelPdxMeshAdditive"
+	BlendState = "BlendStateAdditiveBlend"
+	DepthStencilState = "DepthStencilNoZWrite"
+	Defines = { "ANIMATE_UV" "DISSOLVE" "USE_EMPIRE_COLOR"}
+}
 
+Effect PdxMeshAlphaAdditiveECBSkinned
+{
+	VertexShader = "VertexPdxMeshStandardSkinned"
+	PixelShader = "PixelPdxMeshAdditive"
+	BlendState = "BlendStateAdditiveBlend"
+	DepthStencilState = "DepthStencilNoZWrite"
+	Defines = { "ANIMATE_UV" "DISSOLVE" "USE_EMPIRE_COLOR" }
+}
 
 Effect OmniMeshShip
 {

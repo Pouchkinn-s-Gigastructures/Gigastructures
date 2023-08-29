@@ -1,9 +1,14 @@
 namespace = ehof_ai
 
-@ai_system_cap_p1 = 1
-@ai_system_cap_p2 = 3
-@ai_system_cap_p3 = 6
-@ai_system_cap_p4 = 10
+@ai_system_cap_p1 = 10
+@ai_system_cap_p2 = 20
+@ai_system_cap_p3 = 35
+@ai_system_cap_p4 = 50
+
+@ai_system_cap_aoai_p1 = 25
+@ai_system_cap_aoai_p2 = 50
+@ai_system_cap_aoai_p3 = 75
+@ai_system_cap_aoai_p4 = 150 #They do be building their own galaxy out there
 
 # Generate a system
 country_event = {
@@ -22,30 +27,90 @@ country_event = {
 		resource_income_compare = { resource = alloys value > 10 }
 		OR = {
 			AND = {
-				NOT = { has_country_flag = ehof_ai_system_p1_cap }
+				OR = {
+					NOT = { has_country_flag = ehof_ai_system_p1_cap } 
+					has_country_flag = ehof_spawn_reality_code
+				}
 				check_variable = { which = ehof_phase value = 1 }
-				resource_income_compare = { resource = energy value >= 30 }
+				OR = {
+					AND = {
+						has_origin = origin_incohesive #Go little AI, do an EHOF
+						OR = {
+							check_variable = { which = ehof_ai_system_cap value <= 10 } #So they don't get bogged down when they don't instantly get a second planet 
+							resource_income_compare = { resource = energy value >= 10 }
+							resource_stockpile_compare = { resource = energy value >= @ehof_target_p1 }
+						}
+					}
+					resource_income_compare = { resource = energy value >= 30 }
+				}
 			}
 			AND = {
-				NOT = { has_country_flag = ehof_ai_system_p2_cap }
+				OR = {
+					NOT = { has_country_flag = ehof_ai_system_p2_cap }
+					has_country_flag = ehof_spawn_reality_code
+				}
 				check_variable = { which = ehof_phase value = 2 }
-				resource_income_compare = { resource = energy value >= 25 }
+				OR = {
+					AND = {
+						has_origin = origin_incohesive
+						OR = {
+							resource_stockpile_compare = { resource = energy value >= @ehof_target_p1 }
+							resource_income_compare = { resource = energy value >= 5 }
+						}
+					}
+					resource_income_compare = { resource = energy value >= 25 }
+				}
 			}
 			AND = {
-				NOT = { has_country_flag = ehof_ai_system_p3_cap }
+				OR = {
+					NOT = { has_country_flag = ehof_ai_system_p3_cap }
+					has_country_flag = ehof_spawn_reality_code
+				}
 				check_variable = { which = ehof_phase value = 3 }
-				resource_income_compare = { resource = sr_dark_matter value >= 1 }
+				OR = {
+					has_origin = origin_incohesive
+					resource_income_compare = { resource = sr_dark_matter value >= 1 }
+				}
 			}
 			AND = {
-				NOT = { has_country_flag = ehof_ai_system_p4_cap }
+				OR = {
+					NOT = { has_country_flag = ehof_ai_system_p4_cap }
+					has_country_flag = ehof_spawn_reality_code
+				}
 				check_variable = { which = ehof_phase value = 4 }
-				resource_income_compare = { resource = sr_dark_matter value >= 1 }
+				OR = {
+					has_origin = origin_incohesive
+					resource_income_compare = { resource = sr_dark_matter value >= 1 }
+				}
 			}
 		}
 	}
 
 	immediate = {
-		set_timed_country_flag = { flag = ehof_ai_recently_used days = 360 }
+		if = {
+			limit = {
+				check_variable = { which = ehof_phase value = 1 }
+			}
+			set_timed_country_flag = { flag = ehof_ai_recently_used days = 360 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { which = ehof_phase value = 2 }
+			}
+			set_timed_country_flag = { flag = ehof_ai_recently_used days = 240 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { which = ehof_phase value = 3 }
+			}
+			set_timed_country_flag = { flag = ehof_ai_recently_used days = 180 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { which = ehof_phase value = 4 }
+			}
+			set_timed_country_flag = { flag = ehof_ai_recently_used days = 120 }
+		}
 
 		if = {
 			limit = { NOT = { has_country_flag = ehof_ai_started_rc } }
@@ -62,7 +127,21 @@ country_event = {
 		if = {
 			limit = { check_variable = { which = ehof_phase value = 1 } }
 			change_variable = { which = ehof_ai_system_cap value = 1 }
-			if = { limit = { check_variable = { which = ehof_ai_system_cap value >= @ai_system_cap_p1 } } set_country_flag = ehof_ai_system_p1_cap }	# Check cap
+			if = { 
+				limit = { 
+					OR = {
+						AND = { 
+							check_variable = { which = ehof_ai_system_cap value >= @ai_system_cap_p1 } 
+							NOT = { has_origin = origin_incohesive } #Trokk
+						}
+						AND = {
+							check_variable = { which = ehof_ai_system_cap value >= @ai_system_cap_aoai_p1 }
+							has_origin = origin_incohesive
+						}
+					}
+				} 
+				set_country_flag = ehof_ai_system_p1_cap 
+			}	# Check cap
 			add_monthly_resource_mult = { resource = alloys value = -1 min = -200 max = -200 }															# Construction/Science Ship Cost
 			add_monthly_resource_mult = { resource = energy value = -1 min = @ehof_target_p1 max = @ehof_target_neg_p1 }					# Firing Cost
 			add_monthly_resource_mult = { resource = influence value = -1 min = -150 max = -150 }														# System influence Cost
@@ -70,7 +149,21 @@ country_event = {
 		else_if = {
 			limit = { check_variable = { which = ehof_phase value = 2 } }
 			change_variable = { which = ehof_ai_system_cap value = 1 }
-			if = { limit = { check_variable = { which = ehof_ai_system_cap value >= @ai_system_cap_p2 } } set_country_flag = ehof_ai_system_p2_cap }	# Check cap
+			if = { 
+				limit = { 
+					OR = {
+						AND = { 
+							check_variable = { which = ehof_ai_system_cap value >= @ai_system_cap_p2 } 
+							NOT = { has_origin = origin_incohesive } #Trokk
+						}
+						AND = {
+							check_variable = { which = ehof_ai_system_cap value >= @ai_system_cap_aoai_p2 }
+							has_origin = origin_incohesive
+						}
+					}
+				} 
+				set_country_flag = ehof_ai_system_p2_cap 
+			}	# Check cap
 			add_monthly_resource_mult = { resource = alloys value = -1 min = -200 max = -200 }															# Construction/Science Ship Cost
 			add_monthly_resource_mult = { resource = energy value = -1 min = @ehof_target_p2 max = @ehof_target_neg_p2 }					# Firing Cost
 			add_monthly_resource_mult = { resource = influence value = -1 min = -120 max = -120 }														# System influence Cost
@@ -78,7 +171,21 @@ country_event = {
 		else_if = {
 			limit = { check_variable = { which = ehof_phase value = 3 } }
 			change_variable = { which = ehof_ai_system_cap value = 1 }
-			if = { limit = { check_variable = { which = ehof_ai_system_cap value >= @ai_system_cap_p3 } } set_country_flag = ehof_ai_system_p3_cap }	# Check cap
+			if = { 
+				limit = { 
+					OR = {
+						AND = { 
+							check_variable = { which = ehof_ai_system_cap value >= @ai_system_cap_p3 } 
+							NOT = { has_origin = origin_incohesive } #Trokk
+						}
+						AND = {
+							check_variable = { which = ehof_ai_system_cap value >= @ai_system_cap_aoai_p3 }
+							has_origin = origin_incohesive
+						}
+					}
+				} 
+				set_country_flag = ehof_ai_system_p3_cap 
+			}	# Check cap
 			add_monthly_resource_mult = { resource = alloys value = -1 min = -200 max = -200 }															# Construction/Science Ship Cost
 			add_monthly_resource_mult = { resource = sr_dark_matter value = -1 min = @ehof_target_p3 max = @ehof_target_neg_p3 }			# Firing Cost
 			add_monthly_resource_mult = { resource = influence value = -1 min = -90 max = -90 }															# System influence Cost
@@ -86,7 +193,21 @@ country_event = {
 		else_if = {
 			limit = { check_variable = { which = ehof_phase value = 4 } }
 			change_variable = { which = ehof_ai_system_cap value = 1 }
-			if = { limit = { check_variable = { which = ehof_ai_system_cap value >= @ai_system_cap_p4 } } set_country_flag = ehof_ai_system_p4_cap }	# Check cap
+			if = { 
+				limit = { 
+					OR = {
+						AND = { 
+							check_variable = { which = ehof_ai_system_cap value >= @ai_system_cap_p4 } 
+							NOT = { has_origin = origin_incohesive } #Trokk
+						}
+						AND = {
+							check_variable = { which = ehof_ai_system_cap value >= @ai_system_cap_aoai_p4 }
+							has_origin = origin_incohesive
+						}
+					}
+				} 
+				set_country_flag = ehof_ai_system_p4_cap 
+			}	# Check cap
 			add_monthly_resource_mult = { resource = alloys value = -1 min = -200 max = -200 }															# Construction/Science Ship Cost
 			add_monthly_resource_mult = { resource = sr_dark_matter value = -1 min = @ehof_target_p4 max = @ehof_target_neg_p4 }			# Firing Cost
 			add_monthly_resource_mult = { resource = influence value = -1 min = -60 max = -60 }															# System influence Cost
@@ -189,11 +310,15 @@ country_event = {
 			has_country_flag = ehof_ai_has_ship_in_cluster
 		}
 		NOT = {
-			any_system_within_border = {
+			any_system = {
 				cohesive_system = yes
 				any_fleet_in_system = {
 					is_ship_class = shipclass_science_ship
 					exists = leader
+					exists = owner
+					owner = {
+						is_same_empire = root
+					}
 				}
 			}
 		}
@@ -233,7 +358,7 @@ country_event = {
 				exists = solar_system
 				solar_system = { cohesive_system = yes }
 			}
-			count > 1
+			count > 2 # 1 seems to cause them to just make another and drain their alloys..
 		}
 	}
 
@@ -244,6 +369,9 @@ country_event = {
 					limit = {
 						is_ship_class = shipclass_science_ship
 						exists = solar_system
+						fleet = {
+							NOT = { exists = leader }
+						}
 						solar_system = { cohesive_system = yes }
 					}
 					count > 1
@@ -253,6 +381,9 @@ country_event = {
 				limit = {
 					is_ship_class = shipclass_science_ship
 					exists = solar_system
+					fleet = {
+						NOT = { exists = leader }
+					}
 					solar_system = { cohesive_system = yes }
 				}
 				fleet = {
