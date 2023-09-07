@@ -467,6 +467,40 @@ giga_frameworld_wreck_outpost = {
 	]
 }
 
+giga_frameworld_create_outpost_test = {
+	$planet$ = {
+		save_event_target_as = outpost_planet
+		giga_frameworld_set_outpost_flags = yes
+	}
+	$owner$ = { save_event_target_as = outpost_owner }
+
+	create_fleet = {
+		effect = {
+			set_owner = event_target:outpost_owner
+			create_ship = {
+				random_existing_design = frameworld_planetary_outpost
+				effect = {
+					set_disable_at_health = 0.05
+					#set_name = {
+					#	key = TARGET_ORBITAL_NAME
+					#	variable_string = "\\[FROM.from.planet.GetName]"
+					#}
+				}
+			}
+			save_event_target_as = target_orbital
+			fleet = {
+				set_location = {
+					target = event_target:outpost_planet
+				}
+			}
+		}
+	}
+
+	$planet$ = {
+		giga_frameworld_outpost_set_planet_class = yes
+	}
+}
+
 # this = planet
 giga_frameworld_create_outpost = {
 	[[WHO] if = { limit = { $WHO$ = { giga_has_frameworld_origin = yes } } ]
@@ -815,6 +849,109 @@ giga_frameworld_update_system_icon = {
 			upgrade_megastructure_to = frameworld_outpost_0
 			finish_upgrade = yes
 		}
+	}
+}
+
+@outpost_planet_modified = giga_frameworld_outpost_planet_type_modified
+@outpost_planet_type_species = giga_frameworld_outpost_planet_type_species
+giga_frameworld_outpost_set_planet_class = {
+	if = {
+		limit = {
+			not = {
+				has_planet_flag = giga_frameworld_outpost_planet_type
+			}
+		}
+
+		set_planet_flag = @outpost_planet_modified
+
+		save_event_target_as = outpost_planet
+		if = {
+			# if no holder species exists
+			limit = {
+				not = {
+					any_galaxy_species = {
+						has_species_flag = @outpost_planet_type_species
+						ideal_planet_class = event_target:outpost_planet
+					}
+				}
+			}
+
+			# create a holder species
+			create_species = {
+				name = "giga_frameworld_outpost_planet_species"
+				class = random_non_machine
+
+				homeworld = event_target:outpost_planet
+
+				traits = {
+					ideal_planet_class = event_target:outpost_planet
+				}
+				effect = {
+					set_species_flag = @outpost_planet_type_species
+					# save it as our found species
+					save_event_target_as = species
+				}
+			}
+
+		}
+		else = {
+			# if one does exist, then get it
+			random_galaxy_species = {
+				limit = {
+					has_species_flag = @outpost_planet_type_species
+					ideal_planet_class = event_target:outpost_planet
+				}
+
+				# save it for later use
+				save_event_target_as = species
+			}
+		}
+
+		# set flag and associate species for planet type lookup later
+		set_planet_flag = giga_frameworld_outpost_planet_type
+		set_planet_flag = giga_frameworld_outpost_planet_type@event_target:species
+
+		# set planet type
+		change_pc = {
+			class = pc_ai # TODO: change to something more appropriate
+			inherit_entity = yes
+		}
+
+		remove_planet_flag = @outpost_planet_modified
+	}
+}
+
+giga_frameworld_outpost_restore_planet_class = {
+	if = {
+		limit = {
+			has_planet_flag = giga_frameworld_outpost_planet_type
+		}
+
+		set_planet_flag = @outpost_planet_modified
+
+		save_event_target_as = outpost_planet
+
+		# get matching holder species to be able to reference planet class
+		# we are assuming one has been created by the "on" effect
+		random_galaxy_species = {
+			limit = {
+				has_species_flag = @outpost_planet_type_species
+				event_target:outpost_planet = {
+					has_planet_flag = giga_frameworld_outpost_planet_type@prev
+				}
+			}
+			save_event_target_as = species
+		}
+
+		remove_planet_flag = giga_frameworld_outpost_planet_type
+		remove_planet_flag = giga_frameworld_outpost_planet_type@event_target:species
+
+		change_pc = {
+			class = event_target:species
+			inherit_entity = yes
+		}
+
+		remove_planet_flag = @outpost_planet_modified
 	}
 }
 

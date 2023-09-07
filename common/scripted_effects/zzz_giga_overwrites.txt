@@ -1,0 +1,148 @@
+
+# special resource deposits for habitats and orbitals
+# should cover all of the listed resources, including modded deposits, so beware merging
+set_habitat_planetary_features_effect = {
+
+    if = {
+        # make sure this doesn't happen to habitable worlds!
+        limit = {
+            event_target:target_planet = {
+                is_colonizable = no
+                is_colony = no
+            }
+        }
+
+        # alloys
+        giga_add_habitat_resource_deposit = { resource = alloys deposit = d_hab_alloy_1 }
+
+        # exotic gases
+        giga_add_habitat_resource_deposit = { resource = exotic_gases deposit = d_hab_gas_1 }
+
+        # rare crystals
+        giga_add_habitat_resource_deposit = { resource = rare_crystals deposit = d_hab_crystal_1 }
+
+        # volatile motes
+        giga_add_habitat_resource_deposit = { resource = volatile_motes deposit = d_hab_mote_1 }
+
+        # zro
+        giga_add_habitat_resource_deposit = { resource = sr_zro deposit = d_hab_zro_1 research = yes }
+
+        # dark matter
+        giga_add_habitat_resource_deposit = { resource = sr_dark_matter deposit = d_hab_dark_matter_1 research = yes }
+
+        # living metal
+        giga_add_habitat_resource_deposit = { resource = sr_living_metal deposit = d_hab_living_metal_1 }
+
+        # nanites
+        giga_add_habitat_resource_deposit = { resource = nanites deposit = d_hab_nanites_1 research = yes }
+
+        # iodizium
+        giga_add_habitat_resource_deposit = { resource = sr_iodizium deposit = d_giga_hab_iodizium_1 }
+
+        # supertensiles
+        if = {
+            limit = {
+                has_global_flag = @giga_amb_flag
+            }
+            giga_add_habitat_resource_deposit = { resource = giga_sr_amb_megaconstruction deposit = d_giga_hab_supertensiles_1 }
+         }
+
+        # minor artifacts
+        if = {
+            limit = {
+                has_ancrel = yes
+            }
+            giga_add_habitat_resource_deposit = { resource = minor_artifacts deposit = d_artifacts_planet_1 research = yes }
+        }
+
+    }
+}
+
+# changes check for ship class to a scripted trigger
+# excludes frameworld planetary outposts
+spawn_habitat_cracker_effect = {
+    create_ambient_object = {
+        location = this
+        type = habitat_cracker_object
+        duration = 5
+
+        use_3d_location = yes
+        base_angle_towards = star
+        entity_face_object = star
+
+        entity_offset = { min = 0 max = 0 }
+
+        entity_scale_to_size = yes
+        scale = 0.10
+    }
+    save_event_target_as = target_habitat
+    solar_system = {
+        spawn_megastructure = {
+            type = habitat_central_complex_ruined
+            owner = this.owner
+            coords_from = PREV
+        }
+        random_system_planet = {
+            limit = {
+                has_planet_flag = habitat@event_target:target_habitat
+            }
+            remove_planet_flag = habitat@event_target:target_habitat
+            set_planet_flag = habitat_build_site
+        }
+        every_fleet_in_system = {
+            limit = {
+                giga_is_habitat_orbital = yes # overwritten here
+            }
+            orbit = {
+                if = {
+                    limit = {
+                        NOT = {
+                            has_planet_flag = habitat_build_site
+                        }
+                    }
+                    remove_planet_flag = has_megastructure
+                }
+            }
+            delete_fleet = this
+        }
+    }
+    remove_planet = yes
+}
+
+# changes check for ship class to a scripted trigger
+# excludes frameworld planetary outposts
+spawn_habitat_pacifier_effect = {
+    create_ambient_object = {
+        location = this
+        type = habitat_pacifier_object
+        duration = 5
+
+        use_3d_location = yes
+        base_angle_towards = star
+        entity_face_object = star
+
+        entity_offset = { min = 0 max = 0 }
+
+        entity_scale_to_size = yes
+        scale = 0.10
+    }
+    save_event_target_as = target_habitat
+    solar_system = {
+        every_fleet_in_system = {
+            limit = {
+                giga_is_habitat_orbital = yes # overwritten here
+            }
+            orbit = {
+                if = {
+                    limit = {
+                        NOT = {
+                            has_planet_flag = habitat@event_target:target_habitat
+                        }
+                    }
+                    remove_planet_flag = has_megastructure
+                }
+            }
+            delete_fleet = this
+        }
+    }
+}
