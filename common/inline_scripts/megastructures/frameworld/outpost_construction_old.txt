@@ -7,8 +7,6 @@
     show_galactic_map_icon = no
     place_entity_on_planet_plane = no
     show_in_outliner = no
-    hide_name = yes
-    #entity_offset = { x = -7 y = -7 }
 
     build_time = 720
     resources = {
@@ -41,11 +39,48 @@
     }
 
     on_build_complete = {
-        giga_frameworld_create_outpost = {
-            owner = from
-            planet = fromfrom.planet
+        from = {
+            save_event_target_as = outpost_owner
+        }
+
+        fromfrom.planet = {
+            # new outpost pops effect
+            if = {
+                limit = {
+                    event_target:outpost_owner = { giga_has_frameworld_origin = yes } # minor sanity check
+                    not = { has_planet_flag = giga_frameworld_outpost_pops }
+                }
+
+                set_planet_flag = giga_frameworld_outpost_pops
+
+                # add pops to home equal to bonus pops for colonies
+                event_target:outpost_owner = {
+                    random_owned_planet = {
+                        limit = {
+                            has_planet_flag = giga_frameworld@event_target:outpost_owner
+                        }
+                        save_event_target_as = giga_frameworld
+
+                        # add pops equal to colony pop bonus
+                        set_update_modifiers_batch = begin
+                        while = {
+                            count = value:giga_frameworld_outpost_pops|WHO|event_target:outpost_owner|WHERE|fromfrom.planet|
+
+                            create_pop = {
+                                species = event_target:outpost_owner
+                            }
+                        }
+                        set_update_modifiers_batch = end
+                    }
+                }
+            }
+            # end pops
+
+            giga_frameworld_create_outpost = { WHO = fromfrom.owner } # replace with a proper outpost on completion
         }
         from = {
+            giga_frameworld_recalculate_outpost_bonus = yes
+
             # if this is our first outpost, fire off a notification event
             if = {
                 limit = {
