@@ -766,6 +766,72 @@ country_event = {
 #	}
 #}
 
+
+# yearly outpost planet sanity check to make sure none are orphaned, in either direction
+# scopeless
+event = {
+	id = giga_frameworld_origin.106
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+
+		# check every outpost to make sure it has a planet, and the status thereof
+		every_galaxy_fleet = {
+			limit = {
+				is_frameworld_outpost = yes
+			}
+
+			if = {
+				limit = {
+					exists = orbit
+				}
+				# if the planet exists but it isn't one of the specified types, convert it if habitable, destroy the outpost if not
+				if = {
+					limit = {
+						orbit = {
+							is_frameworld_outpost_planet = no
+						}
+					}
+					if = {
+						limit = {
+							orbit = {
+								or = {
+									is_colonizable = yes
+									is_colony = yes
+								}
+							}
+						}
+						orbit = {
+							giga_frameworld_outpost_set_planet_class = yes
+						}
+					}
+					else = {
+						destroy_fleet = this
+					}
+				}
+			}
+			else = {
+				# if it has no planet, it needs to go
+				destroy_fleet = this
+			}
+		}
+
+		# check outpost planets without outposts to restore them
+		every_galaxy_planet = {
+			limit = {
+				is_frameworld_outpost_planet = yes
+				not = {
+					any_fleet_in_orbit = {
+						is_frameworld_outpost = yes
+					}
+				}
+			}
+			giga_frameworld_outpost_restore_planet_class = yes
+		}
+	}
+}
+
 # yearly pulse fix for megas owned by outpost country and incorrect outposts
 # scopeless
 #event = {
@@ -929,7 +995,7 @@ country_event = {
 			from = {
 				every_fleet_in_system = {
 					limit = {
-						has_fleet_flag = @giga_frameworld_outpost_fleet_flag
+						is_frameworld_outpost = yes
 					}
 
 					if = {
@@ -1159,25 +1225,25 @@ planet_event = {
 }
 
 ### yearly pulse outpost recalculation, just in case it's off somehow
-country_event = {
-	id = giga_frameworld_origin.302
-	hide_window = yes
-	is_triggered_only = yes
-	
-	trigger = {
-		giga_has_frameworld_origin = yes
-	}
-	
-	immediate = {
-		giga_frameworld_recalculate_outpost_bonus = yes
-		random_list = {
-			3 = {}
-			2 = {
-				country_event = { id = giga_frameworld_origin.308 random = 360 }
-			}
-		}
-	}
-}
+#country_event = {
+#	id = giga_frameworld_origin.302
+#	hide_window = yes
+#	is_triggered_only = yes
+#
+#	trigger = {
+#		giga_has_frameworld_origin = yes
+#	}
+#
+#	immediate = {
+#		giga_frameworld_recalculate_outpost_bonus = yes
+#		random_list = {
+#			3 = {}
+#			2 = {
+#				country_event = { id = giga_frameworld_origin.308 random = 360 }
+#			}
+#		}
+#	}
+#}
 
 ### station tech-up 1
 country_event = {
