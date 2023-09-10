@@ -1,0 +1,89 @@
+# evaluating how much rangers should get boosted
+# by the blockers on a world which is unowned
+# and then how much a frameworld should do based on its planetary outposts
+
+# vanilla values from deposits/01_blocker_deposits.txt
+@ranger_small_production = 0.5
+@ranger_large_production = 1
+
+# planet counts
+
+giga_ranger_minerals_boost = {
+    base = 0
+
+    add = value:giga_count_deposit|deposit|d_mountain_range|mult|1|
+
+    add = value:giga_count_deposit|deposit|d_quicksand_basin|mult|0.5|
+    add = value:giga_count_deposit|deposit|d_massive_glacier|mult|0.5|
+}
+
+giga_ranger_energy_boost = {
+    base = 0
+
+    add = value:giga_count_deposit|deposit|d_active_volcano|mult|1|
+
+    add = value:giga_count_deposit|deposit|d_deep_sinkhole|mult|0.5|
+}
+
+giga_ranger_food_boost = {
+    base = 0
+
+    add = value:giga_count_deposit|deposit|d_dense_jungle|mult|0.5|
+    add = value:giga_count_deposit|deposit|d_toxic_kelp|mult|0.5|
+    add = value:giga_count_deposit|deposit|d_noxious_swamp|mult|0.5|
+}
+
+giga_ranger_physics_research_boost = {
+    base = 0
+}
+
+giga_ranger_society_research_boost = {
+    base = 0
+
+    add = value:giga_count_deposit|deposit|d_dangerous_wildlife_blocker|mult|1|
+}
+
+giga_ranger_engineering_research_boost = {
+    base = 0
+}
+
+# frameworld count
+# these use the above and therefore shouldn't need overwriting
+
+# one ranger per planet with natural blockers
+giga_frameworld_ranger_count = {
+    complex_trigger_modifier = { 
+        trigger = count_owned_fleet
+        trigger_scope = owner
+        parameters = {
+            limit = {
+                is_active_frameworld_outpost = yes
+                exists = orbit
+                orbit = {
+                    count_deposits = {
+                        category = deposit_cat_blockers_natural
+                        count > 0
+                    }
+                }
+            }
+        }
+        mode = weight
+    }
+}
+
+# multiplier for being on frame
+@boost_ratio = 0.2
+
+# counts up worlds with resources, can't total up properly...
+giga_frameworld_ranger_boost = {
+    base = 0
+    
+    inline_script = { script = script_values/giga_ranger_values_count_outposts val = 0.5 resource = $resource$ mult = 0.5 }
+    inline_script = { script = script_values/giga_ranger_values_count_outposts val = 1.0 resource = $resource$ mult = 0.5 }
+    inline_script = { script = script_values/giga_ranger_values_count_outposts val = 1.5 resource = $resource$ mult = 0.5 }
+    inline_script = { script = script_values/giga_ranger_values_count_outposts val = 2.0 resource = $resource$ mult = 0.5 }
+
+    inline_script = { script = script_values/giga_ranger_values_count_outposts val = 4.0 resource = $resource$ mult = 2.0 }
+    
+    mult = @boost_ratio
+}
