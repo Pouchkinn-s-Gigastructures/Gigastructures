@@ -650,3 +650,244 @@ planet_event = {
 }
 
 
+namespace = megastructures
+# This = Ship
+# From = Disabler Ship
+# Habitat Orbital Disabled in total war
+ship_event = {
+	id = megastructures.115
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		is_ship_class = shipclass_habitat_station
+		OR = {
+			FROM.owner = { is_crisis_faction = yes }
+			owner = {
+				any_war = {
+					is_total_war = yes
+					FROM.owner = {
+						is_war_participant = {
+							war = PREV
+						}
+					}
+				}
+			}
+		}
+	}
+
+	immediate = {
+		# actual orbitals
+		if = {
+			limit = {
+				giga_is_habitat_orbital = yes
+			}
+
+			if = {
+				limit = {
+					exists = orbit
+				}
+				orbit = {
+					remove_planet_flag = has_megastructure
+					save_event_target_as = target_planet
+				}
+			}
+			solar_system = {
+				random_system_planet = {
+					limit = {
+						has_planet_flag = habitat
+					}
+					every_deposit = {
+						limit = {
+							has_deposit_flag = planet@event_target:target_planet
+						}
+						remove_deposit = yes
+					}
+				}
+			}
+			destroy_ship = this
+			create_ambient_object = {
+				location = this
+				type = habitat_cracker_object
+				duration = 5
+
+				use_3d_location = yes
+				base_angle_towards = star
+				entity_face_object = star
+
+				entity_offset = { min = 0 max = 0 }
+
+				entity_scale_to_size = yes
+				scale = 0.10
+			}
+		}
+		# frameworld outposts
+		else_if = {
+			limit = {
+				is_ship_size = frameworld_planetary_outpost
+			}
+			if = {
+				limit = {
+					exists = orbit
+				}
+				orbit = {
+					giga_frameworld_outpost_restore_planet_class = yes
+					giga_frameworld_clear_outpost_flags = yes
+				}
+			}
+			destroy_ship = this
+		}
+	}
+}
+
+# This = Ship
+# From = Disabler Ship
+# Habitat Orbital Disabled
+ship_event = {
+	id = megastructures.120
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		is_ship_class = shipclass_habitat_station
+		or = {
+			solar_system = {
+				any_system_planet = {
+					has_planet_flag = habitat
+					NOT = {
+						any_deposit = {
+							has_deposit_flag = ruined_orbital@root
+						}
+					}
+				}
+			}
+
+			is_ship_size = frameworld_planetary_outpost
+		}
+	}
+
+	immediate = {
+		# actual orbitals
+		if = {
+			limit = {
+				giga_is_habitat_orbital = yes
+			}
+			solar_system = {
+				random_system_planet = {
+					limit = {
+						has_planet_flag = habitat
+					}
+					save_event_target_as = target_habitat
+					add_planet_devastation = 10
+					if = {
+						limit = {
+							root = {
+								is_ship_class = shipclass_habitat_station
+								NOR = {
+									is_ship_size = minor_orbital_resource
+									is_ship_size = minor_orbital_generic
+								}
+							}
+						}
+						add_deposit = d_ruined_major_orbital
+					}
+					else = {
+						add_deposit = d_ruined_minor_orbital
+					}
+					last_added_deposit = {
+						set_deposit_flag = ruined_orbital@root
+					}
+				}
+			}
+		}
+		# frameworld outposts
+		else_if = {
+			limit = {
+				is_ship_size = frameworld_planetary_outpost
+			}
+		}
+	}
+}
+
+# This = owner of fleet/ship
+# From = disbanded fleet/ship
+# Habitat Orbital Disbanded
+country_event = {
+	id = megastructures.130
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		from = {
+			is_ship_class = shipclass_habitat_station
+			or = {
+				and = {
+					giga_is_habitat_orbital = yes
+					solar_system = {
+						any_system_planet = {
+							has_planet_flag = habitat
+						}
+					}
+				}
+
+				is_ship_size = frameworld_planetary_outpost
+			}
+		}
+	}
+
+	immediate = {
+		log_error = "disband event"
+		from = {
+			# actual orbitals
+			if = {
+				limit = {
+					giga_is_habitat_orbital = yes
+				}
+				log_error = "disband event orbital"
+
+				if = {
+					limit = {
+						exists = orbit
+					}
+					orbit = {
+						remove_planet_flag = has_megastructure
+						save_event_target_as = target_planet
+					}
+				}
+				solar_system = {
+					random_system_planet = {
+						limit = {
+							has_planet_flag = habitat
+						}
+						every_deposit = {
+							limit = {
+								has_deposit_flag = planet@event_target:target_planet
+							}
+							remove_deposit = yes
+						}
+					}
+				}
+			}
+			# frameworld outposts
+			else_if = {
+				limit = {
+					is_ship_size = frameworld_planetary_outpost
+				}
+				log_error = "disband event outpost"
+
+				if = {
+					limit = {
+						exists = orbit
+					}
+					orbit = {
+						giga_frameworld_outpost_restore_planet_class = yes
+						giga_frameworld_clear_outpost_flags = yes
+					}
+				}
+			}
+		}
+	}
+}

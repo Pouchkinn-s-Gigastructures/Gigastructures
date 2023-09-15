@@ -94,7 +94,7 @@ d_frameworld_admin = {
 
         job_roboticist_add = 0.5
 
-        multiplier = value:giga_split_jobs|value|modifier:giga_frameworld_growth_jobs_add|interval|4|fraction|0.5|offset|0|
+        multiplier = value:giga_sequential_job_split|value|modifier:giga_frameworld_growth_jobs_add|interval|4|fraction|0.5|offset|0|
     }
     triggered_planet_modifier = {
         potential = {
@@ -111,7 +111,7 @@ d_frameworld_admin = {
 
         job_giga_extra_healthcare_add = 1
 
-        multiplier = value:giga_split_jobs|value|modifier:giga_frameworld_growth_jobs_add|interval|4|fraction|0.5|offset|0.5|
+        multiplier = value:giga_sequential_job_split|value|modifier:giga_frameworld_growth_jobs_add|interval|4|fraction|0.5|offset|0.5|
     }
 
     ####################################################################################################################
@@ -131,7 +131,7 @@ d_frameworld_admin = {
 
         job_giga_cloning_add = 0.5
 
-        multiplier = value:giga_split_jobs|value|modifier:giga_frameworld_growth_jobs_add|interval|4|fraction|0.5|offset|0|
+        multiplier = value:giga_sequential_job_split|value|modifier:giga_frameworld_growth_jobs_add|interval|4|fraction|0.5|offset|0|
     }
     triggered_planet_modifier = {
         potential = {
@@ -147,7 +147,7 @@ d_frameworld_admin = {
 
         job_giga_extra_healthcare_add = 1
 
-        multiplier = value:giga_split_jobs|value|modifier:giga_frameworld_growth_jobs_add|interval|4|fraction|0.5|offset|0.5|
+        multiplier = value:giga_sequential_job_split|value|modifier:giga_frameworld_growth_jobs_add|interval|4|fraction|0.5|offset|0.5|
     }
 
     ####################################################################################################################
@@ -166,7 +166,7 @@ d_frameworld_admin = {
 
         job_reassigner_add = 0.5
 
-        multiplier = value:giga_split_jobs|value|modifier:giga_frameworld_growth_jobs_add|interval|8|fraction|0.25|offset|0.75|
+        multiplier = value:giga_sequential_job_split|value|modifier:giga_frameworld_growth_jobs_add|interval|8|fraction|0.25|offset|0.75|
     }
     triggered_planet_modifier = {
         potential = {
@@ -181,7 +181,7 @@ d_frameworld_admin = {
 
         job_giga_extra_healthcare_add = 1
 
-        multiplier = value:giga_split_jobs|value|modifier:giga_frameworld_growth_jobs_add|interval|8|fraction|0.75|offset|0|
+        multiplier = value:giga_sequential_job_split|value|modifier:giga_frameworld_growth_jobs_add|interval|8|fraction|0.75|offset|0|
     }
 
     ####################################################################################################################
@@ -459,7 +459,7 @@ d_frameworld_core = {
 
         job_giga_extra_crucible_drone_add = 0.5
 
-        multiplier = value:giga_split_jobs|value|modifier:giga_frameworld_growth_jobs_add|interval|4|fraction|0.5|offset|0|
+        multiplier = value:giga_sequential_job_split|value|modifier:giga_frameworld_growth_jobs_add|interval|4|fraction|0.5|offset|0|
     }
     triggered_planet_modifier = {
         potential = {
@@ -473,7 +473,7 @@ d_frameworld_core = {
 
         job_replicator_add = 1
 
-        multiplier = value:giga_split_jobs|value|modifier:giga_frameworld_growth_jobs_add|interval|4|fraction|0.5|offset|0.5|
+        multiplier = value:giga_sequential_job_split|value|modifier:giga_frameworld_growth_jobs_add|interval|4|fraction|0.5|offset|0.5|
     }
 
     ####################################################################################################################
@@ -577,6 +577,7 @@ d_frameworld_expansion = {
         planet_decision_enact_speed_mult = 0.02
         planet_army_build_speed_mult = 0.02
         pop_purge_speed = 0.02
+        giga_pop_assimilation_speed = 0.02
     }
 }
 d_frameworld_expansion_tooltip = {
@@ -608,6 +609,7 @@ d_frameworld_expansion_tooltip = {
         planet_decision_enact_speed_mult = 0.02
         planet_army_build_speed_mult = 0.02
         pop_purge_speed = 0.02
+        giga_pop_assimilation_speed = 0.02
     }
 }
 
@@ -667,6 +669,7 @@ d_frameworld_reorganise_expansion = {
         planet_decision_enact_speed_mult = 0.1
         planet_army_build_speed_mult = 0.1
         pop_purge_speed = 0.1
+        giga_pop_assimilation_speed = 0.1
     }
 }
 d_frameworld_reorganise_expansion_tooltip = {
@@ -683,6 +686,7 @@ d_frameworld_reorganise_expansion_tooltip = {
         planet_decision_enact_speed_mult = 0.1
         planet_army_build_speed_mult = 0.1
         pop_purge_speed = 0.1
+        giga_pop_assimilation_speed = 0.1
     }
 }
 
@@ -1002,6 +1006,16 @@ d_frameworld_gaia = {
         }
         planet_jobs_organics_produces_mult = 0.05
     }
+
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = {
+                giga_is_environmentalist = yes
+            }
+        }
+        planet_rangers_food_produces_add = 2
+    }
 }
 
 d_frameworld_computing_complex = {
@@ -1175,6 +1189,164 @@ d_frameworld_terravore_damage = {
     }
 }
 
+d_frameworld_nature_preserve = {
+    is_for_colonizable = yes
+    category = deposit_cat_rare
+    icon = d_gaia_planet
+
+    drop_weight = { weight = 0 }
+    potential = { always = no }
+
+    resources = {
+        category = planet_buildings # ranger lodge
+
+        # unity for non-xenophobes and servitors
+        produces = {
+            trigger = {
+                exists = owner
+                owner = {
+                    giga_is_environmentalist = no
+                    or = {
+                        and = {
+                            is_gestalt = no
+                            is_xenophobe = no
+                        }
+                        has_valid_civic = civic_machine_servitor
+                    }
+                }
+            }
+            unity = 10
+        }
+
+        # food for everyone else
+        produces = {
+            trigger = {
+                exists = owner
+                owner = {
+                    giga_is_environmentalist = no
+                    or = {
+                        is_xenophobe = yes
+                        is_gestalt = yes
+                    }
+                }
+            }
+            food = 10
+        }
+
+        # 2 unity per outpost with blockers
+        produces = {
+            trigger = {
+                exists = owner
+                owner = { giga_is_environmentalist = yes }
+            }
+            unity = 2
+            multiplier = value:giga_frameworld_ranger_count
+        }
+    }
+
+    planet_modifier = {
+        planet_max_districts_add = -1
+    }
+
+    # 1 ranger plus 1 per outpost with blockers
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = { giga_is_environmentalist = yes }
+        }
+        job_ranger_add = 1
+    }
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = { giga_is_environmentalist = yes }
+        }
+        job_ranger_add = 1
+        multiplier = value:giga_frameworld_ranger_count
+    }
+
+    # boosts
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = { giga_is_environmentalist = yes }
+        }
+        planet_rangers_minerals_produces_add = 1
+        multiplier = value:giga_frameworld_ranger_boost|resource|minerals|
+    }
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = { giga_is_environmentalist = yes }
+        }
+        planet_rangers_energy_produces_add = 1
+        multiplier = value:giga_frameworld_ranger_boost|resource|energy|
+    }
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = { giga_is_environmentalist = yes }
+        }
+        planet_rangers_food_produces_add = 1
+        multiplier = value:giga_frameworld_ranger_boost|resource|food|
+    }
+
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = { giga_is_environmentalist = yes }
+        }
+        planet_rangers_physics_research_produces_add = 1
+        multiplier = value:giga_frameworld_ranger_boost|resource|physics_research|
+    }
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = { giga_is_environmentalist = yes }
+        }
+        planet_rangers_society_research_produces_add = 1
+        multiplier = value:giga_frameworld_ranger_boost|resource|society_research|
+    }
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = { giga_is_environmentalist = yes }
+        }
+        planet_rangers_engineering_research_produces_add = 1
+        multiplier = value:giga_frameworld_ranger_boost|resource|engineering_research|
+    }
+}
+
+########################################################################################################################
+
+d_frameworld_outpost_mechanics = {
+    is_for_colonizable = yes
+    category = deposit_cat_energy
+
+    drop_weight = { weight = 0 }
+    potential = { always = no }
+
+    resources = {
+        category = planets
+
+        # unity from blockers for environmentalist
+        produces = {
+            trigger = {
+                any_fleet_in_orbit = {
+                    is_frameworld_outpost = yes
+                    exists = owner
+                    owner = {
+                        has_valid_civic = civic_environmentalist
+                    }
+                }
+            }
+
+            unity = 2 # gets halved but the preserve deposit on the frame also gives 2 per planet
+            multiplier = value:natural_blocker_count
+        }
+    }
+}
+
 # debug deposit for planetary outpost testing
 d_frameworld_outpost_debug = {
     is_for_colonizable = yes
@@ -1184,7 +1356,7 @@ d_frameworld_outpost_debug = {
     potential = { always = no }
 
     resources = {
-        category = planet_jobs_productive
+        category = planet_deposits #planet_jobs_productive
 
         produces = {
             energy = 1
