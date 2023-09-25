@@ -321,7 +321,7 @@ PixelShader = {
 		float3 ApplyHue(float3 col, float hueAdjust)
 		{
 			const float3 k = float3(0.57735, 0.57735, 0.57735);
-			half cosAngle = cos(hueAdjust);
+			float cosAngle = cos(hueAdjust);
 			return col * cosAngle + cross(k, col) * sin(hueAdjust) + k * dot(k, col) * (1.0 - cosAngle);
 		}
 
@@ -329,7 +329,7 @@ PixelShader = {
 		{
 			float4 UVLod = float4( (In.vUV0), 0.0, PortraitMipLevel * 0.35 );
 
-			float shift = (In.vPos.x * 0.0065) % 1;
+			float shift = mod( (In.vPos.x * 0.0065), 1 );
 
 			shift = shift * 0.2 + 0.8; // convert to gradient U coord (0.8 to 1.0)
 			float4 UVGrad = float4( shift, 0.95, 0.0, 0.0 );
@@ -360,7 +360,7 @@ PixelShader = {
 		float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
 		{
 		    // model space coords
-		    float3 pos = In.vSphere;
+		    float4 pos = In.vSphere;
 
 		    // Chassis pattern, passed as normal map
 			float4 UVLod = float4( (In.vUV0), 0.0, PortraitMipLevel * 0.35 );
