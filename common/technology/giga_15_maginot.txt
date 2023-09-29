@@ -16,8 +16,7 @@ giga_tech_maginot_world = {
 	prereqfor_desc = {
 		hide_prereq_for_desc = component
 		hide_prereq_for_desc = ship
-		# cwtools errors but this does work, armies are hidden from tooltip
-		hide_prereq_for_desc = army
+		hide_prereq_for_desc = army # cwtools errors but this does work, armies are hidden from tooltip
 		custom = { title = "allow_maginot"	desc = "maginot_desc" }
 		#custom = { title = "allow_maginot_strategic_defence_command_platform"	desc = "maginot_strategic_defence_command_platform_desc" }
 	}
@@ -28,62 +27,110 @@ giga_tech_maginot_world = {
 	}
 
 	weight_modifier = {
-		modifier = { factor = 0 has_global_flag = maginot_disabled }
-		modifier = { factor = 0 has_galactic_wonders = no }
+		# requires galactic wonders (built in AI bypass in trigger)
+		modifier = { factor = 0 
+			has_galactic_wonders = no 
+		}
 		# finishing the unyielding tree is required
 		modifier = { factor = 0
 			NOR = {
-				has_active_tradition = tr_unyielding_finish 
+				has_tradition = tr_unyielding_finish 
 				has_active_tradition = tr_unyielding_federations_finish
+				# forerunner compat
+				has_forerunner_defensive_traditions = yes
 			}
 		}
-		modifier = { factor = value:tech_weight_likelihood has_trait_in_council = { TRAIT = leader_trait_expertise_military_theory } }
-		modifier = { factor = 1.5 has_ascension_perk = ap_eternal_vigilance } # reward full defence focus
-		modifier = { factor = 1.5 has_ascension_perk = ap_technological_ascendancy }
-		modifier = { factor = 2.0 is_specialist_subject_type = { TYPE = bulwark } }
-		# bypass: if overlord has the tech, then a bulwark can roll it regardless of conditions
-		modifier = {
-			add = 35
+		# bypass: if overlord or a fellow scholarium subject has the tech, then a bulwark can roll it regardless of conditions
+		# and will be vastly more likely to roll if they do meet conditions
+		modifier = { add = @tier4weight3
 			is_specialist_subject_type = { TYPE = bulwark }
+			exists = overlord
 			overlord = {
-				has_technology = giga_tech_maginot_world
+				OR = {
+					has_technology = giga_tech_maginot_world
+					any_subject = {
+						is_specialist_subject_type = { TYPE = scholarium }
+						has_technology = giga_tech_maginot_world
+					}
+				}
 			}
 		}
-		modifier = {
-			factor = 2
+		# AI get help to roll it because of their random AP/tradition spam
+		modifier = { add = @tier5weight3 # but less likely than getting it properly
+			is_ai = yes
+			OR = {
+				has_ascension_perk = ap_eternal_vigilance
+				has_tradition = tr_gigabulwark_adopt
+			}
+		}
+
+		# yes bulwarks with the bypass get it more likely too
+		modifier = { factor = @giga_tech_weight_boost_large is_specialist_subject_type = { TYPE = bulwark } }
+		# reward full defence focus
+		modifier = { factor = @giga_tech_weight_boost_massive has_ascension_perk = ap_eternal_vigilance }
+		modifier = { factor = @giga_tech_weight_boost_medium  has_tradition = tr_gigabulwark_adopt }
+		modifier = { factor = @giga_tech_weight_boost_medium  has_tradition = tr_gigabulwark_finish }
+		# small boost for related military buffs
+		modifier = { factor = @giga_tech_weight_boost_small has_ascension_perk = ap_galactic_force_projection }
+		modifier = { factor = @giga_tech_weight_boost_small has_tradition = tr_supremacy_finish }
+		# relevant ethics
+		modifier = { factor = @giga_tech_weight_boost_large 
+			OR = { 
+				has_ethic = ethic_fanatic_pacifist
+				has_ethic = ethic_fanatic_militarist
+			}
+		}
+		# isolationist
+		modifier = { factor = @giga_tech_weight_boost_greater
+			OR = {
+				has_valid_civic = civic_inwards_perfection
+			}
+		}
+		# martial alliances coordinate defences
+		modifier = { factor = @giga_tech_weight_boost_large
+			has_federation = yes
+			federation = {
+				OR = {
+					has_federation_type = military_federation
+				}
+			}
+		}
+		
+		modifier = { factor = value:tech_weight_likelihood has_trait_in_council = { TRAIT = leader_trait_expertise_military_theory } }
+		modifier = { factor = @ap_technological_ascendancy_rare_tech has_ascension_perk = ap_technological_ascendancy }
+		modifier = { factor = @federation_perk_factor
 			has_federation = yes
 			federation = {
 				has_federation_perk = rare_tech_boost
 				any_member = { has_technology = giga_tech_maginot_world }
 			}
 		}
+		# this comes last to avoid bypasses
+		modifier = { factor = 0 has_global_flag = maginot_disabled }
 	}
 
 	ai_weight = {
-		factor = @giga_aiweight_multiplier_strong # the AI should basically always pick this tech if it somehow managed to get the APs required
-		modifier = { factor = value:tech_weight_likelihood has_trait_in_council = { TRAIT = leader_trait_expertise_military_theory } }
-		modifier = { factor = 1.5 	has_ascension_perk = ap_eternal_vigilance }
-		modifier = { factor = 2.0 is_specialist_subject_type = { TYPE = bulwark } }
-		modifier = { factor = 0 	has_galactic_wonders = no }
-		modifier = { factor = 0     has_global_flag = maginot_disabled }
-		# AI also get to roll it with their random AP spam
-		modifier = { factor = 0
-			NOR = {
-				has_active_tradition = tr_unyielding_finish 
-				has_active_tradition = tr_unyielding_federations_finish
-				has_ascension_perk = ap_eternal_vigilance
-			}
-		}
-		# bypass: if overlord has the tech, then a bulwark can roll it regardless of conditions
+		# the AI should basically always pick this tech if it somehow managed to get the APs required, and so should auto-research
+		factor = @giga_aiweight_multiplier_strong
+
+		# ai bulwarks should really pick this
+		# auto-research uses these weights according to vanilla comments, hence specifying is AI
 		modifier = {
-			add = 10
-			is_specialist_subject_type = { TYPE = bulwark }
-			overlord = {
-				has_technology = giga_tech_maginot_world
+			factor = 10.0 
+			is_ai = yes 
+			is_specialist_subject_type = { TYPE = bulwark } 
+		}
+		modifier = {
+			factor = 2
+			is_ai = yes 
+			OR = {
+				has_ai_personality = xenophobic_isolationists
 			}
 		}
 	}
 }
+
+# TODO: these should be modified when the actual defence system for the maginot is redone too
 
 # Buff tech
 giga_tech_maginot_firepower_1 = {
@@ -101,14 +148,14 @@ giga_tech_maginot_firepower_1 = {
 	weight_modifier = {
 		modifier = { factor = value:tech_weight_likelihood has_trait_in_council = { TRAIT = leader_trait_expertise_military_theory } }
 		modifier = { factor = 0 has_utopia = no }
-		modifier = { factor = 1.5 has_ascension_perk = ap_eternal_vigilance } # reward full defence focus
-		modifier = { factor = 1.5 has_ascension_perk = ap_technological_ascendancy }
+		modifier = { factor = @giga_tech_weight_boost_massive has_ascension_perk = ap_eternal_vigilance } # reward full defence focus
+		modifier = { factor = @ap_technological_ascendancy_rare_tech has_ascension_perk = ap_technological_ascendancy }
 		modifier = {
-			factor = 2
+			factor = @federation_perk_factor
 			has_federation = yes
 			federation = {
 				has_federation_perk = rare_tech_boost
-				any_member = { has_technology = giga_tech_maginot_firepower_1 }
+				any_member = { has_technology = giga_tech_maginot_world }
 			}
 		}
 		modifier = { factor = 0		has_global_flag = maginot_disabled }
@@ -116,9 +163,6 @@ giga_tech_maginot_firepower_1 = {
 
 	ai_weight = {
 		factor = @giga_aiweight_multiplier_medium	#You have it now use it.
-		modifier = { factor = value:tech_weight_likelihood has_trait_in_council = { TRAIT = leader_trait_expertise_military_theory } }
-		modifier = { factor = 1.5 has_ascension_perk = ap_eternal_vigilance }
-		modifier = { factor = 0 has_utopia = no }
 	}
 }
 
@@ -137,14 +181,14 @@ giga_tech_maginot_planetcraft_upgrade = {
 	weight_modifier = {
 		modifier = { factor = value:tech_weight_likelihood has_trait_in_council = { TRAIT = leader_trait_expertise_voidcraft } }
 		modifier = { factor = 0 has_utopia = no }
-		modifier = { factor = 1.5 has_ascension_perk = ap_eternal_vigilance } # reward full defence focus
-		modifier = { factor = 1.5 has_ascension_perk = ap_technological_ascendancy }
+		modifier = { factor = @giga_tech_weight_boost_massive has_ascension_perk = ap_eternal_vigilance } # reward full defence focus
+		modifier = { factor = @ap_technological_ascendancy_rare_tech has_ascension_perk = ap_technological_ascendancy }
 		modifier = {
-			factor = 2
+			factor = @federation_perk_factor
 			has_federation = yes
 			federation = {
 				has_federation_perk = rare_tech_boost
-				any_member = { has_technology = giga_tech_maginot_firepower_1 }
+				any_member = { has_technology = giga_tech_maginot_world }
 			}
 		}
 		modifier = { factor = 0		has_global_flag = maginot_disabled }
@@ -152,10 +196,6 @@ giga_tech_maginot_planetcraft_upgrade = {
 
 	ai_weight = {
 		factor = @giga_aiweight_multiplier_strong	#Defend yourself.
-		modifier = { factor = value:tech_weight_likelihood has_trait_in_council = { TRAIT = leader_trait_expertise_voidcraft } }
-		modifier = { factor = 0 has_utopia = no }
-		modifier = { factor = 1.5 has_ascension_perk = ap_eternal_vigilance }
-		modifier = { factor = 1.5 has_ascension_perk = ap_technological_ascendancy }
 	}
 }
 
@@ -174,14 +214,14 @@ giga_tech_maginot_systemcraft_upgrade = {
 	weight_modifier = {
 		modifier = { factor = value:tech_weight_likelihood has_trait_in_council = { TRAIT = leader_trait_expertise_voidcraft } }
 		modifier = { factor = 0 has_utopia = no }
-		modifier = { factor = 1.5 has_ascension_perk = ap_eternal_vigilance } # reward full defence focus
-		modifier = { factor = 1.5 has_ascension_perk = ap_technological_ascendancy }
+		modifier = { factor = @giga_tech_weight_boost_massive has_ascension_perk = ap_eternal_vigilance } # reward full defence focus
+		modifier = { factor = @ap_technological_ascendancy_rare_tech has_ascension_perk = ap_technological_ascendancy }
 		modifier = {
-			factor = 2
+			factor = @federation_perk_factor
 			has_federation = yes
 			federation = {
 				has_federation_perk = rare_tech_boost
-				any_member = { has_technology = giga_tech_maginot_firepower_1 }
+				any_member = { has_technology = giga_tech_maginot_world }
 			}
 		}
 		modifier = { factor = 0		has_global_flag = maginot_disabled }
@@ -189,10 +229,6 @@ giga_tech_maginot_systemcraft_upgrade = {
 
 	ai_weight = {
 		factor = @giga_aiweight_multiplier_insane	#what the fuck.
-		modifier = { factor = value:tech_weight_likelihood has_trait_in_council = { TRAIT = leader_trait_expertise_voidcraft } }
-		modifier = { factor = 0 has_utopia = no }
-		modifier = { factor = 1.5 has_ascension_perk = ap_eternal_vigilance }
-		modifier = { factor = 1.5 has_ascension_perk = ap_technological_ascendancy }
 	}
 }
 

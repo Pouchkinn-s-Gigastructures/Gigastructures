@@ -1,7 +1,7 @@
 Includes = {
 	"terra_incognita.fxh"
 	"giga_functions.fxh"
-	"giga_debug.fxh"
+	#// "giga_debug.fxh"
 	"giga_star_shader_consts.fxh"
 }
 
@@ -43,7 +43,6 @@ VertexStruct VS_OUTPUT
 	float4 vPos				: TEXCOORD1;
 
 	float vDrawRing         : TEXCOORD2;
-    float2 vStarUV          : TEXCOORD3;
     float vCameraDistance   : TEXCOORD4;
 };
 
@@ -174,7 +173,7 @@ PixelShader =
 
                 vColor = vColor * (1-innerBorder) + float4(0.3,0,0,1) * innerBorder;
 
-                if ((angle * dashCount) % (PI*2) > PI) {
+                if ( mod( (angle * dashCount), (PI*2) ) > PI) {
                     vColor = vColor * (1-outerBorder) + float4(0.3,0,0,1) * outerBorder;
                 }
 
