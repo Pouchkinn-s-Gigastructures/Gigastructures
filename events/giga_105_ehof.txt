@@ -4026,3 +4026,98 @@ fleet_event = {
 		name = ehof_megastructure.017.a
 	}
 }
+# this = country
+country_event = { 					# Is your EHOF cluster in need of some roiling subspace tides?
+	id = ehof_megastructure.019 	# Does your EHOF cluster connect to the main galaxy?
+	hide_window = yes				# Its time for some hyperlane begone! now only 99.99 EC!
+	is_triggered_only = yes			# Converts normal systems that are trapped by the lanes of the EHOF into cohesive systems
+									# Cuts off hyperlanes from normal systems that connect to the cohesive cluster and the main galaxy
+	trigger = {					
+		any_system = {
+			has_star_flag = first_ehof_system_of_@root
+		}
+	}
+
+	immediate = {
+		random_system = {
+			limit = { has_star_flag = first_ehof_system_of_@root }
+			save_event_target_as = ehof_first_system_of_@root
+		}
+		if = {
+			limit = {
+				exists = event_target:ehof_first_system_of_@root
+				any_system = {
+					cohesive_system = yes #only check from the neighbors of cohesive systems
+					has_star_flag = ehof_system_created_by_@root
+					any_neighbor_system = {
+						cohesive_system = no
+					}
+				}
+			}
+			set_spawn_system_batch = begin
+			while = { # Subspace tides take 5 at a time or somethin'
+				count = 5
+				random_system = {
+					limit = { 
+						NOT = { cohesive_system = yes }
+						any_neighbor_system = { 
+							cohesive_system = yes 
+							has_star_flag = ehof_system_created_by_@root
+						}
+					}
+					if = { # ONE OF US! ONE OF US! ONE OF US!
+						limit = {
+							NOT = { any_neighbor_system = { cohesive_system = no } }
+						}
+						every_system_planet = {
+							set_planet_flag = cant_build_here
+							set_planet_flag = cant_target_this_planet
+						}
+						set_star_flag = cohesive_system
+						set_star_flag = ehof_system_created_by_@root
+						save_event_target_as = ehof_color_system_name
+						set_name = {
+							key = "ehof_standard_name"
+							variable_string = "[ehof_color_system_name.GetName]"
+						}
+						every_system_planet = {
+							limit = {
+								is_primary_star = yes
+							}
+							save_event_target_as = ehof_color_star_name
+							set_name = {
+								key = "ehof_standard_star_name"
+								variable_string = "[ehof_color_star_name.GetName]"
+							}
+						}
+					}
+					else_if = { # Ew gross it has friends... 
+						limit = { # Has any other neighbors that aren't cohesive
+							any_neighbor_system = { cohesive_system = no }
+						}
+						every_neighbor_system = {
+							limit = {
+								cohesive_system = yes
+							}
+							remove_hyperlane = {
+								from = this
+								to = prev
+							}
+							prev = {
+								change_variable = {
+									which = ehof_hyper_snip
+									value = 1
+								}
+							}
+						}
+						while = {
+							count = ehof_hyper_snip
+							giga_generate_hyperlane = yes
+						}	
+					}
+				}
+			}
+			set_spawn_system_batch = end
+		}
+	}
+}
