@@ -5,31 +5,31 @@
 ##############################################################################################################
 # CATEGORY FUNCTIONS
 
-# base is base "job" output, scale is a *percentage* multiplier, since we can't have decimals in parameters
+# base is base "job" output, scale is a multiplier
 
 # raw materials such as energy, minerals, food
 giga_frameworld_outpost_raw_output = {
-	weight = value:giga_frameworld_outpost_output|JOB|$JOB$|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|BASE|4|SCALE|15|
+	weight = value:giga_frameworld_outpost_output|JOB|$JOB$|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|BASE|4|SCALE|0.15|
 }
 
 # alloys, CGs
 giga_frameworld_outpost_advanced_output = {
-	weight = value:giga_frameworld_outpost_output|JOB|$JOB$|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|BASE|4|SCALE|25|
+	weight = value:giga_frameworld_outpost_output|JOB|$JOB$|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|BASE|4|SCALE|0.25|
 }
 
 # all three researches
 giga_frameworld_outpost_science_output = {
-	weight = value:giga_frameworld_outpost_output|JOB|$JOB$|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|BASE|4|SCALE|75|
+	weight = value:giga_frameworld_outpost_output|JOB|$JOB$|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|BASE|4|SCALE|0.75|
 }
 
 # unity
 giga_frameworld_outpost_unity_output = {
-	weight = value:giga_frameworld_outpost_output|JOB|$JOB$|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|BASE|4|SCALE|75|
+	weight = value:giga_frameworld_outpost_output|JOB|$JOB$|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|BASE|4|SCALE|0.75|
 }
 
 # strategic resources
 giga_frameworld_outpost_rare_output = {
-	weight = value:giga_frameworld_outpost_output|JOB|$JOB$|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|BASE|3|SCALE|33|
+	weight = value:giga_frameworld_outpost_output|JOB|$JOB$|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|BASE|3|SCALE|0.33|
 }
 
 ##############################################################################################################
@@ -44,7 +44,7 @@ giga_frameworld_outpost_generic_modifier = {
 	# machine output
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = planet_jobs_robotic_produces_mult
 		}
@@ -54,7 +54,7 @@ giga_frameworld_outpost_generic_modifier = {
 	# all jobs output
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = planet_jobs_produces_mult
 		}
@@ -64,7 +64,7 @@ giga_frameworld_outpost_generic_modifier = {
 	# all jobs specific resource output
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = planet_jobs_$RESOURCE$_produces_mult
 		}
@@ -74,7 +74,7 @@ giga_frameworld_outpost_generic_modifier = {
 	# category output
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = planet_jobs_$CATEGORY$_produces_mult
 		}
@@ -84,7 +84,7 @@ giga_frameworld_outpost_generic_modifier = {
 	# category specific resource output
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = planet_jobs_$CATEGORY$_$RESOURCE$_produces_mult
 		}
@@ -94,7 +94,7 @@ giga_frameworld_outpost_generic_modifier = {
 	# specific job output
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = planet_$JOB$_produces_mult
 		}
@@ -104,7 +104,7 @@ giga_frameworld_outpost_generic_modifier = {
 	# specific job specific resource output...
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = planet_$JOB$_$RESOURCE$_produces_mult
 		}
@@ -122,7 +122,7 @@ giga_frameworld_outpost_output = {
 	# add flat resource output mods
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = planet_$JOB$_$RESOURCE$_produces_add
 		}
@@ -145,36 +145,41 @@ giga_frameworld_outpost_output = {
 	mult = value:giga_frameworld_outpost_generic_modifier|JOB|$JOB$|CATEGORY|$CATEGORY$|RESOURCE|$RESOURCE$|
 
 	# add half flat output
-	complex_trigger_modifier = {
-		trigger = planet_resource_compare
-		trigger_scope = planet
-		parameters = {
-			resource = $RESOURCE$
-			type = produces
-		}
-		mode = add
-		mult = 0.5
-	}
+	#complex_trigger_modifier = {
+	#	trigger = planet_resource_compare
+	#	trigger_scope = orbit #planet
+	#	parameters = {
+	#		resource = $RESOURCE$
+	#		type = produces
+	#	}
+	#	mode = add
+	#	mult = 0.5
+	#}
+	add = orbit.value:giga_count_resource|resource|$RESOURCE$|mult|0.5| #space|yes| # seems they don't count becaaause... planet deposits?
 
 	# reduce the output if the system isn't under our control
-	modifier = {
-		exists = solar_system.owner
-		exists = solar_system.starbase
-		solar_system.starbase.controller = {
-			not = { is_same_empire = root.owner }
-		}
-		
-		mult = 0.25
-	}
+	#modifier = {
+	#	exists = solar_system.owner
+	#	exists = solar_system.starbase
+	#	solar_system.starbase.controller = {
+	#		not = { is_same_empire = root.owner }
+	#	}
+	#
+	#	mult = 0.25
+	#}
 
 	min = 0
 
 	# make sure only frame nations get to have resources
 	modifier = {
 		exists = owner
-		owner = { not = { has_origin = origin_frameworld } }
-		weight = 0
+		owner = { giga_has_frameworld_origin = no }
+		#weight = 0
+		multiply = 0.25
 	}
+
+	# terravore strip mining (or other effects) can reduce final total output via a modifier on the planet itself
+	mult = orbit.value:scripted_modifier_mult|MODIFIER|giga_frameworld_outpost_output_mult|
 }
 
 # gets the country level additive resource modifier for the specified category
@@ -191,15 +196,13 @@ giga_frameworld_outpost_output_country_additions = {
 	}
 }
 
-# percentage multiplier - can't just be a straight mult because...
-# periods aren't allowed! woo! good job
-giga_frameworld_outpost_size_fraction = {
-	weight = planet.trigger:planet_size
+giga_frameworld_outpost_planet_size_fraction = {
+	weight = orbit.trigger:planet_size
 	
 	# add in any district count modifiers
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = planet_max_districts_add
 		}
@@ -207,17 +210,16 @@ giga_frameworld_outpost_size_fraction = {
 	}
 
 	# apply district count multipliers too
-	mult = value:giga_frameworld_outpost_size_mult
+	mult = value:giga_frameworld_outpost_planet_size_mult
 
 	mult = $FRACTION$
-	mult = 0.01
 }
-giga_frameworld_outpost_size_mult = {
+giga_frameworld_outpost_planet_size_mult = {
 	base = 1
 
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = planet_max_districts_mult
 		}
@@ -234,7 +236,7 @@ giga_frameworld_outpost_size_fraction_if_food = {
 		exists = owner
 		owner = { country_uses_food = yes }
 
-		weight = value:giga_frameworld_outpost_size_fraction|FRACTION|$FRACTION$|
+		weight = value:giga_frameworld_outpost_planet_size_fraction|FRACTION|$FRACTION$|
 	}
 }
 giga_frameworld_outpost_size_fraction_if_no_food = {
@@ -244,7 +246,7 @@ giga_frameworld_outpost_size_fraction_if_no_food = {
 		exists = owner
 		owner = { country_uses_food = no }
 
-		weight = value:giga_frameworld_outpost_size_fraction|FRACTION|$FRACTION$|
+		weight = value:giga_frameworld_outpost_planet_size_fraction|FRACTION|$FRACTION$|
 	}
 }
 
@@ -255,7 +257,7 @@ giga_frameworld_outpost_size_fraction_if_cg = {
 		exists = owner
 		owner = { country_uses_consumer_goods = yes }
 
-		weight = value:giga_frameworld_outpost_size_fraction|FRACTION|$FRACTION$|
+		weight = value:giga_frameworld_outpost_planet_size_fraction|FRACTION|$FRACTION$|
 	}
 }
 giga_frameworld_outpost_size_fraction_if_no_cg = {
@@ -265,7 +267,7 @@ giga_frameworld_outpost_size_fraction_if_no_cg = {
 		exists = owner
 		owner = { country_uses_consumer_goods = no }
 
-		weight = value:giga_frameworld_outpost_size_fraction|FRACTION|$FRACTION$|
+		weight = value:giga_frameworld_outpost_planet_size_fraction|FRACTION|$FRACTION$|
 	}
 }
 
@@ -281,28 +283,9 @@ giga_frameworld_outpost_total_jobs = {
 	add = value:giga_frameworld_outpost_$RESOURCE$_jobs
 
 	mult = $SCALE$
-	mult = 0.01
 
 	add = value:giga_frameworld_outpost_special|SCALE|$SCALE$|RESOURCE|$RESOURCE$|
 }
-
-########################################################################
-# DEPOSIT JOBS
-
-# giga_frameworld_outpost_jobs_isolated_valley = {
-# 	complex_trigger_modifier = {
-# 		trigger = check_modifier_value
-# 		trigger_scope = planet
-# 		parameters = {
-# 			modifier = building_xeno_zoo_max
-# 		}
-# 		mode = add
-# 	}
-
-# 	[[MULT] 
-# 		mult = $MULT$ 
-# 	]
-# }
 
 ########################################################################
 # ENERGY
@@ -313,7 +296,7 @@ giga_frameworld_outpost_energy_jobs = {
 	# normal planet districts
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = district_generator_max
 		}
@@ -331,7 +314,7 @@ giga_frameworld_outpost_energy_jobs = {
 giga_frameworld_outpost_energy_jobs_betharian = {
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = building_betharian_power_plant_max
 		}
@@ -349,7 +332,7 @@ giga_frameworld_outpost_minerals_jobs = {
 	# normal planet districts
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = district_mining_max
 		}
@@ -374,7 +357,7 @@ giga_frameworld_outpost_food_jobs = {
 giga_frameworld_outpost_food_districts = {
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = district_farming_max
 		}
@@ -403,7 +386,7 @@ giga_frameworld_outpost_alloys_jobs = {
 
 	# odd factory
 	modifier = {
-		planet = { has_deposit = d_odd_factory }
+		orbit = { has_deposit = d_odd_factory }
 		add = 2
 	}
 }
@@ -448,13 +431,13 @@ giga_frameworld_outpost_physics_research_jobs = {
 
 	# space-time anomaly
 	modifier = {
-		planet = { has_deposit = d_space_time_anomaly }
+		orbit = { has_deposit = d_space_time_anomaly }
 		add = 2
 	}
 
 	# portal research area
 	modifier = {
-		planet = { 
+		orbit = {
 			or = {
 				has_deposit = d_portal_research_zone 
 				has_deposit = d_portal_research_zone_gestalt
@@ -480,16 +463,9 @@ giga_frameworld_outpost_society_research_jobs = {
 		add = 1
 	}
 
-	# # isolated valley
-	# modifier = {
-	# 	exists = owner
-	# 	owner = { has_technology = tech_alien_life_studies }
-	# 	add = value:giga_frameworld_outpost_jobs_isolated_valley
-	# }
-
 	# radiotrophic preserve
 	modifier = {
-		planet = { has_deposit = d_radiotrophic_preserve }
+		orbit = { has_deposit = d_radiotrophic_preserve }
 		add = 1
 	}
 }
@@ -512,7 +488,7 @@ giga_frameworld_outpost_engineering_research_jobs = {
 
 	# flat number on relic worlds, for the spire
 	modifier = {
-		planet = { is_planet_class = pc_relic }
+		orbit = { is_planet_class = pc_relic }
 		add = 8
 	}
 }
@@ -533,16 +509,9 @@ giga_frameworld_outpost_unity_jobs = {
 		add = 1
 	}
 
-	# # isolated valley
-	# modifier = {
-	# 	exists = owner
-	# 	owner = { has_technology = tech_alien_life_studies }
-	# 	add = value:giga_frameworld_outpost_jobs_isolated_valley|MULT|2|
-	# }
-
 	# radiotrophic preserve
 	modifier = {
-		planet = { has_deposit = d_radiotrophic_preserve }
+		orbit = { has_deposit = d_radiotrophic_preserve }
 		add = 3
 	}
 }
@@ -568,7 +537,7 @@ giga_frameworld_outpost_exotic_gases_mines = {
 
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = building_gas_extractors_max
 		}
@@ -594,7 +563,7 @@ giga_frameworld_outpost_volatile_motes_mines = {
 
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = building_mote_harvesters_max
 		}
@@ -620,7 +589,7 @@ giga_frameworld_outpost_rare_crystals_mines = {
 
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = building_crystal_mines_max
 		}
@@ -669,11 +638,47 @@ giga_frameworld_outpost_minor_artifacts_jobs = {
 giga_frameworld_outpost_giga_sr_amb_megaconstruction_jobs = {
 	base = 0
 
+	modifier = {
+		exists = owner
+		owner = { has_technology = giga_tech_amb_supertensiles }
+		add = value:giga_frameworld_outpost_giga_sr_amb_megaconstruction_mines
+	}
+}
+
+giga_frameworld_outpost_giga_sr_amb_megaconstruction_mines = {
+	base = 0
+
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
-		trigger_scope = planet
+		trigger_scope = orbit #planet
 		parameters = {
 			modifier = building_giga_supertensiles_mines_max
+		}
+		mode = add
+	}
+}
+
+########################################################################
+# IODIZIUM
+
+giga_frameworld_outpost_sr_iodizium_jobs = {
+	base = 0
+
+	modifier = {
+		exists = owner
+		owner = { has_technology = giga_tech_fusion_suppressor }
+		add = value:giga_frameworld_outpost_sr_iodizium_mines
+	}
+}
+
+giga_frameworld_outpost_sr_iodizium_mines = {
+	base = 0
+
+	complex_trigger_modifier = {
+		trigger = check_modifier_value
+		trigger_scope = orbit #planet
+		parameters = {
+			modifier = building_giga_iodizium_mines_max
 		}
 		mode = add
 	}
@@ -693,7 +698,8 @@ giga_frameworld_outpost_planet_jobs = {
 	base = 0
 
 	modifier = {
-		planet = { is_planet_class = $PLANET$ }
+		#planet = { is_planet_class = $PLANET$ }
+		orbit = { has_planet_flag = frameworld_outpost_$PLANET$ }
 
 		[[!USE] weight = value:giga_frameworld_outpost_planet_jobs_$PLANET$|$RESOURCE$|yes|SCALE|$SCALE$|RESOURCE|$RESOURCE$| ]
 
@@ -709,7 +715,8 @@ giga_frameworld_outpost_district_set_jobs = {
 	base = 0
 
 	modifier = {
-		planet = { uses_district_set = $SET$ }
+		#planet = { uses_district_set = $SET$ }
+		orbit = { has_planet_flag = frameworld_outpost_$SET$ }
 
 		[[!USE] weight = value:giga_frameworld_outpost_planet_jobs_$SET$|$RESOURCE$|yes|SCALE|$SCALE$|RESOURCE|$RESOURCE$| ]
 
@@ -720,3 +727,25 @@ giga_frameworld_outpost_district_set_jobs = {
 }
 
 # see common/script_values/giga_frameworld_outpost_special_planets.txt for the actual special planet list and stats
+
+##############################################################################################################
+# BRANCH OFFICE OUTPOSTS
+
+# a far simpler total value used to leech from branch office worlds
+giga_frameworld_outpost_branch_office_resource = {
+	complex_trigger_modifier = {
+		trigger = planet_resource_compare
+		parameters = {
+			resource = $RESOURCE$
+		}
+		mode = weight
+	}
+	min = 0 # we don't want to leech a deficit lmao
+	multiply = 0.4
+	square_root = yes
+
+	# round a bit
+	multiply = 10
+	floor = yes
+	divide = 10
+}

@@ -1,0 +1,231 @@
+#habitat_0 = {
+#	entity = ""
+#	construction_entity = "habitat_phase_01_entity"
+#	construction_blocks_and_blocked_by = none
+#	portrait = "GFX_megastructure_construction_background"
+#	place_entity_on_planet_plane = no
+#	show_in_outliner = no
+#
+#	entity_offset = { x = -7 y = -7 }
+#
+#	build_time = 1800
+#	resources = {
+#		category = megastructures_habitat
+#		cost = {
+#			alloys = 1500
+#			influence = 150
+#		}
+#	}
+#
+#	potential = {
+#		NOT = { has_global_flag = giga_habitats_disabled }
+#		is_giga_one_planet_origin = no
+#		OR = {
+#			has_technology = tech_habitat_1
+#			has_civic = civic_diadochi
+#			has_civic = civic_great_khans_legacy
+#			has_country_flag = democratic_khanate_flag
+#		}
+#	}
+#
+#	possible = {
+#		exists = starbase
+#		custom_tooltip = { fail_text = "requires_inside_border" is_inside_border = from }
+#	}
+#
+#	placement_rules = {
+#		planet_possible = {
+#			custom_tooltip = { fail_text = "requires_surveyed_planet"			is_surveyed = { who = prev.from status = yes } }
+#			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+#			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+#			custom_tooltip = { fail_text = "requires_not_minor_planetary_body"	is_asteroid = no is_moon = no }
+#			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+#			custom_tooltip = { fail_text = "requires_more_pops"
+#				OR = {
+#					has_global_flag = giga_habitats_system_3
+#					has_global_flag = giga_habitats_system_10
+#					has_global_flag = giga_habitats_system_25
+#					has_global_flag = giga_habitats_unlimited
+#					AND = {
+#						OR = {
+#							has_global_flag = giga_habitats_pop_25
+#							has_global_flag = giga_habitats_pop_50
+#							has_global_flag = giga_habitats_pop_100
+#						}
+#						from = { check_variable = { which = habitat_count value < allowed_habitats } }
+#					}
+#				}
+#			}
+#			custom_tooltip = { fail_text = "requires_more_systems"
+#				OR = {
+#					has_global_flag = giga_habitats_pop_25
+#					has_global_flag = giga_habitats_pop_50
+#					has_global_flag = giga_habitats_pop_100
+#					has_global_flag = giga_habitats_unlimited
+#					AND = {
+#						OR = {
+#							has_global_flag = giga_habitats_system_3
+#							has_global_flag = giga_habitats_system_10
+#							has_global_flag = giga_habitats_system_25
+#						}
+#						from = { check_variable = { which = habitat_count value < allowed_habitats } }
+#					}
+#				}
+#			}
+#			custom_tooltip = {
+#				fail_text = "requires_no_orbital_debris"
+#				NOR = {
+#					has_planet_flag = has_orbital_debris
+#				}
+#			}
+#			custom_tooltip = {
+#				fail_text = "requires_not_solarpunk"
+#				NOT = {
+#					solar_system = {
+#						has_star_flag = solarpunk_system_02
+#					}
+#				}
+#			}
+#		}
+#	}
+#
+#	ai_weight = {
+#		factor = 5
+#		modifier = { factor = 0		from = { nor = { has_origin = origin_void_dwellers has_origin = origin_toxic_knights } has_country_flag = has_recently_built_habitat } }
+#		modifier = { factor = 0		starbase = { NOT = { has_starbase_size >= starbase_starport } } }
+#		modifier = { factor = 0		any_system_planet = { is_planet_class = pc_habitat	is_colony = no } }
+#		modifier = { factor = 3		solar_system = { exists = owner						is_same_value = owner.capital_scope.solar_system } }
+#		modifier = { factor = 2		any_neighbor_system = { exists = owner				is_same_value = owner.capital_scope.solar_system } }
+#		modifier = { factor = 0.1	any_neighbor_system = { exists = owner				owner = { NOT = { is_same_value = from } } } }
+#	}
+#
+#	on_build_complete = {
+#		fromfrom.planet = {
+#			giga_set_has_mega_flag = yes
+#			save_event_target_as = habitat_planet
+#			if = { limit = { has_orbital_station = yes } orbital_station = { dismantle = yes } }
+#		}
+#		spawn_planet = {
+#			class = "pc_habitat"
+#			location = fromfrom.planet
+#			orbit_location = yes
+#			orbit_angle_offset = 45
+#			orbit_distance_offset = 9.899
+#			size = 4
+#			has_ring = no
+#
+#			init_effect = {
+#				set_planet_entity = { entity = "habitat_phase_01_entity" graphical_culture = root.from }
+#				# set_planet_entity = { #this is the code in vanilla but idk why
+#				# 	entity = "habitat_phase_01_entity"
+#				# 	graphical_culture = fromfrom
+#				# }
+#				set_surveyed = { surveyed = yes surveyor = from }
+#				set_all_comms_surveyed = yes
+#				clear_blockers = yes
+#				set_planet_flag = forbid_guillis_planet_modifiers
+#				set_planet_flag = megastructure
+#				set_planet_flag = habitat
+#
+#				giga_start_ai_colony_if_safe = yes
+#
+#				set_name = {
+#					key = "HABITAT_PLANET_NAME"
+#					variable_string = "[FROM.from.planet.GetName]"
+#				}
+#
+#				if = {
+#					# we specifically want to avoid doing this to habitable planets because it can do wonky things...
+#					# not that any of them should've been picked up normally, but it turns out it reads habitable planet deposits
+#					# which directly produce resources... found by someone getting 20 supertensile mines from Edge of Eternity's ST cache
+#					limit = {
+#						fromfrom.planet = {
+#							is_colony = no
+#							habitable_planet = no
+#						}
+#					}
+#
+#					# trade
+#					if = { limit = { fromfrom.planet = { has_trade_deposit = yes } } set_planet_flag = commercial_habitat }
+#
+#					# energy
+#					if = { limit = { fromfrom.planet = { has_resource = { type = energy amount > 0 } } } set_planet_flag = energy_habitat }
+#
+#					# minerals
+#					if = { limit = { fromfrom.planet = { has_resource = { type = minerals amount > 0 } } } set_planet_flag = mining_habitat }
+#
+#					# alloys
+#					if = { limit = { fromfrom.planet = { has_resource = { type = alloys amount > 0 } } } set_planet_flag = mining_habitat }
+#					while = { count = fromfrom.planet.value:giga_count_resource|resource|alloys| add_deposit = d_hab_alloy_1 }
+#
+#					# science
+#					if = { limit = { fromfrom.planet = { has_deposit_for = shipclass_research_station } } set_planet_flag = research_habitat }
+#
+#					# exotic gases
+#					while = { count = fromfrom.planet.value:giga_count_resource|resource|exotic_gases| add_deposit = d_hab_gas_1 }
+#
+#					# rare crystals
+#					while = { count = fromfrom.planet.value:giga_count_resource|resource|rare_crystals| add_deposit = d_hab_crystal_1 }
+#
+#					# volatile motes
+#					while = { count = fromfrom.planet.value:giga_count_resource|resource|volatile_motes| add_deposit = d_hab_mote_1 }
+#
+#					# zro
+#					if = { limit = { fromfrom.planet = { has_resource = { type = sr_zro amount > 0 } } } set_planet_flag = research_habitat }
+#					while = { count = fromfrom.planet.value:giga_count_resource|resource|sr_zro| add_deposit = d_hab_zro_1 }
+#
+#					# dark matter
+#					if = { limit = { fromfrom.planet = { has_resource = { type = sr_dark_matter amount > 0 } } } set_planet_flag = research_habitat }
+#					while = { count = fromfrom.planet.value:giga_count_resource|resource|sr_dark_matter| add_deposit = d_hab_dark_matter_1 }
+#
+#					# living metal
+#					if = { limit = { fromfrom.planet = { has_resource = { type = sr_living_metal amount > 0 } } } set_planet_flag = research_habitat }
+#					while = { count = fromfrom.planet.value:giga_count_resource|resource|sr_living_metal| add_deposit = d_hab_living_metal_1 }
+#
+#					# nanites
+#					if = { limit = { fromfrom.planet = { has_resource = { type = nanites amount > 0 } } } set_planet_flag = research_habitat }
+#					while = { count = fromfrom.planet.value:giga_count_resource|resource|nanites| add_deposit = d_hab_nanites_1 }
+#
+#					# iodizium
+#					if = { limit = { fromfrom.planet = { has_resource = { type = sr_iodizium amount > 0 } } } set_planet_flag = mining_habitat }
+#					while = { count = fromfrom.planet.value:giga_count_resource|resource|sr_iodizium| add_deposit = d_giga_hab_iodizium_1 }
+#
+#					# supertensiles
+#					if = { limit = { fromfrom.planet = { has_resource = { type = giga_sr_amb_megaconstruction amount > 0 } } } set_planet_flag = mining_habitat }
+#					while = { count = fromfrom.planet.value:giga_count_resource|resource|giga_sr_amb_megaconstruction| add_deposit = d_giga_hab_supertensiles_1 }
+#
+#					# minor artifacts
+#					if = {
+#						limit = {
+#							has_ancrel = yes
+#						}
+#						if = { limit = { fromfrom.planet = { has_resource = { type = minor_artifacts amount > 0 } } } set_planet_flag = research_habitat }
+#						while = { count = fromfrom.planet.value:giga_count_resource|resource|minor_artifacts| add_deposit = d_artifacts_planet_1 }
+#					}
+#
+#				}
+#
+#				planet_event = { id = giga_mega.1000 } # apply locale modifiers
+#			}
+#		}
+#		remove_megastructure = fromfrom
+#		from = {
+#			country_event =  { id = utopia.61 }
+#			change_variable = { which = habitat_count value = 1 }
+#
+#			remove_country_flag = has_recently_built_habitat
+#			set_timed_country_flag = { flag = has_recently_built_habitat years = 20 }
+#		}
+#	}
+#
+#	on_build_start = {
+#		from = {
+#			set_country_flag = has_recently_built_habitat
+#		}
+#	}
+#	on_build_cancel = {
+#		from = {
+#			remove_country_flag = has_recently_built_habitat
+#		}
+#	}
+#}

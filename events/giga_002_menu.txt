@@ -1,42 +1,42 @@
 namespace = giga_menu
 
 @gigastructures_version = 3.17
+# We don't change the version number in here so this is just wasteful of processing power - Bread
+# # On monthly pulse country (Check version)
+# country_event = {
+# 	id = giga_menu.100
+# 	hide_window = yes
+# 	is_triggered_only = yes
 
-# On monthly pulse country (Check version)
-country_event = {
-	id = giga_menu.100
-	hide_window = yes
-	is_triggered_only = yes
+# 	trigger = {
+# 		has_country_flag = giga_host
+# 		NOT = { check_variable = { which = giga_version value = @gigastructures_version } }
+# 	}
 
-	trigger = {
-		has_country_flag = giga_host
-		NOT = { check_variable = { which = giga_version value = @gigastructures_version } }
-	}
+# 	immediate = {
+# 		set_variable = { which = giga_version value = @gigastructures_version }
+# 		remove_global_flag = giga_game_started
+# 		giga_preset_00 = yes
+# 		country_event = { id = giga_menu.101 }
+# 	}
+# }
 
-	immediate = {
-		set_variable = { which = giga_version value = @gigastructures_version }
-		remove_global_flag = giga_game_started
-		giga_preset_00 = yes
-		country_event = { id = giga_menu.101 }
-	}
-}
+# # Version change detected
+# country_event = {
+# 	id = giga_menu.101
+# 	title = "giga_menu.101.name"
+# 	desc = "giga_menu.101.desc"
+# 	picture = GFX_evt_star_lifters
+# 	is_triggered_only = yes
 
-# Version change detected
-country_event = {
-	id = giga_menu.101
-	title = "giga_menu.101.name"
-	desc = "giga_menu.101.desc"
-	picture = GFX_evt_star_lifters
-	is_triggered_only = yes
+# 	option = {
+# 		default_hide_option = yes
+# 		name = "giga_menu.101.option"
+# 		hidden_effect = { country_event = { id = giga_menu.1 } }
+# 	}
+# }
 
-	option = {
-		default_hide_option = yes
-		name = "giga_menu.101.option"
-		hidden_effect = { country_event = { id = giga_menu.1 } }
-	}
-}
-
-# On Game Start (Get Host)
+# On Game Start (Get Host) (Create situation country)
 country_event = {
 	id = giga_menu.0
 	hide_window = yes
@@ -51,6 +51,13 @@ country_event = {
 		set_global_flag = giga_has_host
 		set_country_flag = giga_host
 		giga_preset_00 = yes
+		create_country = {
+			name = "giga_global_situation_country"
+			type = giga_global_situation
+			effect = {
+				save_global_event_target_as = giga_global_situation_country
+			}
+		}
 	}
 }
 
@@ -713,7 +720,7 @@ country_event = {
 							} 
 							hyperlane_eligible = yes #Don't target the core or AoaI 
 						}
-						spawn_system = { initializer = "giga_flusion_initializer" } 
+						spawn_system = { initializer = "giga_flusion_initializer" hyperlane = no } 
 					}
 					last_created_system = {
 						# Add extra hyperlane
@@ -791,7 +798,7 @@ country_event = {
 									}
 									hyperlane_eligible = yes #Don't target the core or AoaI or anyother forbidden systems
 								}
-								spawn_system = { initializer = "giga_eaw_initializer" } 
+								spawn_system = { initializer = "giga_eaw_initializer" hyperlane = no } 
 							}
 							last_created_system = {
 								# Add extra hyperlane
@@ -826,7 +833,7 @@ country_event = {
 									} 
 									hyperlane_eligible = yes #Don't target the core or AoaI 
 								}
-								spawn_system = { initializer = "cat_orbital_initializer" } 
+								spawn_system = { initializer = "cat_orbital_initializer" hyperlane = no } 
 							}
 							last_created_system = {
 								# Add extra hyperlane
@@ -862,7 +869,7 @@ country_event = {
 									}
 									hyperlane_eligible = yes #Changed to the blanket hyperlane eligible for easier maintenance, slightly more restricive than before.
 								}
-								spawn_system = { initializer = "square_world_init_01" }
+								spawn_system = { initializer = "square_world_init_01" hyperlane = no }
 							}
 							last_created_system = {
 								# Add extra hyperlane
@@ -897,7 +904,7 @@ country_event = {
 									}
 									hyperlane_eligible = yes #Changed to the blanket hyperlane eligible for easier maintenance, slightly more restricive than before.
 								}
-								spawn_system = { initializer = "giga_kerbol_initializer" }
+								spawn_system = { initializer = "giga_kerbol_initializer" hyperlane = no }
 							}
 							last_created_system = {
 								# Add extra hyperlane
@@ -984,19 +991,6 @@ country_event = {
 
 				# Modifiers
 				every_galaxy_planet = {
-					# if = {
-					# 	limit = { is_planet_class = pc_diamond }
-					# 	add_modifier = { modifier = "giga_pd_diamond_planet" days = -1 }
-					# }
-					# if = {
-					# 	limit = { is_planet_class = pc_chthonian }
-					# 	add_modifier = { modifier = "giga_pd_chthonian_planet" days = -1 }
-					# }
-					# if = {
-					# 	limit = { is_planet_class = pc_ethane_ocean }
-					# 	add_modifier = { modifier = "giga_pd_ethane_planet" days = -1 }
-					# }
-					#PD should cover those on its own now
 					if = {
 						limit = {
 							giga_is_gas_giant = yes
@@ -1398,33 +1392,33 @@ country_event = {
 					giga_buildcap_j = { giga_amb_country_setup_from_menu = yes }
 				}
 
-				# Count systems
-				if = {
-					limit = {
-						OR = {
-							has_global_flag = giga_habitats_system_3
-							has_global_flag = giga_habitats_system_10
-							has_global_flag = giga_habitats_system_25
-						}
-					}
-					set_variable = { which = giga_owned_systems value = 0 }
-					every_system_within_border = { prev = { change_variable = { which = giga_owned_systems value = 1 } } }
-					giga_calculate_allowed_habitats = yes
-				}
+				# # Count systems
+				# if = {
+				# 	limit = {
+				# 		OR = {
+				# 			has_global_flag = giga_habitats_system_3
+				# 			has_global_flag = giga_habitats_system_10
+				# 			has_global_flag = giga_habitats_system_25
+				# 		}
+				# 	}
+				# 	set_variable = { which = giga_owned_systems value = 0 }
+				# 	every_system_within_border = { prev = { change_variable = { which = giga_owned_systems value = 1 } } }
+				# 	giga_calculate_allowed_habitats = yes
+				# }
 
-				# Count pops
-				if = {
-					limit = {
-						OR = {
-							has_global_flag = giga_habitats_pop_25
-							has_global_flag = giga_habitats_pop_50
-							has_global_flag = giga_habitats_pop_100
-						}
-					}
-					set_variable = { which = giga_owned_pops value = 0 }
-					every_owned_pop = { prev = { change_variable = { which = giga_owned_pops value = 1 } } }
-					giga_calculate_allowed_habitats = yes
-				}
+				# # Count pops
+				# if = {
+				# 	limit = {
+				# 		OR = {
+				# 			has_global_flag = giga_habitats_pop_25
+				# 			has_global_flag = giga_habitats_pop_50
+				# 			has_global_flag = giga_habitats_pop_100
+				# 		}
+				# 	}
+				# 	set_variable = { which = giga_owned_pops value = 0 }
+				# 	every_owned_pop = { prev = { change_variable = { which = giga_owned_pops value = 1 } } }
+				# 	giga_calculate_allowed_habitats = yes
+				# }
 
 				# Mark starting systems as visited
 				every_system_within_border = {
@@ -1945,21 +1939,3 @@ country_event = {
 		name = "giga_menu.200.a"
 	}
 }
-
-# country_event = {
-# 	id = giga_menu.987
-# 	hide_window = yes
-# 	is_triggered_only = yes
-# 	immediate = {
-# 		remove_all_menu_flags = yes
-# 		if = {
-# 			limit = { 
-# 				NOT = {
-# 					has_global_flag = giga_game_started
-# 				}
-# 			}
-# 			remove_game_post_start_flags = yes
-# 		}
-# 		remove_global_flag = giga_fe_planetcrafts_1
-# 	}
-# }

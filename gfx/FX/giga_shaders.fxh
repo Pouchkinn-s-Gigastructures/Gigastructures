@@ -6,7 +6,7 @@ Includes = {
 	"tiled_pointlights.fxh"
 	"pdxmesh_samplers.fxh"
 	"pdxmesh_ship.fxh"
-	## //"giga_debug.fxh"
+	#//"giga_debug.fxh"
 }
 
 #//Omni Shaders (EHOF/Kreitani)
@@ -321,7 +321,7 @@ PixelShader = {
 		float3 ApplyHue(float3 col, float hueAdjust)
 		{
 			const float3 k = float3(0.57735, 0.57735, 0.57735);
-			half cosAngle = cos(hueAdjust);
+			float cosAngle = cos(hueAdjust);
 			return col * cosAngle + cross(k, col) * sin(hueAdjust) + k * dot(k, col) * (1.0 - cosAngle);
 		}
 
@@ -329,7 +329,7 @@ PixelShader = {
 		{
 			float4 UVLod = float4( (In.vUV0), 0.0, PortraitMipLevel * 0.35 );
 
-			float shift = (In.vPos.x * 0.0065) % 1;
+			float shift = mod( (In.vPos.x * 0.0065), 1 );
 
 			shift = shift * 0.2 + 0.8; // convert to gradient U coord (0.8 to 1.0)
 			float4 UVGrad = float4( shift, 0.95, 0.0, 0.0 );
@@ -354,41 +354,61 @@ PixelShader = {
 
 #// rainbow blokkat
 PixelShader = {
-	MainCode PixelRainbowBlokkatAnim
+	MainCode GigaBlokkat
 		ConstantBuffers = { PortraitCommon, EigthKind, Shadow }
 	[[
 		float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
 		{
+		    // model space coords
+		    float4 pos = In.vSphere;
+
 		    // Chassis pattern, passed as normal map
 			float4 UVLod = float4( (In.vUV0), 0.0, PortraitMipLevel * 0.35 );
 			float4 vDiffuse = tex2Dlod( NormalMap, UVLod );
 			float4 vMasks = tex2Dlod( SpecularMap, UVLod );
 
-			// Colour map, passed as diffuse so the portrait selector can swap it
-            //float shift = (In.vPos.x * 0.0065) % 1;
-            float shift = vUVAnimationTime;
-            shift += vMasks.b;
+			// gradient sample scale passed as UV direction X
+			float outerGradientScale = vUVAnimationDir.x;
+			float innerGradientScale = vUVAnimationDir.y;
 
-            float4 UVGrad = float4( shift, 0.0625, 0.0, 0.0 );
-			float4 vGradient;
-			if( CustomDiffuseTexture > 0.5f ) {
-				vGradient = tex2Dlod( PortraitCharacter, UVGrad );
-			} else {
-				vGradient = tex2Dlod( DiffuseMap, UVGrad );
-			}
-			vGradient.rgb = ToLinear(vGradient.rgb);
+			// Colour map, passed as diffuse so the portrait selector can swap it
+            float outerShift = vUVAnimationTime;
+            outerShift += vMasks.b * outerGradientScale;
+
+            // inner shift is perturbed by model space coords, to make the textures less obvious
+            float innerShift = vUVAnimationTime + 0.5 + pos.x * 0.01 + pos.y * 0.02;
+            innerShift += vMasks.b * innerGradientScale;
+
+            // the top half of the gradient image is the outside, bottom half is inside
+            float4 UVOuterGrad = float4( outerShift, 0.25, 0.0, 0.0 );
+            float4 UVInnerGrad = float4( innerShift, 0.75, 0.0, 0.0 );
+
+            // get the gradient textures
+            float4 vOuterGradient;
+            float4 vInnerGradient;
+            if( CustomDiffuseTexture > 0.5f ) {
+                vOuterGradient = tex2Dlod( PortraitCharacter, UVOuterGrad );
+                vInnerGradient = tex2Dlod( PortraitCharacter, UVInnerGrad );
+            } else {
+                vOuterGradient = tex2Dlod( DiffuseMap, UVOuterGrad );
+                vInnerGradient = tex2Dlod( DiffuseMap, UVInnerGrad );
+            }
+
+            // need to adjust the gradient textures for... whatever reason, thanks game
+            vOuterGradient.rgb = ToGamma(vOuterGradient.rgb);
+            vInnerGradient.rgb = ToGamma(vInnerGradient.rgb);
 
             // recolour chassis with the colour map
-			float3 recoloured = max(vGradient.rgb * vDiffuse.r, vDiffuse.ggg);
+			float3 recolouredOuter = max(vOuterGradient.rgb * vDiffuse.r, vDiffuse.ggg);
+			float3 recolouredInner = max(vInnerGradient.rgb * vDiffuse.r, vDiffuse.ggg);
 
+            // mix insides and outsides
+			float3 recoloured = lerp(recolouredOuter, recolouredInner, vMasks.g);
+
+            // mix recoloured with base
 			vDiffuse.rgb = lerp(vDiffuse.rgb, recoloured, vMasks.r);
 
 			return vDiffuse;
-
-			/*if (giga_debug_number(vUVAnimationTime, In.vUV0 * 3000, int2(1,1))) {
-			    return float4(0.0,0.0,0.0,1.0);
-			}
-			return float4(0.6,0.6,0.6,1.0);*/
 		}
 
 	]]

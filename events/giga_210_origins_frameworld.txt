@@ -13,7 +13,7 @@ country_event = {
 	is_triggered_only = yes
 	
 	trigger = {
-		has_origin = origin_frameworld
+		has_origin = origin_frameworld # specifically not the trigger because any variant would likely want a different setup event
 	}
 	
 	immediate = {
@@ -99,11 +99,24 @@ country_event = {
 
 		##### END DOCS
 
+		# start outpost situation
+		start_situation = {
+			type = giga_situation_frameworld_outposts
+			target = capital_scope
+		}
+
 		# set up AI variables
 		set_variable = {
 			which = frameworld_ai_outpost_candidate_count
 			value = 0
 		}
+
+		#event_target:giga_global_situation_country = {
+		#	start_situation = {
+		#		type = giga_situation_frameworld_planet_effects
+		#		target = prev.capital_scope
+		#	}
+		#}
 
 		# associate this country with a specific frame
 		set_country_flag = giga_frameworld@capital_scope
@@ -111,6 +124,9 @@ country_event = {
 		capital_scope = {
 			# associate the frameworld with the country too
 			set_planet_flag = giga_frameworld@root
+
+			# clear the conquered modifier which apparently gets executed BEFORE the start event
+			remove_modifier = frameworld_conquered
 
 			# fix the entity
 			giga_frameworld_update_entity_with_fallback = {
@@ -140,16 +156,57 @@ country_event = {
 			
 			##### set up deposits
 			
-			add_deposit = d_frameworld_core
+			# an appropriate core
+			if = {
+				limit = { root = { is_regular_empire = yes }	}
+				add_deposit = d_frameworld_admin
+			}
+			else_if = {
+				limit = { root = { is_hive_empire = yes }	}
+				add_deposit = d_frameworld_hive
+			}
+			else_if = {
+				limit = { root = { is_machine_empire = yes }	}
+				add_deposit = d_frameworld_core
+			}
 			
 			# max mining districts
 			add_deposit = d_frameworld_remnants
+
+			# environmentalist nature preserve
+			if = {
+				limit = {
+					root = { giga_is_environmentalist = yes }
+				}
+				remove_building = building_ranger_lodge
+				add_deposit = d_frameworld_nature_preserve
+			}
 
 			# job upkeep adjustment
 			add_deposit = d_giga_job_upkeep
 			
 			##### replace districts
-			
+			add_modifier = {
+				modifier = frameworld_building_wreck_fix
+				days = 3
+			}
+
+			# city
+			while = {
+				limit = {
+					has_district = district_city
+				}
+				add_district = district_giga_frameworld_city
+				remove_district = district_city
+			}
+			# hive
+			while = {
+				limit = {
+					has_district = district_hive
+				}
+				add_district = district_giga_frameworld_hive
+				remove_district = district_hive
+			}
 			# nexus
 			while = {
 				limit = {
@@ -164,9 +221,28 @@ country_event = {
 				limit = {
 					has_district = district_industrial
 				}
-				add_district = district_giga_frameworld_industrial
+				if = {
+					# alternate factory-foundry for normal empires
+					limit = {
+						owner = { is_gestalt = no }
+					}
+					if = {
+						limit = { not = { has_planet_flag = foundry_next }}
+						add_district = district_giga_frameworld_factory
+						set_planet_flag = foundry_next
+					}
+					else = {
+						add_district = district_giga_frameworld_foundry
+						remove_planet_flag = foundry_next
+					}
+				}
+				else = {
+					# all foundry for gestalts, servitor can rely on their starting sanctuary
+					add_district = district_giga_frameworld_foundry
+				}
 				remove_district = district_industrial
 			}
+			remove_planet_flag = foundry_next
 			
 			# energy
 			while = {
@@ -196,12 +272,25 @@ country_event = {
 			}
 			
 			#####
+			remove_modifier = frameworld_building_wreck_fix
 			
 			# get rid of any bad districts or buildings which can't be supported
 			validate_planet_buildings_and_districts = yes
 
+			# fix unemployed pops from the initial district shuffle
+			every_owned_pop = {
+				limit = {
+					is_unemployed = yes
+				}
+				clear_pop_category = yes
+			}
+			check_planet_employment = yes
+
 			# set the maintenance mod on
 			giga_frameworld_apply_expanded_maintenance_modifier = yes
+
+			# set up extra growth mechanics
+			giga_extra_growth_setup = yes
 		}
 	}
 }
@@ -391,12 +480,7 @@ country_event = {
 	desc = {
 		trigger = { 
 			event_target:giga_planet = { 
-				count_deposit = { 
-					count > 1 
-					limit = {
-						is_deposit_type = d_frameworld_expanded_infrastructure
-					} 
-				} 
+				has_planet_flag = frameworld_expanded_infrastructure_2
 			} 
 		}
 		text = giga_frameworld_origin.012.desc.2
@@ -404,12 +488,7 @@ country_event = {
 	desc = {
 		trigger = { 
 			event_target:giga_planet = { 
-				count_deposit = { 
-					count = 1 
-					limit = {
-						is_deposit_type = d_frameworld_expanded_infrastructure
-					} 
-				} 
+				not = { has_planet_flag = frameworld_expanded_infrastructure_2}
 			} 
 		}
 		text = giga_frameworld_origin.012.desc
@@ -445,7 +524,7 @@ country_event = {
 	is_triggered_only = yes
 	
 	trigger = {
-		has_origin = origin_frameworld
+		giga_has_frameworld_origin = yes
 		exists = capital_scope
 		capital_scope = {
 			has_orbital_bombardment = no
@@ -467,6 +546,7 @@ country_event = {
 				is_occupied_flag = no
 			}
 
+			# add overextension if it's missing
 			if = {
 				limit = {
 					not = {
@@ -475,41 +555,59 @@ country_event = {
 				}
 				add_modifier = {
 					modifier = frameworld_conquered
-					days = -1
+					clear_on_owner_change = yes
 				}
 			}
-			
+
+			# remove resettlement block if we're not at war
+			if = {
+				limit = {
+					root = { is_at_war = no }
+					has_modifier = frameworld_conquered_no_resettle
+				}
+				remove_modifier = frameworld_conquered_no_resettle
+			}
+
 			# resettle pops to the homeworld
-			while = {
-				# 5% or 4, whichever is more
-				count = value:giga_frameworld_resettlement_count
-				random_owned_pop = {
-					resettle_pop = {
-						pop = this
-						planet = event_target:target_frameworld
+			# if we're not blocked by war or recent acquisition, anyway...
+			if = {
+				limit = {
+					not = { has_modifier = frameworld_conquered_no_resettle }
+				}
+				while = {
+					# 5% or 4, whichever is more
+					count = value:giga_frameworld_resettlement_count
+					random_owned_pop = {
+						resettle_pop = {
+							pop = this
+							planet = event_target:target_frameworld
+						}
 					}
 				}
 			}
-			
+
 			# if there are no pops left, clear out the planet and place an outpost
 			if = {
 				limit = {
 					num_pops = 0
 				}
 				
-				remove_all_buildings = yes
-				remove_all_districts = yes
-				remove_modifier = frameworld_conquered
-				destroy_colony = yes
+				#remove_all_buildings = yes
+				#remove_all_districts = yes
+				#destroy_colony = yes
 				
 				if = {
 					limit = {
 						can_have_frameworld_outpost = yes
 					}
 					set_planet_flag = frameworld_built_outpost
-					giga_frameworld_create_outpost = { WHO = root }
-					root = {
-						giga_frameworld_recalculate_outpost_bonus = yes
+					#giga_frameworld_create_outpost = { WHO = root RESETTLED = yes}
+					#root = {
+					#	giga_frameworld_recalculate_outpost_bonus = yes
+					#}
+					giga_frameworld_create_outpost = {
+						planet = this
+						owner = root
 					}
 				}
 
@@ -564,120 +662,121 @@ country_event = {
 
 ### colonise a planet with an outpost wreck over it
 # this = the planet
-planet_event = {
-	
-	id = giga_frameworld_origin.102
-	hide_window = yes
-	is_triggered_only = yes
-	
-	trigger = {
-		has_planet_flag = giga_frameworld_outpost
-		exists = owner
-		owner = {
-			NOT = { has_origin = origin_frameworld }
-		}
-	}
-	
-	immediate = {
-		giga_frameworld_remove_outpost_wrecks = yes
-		remove_planet_flag = giga_frameworld_outpost
-		
-		owner = {
-			if = {
-				limit = {
-					NOT = { has_country_flag = frameworld_dismantled_outpost }
-				}
-				set_country_flag = frameworld_dismantled_outpost
-				country_event = {
-					id = giga_frameworld_origin.103
-					scopes = { from = root }
-				}
-			}
-			else = {
-				add_resource = {
-					alloys = @frameworld_outpost_disassembly_reward
-				}
-			}
-		}
-	}
-}
+#planet_event = {
+#
+#	id = giga_frameworld_origin.102
+#	hide_window = yes
+#	is_triggered_only = yes
+#
+#	trigger = {
+#		has_planet_flag = giga_frameworld_outpost
+#		exists = owner
+#		owner = {
+#			giga_has_frameworld_origin = no
+#		}
+#	}
+#
+#	immediate = {
+#		giga_frameworld_remove_outpost_wrecks = yes
+#		remove_planet_flag = giga_frameworld_outpost
+#
+#		owner = {
+#			if = {
+#				limit = {
+#					NOT = { has_country_flag = frameworld_dismantled_outpost }
+#				}
+#				set_country_flag = frameworld_dismantled_outpost
+#				country_event = {
+#					id = giga_frameworld_origin.103
+#					scopes = { from = root }
+#				}
+#			}
+#			else = {
+#				add_resource = {
+#					alloys = @frameworld_outpost_disassembly_reward
+#				}
+#			}
+#		}
+#	}
+#}
 
 ### settled world outpost wreck removal notification
-country_event = {
-	id = giga_frameworld_origin.103
-	is_triggered_only = yes
-	
-	title = giga_frameworld_origin.103.name
-	
-	desc = {
-		text = giga_frameworld_origin.103.desc.a
-	}
-	
-	show_sound = event_mystic_reveal
-	picture = GFX_evt_colony_settlement
-	
-	location = from
-	
-	option = {
-		name = giga_frameworld_origin.103.a
-		add_resource = {
-			alloys = @frameworld_outpost_disassembly_reward
-		}
-	}
-}
+#country_event = {
+#	id = giga_frameworld_origin.103
+#	is_triggered_only = yes
+#
+#	title = giga_frameworld_origin.103.name
+#
+#	desc = {
+#		text = giga_frameworld_origin.103.desc.a
+#	}
+#
+#	show_sound = event_mystic_reveal
+#	picture = GFX_evt_colony_settlement
+#
+#	location = from
+#
+#	option = {
+#		name = giga_frameworld_origin.103.a
+#		add_resource = {
+#			alloys = @frameworld_outpost_disassembly_reward
+#		}
+#	}
+#}
 
 # special outpost country first contact
 # This = Empire 1
 # From = Empire 2
 # Fromfromfrom = System where contact occurred
-country_event = {
-	id = giga_frameworld_origin.104
-	hide_window = yes
-	is_triggered_only = yes
-	
-	trigger = {
-		from = {
-			is_country_type = frameworld_outpost_country_type
-		}
-	}
-	
-	immediate = {
-		establish_communications_no_message = from
-	}
-}
+#country_event = {
+#	id = giga_frameworld_origin.104
+#	hide_window = yes
+#	is_triggered_only = yes
+#
+#	trigger = {
+#		from = {
+#			is_country_type = frameworld_outpost_country_type
+#		}
+#	}
+#
+#	immediate = {
+#		establish_communications_no_message = from
+#	}
+#}
 
 # megastructure complete check to fix megas owned by planetary outpost country
 # Root = Country
 # From = Megastructure
 # FromFrom = System
 # FromFromFrom = Fleet
-country_event = {
-	id = giga_frameworld_origin.105
-	hide_window = yes
-	is_triggered_only = yes
+#country_event = {
+#	id = giga_frameworld_origin.105
+#	hide_window = yes
+#	is_triggered_only = yes
+#
+#	trigger = {
+#		exists = from
+#		exists = from.from
+#		exists = event_target:frameworld_outpost_country
+#		from.from = {
+#			any_system_planet = {
+#				exists = owner
+#				owner = {
+#					is_same_empire = event_target:frameworld_outpost_country
+#				}
+#			}
+#		}
+#	}
+#
+#	immediate = {
+#		fromfrom = {
+#			giga_frameworld_fix_outpost_country_megas = yes
+#		}
+#	}
+#}
 
-	trigger = {
-		exists = from
-		exists = from.from
-		exists = event_target:frameworld_outpost_country
-		from.from = {
-			any_system_planet = {
-				exists = owner
-				owner = {
-					is_same_empire = event_target:frameworld_outpost_country
-				}
-			}
-		}
-	}
 
-	immediate = {
-		fromfrom = {
-			giga_frameworld_fix_outpost_country_megas = yes
-		}
-	}
-}
-
-# yearly pulse fix for megas owned by outpost country and incorrect outposts
+# yearly outpost planet sanity check to make sure none are orphaned, in either direction
 # scopeless
 event = {
 	id = giga_frameworld_origin.106
@@ -685,67 +784,145 @@ event = {
 	is_triggered_only = yes
 
 	immediate = {
-		# handle megas owned incorrectly by the outpost country
-		if = {
-			limit = {
-				exists = event_target:frameworld_outpost_country
-			}
 
-			every_megastructure = {
-				limit = {
-					exists = owner
-					owner = {
-						is_same_empire = event_target:frameworld_outpost_country
-					}
-					solar_system = {
-						exists = owner
-					}
-				}
-	
-				set_owner = solar_system.owner
-			}
-		}
-		
-		# handle outposts being owned by the wrong people
-		every_megastructure = {
+		# check every outpost to make sure it has a planet, and the status thereof
+		every_galaxy_fleet = {
 			limit = {
 				is_frameworld_outpost = yes
-				exists = owner
-				solar_system = {
-					exists = owner
-					owner = {
-						not = {
-							is_same_empire = prevprev.owner
+			}
+
+			if = {
+				limit = {
+					exists = orbit
+				}
+				# if the planet exists but it isn't one of the specified types, convert it if habitable, destroy the outpost if not
+				if = {
+					limit = {
+						orbit = {
+							is_frameworld_outpost_planet = no
 						}
 					}
+					if = {
+						limit = {
+							orbit = {
+								or = {
+									is_colonizable = yes
+									is_colony = yes
+								}
+							}
+						}
+						orbit = {
+							giga_frameworld_outpost_set_planet_class = yes
+							giga_frameworld_clear_outpost_flags = yes
+						}
+					}
+					else = {
+						destroy_fleet = this
+					}
 				}
 			}
-
-			set_owner = solar_system.owner
+			else = {
+				# if it has no planet, it needs to go
+				destroy_fleet = this
+			}
 		}
 
-		# remove outposts where the planet is no longer habitable for whatever reason
-		every_megastructure = {
+		# check outpost planets without outposts to restore them
+		every_galaxy_planet = {
 			limit = {
-				is_frameworld_outpost = yes
-				planet = {
-					is_colony = no
-					is_colonizable = no
+				is_frameworld_outpost_planet = yes
+				not = {
+					any_fleet_in_orbit = {
+						is_frameworld_outpost = yes
+					}
 				}
 			}
-			planet = {
-				remove_planet_flag = giga_frameworld_outpost
-			}
-			remove_megastructure = this
+			giga_frameworld_outpost_restore_planet_class = yes
+			giga_frameworld_clear_outpost_flags = yes
 		}
 	}
 }
+
+# yearly pulse fix for megas owned by outpost country and incorrect outposts
+# scopeless
+#event = {
+#	id = giga_frameworld_origin.106
+#	hide_window = yes
+#	is_triggered_only = yes
+#
+#	immediate = {
+#		# handle megas owned incorrectly by the outpost country
+#		if = {
+#			limit = {
+#				exists = event_target:frameworld_outpost_country
+#			}
+#
+#			every_megastructure = {
+#				limit = {
+#					exists = owner
+#					owner = {
+#						is_same_empire = event_target:frameworld_outpost_country
+#					}
+#					solar_system = {
+#						exists = owner
+#					}
+#				}
+#
+#				set_owner = solar_system.owner
+#			}
+#		}
+#
+#		# handle outposts being owned by the wrong people
+#		every_megastructure = {
+#			limit = {
+#				is_frameworld_outpost = yes
+#				exists = owner
+#				solar_system = {
+#					exists = owner
+#					owner = {
+#						not = {
+#							is_same_empire = prevprev.owner
+#						}
+#					}
+#				}
+#			}
+#
+#			set_owner = solar_system.owner
+#		}
+#
+#		# remove outposts where the planet is no longer habitable for whatever reason
+#		every_megastructure = {
+#			limit = {
+#				is_frameworld_outpost = yes
+#				planet = {
+#					is_colony = no
+#					is_colonizable = no
+#				}
+#			}
+#			planet = {
+#				remove_planet_flag = giga_frameworld_outpost
+#			}
+#			remove_megastructure = this
+#		}
+#	}
+#}
 
 # first outpost notification
 country_event = {
 	id = giga_frameworld_origin.107
 	title = giga_frameworld_origin.107.name
-	desc = giga_frameworld_origin.107.desc
+	desc = {
+		text = giga_frameworld_origin.107.desc
+		trigger = { is_gestalt = no }
+	}
+	desc = {
+		text = giga_frameworld_origin.107.desc.hive
+		trigger = { is_hive_empire = yes }
+	}
+	desc = {
+		text = giga_frameworld_origin.107.desc.machine
+		trigger = { is_machine_empire = yes }
+	}
 	picture = GFX_evt_space_station
 	location = from
 	is_triggered_only = yes
@@ -762,6 +939,42 @@ country_event = {
 	}
 }
 
+### apply overextension debuff to other planets
+planet_event = {
+	id = giga_frameworld_origin.108
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		from = {
+			giga_has_frameworld_origin = yes
+		}
+		not = {
+			has_planet_flag = giga_frameworld@from
+		}
+	}
+
+	immediate = {
+		add_modifier = {
+			modifier = frameworld_conquered
+			clear_on_owner_change = yes
+		}
+
+		if = {
+			limit = {
+				from = {
+					is_at_war = yes
+				}
+			}
+			add_modifier = {
+				modifier = frameworld_conquered_no_resettle
+				clear_on_owner_change = yes
+				years = 5 # this many years of no resettlement while at war
+			}
+		}
+	}
+}
+
 ###############################################################################################################################################
 # Gaining and losing systems
 ###############################################################################################################################################
@@ -770,135 +983,180 @@ country_event = {
 # from = system which changed hands
 # fromfrom = new owner
 country_event = {
-	
+
 	id = giga_frameworld_origin.200
 	hide_window = yes
 	is_triggered_only = yes
-	
+
 	trigger = {
-		has_origin = origin_frameworld
+		giga_has_frameworld_origin = yes
 	}
-	
+
 	immediate = {
 		if = {
 			limit = {
-				fromfrom = {
-					NOT = { has_origin = origin_frameworld } # if the new owner isn't also a frameworld empire
-				}
-			}
-			from = {
-				every_system_megastructure = {
-					limit = {
-						is_active_frameworld_outpost = yes
+				or = {
+					not = { exists = fromfrom }
+					fromfrom = {
+						giga_has_frameworld_origin = no # if the new owner isn't also a frameworld empire
 					}
-					
-					giga_frameworld_wreck_outpost = { WHO = fromfrom CULTURE = root }
 				}
 			}
-			giga_frameworld_recalculate_outpost_bonus = yes
-		}
 
-		# ensure outpost ownership swap
-		from = {
-			giga_frameworld_change_outposts_ownership = yes
+			from = {
+				every_fleet_in_system = {
+					limit = {
+						is_frameworld_outpost = yes
+					}
+
+					if = {
+						limit = {
+							exists = orbit
+						}
+						orbit = {
+							giga_frameworld_outpost_restore_planet_class = yes
+							giga_frameworld_clear_outpost_flags = yes
+						}
+					}
+					destroy_fleet = this
+				}
+			}
 		}
 	}
 }
+
+
+
+#country_event = {
+#
+#	id = giga_frameworld_origin.200
+#	hide_window = yes
+#	is_triggered_only = yes
+#
+#	trigger = {
+#		giga_has_frameworld_origin = yes
+#	}
+#
+#	immediate = {
+#		if = {
+#			limit = {
+#				fromfrom = {
+#					giga_has_frameworld_origin = no # if the new owner isn't also a frameworld empire
+#				}
+#			}
+#			from = {
+#				every_system_megastructure = {
+#					limit = {
+#						is_active_frameworld_outpost = yes
+#					}
+#
+#					giga_frameworld_wreck_outpost = { WHO = fromfrom CULTURE = root }
+#				}
+#			}
+#			giga_frameworld_recalculate_outpost_bonus = yes
+#		}
+#
+#		# ensure outpost ownership swap
+#		from = {
+#			giga_frameworld_change_outposts_ownership = yes
+#		}
+#	}
+#}
 
 ### gain system, recalculate outpost count in case there's one in there
 # from = system which changed hands
 # fromfrom = old owner
-country_event = {
-	
-	id = giga_frameworld_origin.201
-	hide_window = yes
-	is_triggered_only = yes
-	
-	trigger = {
-		has_origin = origin_frameworld
-	}
-	
-	immediate = {
-		# outpost stuff
-		if = {
-			limit = {
-				from = {
-					any_system_megastructure = {
-						is_active_frameworld_outpost = yes
-					}
-				}
-			}
-			giga_frameworld_recalculate_outpost_bonus = yes
-		}
-
-		# ensure outpost ownership swap
-		from = {
-			giga_frameworld_change_outposts_ownership = yes
-		}
-	}
-}
+#country_event = {
+#
+#	id = giga_frameworld_origin.201
+#	hide_window = yes
+#	is_triggered_only = yes
+#
+#	trigger = {
+#		giga_has_frameworld_origin = yes
+#	}
+#
+#	immediate = {
+#		# outpost stuff
+#		if = {
+#			limit = {
+#				from = {
+#					any_system_megastructure = {
+#						is_active_frameworld_outpost = yes
+#					}
+#				}
+#			}
+#			giga_frameworld_recalculate_outpost_bonus = yes
+#		}
+#
+#		# ensure outpost ownership swap
+#		from = {
+#			giga_frameworld_change_outposts_ownership = yes
+#		}
+#	}
+#}
 
 ### outpost rendered ownerless
 # this = solar system containing megastructure
 # from = megastructure
 # fromfrom = old owner (if existing)
-system_event = {
-	
-	id = giga_frameworld_origin.202
-	hide_window = yes
-	is_triggered_only = yes
-	
-	trigger = {
-		from = {
-			is_active_frameworld_outpost = yes
-		}
-	}
-	
-	immediate = {
-		from = {
-			giga_frameworld_wreck_outpost = { CULTURE = fromfrom }
-		}
-		
-		fromfrom = {
-			giga_frameworld_recalculate_outpost_bonus = yes
-		}
-	}
-}
+#system_event = {
+#
+#	id = giga_frameworld_origin.202
+#	hide_window = yes
+#	is_triggered_only = yes
+#
+#	trigger = {
+#		from = {
+#			is_active_frameworld_outpost = yes
+#		}
+#	}
+#
+#	immediate = {
+#		from = {
+#			giga_frameworld_wreck_outpost = { CULTURE = fromfrom }
+#		}
+#
+#		fromfrom = {
+#			giga_frameworld_recalculate_outpost_bonus = yes
+#		}
+#	}
+#}
 
 ### outpost colony destroyed
 # this = planet
-planet_event = {
-	id = giga_frameworld_origin.203
-	hide_window = yes
-	is_triggered_only = yes
-
-	trigger = {
-		exists = owner
-		owner = {
-			is_country_type = frameworld_outpost_country_type
-		}
-	}
-
-	immediate = {
-		# find the current outpost and wreck it
-		solar_system = {
-			random_system_megastructure = {
-				limit = {
-					planet = { is_same_value = root	}
-					is_active_frameworld_outpost = yes
-				}
-				giga_frameworld_wreck_outpost = { 
-					CULTURE = prev 
-					WHO = prev.owner 
-					NOCOLONY = foo # cwtools, why do you say this is invalid?
-				}
-				solar_system = {
-					giga_frameworld_update_system_icon = yes
-				}
-			}
-		}
-	}
-}
+#planet_event = {
+#	id = giga_frameworld_origin.203
+#	hide_window = yes
+#	is_triggered_only = yes
+#
+#	trigger = {
+#		exists = owner
+#		owner = {
+#			is_country_type = frameworld_outpost_country_type
+#		}
+#	}
+#
+#	immediate = {
+#		# find the current outpost and wreck it
+#		solar_system = {
+#			random_system_megastructure = {
+#				limit = {
+#					planet = { is_same_value = root	}
+#					is_active_frameworld_outpost = yes
+#				}
+#				giga_frameworld_wreck_outpost = {
+#					CULTURE = prev
+#					WHO = prev.owner
+#					NOCOLONY = foo # cwtools, why do you say this is invalid?
+#				}
+#				solar_system = {
+#					giga_frameworld_update_system_icon = yes
+#				}
+#			}
+#		}
+#	}
+#}
 
 ###############################################################################################################################################
 # Tech up and variable recalculations
@@ -977,18 +1235,17 @@ planet_event = {
 	}
 }
 
-### yearly pulse outpost recalculation, just in case it's off somehow
+### yearly pulse for outpost resource discovery
 country_event = {
 	id = giga_frameworld_origin.302
 	hide_window = yes
 	is_triggered_only = yes
-	
+
 	trigger = {
-		has_origin = origin_frameworld
+		giga_has_frameworld_origin = yes
 	}
-	
+
 	immediate = {
-		giga_frameworld_recalculate_outpost_bonus = yes
 		random_list = {
 			3 = {}
 			2 = {
@@ -1006,7 +1263,7 @@ country_event = {
 	fire_only_once = yes
 	
 	trigger = {
-		has_origin = origin_frameworld
+		giga_has_frameworld_origin = yes
 		last_increased_tech = tech_starbase_3
 	}
 	
@@ -1023,7 +1280,7 @@ country_event = {
 	fire_only_once = yes
 	
 	trigger = {
-		has_origin = origin_frameworld
+		giga_has_frameworld_origin = yes
 		last_increased_tech = tech_starbase_4
 	}
 	
@@ -1040,7 +1297,7 @@ country_event = {
 	fire_only_once = yes
 	
 	trigger = {
-		has_origin = origin_frameworld
+		giga_has_frameworld_origin = yes
 		last_increased_tech = tech_starbase_5
 	}
 	
@@ -1057,7 +1314,7 @@ country_event = {
 	fire_only_once = yes
 	
 	trigger = {
-		has_origin = origin_frameworld
+		giga_has_frameworld_origin = yes
 		last_increased_tech = giga_tech_maginot_world
 	}
 	
@@ -1080,20 +1337,20 @@ country_event = {
 
 	immediate = {
 		# AI CGs
-		if = {
-			limit = {
-				is_ai = yes
-				has_origin = origin_frameworld
-				has_valid_civic = civic_machine_servitor
-			}
-
-			every_owned_planet = {
-				limit = {
-					is_planet_class = pc_giga_frameworld
-				}
-				giga_frameworld_apply_ai_artisan_modifier = yes
-			}
-		}
+		#if = {
+		#	limit = {
+		#		is_ai = yes
+		#		giga_has_frameworld_origin = yes
+		#		has_valid_civic = civic_machine_servitor
+		#	}
+		#
+		#	every_owned_planet = {
+		#		limit = {
+		#			is_planet_class = pc_giga_frameworld
+		#		}
+		#		giga_frameworld_apply_ai_artisan_modifier = yes
+		#	}
+		#}
 
 		# recalculate unemployed drone count including frame drones
 		every_owned_planet = {
@@ -1122,7 +1379,7 @@ country_event = {
 		if = {
 			limit = {
 				is_ai = yes
-				has_origin = origin_frameworld
+				giga_has_frameworld_origin = yes
 			}
 
 			set_variable = {
@@ -1158,7 +1415,7 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		has_origin = origin_frameworld
+		giga_has_frameworld_origin = yes
 		giga_frameworld_needs_to_unlock_any_resource = yes
 	}
 
@@ -1169,8 +1426,7 @@ country_event = {
 			set_country_flag = giga_frameworld_unlock_motes # unset on option
 			random_planet_within_border = {
 				limit = {
-					exists = owner
-					owner = { is_same_empire = event_target:frameworld_outpost_country }
+					is_frameworld_outpost_planet = yes
 					check_modifier_value = {
 						modifier = building_mote_harvesters_max
 						value > 0
@@ -1185,8 +1441,7 @@ country_event = {
 			set_country_flag = giga_frameworld_unlock_gases # unset on option
 			random_planet_within_border = {
 				limit = {
-					exists = owner
-					owner = { is_same_empire = event_target:frameworld_outpost_country }
+					is_frameworld_outpost_planet = yes
 					check_modifier_value = {
 						modifier = building_gas_extractors_max
 						value > 0
@@ -1201,8 +1456,7 @@ country_event = {
 			set_country_flag = giga_frameworld_unlock_crystals # unset on option
 			random_planet_within_border = {
 				limit = {
-					exists = owner
-					owner = { is_same_empire = event_target:frameworld_outpost_country }
+					is_frameworld_outpost_planet = yes
 					check_modifier_value = {
 						modifier = building_crystal_mines_max
 						value > 0
@@ -1217,8 +1471,7 @@ country_event = {
 			set_country_flag = giga_frameworld_unlock_betharian # unset on option
 			random_planet_within_border = {
 				limit = {
-					exists = owner
-					owner = { is_same_empire = event_target:frameworld_outpost_country }
+					is_frameworld_outpost_planet = yes
 					check_modifier_value = {
 						modifier = building_betharian_power_plant_max
 						value > 0
@@ -1227,21 +1480,6 @@ country_event = {
 				save_event_target_as = frameworld_outpost_betharian
 			}
 		}
-		# if = {
-		# 	limit = { giga_frameworld_needs_to_unlock_zoo = yes }
-		# 	set_country_flag = giga_frameworld_unlocked_zoo
-		# 	set_country_flag = giga_frameworld_unlock_zoo # unset on option
-		# 	random_planet_within_border = {
-		# 		limit = {
-		# 			owner = { is_same_empire = event_target:frameworld_outpost_country }
-		# 			check_modifier_value = {
-		# 				modifier = building_xeno_zoo_max
-		# 				value > 0
-		# 			}
-		# 		}
-		# 		save_event_target_as = frameworld_outpost_zoo
-		# 	}
-		# }
 	}
 
 	option = { 
@@ -1275,13 +1513,6 @@ country_event = {
 			remove_country_flag = giga_frameworld_unlock_betharian
 			custom_tooltip = giga_frameworld_origin.308.a.betharian
 			add_research_option = tech_mine_betharian
-		}
-
-		if = {
-			limit = { has_country_flag = giga_frameworld_unlock_zoo }
-			remove_country_flag = giga_frameworld_unlock_zoo
-			custom_tooltip = giga_frameworld_origin.308.a.zoo
-			add_research_option = tech_alien_life_studies
 		}
 	}
 }
@@ -1371,7 +1602,7 @@ country_event = {
 			if = {
 				limit = {
 					event_target:frameworld = {
-						has_deposit = d_frameworld_maginot
+						has_planet_flag = frameworld_maginot
 					}
 				}
 
@@ -1500,7 +1731,7 @@ planet_event = {
 		exists = owner
 		owner = {
 			is_ai = yes
-			has_origin = origin_frameworld
+			giga_has_frameworld_origin = yes
 		}
 	}
 	
@@ -1518,7 +1749,7 @@ country_event = {
 	
 	trigger = {
 		is_ai = yes
-		has_origin = origin_frameworld
+		giga_has_frameworld_origin = yes
 		capital_scope = {
 			is_planet_class = pc_giga_frameworld
 		}
@@ -1544,6 +1775,68 @@ planet_event = {
 		}
 		init_giga_maginot = yes
 		giga_frameworld_update_maginot_deposits = yes
+	}
+}
+
+### AI situation mineral desire counter
+situation_event = {
+	id = giga_frameworld_origin.1003
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		exists = owner
+		owner = {
+			is_ai = yes
+		}
+	}
+
+	immediate = {
+		# 4 month running average
+		set_variable = {
+			which = giga_frameworld_ai_wanted_minerals_4
+			value = value:giga_var|var|giga_frameworld_ai_wanted_minerals_3|
+		}
+		set_variable = {
+			which = giga_frameworld_ai_wanted_minerals_3
+			value = value:giga_var|var|giga_frameworld_ai_wanted_minerals_2|
+		}
+		set_variable = {
+			which = giga_frameworld_ai_wanted_minerals_2
+			value = value:giga_var|var|giga_frameworld_ai_wanted_minerals_1|
+		}
+		set_variable = {
+			which = giga_frameworld_ai_wanted_minerals_1
+			value = value:giga_frameworld_ai_wanted_minerals
+		}
+
+		# get the average
+		set_variable = {
+			which = giga_frameworld_ai_wanted_minerals
+			value = giga_frameworld_ai_wanted_minerals_1
+		}
+		change_variable = {
+			which = giga_frameworld_ai_wanted_minerals
+			value = giga_frameworld_ai_wanted_minerals_2
+		}
+		change_variable = {
+			which = giga_frameworld_ai_wanted_minerals
+			value = giga_frameworld_ai_wanted_minerals_3
+		}
+		change_variable = {
+			which = giga_frameworld_ai_wanted_minerals
+			value = giga_frameworld_ai_wanted_minerals_4
+		}
+		divide_variable = {
+			which = giga_frameworld_ai_wanted_minerals
+			value = 4
+		}
+
+		# calculate the cost so it's not recalculating all the time since we only do monthly anyway
+		set_variable = {
+			which = giga_frameworld_ai_wanted_minerals_cost
+			value = value:giga_frameworld_ai_wanted_minerals_cost
+		}
 	}
 }
 

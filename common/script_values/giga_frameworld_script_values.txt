@@ -19,7 +19,7 @@ frameworld_maintenance_district_jobs = {
 	# maintenance overseer swap
 	modifier = {
 		subtract = 2
-		has_deposit = d_frameworld_advanced_city
+		has_deposit = d_frameworld_advanced_nexus
 	}
 
 	complex_trigger_modifier = {
@@ -88,6 +88,13 @@ giga_frameworld_expanded_maintenance_multiplier = {
 		}
 		mode = add
 	}
+	complex_trigger_modifier = {
+		trigger = num_assigned_jobs
+		parameters = {
+			job = frame_maintenance_worker
+		}
+		mode = add
+	}
 
 	subtract = 5
 
@@ -98,7 +105,7 @@ giga_frameworld_max_stronghold_districts = {
 	base = 0
 
 	# 5% of max districts
-	add = value:giga_frameworld_outpost_size_fraction|FRACTION|5|
+	add = value:giga_frameworld_outpost_planet_size_fraction|FRACTION|5|
 
 	# minimum of 1
 	min = 1
@@ -116,7 +123,7 @@ giga_frameworld_resettlement_count = {
 # number of pops which should be created on 
 # the home frameworld when a new outpost is built
 giga_frameworld_outpost_pops = {
-	base = 0
+	base = 1 # origin has -1 in it, this offsets
 	
 	complex_trigger_modifier = {
 		trigger = check_modifier_value
@@ -259,4 +266,147 @@ giga_frameworld_remove_max_maginot_gun_districts = {
 	subtract = value:giga_frameworld_get_max_maginot_gun_districts
 
 	min = 0
+}
+
+giga_frameworld_outpost_empire_size_mult = {
+	base = 1
+	mult = value:giga_frameworld_outpost_count
+	mult = value:scripted_modifier_mult|MODIFIER|empire_size_colonies_mult|
+}
+
+giga_frameworld_outpost_count_raw = {
+	# outpost station fleets
+	complex_trigger_modifier = {
+		trigger = count_owned_fleet
+		parameters = {
+			limit = {
+				is_frameworld_outpost = yes
+				is_disabled = no
+			}
+		}
+		mode = weight
+	}
+
+	# branch offices and other sources
+	add = modifier:giga_frameworld_outpost_count
+}
+
+giga_frameworld_outpost_count = {
+	#weight = modifier:giga_frameworld_outpost_count
+	weight = value:giga_frameworld_outpost_count_raw
+
+	# megacorp outposts count for less, but they get branch office outposts too
+	modifier = {
+		is_megacorp = yes
+		multiply = 0.5
+	}
+}
+giga_frameworld_outpost_growth_count = {
+	weight = owner.value:giga_frameworld_outpost_count
+	multiply = @giga_frameworld_outpost_expansion_curve
+	divide = value:giga_frameworld_outpost_growth_count_internal
+	multiply = $mult|1$
+}
+giga_frameworld_outpost_growth_count_internal = {
+	weight = owner.value:giga_frameworld_outpost_count
+	add = @giga_frameworld_outpost_expansion_curve
+}
+
+giga_frameworld_outpost_job_upkeep = {
+	base = 1
+	[[!lithoid]
+		complex_trigger_modifier = {
+			trigger = num_assigned_jobs
+			parameters = {
+				job = $job$
+			}
+			trigger_scope = target
+			mode = mult
+		}
+	]
+	[[lithoid]
+		complex_trigger_modifier = {
+			trigger = count_owned_pop
+			parameters = {
+				limit = {
+					has_job = $job$
+					is_lithoid = $lithoid$
+				}
+			}
+			trigger_scope = target
+			mode = mult
+		}
+	]
+	mult = owner.value:giga_frameworld_outpost_count
+	[[MODIFIER]
+	mult = target.value:scripted_modifier_mult|MODIFIER|$modifier$|
+	]
+}
+giga_frameworld_outpost_growth_job_upkeep = {
+	base = 1
+	[[!checkType]
+		complex_trigger_modifier = {
+			trigger = num_assigned_jobs
+			parameters = {
+				job = $job$
+			}
+			trigger_scope = target
+			mode = mult
+		}
+	]
+	[[checkType]
+		complex_trigger_modifier = {
+			trigger = count_owned_pop
+			parameters = {
+				limit = {
+					has_job = $job$
+					is_lithoid = $lithoid|no$
+				}
+			}
+			trigger_scope = target
+			mode = mult
+		}
+	]
+	mult = value:giga_frameworld_outpost_growth_count
+	[[modifier]
+		mult = target.value:scripted_modifier_mult|MODIFIER|$modifier$|
+	]
+}
+
+giga_frameworld_ai_wanted_minerals = {
+	weight = trigger:years_passed
+	mult = 1.5 # minerals per year since game start
+
+	complex_trigger_modifier = {
+		trigger = resource_income_compare
+		parameters = {
+			resource = minerals
+		}
+		trigger_scope = owner
+		mode = subtract
+	}
+
+	add = value:giga_var|var|giga_frameworld_ai_wanted_minerals|
+
+	min = 0 # don't go negative lol
+}
+giga_frameworld_ai_wanted_minerals_cost = {
+	complex_trigger_modifier = {
+		trigger = market_resource_price
+		parameters = {
+			resource = minerals
+			amount = 1
+			trade_type = market_buy
+		}
+		trigger_scope = owner
+		mode = weight
+	}
+	multiply = value:giga_var|var|giga_frameworld_ai_wanted_minerals|
+}
+
+giga_frameworld_hab_harvest_count = {
+	weight = solar_system.value:num_major_orbitals
+	mult = 0.5
+	ceiling = yes
+	add = trigger:planet_size
 }

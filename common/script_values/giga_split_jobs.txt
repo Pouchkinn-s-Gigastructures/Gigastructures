@@ -1,0 +1,78 @@
+
+# sequential split, for when a continuous value goes up and you want to give jobs from that sequentially instead of all at once
+# used in frame secondary growth jobs so that, for example, reaching 1.0 jobs in a roboticist/healthcare split gives 1 job instead of 0.5 of each
+
+# interval = amount of input for which the sequence repeats
+# value = the input
+# fraction = how much of the interval should give this output
+# offset = fraction of the interval where it starts counting up
+
+# e.g.
+#                                    input |  1  2  3  4  5  6  7  8 |  9 10 11 12 13 14 15 16 |
+# interval 8, fraction 0.25, offset 0    = |  1  2  2  2  2  2  2  2 |  3  4  4  4  4  4  4  4 |
+# interval 8, fraction 0.75, offset 0.25 = |  0  0  1  2  3  4  5  6 |  6  6  7  8  9 10 11 12 |
+giga_sequential_job_split = {
+    weight = $value$
+    divide = $interval$
+    subtract = value:giga_sequential_job_split_internal_whole|value|$value$|interval|$interval$|
+
+    subtract = $offset$
+    min = 0
+    max = $fraction$
+
+    add = value:giga_sequential_job_split_internal_whole|value|$value$|interval|$interval$|mult|$fraction$|
+
+    multiply = $interval$
+}
+giga_sequential_job_split_internal_whole = {
+    weight = $value$
+    divide = $interval$
+    floor = yes
+    [[mult]
+        multiply = $mult$
+    ]
+}
+
+# simple two job split
+# for use with one job rounded up, one rounded down by passing floor
+
+# inline round down: @[ ($jobs$ * 0.5) - (($jobs$ * 0.5) % 1) ]
+# inline round up: @[ -1 * ( (-1 * ($jobs$ * 0.5)) - ((((-1 * ($jobs$ * 0.5)) % 1) + 1) % 1)) ]
+giga_two_job_split = {
+    weight = $value$
+    divide = 2
+    [[floor]
+        floor = yes
+    ]
+    [[!floor]
+        ceiling = yes
+    ]
+}
+
+# three job split, assuming the first two jobs are equal importance and the third is secondary
+# a vanilla example is death priests and mortal initiates, mixed with managers for megacorps
+# won't act great for an input of 1 or 2, yielding 0/0/1 and 1/1/0 respectively
+
+# inline: @[ (($jobs$ + 1) / 3) - ((((($jobs$ + 1) / 3) % 1) + 1) % 1) ]
+giga_three_job_split_primary = {
+    weight = $value$
+    add = 1
+
+    divide = 3
+    floor = yes
+
+    [[double]
+        multiply = 2
+    ]
+
+
+}
+
+# inline: @[ $jobs$ - (2 * ((($jobs$ + 1) / 3) - ((((($jobs$ + 1) / 3) % 1) + 1) % 1))) ]
+giga_three_job_split_secondary = {
+    weight = $value$
+
+    subtract = value:giga_three_job_split_primary|value|$value$|double|yes|
+
+
+}

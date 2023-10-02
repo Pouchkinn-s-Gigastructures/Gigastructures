@@ -1,0 +1,316 @@
+########################################################################################################################
+# "What about pop growth?" "You've already had it" "We've had one, yes. What about SECOND pop growth?"
+########################################################################################################################
+# Since we don't get flat growth modifiers, here's an entire second pop growth system
+# This is clearly a sensible and not at all crackpot idea
+#
+# - TTFTCUTS
+
+# this effect sets up the system on target planet
+# after that, provide any source of giga_pop_growth_speed_extra_add to the planet and it'll just... go
+giga_extra_growth_setup = {
+    event_target:giga_global_situation_country = {
+        start_situation = {
+            type = giga_situation_extra_growth
+            target = prev
+        }
+    }
+}
+
+########################################################################################################################
+# LOGIC
+
+# monthly tick logic
+giga_extra_growth_tick = {
+    if = {
+        limit = {
+            target = {
+                check_modifier_value = {
+                    modifier = giga_pop_growth_speed_extra_add
+                    value > 0
+                }
+            }
+        }
+        # if we have growth, try to grow (even if it ends up as 0)
+
+        # add modifier if missing
+        target = {
+            if = {
+                limit = {
+                    not = {
+                        has_modifier = giga_extra_growth
+                    }
+                }
+                add_modifier = {
+                    modifier = giga_extra_growth
+                    clear_on_owner_change = yes
+                }
+
+                # we also assume that if the modifier was missing no growth was happening or it needs to be reset
+                # potentially due to a new owner
+                root = {
+                    set_variable = {
+                        which = current_growth
+                        value = 0
+                    }
+                    remove_situation_flag = has_species
+                }
+            }
+        }
+
+        ################################################################################################################
+        # calculate growth variables
+
+        giga_extra_growth_recalculate_variables = yes
+
+        # set current growth if needed
+        if = {
+            limit = {
+                not = { is_variable_set = current_growth }
+            }
+            set_variable = {
+                which = current_growth
+                value = 0
+            }
+        }
+
+        if = {
+            limit = {
+                check_variable = {
+                    which = total_growth
+                    value > 0
+                }
+            }
+            # if the currently grown species isn't the right one drop it
+            if = {
+                limit = {
+                    exists = target
+                    target = {
+                        exists = growing_species
+                    }
+                    NOT = {
+                        target.growing_species = {
+                            is_same_value = giga_extra_growth_species@root
+                        }
+                    }
+                }
+                remove_situation_flag = has_species
+            }
+
+            # find species if needed and possible
+            giga_extra_growth_find_species = yes
+
+            # grow if allowed
+            [[!no_growth]
+
+                if = {
+                    limit = {
+                        has_situation_flag = has_species
+                    }
+
+                    # add growth
+                    change_variable = {
+                        which = current_growth
+                        value = total_growth
+                    }
+
+                    # grow pops if at or over threshold
+                    while = {
+                        limit = {
+                            check_variable = {
+                                which = current_growth
+                                value >= growth_required
+                            }
+                        }
+
+                        # decrement growth
+                        subtract_variable = {
+                            which = current_growth
+                            value = growth_required
+                        }
+
+                        # spawn pop
+                        target = {
+                            create_pop = {
+                                species = event_target:giga_extra_growth_species@root
+                            }
+
+                            # fire pop grown action for compat with other content
+                            fire_on_action = {
+                                on_action = on_pop_grown
+                                scopes = {
+                                    from = owner
+                                    fromfrom = last_created_pop
+                                }
+                            }
+                        }
+
+                        # recalculate variables and find species
+                        giga_extra_growth_recalculate_variables = yes
+                        giga_extra_growth_find_species = yes
+
+                        # break early if species was lost
+                        if = {
+                            limit = {
+                                not = { has_situation_flag = has_species }
+                            }
+                            set_variable = {
+                                which = current_growth
+                                value = 0
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+        else = {
+            # cancel growth if no total growth
+            set_variable = {
+                which = current_growth
+                value = 0
+            }
+            remove_situation_flag = has_species
+        }
+
+        # months until grown
+        set_variable = {
+            which = months_until_grown
+            value = value:giga_calculate_extra_growth_eta
+        }
+        set_variable = {
+            which = current_growth_display
+            value = value:giga_formatting_round_to_two_places|val|current_growth|
+        }
+
+        ################################################################################################################
+    }
+    else = {
+        # if we definitely don't due to no growth modifier, clean up
+
+        # clear modifier if we have it
+        target = {
+            if = {
+                limit = {
+                    has_modifier = giga_extra_growth
+                }
+            }
+            remove_modifier = giga_extra_growth
+        }
+
+        # reset growth
+        set_variable = {
+            which = current_growth
+            value = 0
+        }
+        remove_situation_flag = has_species
+    }
+}
+
+giga_extra_growth_recalculate_variables = {
+    # planet capacity
+    set_variable = {
+        which = planet_capacity
+        value = target.value:giga_calculate_planet_capacity|per_district|prev.capacity_per_empty_district|
+    }
+
+    # base modifier
+    set_variable = {
+        which = base_growth_modifier
+        value = value:giga_formatting_round_to_two_places|val|target.modifier:giga_pop_growth_speed_extra_add|
+    }
+
+    # base growth
+    set_variable = {
+        which = base_growth
+        value = target.value:giga_calculate_extra_growth_base|planet_capacity|prev.planet_capacity|
+    }
+    set_variable = {
+        which = base_growth_display
+        value = value:giga_formatting_round_to_two_places|val|base_growth|
+    }
+
+    # base growth difference
+    set_variable = {
+        which = base_growth_difference
+        value = base_growth
+    }
+    subtract_variable = {
+        which = base_growth_difference
+        value = base_growth_modifier
+    }
+    set_variable = {
+        which = base_growth_difference
+        value = value:giga_formatting_round_to_two_places|val|base_growth_difference|
+    }
+
+    # growth required
+    set_variable = {
+        which = growth_required
+        value = value:giga_calculate_extra_growth_required
+    }
+    set_variable = {
+        which = growth_required_display
+        value = value:giga_formatting_round_to_two_places|val|growth_required|
+    }
+
+    # growth speed modifiers
+    set_variable = {
+        which = growth_modifiers
+        value = value:giga_calculate_extra_growth_modifiers
+    }
+    set_variable = {
+        which = growth_modifiers_display
+        value = value:giga_formatting_percentage|val|growth_modifiers|
+    }
+    # reduction modifiers
+    set_variable = {
+        which = growth_reductions
+        value = value:giga_calculate_extra_growth_modifiers|reduction|yes|
+    }
+    set_variable = {
+        which = growth_reductions_display
+        value = value:giga_formatting_percentage|val|growth_reductions|
+    }
+
+    # total growth speed
+    set_variable = {
+        which = total_growth
+        value = value:giga_calculate_extra_growth_total
+    }
+    set_variable = {
+        which = total_growth_display
+        value = value:giga_formatting_round_to_two_places|val|total_growth|
+    }
+
+    # format current growth
+    set_variable = {
+        which = current_growth_display
+        value = value:giga_formatting_round_to_two_places|val|current_growth|
+    }
+}
+
+giga_extra_growth_find_species = {
+    if = {
+        limit = {
+            not = {
+                has_situation_flag = has_species
+            }
+        }
+        if = {
+            limit = {
+                exists = target
+                target = {
+                    exists = growing_species
+                }
+            }
+            target.growing_species = {
+                save_global_event_target_as = giga_extra_growth_species@root
+                save_global_event_target_as = giga_extra_growth_species@target
+            }
+            set_situation_flag = has_species
+        }
+        else = {
+            remove_situation_flag = has_species
+        }
+    }
+}
