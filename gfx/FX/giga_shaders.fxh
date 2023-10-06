@@ -379,10 +379,20 @@ PixelShader = {
             float innerShift = vUVAnimationTime + 0.5 + pos.x * 0.01 + pos.y * 0.02;
             innerShift += vMasks.b * innerGradientScale;
 
+
+            // vertical = gradient is down the blokkat, otherwise across
+        #ifdef VERTICAL
+            //float gradOffset = clamp((0.1 - pos.y * -0.125) - 0.225, -0.225, 0.225);
+            float gradOffset = (7 - pos.y) * 0.065 - 0.125;
+
+        #else
+            float gradOffset = pos.x * 0.125;
+        #endif
+            gradOffset = clamp(gradOffset, -0.225, 0.225);
+
             // the top half of the gradient image is the outside, bottom half is inside
-            float xGradOffset = clamp(pos.x * 0.125, -0.225, 0.225);
-            float4 UVOuterGrad = float4( outerShift, 0.25 + xGradOffset, 0.0, 0.0 );
-            float4 UVInnerGrad = float4( innerShift, 0.75 + xGradOffset, 0.0, 0.0 );
+            float4 UVOuterGrad = float4( outerShift, 0.25 + gradOffset, 0.0, 0.0 );
+            float4 UVInnerGrad = float4( innerShift, 0.75 + gradOffset, 0.0, 0.0 );
 
             // get the gradient textures
             float4 vOuterGradient;
