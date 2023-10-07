@@ -381,13 +381,11 @@ PixelShader = {
 
 
             // vertical = gradient is down the blokkat, otherwise across
-        #ifdef VERTICAL
-            //float gradOffset = clamp((0.1 - pos.y * -0.125) - 0.225, -0.225, 0.225);
-            float gradOffset = (7 - pos.y) * 0.065 - 0.125;
-
-        #else
-            float gradOffset = pos.x * 0.125;
-        #endif
+            #ifdef VERTICAL
+                float gradOffset = (7 - pos.y) * 0.065 - 0.125;
+            #else
+                float gradOffset = pos.x * 0.125;
+            #endif
             gradOffset = clamp(gradOffset, -0.225, 0.225);
 
             // the top half of the gradient image is the outside, bottom half is inside
