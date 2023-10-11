@@ -589,6 +589,45 @@ PixelShader = {
                 #endif
                 // end cosmic
                 // #####################################################################################################
+
+                // #####################################################################################################
+                // screen texture variant, screen-space texture on the inside
+                //
+                // IMAGE FORMAT:
+                // expects 256x256, use 8.8.8.8 BGRA to preserve values, DXT5 will smear things
+                //
+                // rows 0-15 = external gradient as normal, but uses alpha to fade through to background, is additive
+                // rows 16-31 = internal gradient, works the same as external
+                // rows 32-255 = texture and technical
+                //      columns 0-239 = the texture
+                //      columns 240-255 = TECHNICAL
+                //          TODO: decide stuff here
+                #ifdef SCREEN_TEXTURE
+                    const float2 textureUV = float2(0.0,1.0/16.0);
+                    const float2 textureDims = float2(15.0/16.0, 15.0/16.0);
+                    const float2 scrollUV = float2(15.5/16.0, 1.5/16.0);
+                    const float crop = 1.0/240.0;
+
+                    // get data
+                    float4 data = tex2Dportrait(scrollUV);
+                    float2 scrollDir = data.rg * 2.0 - 1.0;
+
+                    // screen coords
+                    float2 screen = In.vPos.xy;
+                    screen.y *= -1;
+
+                    float2 sampleUV = frac((screen / 240) - scrollDir * vUVAnimationTime);
+                    sampleUV = clamp(sampleUV, crop, 1-crop);
+
+                    float4 sampled = tex2Dportrait(textureUV + textureDims * sampleUV);
+
+                    vInnerGradient.rgb = sampled.rgb;
+
+                    //debug, uncomment to make external texture match inner
+                    //vOuterGradient.rgb = vInnerGradient.rgb;
+                #endif
+                // end screen texture
+                // #####################################################################################################
             #endif
 
             // recolour chassis with the colour map
