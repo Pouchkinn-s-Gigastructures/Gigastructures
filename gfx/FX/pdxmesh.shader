@@ -4615,14 +4615,14 @@ Effect GigaBlokkatAnimateUVSkinnedShadow
 	PixelShader = "PixelPdxMeshStandardShadow"
 	Defines = { "IS_SHADOW" }
 }
-Effect GigaBlokkatAnimateUVVerticalSkinned
+Effect GigaBlokkatVerticalAnimateUVSkinned
 {
 	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
 	PixelShader = "GigaBlokkat"
 	BlendState = "BlendStateAlphaBlendWriteAlpha";
 	Defines = { "VERTICAL" }
 }
-Effect GigaBlokkatAnimateUVVerticalSkinnedShadow
+Effect GigaBlokkatVerticalAnimateUVSkinnedShadow
 {
 	VertexShader = "VertexPdxMeshStandardShadow"
 	PixelShader = "PixelPdxMeshStandardShadow"
@@ -4640,6 +4640,19 @@ Effect GigaBlokkatCosmicAnimateUVSkinnedShadow
 	VertexShader = "VertexPdxMeshStandardShadow"
 	PixelShader = "PixelPdxMeshStandardShadow"
 	Defines = { "EXTENDED_GRADIENT" "COSMIC" "IS_SHADOW" }
+}
+Effect GigaBlokkatCosmicVerticalAnimateUVSkinned
+{
+	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
+	PixelShader = "GigaBlokkat"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+	Defines = { "EXTENDED_GRADIENT" "COSMIC" "VERTICAL" }
+}
+Effect GigaBlokkatCosmicVerticalAnimateUVSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "EXTENDED_GRADIENT" "COSMIC" "VERTICAL" "IS_SHADOW" }
 }
 
 Effect PdxMeshMarchPortrait

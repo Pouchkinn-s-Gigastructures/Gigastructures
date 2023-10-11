@@ -429,15 +429,17 @@ PixelShader = {
                 // cosmic variant, layered icon fields
                 //
                 // IMAGE FORMAT:
-                // 256x256, use 8.8.8.8 BGRA to preserve values, DXT5 will smear things
+                // expects 256x256, use 8.8.8.8 BGRA to preserve values, DXT5 will smear things
                 //
                 // rows 0-15 = external gradient as normal, but uses alpha to fade through to background, is additive
                 // rows 16-31 = internal gradient, works the same as external
                 // rows 32-47 = colour gradient for icons, each layer will sample a colour, is multiplicative
                 //   closer layers are towards the left end, deeper towards the right, so colours fade left to right into the distance
                 // all three gradients can have vertical gradients in them which will be applied horizontally or vertically per shader variant
-                // rows 48-63 = TECHNICAL:
-                //      columns 0-31 = global data.
+                // rows 48-63 = BACKGROUNDS AND TECHNICAL:
+                //      columns 0-7 = background colour for external parts, adjustable as the gradients above
+                //      columns 8-15 = background colour for internal parts, adjustable as the gradients above
+                //      columns 16-31 = global data.
                 //          red = icon density, e.g. 127 = 0.5 = half of the cells per level will be filled
                 //          green = initial scaling, <= 0.5 values are doubled and used as a multiplier
                 //              > 0.5 values are subtracted from 1, doubled, and inverted
@@ -448,7 +450,7 @@ PixelShader = {
                 //      left to right corresponds to each row in turn
                 //          red = animation speed multiplier, e.g. 127 = 0.5 = half frame rate
                 //          green = animation delay, each value is a 1 frame delay between the end of the previous cycle and next
-                //              e.g. 13 = 8 frames of animation, 13 frames clear, 0 = continual animation
+                //              e.g. 13 = 8 frames of animation, 13 frames paused on the last frame, 0 = continual animation
                 //          blue and alpha unused
                 // rows 64-255 = seven 32 row regions, each containing eight 32 column sub-regions containing animation frames
                 //   an icon row is picked randomly for use and cycles between the frames in that row, governed by the corresponding
@@ -460,7 +462,7 @@ PixelShader = {
                     const int iconFrames = 8; // number of frames per row
                     const int layers = 16; // number of icon layers
                     const float animationRate = 25.0; // base fps at 1.0 UV animation rate
-                    const float2 globalsUV = float2((1.0/8.0)*0.5,(1.0/32.0)*3.5); // coord of global values
+                    const float2 globalsUV = float2((1.0/8.0)*0.75,(1.0/32.0)*3.5); // coord of global values
                     const float2 iconDataUV = float2((1.0/8.0)*1.5,(1.0/32.0)*3.5); // coord of left-most icon values
                     const float2 iconDataUVOffset = float2(1.0/8.0,0); // per icon id offset for icon values
                     const float2 iconOrigin = float2(0.0,1.0/8.0); // UV of top left icon
@@ -470,10 +472,13 @@ PixelShader = {
 
                     // colour gradient y coord
                     float iconColourY = (1.0/32.0) * 2.5 + (gradOffset / 16.0);
+                    float backgroundColourY = (1.0/32.0) * 3.5 + (gradOffset / 16.0);
 
                     // start off the background
-                    //float4 background = float4(0.0,0.0,0.0,1.0);
-                    float4 background = tex2Dportrait((layers - 0.25) / layers, iconColourY);
+                    float4 backgroundOuter = tex2Dportrait((1.0/32.0) * 0.5, backgroundColourY);
+                    float4 backgroundInner = tex2Dportrait((1.0/32.0) * 1.5, backgroundColourY);
+
+                    float4 background = lerp(backgroundOuter, backgroundInner, vMasks.g);
                     background.a = 1;
                     // screen coords
                     float2 screen = In.vPos.xy;
@@ -561,18 +566,20 @@ PixelShader = {
                             frame += floor(frac(orientationSelect) * totalFrames);
                             frame = mod(frame, totalFrames);
 
-                            // if the frame isn't a buffer, draw
-                            if (frame < iconFrames) {
-                                // sample texture
-                                float4 layer = tex2Dportrait(iconOrigin + iconSize * float2(frame, icon) + texCoord * iconSize);
-
-                                // sample colour gradient
-                                float4 layerColour = tex2Dportrait((1.0/layers) * (((layers-1)-i)+0.5), iconColourY);
-                                layer *= layerColour;
-
-                                // alpha mix
-                                background.rgb = background.rgb * (1 - layer.a) + layer.rgb * layer.a;
+                            // if the frame is a buffer, display the last frame in the sequence
+                            if (frame >= iconFrames) {
+                                frame = iconFrames-1;
                             }
+
+                            // sample texture
+                            float4 layer = tex2Dportrait(iconOrigin + iconSize * float2(frame, icon) + texCoord * iconSize);
+
+                            // sample colour gradient and multiply
+                            float4 layerColour = tex2Dportrait((1.0/layers) * (((layers-1)-i)+0.5), iconColourY);
+                            layer *= layerColour;
+
+                            // alpha mix into background
+                            background.rgb = background.rgb * (1 - layer.a) + layer.rgb * layer.a;
                         }
                     }
 
