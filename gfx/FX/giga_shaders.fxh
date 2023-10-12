@@ -515,7 +515,7 @@ PixelShader = {
                         coord.y += vUVAnimationTime * 124.9;
 
                         // determine grid coordinates
-                        int2 grid = floor(coord / iconPixelSize);
+                        float2 grid = floor(coord / iconPixelSize);
 
                         // random value for icon selection
                         float select = rand(grid * 0.0022734);
@@ -526,12 +526,12 @@ PixelShader = {
                             float orientationSelect = rand((grid + float2(1,3)) * 0.000764);
 
                             // rescale select to 0-1 then pick from the range of icons, times 8 for orientations
-                            int iconSelect = floor((select / iconDensity) * iconTypes * 8);
+                            float iconSelect = floor((select / iconDensity) * iconTypes * 8);
 
-                            int icon = iconSelect / 8; // which row of the texture to use
-                            int orientation = mod(orientationSelect * 8, 8); // rotation and flip
+                            float icon = iconSelect / 8; // which row of the texture to use
+                            float orientation = mod(orientationSelect * 8, 8); // rotation and flip
                             bool flip = ((orientation / 8.0) >= 0.5); // should we mirror the texture
-                            int rotation = mod(orientation, 4); // 0-3 rotation
+                            float rotation = mod(orientation, 4); // 0-3 rotation
 
                             // determine local coordinates for the icon
                             float2 texCoord = frac(coord / iconPixelSize);
@@ -558,11 +558,11 @@ PixelShader = {
                             // sample icon data values
                             float4 iconData = tex2Dportrait(iconDataUV + iconDataUVOffset * icon);
                             float animationRateMult = iconData.r;
-                            int bufferFrames = floor(iconData.g * 0xFF);
-                            int totalFrames = iconFrames + bufferFrames;
+                            float bufferFrames = floor(iconData.g * 0xFF);
+                            float totalFrames = iconFrames + bufferFrames;
 
                             // determine animation frame
-                            int frame = floor( mod( (vUVAnimationTime * animationRate * animationRateMult * iconFrames), totalFrames ) );
+                            float frame = floor( mod( (vUVAnimationTime * animationRate * animationRateMult * iconFrames), totalFrames ) );
                             frame += floor(frac(orientationSelect) * totalFrames);
                             frame = mod(frame, totalFrames);
 
