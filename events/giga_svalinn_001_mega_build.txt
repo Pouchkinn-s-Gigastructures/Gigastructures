@@ -44,7 +44,7 @@ system_event = {
 					is_valid_svalinn_bastion_target = yes
 				}
 			}
-			variable = giga_svalinn_num_neighbor_stars
+			variable = giga_svalinn_num_viable_neighbor_stars
 		}
 		# set a counter variable for scoping
 		set_variable = {
@@ -56,6 +56,7 @@ system_event = {
 			limit = {
 				is_valid_svalinn_bastion_target = yes
 			}
+			set_star_flag = giga_svalinn_neighbor_system_to_@ROOT
 			set_variable = {
 				which = giga_svalinn_neighbor_system_id
 				value = event_target:giga_svalinn_construction_system.giga_svalinn_current_neighbor_system
@@ -68,6 +69,8 @@ system_event = {
 				}
 			}
 		}
+		# release the counter
+		clear_variable = giga_svalinn_current_neighbor_system
 		event_target:giga_svalinn_construction_owner = { country_event = { id = giga_svalinn_construction.011 } }
 	}
 }
@@ -95,7 +98,7 @@ system_event = {
 		owner = { save_event_target_as = giga_svalinn_construction_owner }
 		random_neighbor_system = {
 			limit = {
-				has_star_flag = giga_svalinn_interstellar_target_system
+				has_star_flag = giga_svalinn_interstellar_target_system_from_@PREV
 			}
 			save_event_target_as = giga_svalinn_interstellar_target_system
 		}
@@ -116,7 +119,8 @@ system_event = {
 					effect = {
 						isolate_system = yes
 						set_star_flag = giga_svalinn_interstellar_management_system
-						save_event_target_as = giga_svalinn_interstellar_management_system
+						# TODO: change globals to be per country?
+						save_global_event_target_as = giga_svalinn_interstellar_management_system
 					}
 				}
 				last_created_system = {
@@ -127,6 +131,7 @@ system_event = {
 					set_surveyed = { surveyed = yes }
 					every_system_planet = { set_surveyed = { surveyed = yes } }
 				}
+				# TODO: change to bypass
 				add_hyperlane = {
 					from = event_target:giga_svalinn_construction_owner.capital_scope.solar_system
 					to = event_target:giga_svalinn_interstellar_management_system
@@ -246,199 +251,205 @@ system_event = {
 			which = giga_svalinn_triangle_angle_A_degrees
 			value = value:giga_radian_to_degrees|VAL|giga_calculate_angle_A|
 		}
+		# account for north being at 90 degrees and not 0 for spawn system
+		# (it looks better to have reference system north)
+		#change_variable = {
+		#	which = giga_svalinn_triangle_angle_A_degrees
+		#	value = -90
+		#}
 	}
 }
 
 ########################################################################################################
 
 # ship implementation
-system_event = {
-	id = giga_svalinn_construction.090
-	is_triggered_only = yes
-	hide_window = yes
-
-	trigger = {
-		has_star_flag = has_svalinn_platform_mega
-	}
-
-	immediate = {
-		# event targets not preserved, resave them
-		save_event_target_as = giga_svalinn_construction_system
-		owner = { save_event_target_as = giga_svalinn_construction_owner }
-		random_neighbor_system = {
-			limit = {
-				has_star_flag = giga_svalinn_interstellar_target_system
-			}
-			save_event_target_as = giga_svalinn_interstellar_target_system
-		}
-		create_fleet = {
-			name = "NAME_svalinn_system_angle_measure"
-			effect = {
-				set_fleet_flag = giga_svalinn_hyperlane_traveller
-				set_owner = event_target:giga_svalinn_construction_owner
-				create_ship_design = {
-					design = "NAME_svalinn_system_angle_measure"
-				}
-				create_ship = {
-					name = "NAME_svalinn_hyperlane_traveller"
-					design = last_created_design
-				}
-				set_location = {
-					target = event_target:giga_svalinn_interstellar_target_system
-					distance = 1
-					angle = 0
-				}
-			}
-		}
-		last_created_fleet = {
-			set_fleet_stance = passive
-			set_aggro_range_measure_from = return_point
-			set_aggro_range = 0
-			clear_orders = yes
-			clear_fleet_actions = this
-			queue_actions = {
-				move_to = event_target:giga_svalinn_construction_system
-			}
-		}
-	}
-}
-
-## on_entering_system_fleet
-# Scope = Fleet
-# From = System
-fleet_event = {
-	id = giga_svalinn_construction.091
-	is_triggered_only = yes
-	hide_window = yes
-
-	trigger = {
-		has_fleet_flag = giga_svalinn_hyperlane_traveller
-		from = { has_star_flag = has_svalinn_platform_mega }
-	}
-
-	immediate = {
-		create_ambient_object = {
-			type = giga_svalinn_system_angle_measure_object
-			location = this
-		}
-		last_created_ambient_object = {
-			set_ambient_object_flag = giga_svalinn_hyperlane_entry
-			save_event_target_as = giga_svalinn_hyperlane_entry
-		}
-		from = { system_event = { id = giga_svalinn_construction.092 } }
-		delete_fleet = this
-	}
-}
-
-# creates static ambient objects for measuring purposes
-system_event = {
-	id = giga_svalinn_construction.092
-	is_triggered_only = yes
-	hide_window = yes
-
-	trigger = {
-		has_star_flag = has_svalinn_platform_mega
-	}
-
-	immediate = {
-		# event targets not preserved, resave them
-		save_event_target_as = giga_svalinn_construction_system
-		owner = { save_event_target_as = giga_svalinn_construction_owner }
-		random_neighbor_system = {
-			limit = {
-				has_star_flag = giga_svalinn_interstellar_target_system
-			}
-			save_event_target_as = giga_svalinn_interstellar_target_system
-		}
-
-		# north
-		create_ambient_object = {
-			type = giga_svalinn_system_angle_measure_object
-		}
-		last_created_ambient_object = {
-			set_ambient_object_flag = giga_svalinn_system_north
-			save_event_target_as = giga_svalinn_system_north
-			set_location = {
-				target = star
-				distance = 200
-				angle = 90
-			}
-		}
-
-		# west
-		create_ambient_object = {
-			type = giga_svalinn_system_angle_measure_object
-		}
-		last_created_ambient_object = {
-			set_ambient_object_flag = giga_svalinn_system_west
-			save_event_target_as = giga_svalinn_system_west
-			set_location = {
-				target = star
-				distance = 200
-				angle = 180
-			}
-		}
-		system_event = { id = giga_svalinn_construction.093 }
-	}
-}
-
-system_event = {
-	id = giga_svalinn_construction.093
-	is_triggered_only = yes
-	hide_window = yes
-
-	trigger = {
-		has_star_flag = has_svalinn_platform_mega
-	}
-
-	immediate = {
-		set_variable = {
-			which = giga_svalinn_triangle_side_a
-			value = 1
-		}
-		set_variable = {
-			which = giga_svalinn_triangle_side_b
-			value = 1
-		}
-		set_variable = {
-			which = giga_svalinn_triangle_side_c
-			value = 1
-		}
-
-		event_target:giga_svalinn_system_north = {
-			export_trigger_value_to_variable = {
-				trigger = distance
-				parameters = {
-					source = event_target:giga_svalinn_hyperlane_entry
-					type = euclidean
-					same_solar_system = yes
-				}
-				variable = event_target:giga_svalinn_construction_system.giga_svalinn_triangle_side_a
-			}
-			export_trigger_value_to_variable = {
-				trigger = distance
-				parameters = {
-					source = event_target:giga_svalinn_system_west
-					type = euclidean
-					same_solar_system = yes
-				}
-				variable = event_target:giga_svalinn_construction_system.giga_svalinn_triangle_side_b
-			}
-		}
-		event_target:giga_svalinn_system_west = {
-			export_trigger_value_to_variable = {
-				trigger = distance
-				parameters = {
-					source = event_target:giga_svalinn_hyperlane_entry
-					type = euclidean
-					same_solar_system = yes
-				}
-				variable = event_target:giga_svalinn_construction_system.giga_svalinn_triangle_side_c
-			}
-		}
-	}
-
-}
+#system_event = {
+#	id = giga_svalinn_construction.090
+#	is_triggered_only = yes
+#	hide_window = yes
+#
+#	trigger = {
+#		has_star_flag = has_svalinn_platform_mega
+#	}
+#
+#	immediate = {
+#		# event targets not preserved, resave them
+#		save_event_target_as = giga_svalinn_construction_system
+#		owner = { save_event_target_as = giga_svalinn_construction_owner }
+#		random_neighbor_system = {
+#			limit = {
+#				has_star_flag = giga_svalinn_interstellar_target_system
+#			}
+#			save_event_target_as = giga_svalinn_interstellar_target_system
+#		}
+#		create_fleet = {
+#			name = "NAME_svalinn_system_angle_measure"
+#			effect = {
+#				set_fleet_flag = giga_svalinn_hyperlane_traveller
+#				set_owner = event_target:giga_svalinn_construction_owner
+#				create_ship_design = {
+#					design = "NAME_svalinn_system_angle_measure"
+#				}
+#				create_ship = {
+#					name = "NAME_svalinn_hyperlane_traveller"
+#					design = last_created_design
+#				}
+#				set_location = {
+#					target = event_target:giga_svalinn_interstellar_target_system
+#					distance = 1
+#					angle = 0
+#				}
+#			}
+#		}
+#		last_created_fleet = {
+#			set_fleet_stance = passive
+#			set_aggro_range_measure_from = return_point
+#			set_aggro_range = 0
+#			clear_orders = yes
+#			clear_fleet_actions = this
+#			queue_actions = {
+#				move_to = event_target:giga_svalinn_construction_system
+#			}
+#		}
+#	}
+#}
+#
+### on_entering_system_fleet
+## Scope = Fleet
+## From = System
+#fleet_event = {
+#	id = giga_svalinn_construction.091
+#	is_triggered_only = yes
+#	hide_window = yes
+#
+#	trigger = {
+#		has_fleet_flag = giga_svalinn_hyperlane_traveller
+#		from = { has_star_flag = has_svalinn_platform_mega }
+#	}
+#
+#	immediate = {
+#		create_ambient_object = {
+#			type = giga_svalinn_system_angle_measure_object
+#			location = this
+#		}
+#		last_created_ambient_object = {
+#			set_ambient_object_flag = giga_svalinn_hyperlane_entry
+#			save_event_target_as = giga_svalinn_hyperlane_entry
+#		}
+#		from = { system_event = { id = giga_svalinn_construction.092 } }
+#		delete_fleet = this
+#	}
+#}
+#
+## creates static ambient objects for measuring purposes
+#system_event = {
+#	id = giga_svalinn_construction.092
+#	is_triggered_only = yes
+#	hide_window = yes
+#
+#	trigger = {
+#		has_star_flag = has_svalinn_platform_mega
+#	}
+#
+#	immediate = {
+#		# event targets not preserved, resave them
+#		save_event_target_as = giga_svalinn_construction_system
+#		owner = { save_event_target_as = giga_svalinn_construction_owner }
+#		random_neighbor_system = {
+#			limit = {
+#				has_star_flag = giga_svalinn_interstellar_target_system
+#			}
+#			save_event_target_as = giga_svalinn_interstellar_target_system
+#		}
+#
+#		# north
+#		create_ambient_object = {
+#			type = giga_svalinn_system_angle_measure_object
+#		}
+#		last_created_ambient_object = {
+#			set_ambient_object_flag = giga_svalinn_system_north
+#			save_event_target_as = giga_svalinn_system_north
+#			set_location = {
+#				target = star
+#				distance = 200
+#				angle = 90
+#			}
+#		}
+#
+#		# west
+#		create_ambient_object = {
+#			type = giga_svalinn_system_angle_measure_object
+#		}
+#		last_created_ambient_object = {
+#			set_ambient_object_flag = giga_svalinn_system_west
+#			save_event_target_as = giga_svalinn_system_west
+#			set_location = {
+#				target = star
+#				distance = 200
+#				angle = 180
+#			}
+#		}
+#		system_event = { id = giga_svalinn_construction.093 }
+#	}
+#}
+#
+#system_event = {
+#	id = giga_svalinn_construction.093
+#	is_triggered_only = yes
+#	hide_window = yes
+#
+#	trigger = {
+#		has_star_flag = has_svalinn_platform_mega
+#	}
+#
+#	immediate = {
+#		set_variable = {
+#			which = giga_svalinn_triangle_side_a
+#			value = 1
+#		}
+#		set_variable = {
+#			which = giga_svalinn_triangle_side_b
+#			value = 1
+#		}
+#		set_variable = {
+#			which = giga_svalinn_triangle_side_c
+#			value = 1
+#		}
+#
+#		event_target:giga_svalinn_system_north = {
+#			export_trigger_value_to_variable = {
+#				trigger = distance
+#				parameters = {
+#					source = event_target:giga_svalinn_hyperlane_entry
+#					type = euclidean
+#					same_solar_system = yes
+#				}
+#				variable = event_target:giga_svalinn_construction_system.giga_svalinn_triangle_side_a
+#			}
+#			export_trigger_value_to_variable = {
+#				trigger = distance
+#				parameters = {
+#					source = event_target:giga_svalinn_system_west
+#					type = euclidean
+#					same_solar_system = yes
+#				}
+#				variable = event_target:giga_svalinn_construction_system.giga_svalinn_triangle_side_b
+#			}
+#		}
+#		event_target:giga_svalinn_system_west = {
+#			export_trigger_value_to_variable = {
+#				trigger = distance
+#				parameters = {
+#					source = event_target:giga_svalinn_hyperlane_entry
+#					type = euclidean
+#					same_solar_system = yes
+#				}
+#				variable = event_target:giga_svalinn_construction_system.giga_svalinn_triangle_side_c
+#			}
+#		}
+#	}
+#
+#}
 ########################################################################################################
 
 # spawns system
@@ -449,7 +460,7 @@ system_event = {
 	hide_window = yes
 
 	trigger = {
-		always = yes
+		has_star_flag = has_svalinn_platform_mega
 	}
 
 	immediate = {
@@ -458,59 +469,19 @@ system_event = {
 		owner = { save_event_target_as = giga_svalinn_construction_owner }
 		random_neighbor_system = {
 			limit = {
-				has_star_flag = giga_svalinn_interstellar_target_system
+				has_star_flag = giga_svalinn_interstellar_target_system_from_@ROOT
 			}
 			save_event_target_as = giga_svalinn_interstellar_target_system
 		}
 
-		event_target:giga_svalinn_construction_system = {
-			# spawn_system does not work with variables, so script value export is used
-			# can not use distance variable directly, since the script does not understand
-			# the scope of a script variable inside of a spawn_system block and cannot find the distance
-			# so set variable, then export that variable, not redundant at all
-			set_variable = {
-				which = giga_calculated_distance_to_y_system
-				value = value:giga_calculate_half_of_distance|system_target_scope|giga_svalinn_interstellar_target_system|
-			}
-			set_variable = {
-				which = test
-				value = 180
-			}
-			
-			spawn_system = {
-				min_distance = 10
-				max_distance = 10
-				min_orientation_angle = 90
-				max_orientation_angle = 90
-				hyperlane = no
-				is_discovered = yes
-				initializer = giga_svalinn_interstellar_init
-				effect = {
-					isolate_system = yes
-					save_event_target_as = giga_svalinn_interstellar_new_system
-				}
-			}
-			last_created_system = {
-				create_starbase = {
-					size = starbase_citadel
-					owner = event_target:giga_svalinn_construction_owner
-				}
-				set_surveyed = { surveyed = yes }
-				every_system_planet = { set_surveyed = { surveyed = yes } }
-			}
-			remove_hyperlane = {
-				from = event_target:giga_svalinn_construction_system
-				to = event_target:giga_svalinn_interstellar_target_system
-			}
-			add_hyperlane = {
-				from = event_target:giga_svalinn_construction_system
-				to = event_target:giga_svalinn_interstellar_new_system
-			}
-			add_hyperlane = {
-				from = event_target:giga_svalinn_interstellar_target_system
-				to = event_target:giga_svalinn_interstellar_new_system
-			}
+		# effect that spawns the new system
+		giga_svalinn_spawn_halfway_system = {
+			construction_owner = giga_svalinn_construction_owner
+			giga_system_x = giga_svalinn_construction_system
+			giga_system_y = giga_svalinn_interstellar_target_system
+			calculated_angle_variable = giga_svalinn_triangle_angle_A_degrees
 		}
+
 	}
 }
 
