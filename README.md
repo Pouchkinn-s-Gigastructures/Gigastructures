@@ -9,19 +9,21 @@ Navigate to `Documents/Paradox Interactive/Stellaris/mod/` (or wherever you have
 
 Irony Mod Manager will autogenerate the .mod file needed to locate the mod, so if using that the next steps are not needed, just launch Irony. [Irony can be found here](https://bcssov.github.io/IronyModManager/).
 
-If using the base paradox launcher, you will then need to create another (text) file called Gigastructures-Debug.mod with the following contents:
+If using the base paradox launcher, you will then need to create another (text) file called Gigastructures-Live-Branch.mod with the following contents:
 
 ```
 path="mod/Gigastructures-Live-Branch" 
-name="Gigastructural Engineering & More (DEBUG)"
+name="Gigastructural Engineering & More (Github)"
 picture="thumbnail.png"
 remote_file_id="1121692237"
 tags={
     "Gameplay"
     "Megastructures"
 }
-supported_version="3.8.*"
+supported_version="3.9.*"
 ```
+
+Place the .mod file in `Documents/Paradox Interactive/Stellaris/mod/`. That is *alongside* the Gigastructures folder with the mod content, not inside it.
 
 After that you should be good to go and can find the mod in your launcher of choice.
 
