@@ -25,7 +25,7 @@ supported_version="3.9.*"
 
 Place the .mod file in `Documents/Paradox Interactive/Stellaris/mod/`. That is *alongside* the Gigastructures folder with the mod content, not inside it.
 
-After that you should be good to go and can find the mod in your launcher of choice.
+After that you should be good to go and can find the mod in your launcher of choice. [See also the Wiki page on how local mods work.](https://stellaris.paradoxwikis.com/Modding#Mod_management)
 
 If experienced with Github use, it is also possible to clone the repository through the usual methods into the `Documents/Paradox Interactive/Stellaris/mod/` folder, create the necessary .mod file or generate it, and keep the mod up to date with Github tools.
 
