@@ -352,11 +352,30 @@ PixelShader = {
 	]]
 }
 
-#// rainbow blokkat
+#// new style blokkat
 PixelShader = {
 	MainCode GigaBlokkat
 		ConstantBuffers = { PortraitCommon, EigthKind, Shadow }
 	[[
+        float rand(float2 co){
+          return frac(sin(dot(co.xy ,float2(12.9898,78.233))) * 43758.5453);
+        }
+
+        // get the appropriate diffuse map
+        float4 tex2Dportrait(float4 uv) {
+            float4 col;
+            if( CustomDiffuseTexture > 0.5f ) {
+                col = tex2Dlod( PortraitCharacter, uv );
+            } else {
+                col = tex2Dlod( DiffuseMap, uv );
+            }
+            // need to adjust the gradient textures for... whatever reason, thanks game
+            col.rgb = ToGamma(col.rgb);
+            return col;
+        }
+        float4 tex2Dportrait(float2 uv) { return tex2Dportrait(float4(uv,0,0)); }
+        float4 tex2Dportrait(float u, float v) { return tex2Dportrait(float2(u,v)); }
+
 		float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
 		{
 		    // model space coords
@@ -379,24 +398,237 @@ PixelShader = {
             float innerShift = vUVAnimationTime + 0.5 + pos.x * 0.01 + pos.y * 0.02;
             innerShift += vMasks.b * innerGradientScale;
 
+            // vertical = gradient is down the blokkat, otherwise across
+            const float limit = 0.2;
+            #ifdef VERTICAL
+                float gradOffset = (7 - pos.y) * 0.05 - (limit * 0.4);
+            #else
+                float gradOffset = pos.x * limit * 0.5;
+            #endif
+            gradOffset = clamp(gradOffset, -limit, limit);
+
+            #ifdef EXTENDED_GRADIENT
+                // the bigger texture has the gradients in the top 16 pixels of 256
+                const float gradHeight = 1.0 / 16;
+            #else
+                // basic texture has the gradient across the entire height of the texture (256x16)
+                const float gradHeight = 1.0;
+            #endif
+
             // the top half of the gradient image is the outside, bottom half is inside
-            float4 UVOuterGrad = float4( outerShift, 0.25, 0.0, 0.0 );
-            float4 UVInnerGrad = float4( innerShift, 0.75, 0.0, 0.0 );
+            float2 UVOuterGrad = float2( outerShift, (0.25 + gradOffset) * gradHeight );
+            float2 UVInnerGrad = float2( innerShift, (0.75 + gradOffset) * gradHeight );
 
             // get the gradient textures
-            float4 vOuterGradient;
-            float4 vInnerGradient;
-            if( CustomDiffuseTexture > 0.5f ) {
-                vOuterGradient = tex2Dlod( PortraitCharacter, UVOuterGrad );
-                vInnerGradient = tex2Dlod( PortraitCharacter, UVInnerGrad );
-            } else {
-                vOuterGradient = tex2Dlod( DiffuseMap, UVOuterGrad );
-                vInnerGradient = tex2Dlod( DiffuseMap, UVInnerGrad );
-            }
+            float4 vOuterGradient = tex2Dportrait( UVOuterGrad );
+            float4 vInnerGradient = tex2Dportrait( UVInnerGrad );
 
-            // need to adjust the gradient textures for... whatever reason, thanks game
-            vOuterGradient.rgb = ToGamma(vOuterGradient.rgb);
-            vInnerGradient.rgb = ToGamma(vInnerGradient.rgb);
+            // extra stuff for variants with the larger texture
+            #ifdef EXTENDED_GRADIENT
+                // #####################################################################################################
+                // cosmic variant, layered icon fields
+                //
+                // IMAGE FORMAT:
+                // expects 256x256, use 8.8.8.8 BGRA to preserve values, DXT5 will smear things
+                //
+                // rows 0-15 = external gradient as normal, but uses alpha to fade through to background, is additive
+                // rows 16-31 = internal gradient, works the same as external
+                // rows 32-47 = colour gradient for icons, each layer will sample a colour, is multiplicative
+                //   closer layers are towards the left end, deeper towards the right, so colours fade left to right into the distance
+                // all three gradients can have vertical gradients in them which will be applied horizontally or vertically per shader variant
+                // rows 48-63 = BACKGROUNDS AND TECHNICAL:
+                //      columns 0-7 = background colour for external parts, adjustable as the gradients above
+                //      columns 8-15 = background colour for internal parts, adjustable as the gradients above
+                //      columns 16-31 = global data.
+                //          red = icon density, e.g. 127 = 0.5 = half of the cells per level will be filled
+                //          green = initial scaling, <= 0.5 values are doubled and used as a multiplier
+                //              > 0.5 values are subtracted from 1, doubled, and inverted
+                //              e.g. 0.1 = 1*0.1*2 = 1*0.2 = 0.2x, 0.8 = 1/((1-0.8)*2) = 1/0.4 = 2.5x
+                //          blue = per layer size multiplier
+                //          alpha unused
+                //      columns 32-255 = seven 32 column regions corresponding to the seven rows of icons below
+                //      left to right corresponds to each row in turn
+                //          red = animation speed multiplier, e.g. 127 = 0.5 = half frame rate
+                //          green = animation delay, each value is a 1 frame delay between the end of the previous cycle and next
+                //              e.g. 13 = 8 frames of animation, 13 frames paused on the last frame, 0 = continual animation
+                //          blue and alpha unused
+                // rows 64-255 = seven 32 row regions, each containing eight 32 column sub-regions containing animation frames
+                //   an icon row is picked randomly for use and cycles between the frames in that row, governed by the corresponding
+                //   technical region in rows 48-63, columns 32-255. Full colour and alpha, but multiplied against the colour gradient
+                //   in rows 32-47, sampling based on which layer is being rendered.
+                #ifdef COSMIC
+                    // cosmic consts
+                    const int iconTypes = 7; // number of icon rows
+                    const int iconFrames = 8; // number of frames per row
+                    const int layers = 16; // number of icon layers
+                    const float animationRate = 25.0; // base fps at 1.0 UV animation rate
+                    const float2 globalsUV = float2((1.0/8.0)*0.75,(1.0/32.0)*3.5); // coord of global values
+                    const float2 iconDataUV = float2((1.0/8.0)*1.5,(1.0/32.0)*3.5); // coord of left-most icon values
+                    const float2 iconDataUVOffset = float2(1.0/8.0,0); // per icon id offset for icon values
+                    const float2 iconOrigin = float2(0.0,1.0/8.0); // UV of top left icon
+                    const float2 iconSize = float2(1.0/8.0,1.0/8.0); // UV size of icon
+                    const float iconPixelSize = 32.0; // how many pixels of screen space does an icon occupy at 100% size?
+                    const float iconCrop = 1.0/iconPixelSize; // UV crop to prevent bleed
+
+                    // colour gradient y coord
+                    float iconColourY = (1.0/32.0) * 2.5 + (gradOffset / 16.0);
+                    float backgroundColourY = (1.0/32.0) * 3.5 + (gradOffset / 16.0);
+
+                    // start off the background
+                    float4 backgroundOuter = tex2Dportrait((1.0/32.0) * 0.5, backgroundColourY);
+                    float4 backgroundInner = tex2Dportrait((1.0/32.0) * 1.5, backgroundColourY);
+
+                    float4 background = lerp(backgroundOuter, backgroundInner, vMasks.g);
+                    background.a = 1;
+                    // screen coords
+                    float2 screen = In.vPos.xy;
+                    screen.y *= -1;
+
+                    // get global values
+                    float4 globals = tex2Dportrait(globalsUV);
+                    float iconDensity = max(0.01, globals.r);
+                    float initialScaling = globals.g;
+                    if (initialScaling > 0.5) {
+                        initialScaling = 1.0 / ((1.0 - initialScaling) * 2.0);
+                    } else {
+                        initialScaling *= 2.0;
+                    }
+                    float scalingPerLevel = globals.b;
+
+                    // draw several layers of icons
+                    for(int i = 0; i<layers; i++) {
+                        // rotation angle for this layer
+                        float angle = 2.327 * (i+0.2);
+
+                        // calculate scale factor
+                        float scaleFactor = (initialScaling * pow(scalingPerLevel, (layers-1)-i));
+
+                        // start with the screen coord, offset, scale
+                        float2 coord = (screen / scaleFactor) + float2(i*234,i*764);
+
+                        // rotate the coordinate space
+                        float oc = cos(angle);
+                        float os = sin(angle);
+                        coord = float2(coord.x * oc - coord.y * os, coord.x * os + coord.y * oc);
+
+                        // add scrolling
+                        coord.y += vUVAnimationTime * 124.9;
+
+                        // determine grid coordinates
+                        float2 grid = floor(coord / iconPixelSize);
+
+                        // random value for icon selection
+                        float select = rand(grid * 0.0022734);
+
+                        // skip if random < density, as this cell should be empty
+                        if (select < iconDensity) {
+                            // random for deriving orientation
+                            float orientationSelect = rand((grid + float2(1,3)) * 0.000764);
+
+                            // rescale select to 0-1 then pick from the range of icons, times 8 for orientations
+                            float iconSelect = floor((select / iconDensity) * iconTypes * 8);
+
+                            float icon = iconSelect / 8; // which row of the texture to use
+                            float orientation = mod(orientationSelect * 8, 8); // rotation and flip
+                            bool flip = ((orientation / 8.0) >= 0.5); // should we mirror the texture
+                            float rotation = mod(orientation, 4); // 0-3 rotation
+
+                            // determine local coordinates for the icon
+                            float2 texCoord = frac(coord / iconPixelSize);
+                            // mirror horizontally if we need to
+                            if (flip) {
+                                texCoord.x = 1 - texCoord.x;
+                            }
+
+                            // adjust for rotations
+                            if (rotation == 1) {
+                                texCoord = float2(1-texCoord.y,texCoord.x);
+                                //background.r = 1;
+                            } else if (rotation == 2) {
+                                texCoord = float2(1-texCoord.x,1-texCoord.y);
+                                //background.g = 1;
+                            } else if (rotation == 3) {
+                                texCoord = float2(texCoord.y,1-texCoord.x);
+                                //background.b = 1;
+                            }
+
+                            // clamp slightly to prevent bleed
+                            texCoord = clamp(texCoord, iconCrop, 1.0 - iconCrop);
+
+                            // sample icon data values
+                            float4 iconData = tex2Dportrait(iconDataUV + iconDataUVOffset * icon);
+                            float animationRateMult = iconData.r;
+                            float bufferFrames = floor(iconData.g * 0xFF);
+                            float totalFrames = iconFrames + bufferFrames;
+
+                            // determine animation frame
+                            float frame = floor( mod( (vUVAnimationTime * animationRate * animationRateMult * iconFrames), totalFrames ) );
+                            frame += floor(frac(orientationSelect) * totalFrames);
+                            frame = mod(frame, totalFrames);
+
+                            // if the frame is a buffer, display the last frame in the sequence
+                            if (frame >= iconFrames) {
+                                frame = iconFrames-1;
+                            }
+
+                            // sample texture
+                            float4 layer = tex2Dportrait(iconOrigin + iconSize * float2(frame, icon) + texCoord * iconSize);
+
+                            // sample colour gradient and multiply
+                            float4 layerColour = tex2Dportrait((1.0/layers) * (((layers-1)-i)+0.5), iconColourY);
+                            layer *= layerColour;
+
+                            // alpha mix into background
+                            background.rgb = background.rgb * (1 - layer.a) + layer.rgb * layer.a;
+                        }
+                    }
+
+                    // mix into gradients for recolouring
+                    vOuterGradient.rgb = background.rgb + vOuterGradient.rgb * vOuterGradient.a;
+                    vInnerGradient.rgb = background.rgb + vInnerGradient.rgb * vInnerGradient.a;
+                #endif
+                // end cosmic
+                // #####################################################################################################
+
+                // #####################################################################################################
+                // screen texture variant, screen-space texture on the inside
+                //
+                // IMAGE FORMAT:
+                // expects 256x256, use 8.8.8.8 BGRA to preserve values, DXT5 will smear things
+                //
+                // rows 0-15 = external gradient as normal, but uses alpha to fade through to background, is additive
+                // rows 16-31 = internal gradient, works the same as external
+                // rows 32-255 = texture and technical
+                //      columns 0-239 = the texture
+                //      columns 240-255 = TECHNICAL
+                //          TODO: decide stuff here
+                #ifdef SCREEN_TEXTURE
+                    const float2 textureUV = float2(0.0,1.0/16.0);
+                    const float2 textureDims = float2(15.0/16.0, 15.0/16.0);
+                    const float2 scrollUV = float2(15.5/16.0, 1.5/16.0);
+                    const float crop = 1.0/240.0;
+
+                    // get data
+                    float4 data = tex2Dportrait(scrollUV);
+                    float2 scrollDir = data.rg * 2.0 - 1.0;
+
+                    // screen coords
+                    float2 screen = In.vPos.xy;
+                    screen.y *= -1;
+
+                    float2 sampleUV = frac((screen / 240) - scrollDir * vUVAnimationTime);
+                    sampleUV = clamp(sampleUV, crop, 1-crop);
+
+                    float4 sampled = tex2Dportrait(textureUV + textureDims * sampleUV);
+
+                    vInnerGradient.rgb = sampled.rgb;
+
+                    //debug, uncomment to make external texture match inner
+                    //vOuterGradient.rgb = vInnerGradient.rgb;
+                #endif
+                // end screen texture
+                // #####################################################################################################
+            #endif
 
             // recolour chassis with the colour map
 			float3 recolouredOuter = max(vOuterGradient.rgb * vDiffuse.r, vDiffuse.ggg);
@@ -407,6 +639,8 @@ PixelShader = {
 
             // mix recoloured with base
 			vDiffuse.rgb = lerp(vDiffuse.rgb, recoloured, vMasks.r);
+			//vDiffuse.rgb = vOuterGradient.rgb; // uncomment to peel the blokkat (outer gradient)
+			//vDiffuse.rgb = vInnerGradient.rgb; // uncomment to REALLY peel the blokkat (INNER gradient)
 
 			return vDiffuse;
 		}
