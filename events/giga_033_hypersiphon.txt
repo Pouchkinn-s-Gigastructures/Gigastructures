@@ -1,5 +1,6 @@
 namespace = giga_hypersiphon
 
+# tracker situation attached to hypersiphon mega starts the instability situation for owning player if they have instability gain
 situation_event = {
     id = giga_hypersiphon.001
     hide_window = yes
@@ -29,5 +30,425 @@ situation_event = {
                 type = giga_situation_hypersiphon_instability
             }
         }
+    }
+}
+
+# instability intro event
+country_event = {
+    id = giga_hypersiphon.002
+    title = giga_hypersiphon.002.name
+    desc = giga_hypersiphon.002.desc
+    picture = GFX_evt_shroudwalker_enclave
+    show_sound = event_psionic
+    is_triggered_only = yes
+
+    trigger = {
+        not = { has_country_flag = hypersiphon_instability_intro }
+    }
+
+    immediate = {
+        set_country_flag = hypersiphon_instability_intro
+    }
+
+    option = {
+        name = giga_hypersiphon.002.a
+
+        tooltip = {
+            start_situation = {
+                type = giga_situation_hypersiphon_instability
+            }
+        }
+    }
+}
+
+# instability random event gateway
+situation_event = {
+    id = giga_hypersiphon.003
+    hide_window = yes
+    is_triggered_only = yes
+
+    immediate = {
+        random_list = {
+            0 = {
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_1
+                    add = 96 # every 8 years
+                }
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_2
+                    add = 72 # every 6 years
+                }
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_3
+                    add = 48 # every 4 years
+                }
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_4
+                    add = 24 # every 2 years
+                }
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_5
+                    add = 12 # every year
+                }
+
+                # mitigation
+                modifier = {
+                    current_situation_approach = giga_situation_hypersiphon_instability_approach_mitigate
+                    multiply = 2 # twice as likely to be nothing when mitigating
+                }
+            }
+            1 = {
+                # random bad effect
+                situation_event = {
+                    id = giga_hypersiphon.004
+                    random = 29
+                }
+            }
+        }
+    }
+}
+
+# bad effect gateway
+situation_event = {
+    id = giga_hypersiphon.004
+    hide_window = yes
+    is_triggered_only = yes
+
+    trigger = {
+        not = {
+            has_situation_flag = random_event_cooldown
+        }
+    }
+
+    immediate = {
+        set_timed_situation_flag = {
+            flag = random_event_cooldown
+            days = 75
+        }
+        random_list = {
+            100 = {
+                # sludge and other planet issues
+
+
+            }
+            20 = {
+                # shroud cows
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_1
+                    multiply = 2 # more common in stage 1
+                }
+
+
+            }
+            100 = {
+                # visions of doom and other pop problems
+                modifier = {
+                    current_stage >= giga_situation_hypersiphon_instability_stage_4
+                    multiply = 2 # more common stage 4+
+                }
+
+
+            }
+            10 = {
+                # minor incursion
+                modifier = {
+                    current_stage >= giga_situation_hypersiphon_instability_stage_2
+                    multiply = 2
+                }
+                modifier = {
+                    current_stage >= giga_situation_hypersiphon_instability_stage_3
+                    multiply = 2
+                }
+                modifier = {
+                    current_stage >= giga_situation_hypersiphon_instability_stage_4
+                    multiply = 4
+                }
+                modifier = {
+                    current_stage >= giga_situation_hypersiphon_instability_stage_5
+                    multiply = 2 # gets more likely with later stages
+                }
+
+
+            }
+        }
+    }
+}
+
+########################################################################################################################
+# a series of unfortunate events (random bad things)
+
+# random planet gets nasty blocker
+situation_event = {
+    id = giga_hypersiphon.010
+    title = giga_hypersiphon.010.name
+    desc = giga_hypersiphon.010.desc
+    picture = GFX_evt_shrouded_planet
+    show_sound = event_psionic
+    is_triggered_only = yes
+    situation = this
+    location = event_target:hypersiphon_target
+
+    immediate = {
+        owner = {
+            random_owned_planet = {
+                weights = {
+                    base = 1
+                    modifier = {
+                        has_planet_flag = hypersipon_instability_effect
+                        multiply = 0.01
+                    }
+                    modifier = {
+                        not = {
+                            has_active_building = building_giga_shroud_conduit
+                        }
+                        multiply = 0.01
+                    }
+                }
+
+                save_event_target_as = hypersiphon_target
+                set_timed_planet_flag = {
+                    flag = hypersipon_instability_effect
+                    years = 10
+                }
+            }
+        }
+    }
+
+    option = {
+        name = giga_hypersiphon.010.a
+
+        event_target:hypersiphon_target = {
+            random_list = {
+                1 = {
+                    add_deposit = d_bomb_crater
+                }
+                1 = {
+                    add_deposit = d_city_ruins
+                }
+                1 = {
+                    add_deposit = d_active_volcano
+                }
+                1 = {
+                    modifier = {
+                        current_stage >= giga_situation_hypersiphon_instability_stage_3
+                        multiply = 1.5
+                    }
+                    add_deposit = d_dangerous_wildlife_blocker
+                }
+                1 = {
+                    modifier = {
+                        current_stage >= giga_situation_hypersiphon_instability_stage_3
+                        multiply = 1.5
+                    }
+                    modifier = {
+                        current_stage >= giga_situation_hypersiphon_instability_stage_4
+                        multiply = 3
+                    }
+                    add_deposit = d_mountain_range
+                }
+            }
+        }
+    }
+}
+
+# random system gets a space debuff and shroud cows
+situation_event = {
+    id = giga_hypersiphon.020
+    title = giga_hypersiphon.020.name
+    desc = {
+        trigger = {
+            not = { owner = { has_country_flag = hypersiphon_instability_cows_seen } }
+        }
+        text = giga_hypersiphon.020.desc.first
+    }
+    desc = {
+        trigger = {
+            owner = { has_country_flag = hypersiphon_instability_cows_seen }
+        }
+        text = giga_hypersiphon.020.desc.other
+    }
+    picture = GFX_evt_tiyanki_observation
+    show_sound = event_psionic
+    is_triggered_only = yes
+    situation = this
+    location = event_target:hypersiphon_target
+
+    immediate = {
+        owner = {
+            if = {
+                limit = {
+                    any_system_within_border = {
+                        not = {
+                            has_star_flag = hypersiphon_instability_effect
+                        }
+                    }
+                }
+
+                random_system_within_border = {
+                    limit = {
+                        not = {
+                            has_star_flag = hypersiphon_instability_effect
+                        }
+                    }
+
+                    weights = {
+                        base = 1
+                        modifier = {
+                            is_bottleneck_system = yes
+                            multiply = 10
+                        }
+                    }
+
+                    save_event_target_as = hypersiphon_target
+                    set_star_flag = hypersiphon_instability_effect
+
+                    #TODO: add visual effects for these, check out the space storm events I guess
+                    random_list = {
+                        10 = {
+                            # slow, shield weakening
+                            add_modifier = {
+                                modifier = space_storm
+                            }
+                        }
+                        10 = {
+                            # armour weakened, hull weakened
+                            add_modifier = {
+                                modifier = space_storm
+                            }
+                        }
+                        10 = {
+                            modifier = {
+                                root = { current_stage >= giga_situation_hypersiphon_instability_stage_4}
+                                multiply = 2
+                            }
+
+                            # slow, shield AND armour weakened
+                            add_modifier = {
+                                modifier = space_storm
+                            }
+                        }
+                        1 = {
+                            modifier = {
+                                root = { current_stage >= giga_situation_hypersiphon_instability_stage_4}
+                                multiply = 10
+                            }
+                            modifier = {
+                                root = { current_stage >= giga_situation_hypersiphon_instability_stage_5}
+                                multiply = 5
+                            }
+
+                            # slowed, shield, armour and hull weakened, DEGEN
+                            add_modifier = {
+                                modifier = space_storm
+                            }
+                        }
+                    }
+                    # clean out the storm spawned here
+                    system_event = {
+                        id = giga_hypersiphon.021
+                        days = 10 #00
+                        random = 8 #00
+                    }
+
+                    # TODO: spawn cows here
+                }
+            }
+            else = {
+                random_system_within_border = {
+                    save_event_target_as = hypersiphon_target
+
+                    #TODO: spawn cows here, and cause some other problems because the system modifiers already exist
+                }
+            }
+        }
+    }
+
+    # first encounter
+    option = {
+        name = giga_hypersiphon.020.a
+
+        trigger = {
+            not = { owner = { has_country_flag = hypersiphon_instability_cows_seen } }
+        }
+    }
+
+    # neutral followups
+    option = {
+        name = giga_hypersiphon.020.b
+
+        trigger = {
+            owner = { has_country_flag = hypersiphon_instability_cows_seen }
+        }
+    }
+
+    # hostile
+    option = {
+        name = giga_hypersiphon.020.c
+
+        trigger = {
+            owner = { has_country_flag = hypersiphon_instability_cows_seen }
+
+        }
+    }
+
+    # make sure they're known for next time
+    after = {
+        hidden_effect = {
+            owner = {
+                set_country_flag = hypersiphon_instability_cows_seen
+            }
+        }
+    }
+}
+
+# shroud cows get cleaned out on timer
+system_event = {
+    id = giga_hypersiphon.021
+    hide_window = yes
+    is_triggered_only = yes
+
+    immediate = {
+        remove_star_flag = hypersiphon_instability_effect
+
+        # remove modifiers
+        switch = {
+            trigger = has_modifier
+            space_storm = { remove_modifier = space_storm }
+        }
+
+        # remove cows
+        every_fleet_in_system = {
+            limit = {
+                has_fleet_flag = hypersiphon_cows
+            }
+            delete_fleet = this
+        }
+
+        # notify system owner
+        if = {
+            limit = {
+                exists = space_owner
+            }
+            space_owner = {
+                country_event = {
+                    id = giga_hypersiphon.022
+                }
+            }
+        }
+    }
+}
+
+# shroud cow clean out notification
+country_event = {
+    id = giga_hypersiphon.022
+    title = giga_hypersiphon.022.name
+    desc = giga_hypersiphon.022.desc
+    picture = GFX_evt_surreal_visions
+    show_sound = event_psionic
+    location = from.star
+    is_triggered_only = yes
+
+    option = {
+        name = giga_hypersiphon.022.a
     }
 }
