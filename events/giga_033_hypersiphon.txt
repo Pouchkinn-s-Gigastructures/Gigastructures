@@ -150,7 +150,9 @@ situation_event = {
                     multiply = 2 # more common stage 4+
                 }
 
-
+                situation_event = {
+                    id = giga_hypersiphon.030
+                }
             }
             10 = {
                 # minor incursion
@@ -180,6 +182,7 @@ situation_event = {
 ########################################################################################################################
 # a series of unfortunate events (random bad things)
 
+########################################################################################################################
 # random planet gets nasty blocker
 situation_event = {
     id = giga_hypersiphon.010
@@ -214,6 +217,36 @@ situation_event = {
                     flag = hypersipon_instability_effect
                     years = 10
                 }
+
+                random_list = {
+                    1 = {
+                        set_planet_flag = hypersiphon_instability_1_1
+                    }
+                    1 = {
+                        set_planet_flag = hypersiphon_instability_1_2
+                    }
+                    1 = {
+                        set_planet_flag = hypersiphon_instability_1_3
+                    }
+                    1 = {
+                        modifier = {
+                            root = { current_stage >= giga_situation_hypersiphon_instability_stage_3 }
+                            multiply = 1.5
+                        }
+                        set_planet_flag = hypersiphon_instability_1_4
+                    }
+                    1 = {
+                        modifier = {
+                            root = { current_stage >= giga_situation_hypersiphon_instability_stage_3 }
+                            multiply = 1.5
+                        }
+                        modifier = {
+                            root = { current_stage >= giga_situation_hypersiphon_instability_stage_4 }
+                            multiply = 3
+                        }
+                        set_planet_flag = hypersiphon_instability_1_5
+                    }
+                }
             }
         }
     }
@@ -222,44 +255,38 @@ situation_event = {
         name = giga_hypersiphon.010.a
 
         event_target:hypersiphon_target = {
-            random_list = {
-                1 = {
+            switch = {
+                trigger = has_planet_flag
+                hypersiphon_instability_1_1 = {
+                    custom_tooltip = giga_hypersiphon.010.result.1
                     add_planet_devastation = 20
                     add_deposit = d_giga_hypersiphon_goop
-                    custom_tooltip = SEPARATOR
+                    remove_planet_flag = hypersiphon_instability_1_1
                 }
-                1 = {
+                hypersiphon_instability_1_2 = {
+                    custom_tooltip = giga_hypersiphon.010.result.2
                     add_planet_devastation = 20
                     add_deposit = d_giga_hypersiphon_goop
                     add_deposit = d_giga_hypersiphon_goop
-                    custom_tooltip = SEPARATOR
+                    remove_planet_flag = hypersiphon_instability_1_2
                 }
-                1 = {
+                hypersiphon_instability_1_3 = {
+                    custom_tooltip = giga_hypersiphon.010.result.3
                     add_planet_devastation = 25
                     add_deposit = d_giga_hypersiphon_goop
                     add_deposit = d_giga_hypersiphon_psionic_anomaly
-                    custom_tooltip = SEPARATOR
+                    remove_planet_flag = hypersiphon_instability_1_3
                 }
-                1 = {
-                 modifier = {
-                        current_stage >= giga_situation_hypersiphon_instability_stage_3
-                        multiply = 1.5
-                    }
+                hypersiphon_instability_1_4 = {
+                    custom_tooltip = giga_hypersiphon.010.result.4
                     add_planet_devastation = 30
                     add_deposit = d_giga_hypersiphon_goop
                     add_deposit = d_giga_hypersiphon_goop
                     add_deposit = d_giga_hypersiphon_psionic_anomaly
-                    custom_tooltip = SEPARATOR
+                    remove_planet_flag = hypersiphon_instability_1_4
                 }
-                1 = {
-                    modifier = {
-                        current_stage >= giga_situation_hypersiphon_instability_stage_3
-                        multiply = 1.5
-                    }
-                    modifier = {
-                        current_stage >= giga_situation_hypersiphon_instability_stage_4
-                        multiply = 3
-                    }
+                hypersiphon_instability_1_5 = {
+                    custom_tooltip = giga_hypersiphon.010.result.5
                     add_planet_devastation = 60
                     add_deposit = d_giga_hypersiphon_goop
                     add_deposit = d_giga_hypersiphon_goop
@@ -270,12 +297,14 @@ situation_event = {
                     else = {
                         add_deposit = d_giga_hypersiphon_psionic_supercell_planet
                     }
+                    remove_planet_flag = hypersiphon_instability_1_5
                 }
             }
         }
     }
 }
 
+########################################################################################################################
 # random system gets a space debuff and shroud cows
 situation_event = {
     id = giga_hypersiphon.020
@@ -566,7 +595,10 @@ system_event = {
         # remove modifiers
         switch = {
             trigger = has_modifier
-            space_storm = { remove_modifier = space_storm }
+            giga_hypersiphon_storm_1 = { remove_modifier = giga_hypersiphon_storm_1 }
+            giga_hypersiphon_storm_2 = { remove_modifier = giga_hypersiphon_storm_2 }
+            giga_hypersiphon_storm_3 = { remove_modifier = giga_hypersiphon_storm_3 }
+            giga_hypersiphon_storm_4 = { remove_modifier = giga_hypersiphon_storm_4 }
         }
 
         # remove storm effects
@@ -611,5 +643,318 @@ country_event = {
 
     option = {
         name = giga_hypersiphon.022.a
+    }
+}
+
+########################################################################################################################
+# visions of doom (planet modifiers, pop modifiers, deaths)
+
+@debuff_days = 1080
+situation_event = {
+    id = giga_hypersiphon.030
+    title = giga_hypersiphon.030.name
+    desc = giga_hypersiphon.030.desc
+    picture = GFX_evt_ongoing_disaster
+    show_sound = event_psionic
+    is_triggered_only = yes
+    situation = this
+    location = event_target:hypersiphon_target
+
+    immediate = {
+        # pick a target planet
+        owner = {
+            random_owned_planet = {
+                weights = {
+                    base = 1
+                    modifier = {
+                        has_planet_flag = hypersipon_instability_effect
+                        multiply = 0.01
+                    }
+                    modifier = {
+                        not = {
+                            has_active_building = building_giga_shroud_conduit
+                        }
+                        multiply = 0.01
+                    }
+                }
+
+                save_event_target_as = hypersiphon_target
+                set_timed_planet_flag = {
+                    flag = hypersipon_instability_effect
+                    years = 10
+                }
+
+                # roll 1: killing pops and devastation
+                random_list = {
+                    30 = {
+                        # no pops die
+                        set_planet_flag = hypersiphon_instability_3_1_0
+                    }
+                    10 = {
+                        # one pop dies
+                        modifier = {
+                            root = { current_stage >= giga_situation_hypersiphon_instability_stage_3 }
+                            multiply = 1.5
+                        }
+                        set_planet_flag = hypersiphon_instability_3_1_1
+                    }
+                    10 = {
+                        # two pops die
+                        modifier = {
+                            root = { current_stage >= giga_situation_hypersiphon_instability_stage_3 }
+                            multiply = 1.5
+                        }
+                        modifier = {
+                            root = { current_stage >= giga_situation_hypersiphon_instability_stage_4 }
+                            multiply = 3
+                        }
+                        set_planet_flag = hypersiphon_instability_3_1_2
+                    }
+                    2 = {
+                        # three pops die
+                        modifier = {
+                            root = { current_stage >= giga_situation_hypersiphon_instability_stage_3 }
+                            multiply = 1.5
+                        }
+                        modifier = {
+                            root = { current_stage >= giga_situation_hypersiphon_instability_stage_4 }
+                            multiply = 5
+                        }
+                        set_planet_flag = hypersiphon_instability_3_1_3
+                    }
+                }
+
+                # roll 2: debuff
+                random_list = {
+                    1 = {
+                        # energy
+                        modifier = {
+                            has_generator_designation = yes
+                            multiply = 3
+                        }
+                        modifier = {
+                            planet_resource_compare = {
+                                type = produces
+                                resource = energy
+                                value >= 100
+                            }
+                            multiply = 3
+                        }
+                        modifier = {
+                            has_modifier = giga_hypersiphon_instability_resources_energy
+                            multiply = 0
+                        }
+                        set_planet_flag = hypersiphon_instability_3_2_energy
+                    }
+                    1 = {
+                        # minerals
+                        modifier = {
+                            has_mining_designation = yes
+                            multiply = 3
+                        }
+                        modifier = {
+                            planet_resource_compare = {
+                                type = produces
+                                resource = minerals
+                                value >= 100
+                            }
+                            multiply = 3
+                        }
+                        modifier = {
+                            has_modifier = giga_hypersiphon_instability_resources_minerals
+                            multiply = 0
+                        }
+                        set_planet_flag = hypersiphon_instability_3_2_minerals
+                    }
+                    1 = {
+                        # food
+                        modifier = {
+                            has_farming_designation = yes
+                            multiply = 3
+                        }
+                        modifier = {
+                            planet_resource_compare = {
+                                type = produces
+                                resource = food
+                                value >= 100
+                            }
+                            multiply = 3
+                        }
+                        modifier = {
+                            has_modifier = giga_hypersiphon_instability_resources_food
+                            multiply = 0
+                        }
+                        modifier = {
+                            owner = { country_uses_food = no }
+                            multiply = 0
+                        }
+                        set_planet_flag = hypersiphon_instability_3_2_food
+                    }
+                    1 = {
+                        # alloys
+                        modifier = {
+                            has_foundry_designation = yes
+                            multiply = 3
+                        }
+                        modifier = {
+                            planet_resource_compare = {
+                                type = produces
+                                resource = alloys
+                                value >= 100
+                            }
+                            multiply = 3
+                        }
+                        modifier = {
+                            has_modifier = giga_hypersiphon_instability_resources_alloys
+                            multiply = 0
+                        }
+                        set_planet_flag = hypersiphon_instability_3_2_alloys
+                    }
+                    1 = {
+                        # CGs
+                        modifier = {
+                            has_factory_designation = yes
+                            multiply = 3
+                        }
+                        modifier = {
+                            planet_resource_compare = {
+                                type = produces
+                                resource = consumer_goods
+                                value >= 100
+                            }
+                            multiply = 3
+                        }
+                        modifier = {
+                            has_modifier = giga_hypersiphon_instability_resources_consumer_goods
+                            multiply = 0
+                        }
+                        modifier = {
+                            owner = { country_uses_consumer_goods = no }
+                            multiply = 0
+                        }
+                        set_planet_flag = hypersiphon_instability_3_2_consumer_goods
+                    }
+                    1 = {
+                        # unity
+                        modifier = {
+                            has_unity_designation = yes
+                            multiply = 3
+                        }
+                        modifier = {
+                            planet_resource_compare = {
+                                type = produces
+                                resource = unity
+                                value >= 100
+                            }
+                            multiply = 3
+                        }
+                        modifier = {
+                            has_modifier = giga_hypersiphon_instability_resources_unity
+                            multiply = 0
+                        }
+                        set_planet_flag = hypersiphon_instability_3_2_unity
+                    }
+                    1 = {
+                        # research
+                        modifier = {
+                            has_research_designation = yes
+                            multiply = 3
+                        }
+                        modifier = {
+                            or = {
+                                planet_resource_compare = {
+                                    type = produces
+                                    resource = physics_research
+                                    value >= 100
+                                }
+                                planet_resource_compare = {
+                                    type = produces
+                                    resource = society_research
+                                    value >= 100
+                                }
+                                planet_resource_compare = {
+                                    type = produces
+                                    resource = engineering_research
+                                    value >= 100
+                                }
+                            }
+                            multiply = 3
+                        }
+                        modifier = {
+                            has_modifier = giga_hypersiphon_instability_resources_research
+                            multiply = 0
+                        }
+                        set_planet_flag = hypersiphon_instability_3_2_research
+                    }
+                }
+            }
+        }
+    }
+
+    option = {
+        name = giga_hypersiphon.030.a
+
+        event_target:hypersiphon_target = {
+            # pop deaths
+            switch = {
+                trigger = has_planet_flag
+                # hypersiphon_instability_3_1_0 (nothing happens)
+                hypersiphon_instability_3_1_1 = {
+                    custom_tooltip = giga_hypersiphon.030.result.1.1
+                    add_planet_devastation = 20
+                    random_owned_pop = { kill_pop = yes }
+                    remove_planet_flag = hypersiphon_instability_3_1_1
+                }
+                hypersiphon_instability_3_1_2 = {
+                    custom_tooltip = giga_hypersiphon.030.result.1.2
+                    add_planet_devastation = 40
+                    random_owned_pop = { kill_pop = yes }
+                    random_owned_pop = { kill_pop = yes }
+                    remove_planet_flag = hypersiphon_instability_3_1_2
+                }
+                hypersiphon_instability_3_1_3 = {
+                    custom_tooltip = giga_hypersiphon.030.result.1.3
+                    add_planet_devastation = 60
+                    random_owned_pop = { kill_pop = yes }
+                    random_owned_pop = { kill_pop = yes }
+                    random_owned_pop = { kill_pop = yes }
+                    remove_planet_flag = hypersiphon_instability_3_1_3
+                }
+            }
+
+            # debuff
+            switch = {
+                trigger = has_planet_flag
+                # hypersiphon_instability_3_1_0 (nothing happens)
+                hypersiphon_instability_3_2_energy = {
+                    add_modifier = { modifier = giga_hypersiphon_instability_resources_energy days = @debuff_days }
+                    remove_planet_flag = hypersiphon_instability_3_2_energy
+                }
+                hypersiphon_instability_3_2_minerals = {
+                    add_modifier = { modifier = giga_hypersiphon_instability_resources_minerals days = @debuff_days }
+                    remove_planet_flag = hypersiphon_instability_3_2_minerals
+                }
+                hypersiphon_instability_3_2_food = {
+                    add_modifier = { modifier = giga_hypersiphon_instability_resources_food days = @debuff_days }
+                    remove_planet_flag = hypersiphon_instability_3_2_food
+                }
+                hypersiphon_instability_3_2_alloys = {
+                    add_modifier = { modifier = giga_hypersiphon_instability_resources_alloys days = @debuff_days }
+                    remove_planet_flag = hypersiphon_instability_3_2_alloys
+                }
+                hypersiphon_instability_3_2_consumer_goods = {
+                    add_modifier = { modifier = giga_hypersiphon_instability_resources_consumer_goods days = @debuff_days }
+                    remove_planet_flag = hypersiphon_instability_3_2_consumer_goods
+                }
+                hypersiphon_instability_3_2_unity = {
+                    add_modifier = { modifier = giga_hypersiphon_instability_resources_unity days = @debuff_days }
+                    remove_planet_flag = hypersiphon_instability_3_2_unity
+                }
+                hypersiphon_instability_3_2_research = {
+                    add_modifier = { modifier = giga_hypersiphon_instability_resources_research days = @debuff_days }
+                    remove_planet_flag = hypersiphon_instability_3_2_research
+                }
+            }
+        }
     }
 }
