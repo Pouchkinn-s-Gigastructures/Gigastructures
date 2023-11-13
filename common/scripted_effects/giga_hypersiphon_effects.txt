@@ -29,9 +29,80 @@ giga_create_shroud_cow_country = {
     }
 }
 
+giga_create_hypersiphon_minor_incrusion_country = {
+    optimize_memory
+    if = {
+        limit = { NOT = { exists = event_target:giga_hypersiphon_minor_incrusion_country } }
+        create_country = {
+            name = NAME_Giga_Hypersiphon_Incursion
+            type = faction
+            flag = {
+                icon = {
+                    category = "ornate"
+                    file = "flag_ornate_11.dds"
+                }
+                background= {
+                    category = "backgrounds"
+                    file = diagonal.dds
+                }
+                colors={
+                    "bright_purple"
+                    "purple"
+                    "null"
+                    "null"
+                }
+            }
+            effect = {
+                save_global_event_target_as = giga_hypersiphon_minor_incrusion_country
+            }
+        }
+    }
+}
+
+giga_create_hypersiphon_major_incrusion_country = {
+    optimize_memory
+    if = {
+        limit = { NOT = { exists = event_target:giga_hypersiphon_major_incrusion_country } }
+        create_country = {
+            name = NAME_Giga_Hypersiphon_Incursion
+            type = faction
+            flag = {
+                icon = {
+                    category = "ornate"
+                    file = "flag_ornate_11.dds"
+                }
+                background= {
+                    category = "backgrounds"
+                    file = diagonal.dds
+                }
+                colors={
+                    "bright_purple"
+                    "purple"
+                    "null"
+                    "null"
+                }
+            }
+            effect = {
+                save_global_event_target_as = giga_hypersiphon_major_incrusion_country
+            }
+        }
+    }
+}
+
 # mooooo
 giga_establish_shroud_cow_communications = {
     establish_communications_no_message = event_target:giga_shroud_cow_country
+}
+
+giga_establish_incursion_communications = {
+    if = {
+        limit = { exists = event_target:giga_hypersiphon_major_incrusion_country }
+        establish_communications_no_message = event_target:giga_hypersiphon_major_incrusion_country
+    }
+    if = {
+        limit = { exists = event_target:giga_hypersiphon_minor_incrusion_country }
+        establish_communications_no_message = event_target:giga_hypersiphon_minor_incrusion_country
+    }
 }
 
 giga_spawn_shroud_cows = {
@@ -273,25 +344,120 @@ giga_spawn_shroud_cow_fleet_5 = {
 @incursion_power_variable = giga_hypersiphon_incursion_power
 
 giga_hypersiphon_calculate_empire_power = {
-    # estimate how big a force could be brought to bear
-    set_variable = {
-        which = @incursion_power_variable # as power, since it's the base value to be multiplied
-        value = value:giga_hypersiphon_calculate_empire_navy_size
-    }
+    # for console sanity when running this as a test
+    hidden_effect = {
+        # estimate how big a force could be brought to bear, minus standing naval cap use
+        set_variable = {
+            which = @incursion_power_variable # as power, since it's the base value to be multiplied
+            value = value:giga_hypersiphon_calculate_empire_navy_size
+        }
 
-    # multiply by estimated power per ship without buffs
-    multiply_variable = {
-        which = @incursion_power_variable
-        value = value:giga_hypersiphon_calculate_empire_power_per_naval_cap
-    }
+        # multiply by estimated power per ship without buffs
+        multiply_variable = {
+            which = @incursion_power_variable
+            value = value:giga_hypersiphon_calculate_empire_power_per_naval_cap
+        }
 
-    # multiply by estimated buffs
-    multiply_variable = {
-        which = @incursion_power_variable
-        value = value:giga_hypersiphon_calculate_empire_fleet_buffs
+        # multiply by estimated buffs
+        multiply_variable = {
+            which = @incursion_power_variable
+            value = value:giga_hypersiphon_calculate_empire_fleet_buffs
+        }
+
+        # add current power since we subtract standing fleet from the total size
+        change_variable = {
+            which = @incursion_power_variable
+            value = trigger:fleet_power
+        }
+
+        # add "corrections" for problem causers
+        every_owned_ship = {
+            limit = {
+                or = {
+                    is_ship_class = shipclass_military
+                    is_ship_class = shipclass_military_special
+                }
+            }
+            switch = {
+                trigger = is_ship_size
+                giga_massive_planet = { change_variable = { which = @incursion_power_variable value = 250000 } }
+                giga_planet_behemoth = { change_variable = { which = @incursion_power_variable value = 2000000 } }
+                giga_systemcraft = { change_variable = { which = @incursion_power_variable value = 10000000 } }
+            }
+        }
     }
+    custom_tooltip = giga_hypersiphon_power_estimate
 }
 
 giga_spawn_hypersiphon_incursion_fleet = {
+    # do a spawn series
+    create_fleet = {
+        name = NAME_Giga_Hypersiphon_Incursion_Fleet
+        settings = { spawn_debris = no }
+        effect = {
+            set_owner = $owner$
 
+            set_variable = {
+                which = spawn_budget
+                value = prev.$budget_scope$.giga_hypersiphon_incursion_power
+            }
+            set_variable = {
+                which = current_spawn_budget
+                value = this.spawn_budget
+            }
+            log_error = "INCURSION SPAWN: [This.spawn_budget]"
+
+            while = {
+                count = 10000
+                limit = {
+                    check_variable = {
+                        which = current_spawn_budget
+                        value > 0
+                    }
+                }
+                random_list = {
+                    #inline_script = {
+                    #    script = systems/fleet_spawning/giga_ship_entry
+                    #    weight = 1000
+                    #
+                    #    design = NAME_Giga_Hypersiphon_Tiyanki_Bull
+                    #
+                    #    cost = 1000
+                    #    max = 100000000
+                    #    min = 1000
+                    #}
+                    #inline_script = {
+                    #    script = systems/fleet_spawning/giga_ship_entry
+                    #    weight = 1000
+                    #
+                    #    design = NAME_Giga_Hypersiphon_Tiyanki_Hatchling
+                    #
+                    #    cost = 100
+                    #    max = 100000
+                    #    min = 0
+                    #}
+                    inline_script = {
+                        script = systems/fleet_spawning/giga_ship_entry
+                        weight = 1000
+
+                        design = giga_shroud_test
+
+                        cost = 10000
+                        max = 100000000
+                        min = 0
+                    }
+
+
+                    # just in case
+                    #1 = { change_variable = { which = current_spawn_budget value = -1 }}
+                }
+            }
+
+            set_location = prev
+            set_fleet_stance = aggressive
+            set_aggro_range_measure_from = return_point
+            set_aggro_range = 2000
+            set_fleet_flag = hypersiphon_minor_incursion
+        }
+    }
 }
