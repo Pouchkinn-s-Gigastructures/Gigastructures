@@ -1016,6 +1016,17 @@ situation_event = {
             giga_create_hypersiphon_minor_incrusion_country = yes
             giga_establish_incursion_communications = yes
 
+            root = {
+                switch = {
+                    trigger = current_stage
+                    giga_situation_hypersiphon_instability_stage_1 = { prev = { multiply_variable = { which = giga_hypersiphon_incursion_power value = 0.3 } } }
+                    giga_situation_hypersiphon_instability_stage_2 = { prev = { multiply_variable = { which = giga_hypersiphon_incursion_power value = 0.6 } } }
+                    giga_situation_hypersiphon_instability_stage_3 = { prev = { multiply_variable = { which = giga_hypersiphon_incursion_power value = 0.8 } } }
+                    giga_situation_hypersiphon_instability_stage_4 = { prev = { multiply_variable = { which = giga_hypersiphon_incursion_power value = 1.0 } } }
+                    giga_situation_hypersiphon_instability_stage_5 = { prev = { multiply_variable = { which = giga_hypersiphon_incursion_power value = 1.0 } } }
+                }
+            }
+
             random_system_within_border = {
                 weights = {
                     base = 10
@@ -1030,18 +1041,21 @@ situation_event = {
                         multiply = 0.5
                     }
                     modifier = {
+                        exists = starbase
                         starbase = {
                             has_starbase_size > starbase_outpost
                         }
                         multiply = 0.5
                     }
                     modifier = {
+                        exists = starbase
                         starbase = {
                             has_starbase_size > starbase_starport
                         }
                         multiply = 0.5
                     }
                     modifier = {
+                        exists = starbase
                         starbase = {
                             has_starbase_size >= starbase_citadel
                         }
@@ -1054,7 +1068,7 @@ situation_event = {
                 star = {
                     giga_spawn_hypersiphon_incursion_fleet = {
                         owner = event_target:giga_hypersiphon_minor_incrusion_country
-                        budget_scope = root.owner
+                        budget = root.owner.giga_hypersiphon_incursion_power
                     }
                 }
             }
@@ -1066,6 +1080,174 @@ situation_event = {
 
         event_target:hypersiphon_target = {
             custom_tooltip = giga_hypersiphon.040.result
+        }
+    }
+}
+
+# have minor incursion fleets decay over time
+event = {
+    id = giga_hypersiphon.041
+    hide_window = yes
+    is_triggered_only = yes
+
+    trigger = {
+        exists = event_target:giga_hypersiphon_minor_incrusion_country
+    }
+
+    immediate = {
+        event_target:giga_hypersiphon_minor_incrusion_country = {
+            every_owned_fleet = {
+                limit = {
+                    is_in_combat = no
+                }
+                random_list = {
+                    20 = {}
+                    1 = {
+                        random_owned_ship = {
+                            weights = {
+                                base = 1
+                                modifier = {
+                                    is_ship_size = giga_hypersiphon_shroud_entity_small
+                                    multiply = 4
+                                }
+                            }
+                            delete_ship = this
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+########################################################################################################################
+# major incursion (situation end/restart, powerful shroud monsters spawn in a system and can hold space, kill colonies)
+
+situation_event = {
+    id = giga_hypersiphon.100
+    title = giga_hypersiphon.100.name
+    desc = giga_hypersiphon.100.desc
+    picture = GFX_evt_space_monster
+    show_sound = event_ex_started
+    is_triggered_only = yes
+    situation = this
+    location = event_target:hypersiphon_target
+
+    immediate = {
+        owner = {
+            giga_create_hypersiphon_major_incrusion_country = yes
+            giga_establish_incursion_communications = yes
+            giga_hypersiphon_calculate_empire_power = yes
+
+            random_system_within_border = {
+                save_event_target_as = hypersiphon_target
+
+                star = {
+                    # spawn station
+                    giga_spawn_hypersiphon_incursion_portal = {
+                        owner = event_target:giga_hypersiphon_major_incrusion_country
+                        budget = root.owner.giga_hypersiphon_incursion_power
+                    }
+                    event_target:giga_hypersiphon_major_incrusion_country = {
+                        start_situation = {
+                            type = giga_situation_hypersiphon_incursion_tracker
+                            target = last_created_fleet
+                            effect = {
+                                save_event_target_as = situation
+                            }
+                        }
+                    }
+
+                    # spawn initial fleets
+                    giga_spawn_hypersiphon_incursion_fleet = {
+                        owner = event_target:giga_hypersiphon_major_incrusion_country
+                        budget = root.owner.giga_hypersiphon_incursion_power
+                    }
+                    last_created_fleet = { set_fleet_flag = hypersiphon_incursion@event_target:situation }
+                    giga_spawn_hypersiphon_incursion_fleet = {
+                        owner = event_target:giga_hypersiphon_major_incrusion_country
+                        budget = root.owner.giga_hypersiphon_incursion_power
+                    }
+                    last_created_fleet = { set_fleet_flag = hypersiphon_incursion@event_target:situation }
+                }
+            }
+
+            # notify people
+            every_relation = {
+                limit = {
+                    is_ai = no
+                    has_communications = root
+                    OR = {
+                        has_intel_level = {
+                            who = root
+                            category = military
+                            level >= 1
+                        }
+                        has_intel_level = {
+                            who = root
+                            category = economy
+                            level >= 2
+                        }
+                    }
+                }
+                country_event = { id = giga_hypersiphon.101 }
+            }
+
+            # re start the situation (no escape!)
+            start_situation = {
+                type = giga_situation_hypersiphon_instability
+            }
+        }
+        # end this loop's situation
+        destroy_situation = this
+    }
+
+    option = {
+        name = giga_hypersiphon.100.a
+    }
+
+    after = {
+        custom_tooltip = giga_hypersiphon.100.restart
+    }
+}
+
+# notification for other countries
+country_event = {
+    id = giga_hypersiphon.101
+    title = giga_hypersiphon.101.name
+    desc = giga_hypersiphon.101.desc
+    picture = GFX_evt_space_monster
+    show_sound = event_ex_started
+    is_triggered_only = yes
+    location = event_target:hypersiphon_target
+
+    option = {
+        name = giga_hypersiphon.101.a
+    }
+}
+
+starbase_event = {
+    id = giga_hypersiphon.102
+    hide_window = yes
+    is_triggered_only = yes
+
+    trigger = {
+        from.owner = {
+            is_country_type = giga_hypersiphon_major_incursion
+        }
+        NOT = {
+            solar_system = {
+                any_system_planet = { is_colony = yes } # For populated systems, they need to destroy the colonies
+            }
+        }
+    }
+
+    immediate = {
+        solar_system = {
+            create_starbase = {
+                owner = from.owner
+                size = giga_hypersiphon_incursion_starbase
+            }
         }
     }
 }
