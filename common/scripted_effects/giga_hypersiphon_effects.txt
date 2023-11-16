@@ -559,6 +559,73 @@ giga_spawn_hypersiphon_incursion_fleet = {
     }
 }
 
+giga_hypersiphon_incursion_orders = {
+    queue_actions = {
+        repeat = {
+            # bomb every planet in the current system
+            repeat = {
+                while = {
+                    id = a
+                    solar_system = {
+                        any_system_planet = {
+                            is_colony = yes
+                            not = { has_planet_flag = paluushia }
+                        }
+                    }
+                }
+                find_random_planet = {
+                    trigger = {
+                        id = b
+                        is_colony = yes
+                        not = { has_planet_flag = paluushia }
+                    }
+                    found_planet = {
+                        orbit_planet = this
+                    }
+                }
+            }
+            # then wait a bit
+            wait = {
+                duration = 5
+                random = 20
+            }
+            # then move to a neighbour system owned by target
+            find_random_system = {
+                trigger = {
+                    id = c
+                    is_neighbor_of = prev.solar_system
+                    exists = owner
+                    prev = {
+                        has_fleet_flag = hypersiphon_incursion_target@prev.owner
+                    }
+                }
+                found_system = {
+                    move_to = this
+                }
+                failed = {
+                    # otherwise move to the closest system owned by target
+                    find_closest_system = {
+                        trigger = {
+                            id = d
+                            exists = owner
+                            prev = {
+                                has_fleet_flag = hypersiphon_incursion_target@prev.owner
+                            }
+                        }
+                        found_system = {
+                            move_to = this
+                        }
+                        failed = {
+                            # otherwise go home
+                            # noop for now
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 giga_spawn_hypersiphon_incursion_portal = {
     # do a spawn series
     create_fleet = {
@@ -582,6 +649,7 @@ giga_spawn_hypersiphon_incursion_portal = {
                 angle = random
             }
             set_fleet_flag = hypersiphon_major_incursion
+            set_fleet_flag = hypersiphon_incursion_portal
         }
     }
 }

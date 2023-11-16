@@ -1154,8 +1154,13 @@ situation_event = {
                             target = last_created_fleet
                             effect = {
                                 save_event_target_as = situation
+                                set_situation_flag = hypersiphon_incursion_target@root.owner
                             }
                         }
+                    }
+                    last_created_fleet = {
+                        set_fleet_flag = hypersiphon_incursion@event_target:situation
+                        set_fleet_flag = hypersiphon_incursion_target@root.owner
                     }
 
                     # spawn initial fleets
@@ -1163,12 +1168,20 @@ situation_event = {
                         owner = event_target:giga_hypersiphon_major_incrusion_country
                         budget = root.owner.giga_hypersiphon_incursion_power
                     }
-                    last_created_fleet = { set_fleet_flag = hypersiphon_incursion@event_target:situation }
+                    last_created_fleet = {
+                        set_fleet_flag = hypersiphon_incursion@event_target:situation
+                        set_fleet_flag = hypersiphon_incursion_target@root.owner
+                        giga_hypersiphon_incursion_orders = yes
+                    }
                     giga_spawn_hypersiphon_incursion_fleet = {
                         owner = event_target:giga_hypersiphon_major_incrusion_country
                         budget = root.owner.giga_hypersiphon_incursion_power
                     }
-                    last_created_fleet = { set_fleet_flag = hypersiphon_incursion@event_target:situation }
+                    last_created_fleet = {
+                        set_fleet_flag = hypersiphon_incursion@event_target:situation
+                        set_fleet_flag = hypersiphon_incursion_target@root.owner
+                        giga_hypersiphon_incursion_orders = yes
+                    }
                 }
             }
 
@@ -1226,12 +1239,15 @@ country_event = {
     }
 }
 
+# starbase destroyed by incursion
 starbase_event = {
     id = giga_hypersiphon.102
     hide_window = yes
     is_triggered_only = yes
 
     trigger = {
+        exists = from
+        exists = from.owner
         from.owner = {
             is_country_type = giga_hypersiphon_major_incursion
         }
@@ -1247,7 +1263,291 @@ starbase_event = {
             create_starbase = {
                 owner = from.owner
                 size = giga_hypersiphon_incursion_starbase
+                effect = {
+                    save_event_target_as = starbase
+                    from.owner = {
+                        random_situation = {
+                            limit = {
+                                is_situation_type = giga_situation_hypersiphon_incursion_tracker
+                                from = {
+                                    has_fleet_flag = hypersiphon_incursion@prev
+                                }
+                            }
+                            event_target:starbase = {
+                                set_starbase_flag = hypersiphon_incursion@prev
+                            }
+                        }
+                    }
+                }
             }
         }
+    }
+}
+
+# shroud colony on bombardment
+planet_event = {
+    id = giga_hypersiphon.103
+    title = giga_hypersiphon.103.name
+    desc = giga_hypersiphon.103.desc
+    picture = GFX_evt_shrouded_planet
+    show_sound = event_ghost_town
+
+    is_triggered_only = yes
+
+    trigger = {
+        planet_devastation >= 100
+        FROM = {
+            is_country_type = giga_hypersiphon_major_incursion
+        }
+    }
+
+    immediate = {
+        add_threat = { who = from amount = 2 }
+
+        # handles colony destruction etc
+        giga_shroud_planet = yes
+
+        solar_system = {
+            if = { # Build starbase if no other colonies are left
+                limit = {
+                    NOT = {
+                        exists = starbase
+                        any_system_planet = {
+                            has_owner = yes
+                            owner = {
+                                NOT = { is_same_value = from }
+                            }
+                        }
+                    }
+                }
+                create_starbase = {
+                    size = giga_hypersiphon_incursion_starbase
+                    owner = from
+                    effect = {
+                        save_event_target_as = starbase
+                        from = {
+                            random_situation = {
+                                limit = {
+                                    is_situation_type = giga_situation_hypersiphon_incursion_tracker
+                                    fromfrom = {
+                                        has_fleet_flag = hypersiphon_incursion@prev
+                                    }
+                                }
+                                event_target:starbase = {
+                                    set_starbase_flag = hypersiphon_incursion@prev
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    option = {
+        name = giga_hypersiphon.103.a
+    }
+}
+
+# portal is killed, hidden
+country_event = {
+    id = giga_hypersiphon.104
+    hide_window = yes
+    is_triggered_only = yes
+
+    trigger = {
+        is_country_type = giga_hypersiphon_major_incursion
+        from = {
+            has_fleet_flag = hypersiphon_incursion_portal
+        }
+    }
+
+    immediate = {
+        fromfrom.solar_system = {
+            save_event_target_as = hypersiphon_target
+        }
+        random_country = {
+            limit = {
+                fromfrom = {
+                    has_fleet_flag = hypersiphon_incursion_target@prev
+                }
+            }
+            save_event_target_as = target
+        }
+
+        # if the killer is the target
+        if = {
+            limit = {
+                from = {
+                    is_same_empire = event_target:target
+                }
+            }
+            # notify killer/target
+            from = {
+                country_event = {
+                    id = giga_hypersiphon.105
+                }
+            }
+        }
+        else = {
+            # notify killer
+            country_event = {
+                id = giga_hypersiphon.106
+            }
+            # notify target
+            country_event = {
+                id = giga_hypersiphon.107
+            }
+        }
+
+        # notify everyone else
+        from = {
+            every_relation = {
+                limit = {
+                    is_ai = no
+                    has_communications = root
+                    not = {
+                        is_same_empire = event_target:target
+                    }
+                    OR = {
+                        has_intel_level = {
+                            who = root
+                            category = military
+                            level >= 1
+                        }
+                        has_intel_level = {
+                            who = root
+                            category = economy
+                            level >= 2
+                        }
+                    }
+                }
+                country_event = { id = giga_hypersiphon.108 }
+            }
+        }
+    }
+}
+
+# you killed the portal and are the target
+country_event = {
+    id = giga_hypersiphon.105
+    title = giga_hypersiphon.105.name
+    desc = {
+        text = giga_hypersiphon.105.desc.first
+        trigger = { not = { has_country_flag = giga_hypersiphon_closed_portal } }
+    }
+    desc = {
+        text = giga_hypersiphon.105.desc.other
+        trigger = { has_country_flag = giga_hypersiphon_closed_portal }
+    }
+    picture = GFX_evt_large_explosion
+    show_sound = event_super_explosion
+    is_triggered_only = yes
+    location = event_target:hypersiphon_target
+
+    option = {
+        trigger = {
+            not = { has_country_flag = giga_hypersiphon_closed_portal }
+        }
+        name = giga_hypersiphon.105.a
+
+        enable_special_project = {
+            name = giga_project_hypersiphon_portal
+        }
+    }
+    option = {
+        trigger = {
+            has_country_flag = giga_hypersiphon_closed_portal
+        }
+        name = giga_hypersiphon.105.b
+    }
+
+    after = {
+        set_country_flag = giga_hypersiphon_closed_portal
+    }
+}
+
+# you killed the portal and are not the target
+country_event = {
+    id = giga_hypersiphon.106
+    title = giga_hypersiphon.106.name
+    desc = giga_hypersiphon.106.desc
+    picture = GFX_evt_large_explosion
+    show_sound = event_super_explosion
+    is_triggered_only = yes
+    location = event_target:hypersiphon_target
+
+    option = {
+        name = giga_hypersiphon.106.a
+    }
+}
+
+# the portal was killed but not by you, the target
+country_event = {
+    id = giga_hypersiphon.107
+    title = giga_hypersiphon.107.name
+    desc = {
+        text = giga_hypersiphon.107.desc.first
+        trigger = { not = { has_country_flag = giga_hypersiphon_closed_portal } }
+    }
+    desc = {
+        text = giga_hypersiphon.107.desc.other
+        trigger = { has_country_flag = giga_hypersiphon_closed_portal }
+    }
+    picture = GFX_evt_large_explosion
+    show_sound = event_super_explosion
+    is_triggered_only = yes
+    location = event_target:hypersiphon_target
+
+    option = {
+        trigger = {
+            not = { has_country_flag = giga_hypersiphon_closed_portal }
+        }
+        name = giga_hypersiphon.107.a
+
+        enable_special_project = {
+            name = giga_project_hypersiphon_portal
+        }
+    }
+    option = {
+        trigger = {
+            has_country_flag = giga_hypersiphon_closed_portal
+        }
+        name = giga_hypersiphon.107.b
+    }
+
+    after = {
+        set_country_flag = giga_hypersiphon_closed_portal
+    }
+}
+
+# everyone else learns about it being killed
+country_event = {
+    id = giga_hypersiphon.108
+    title = giga_hypersiphon.108.name
+    desc = giga_hypersiphon.108.desc
+    picture = GFX_evt_surreal_visions
+    show_sound = event_psionic
+    is_triggered_only = yes
+    location = event_target:hypersiphon_target
+
+    option = {
+        name = giga_hypersiphon.108.a
+    }
+}
+
+# special project completed to unlock additional approaches
+country_event = {
+    id = giga_hypersiphon.109
+    title = giga_hypersiphon.109.name
+    desc = giga_hypersiphon.109.desc
+    picture = GFX_evt_shroudwalker_enclave
+    show_sound = event_psionic
+    is_triggered_only = yes
+
+    option = {
+        name = giga_hypersiphon.109.a
+
+        custom_tooltip = giga_hypersiphon.109.effect
     }
 }
