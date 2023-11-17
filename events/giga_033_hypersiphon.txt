@@ -96,6 +96,11 @@ situation_event = {
                     current_situation_approach = giga_situation_hypersiphon_instability_approach_mitigate
                     multiply = 2 # twice as likely to be nothing when mitigating
                 }
+                # encouragement
+                modifier = {
+                    current_situation_approach = giga_situation_hypersiphon_instability_approach_encourage
+                    multiply = 0.75 # less likely to be nothing when encouraging
+                }
             }
             1 = {
                 # random bad effect
@@ -1045,7 +1050,7 @@ situation_event = {
                         starbase = {
                             has_starbase_size > starbase_outpost
                         }
-                        multiply = 0.5
+                        multiply = 0.25
                     }
                     modifier = {
                         exists = starbase
@@ -1138,8 +1143,44 @@ situation_event = {
             giga_create_hypersiphon_major_incrusion_country = yes
             giga_establish_incursion_communications = yes
             giga_hypersiphon_calculate_empire_power = yes
+            multiply_variable = { which = giga_hypersiphon_incursion_power value = 0.8 }
 
             random_system_within_border = {
+                weights = {
+                    base = 10
+                    modifier = {
+                        is_bottleneck_system = yes
+                        multiply = 5
+                    }
+                    modifier = {
+                        any_system_planet = {
+                            is_colony = yes
+                        }
+                        multiply = 0.5
+                    }
+                    modifier = {
+                        exists = starbase
+                        starbase = {
+                            has_starbase_size > starbase_outpost
+                        }
+                        multiply = 0.25
+                    }
+                    modifier = {
+                        exists = starbase
+                        starbase = {
+                            has_starbase_size > starbase_starport
+                        }
+                        multiply = 0.5
+                    }
+                    modifier = {
+                        exists = starbase
+                        starbase = {
+                            has_starbase_size >= starbase_citadel
+                        }
+                        multiply = 0.1
+                    }
+                }
+
                 save_event_target_as = hypersiphon_target
 
                 star = {
@@ -1164,24 +1205,23 @@ situation_event = {
                     }
 
                     # spawn initial fleets
-                    giga_spawn_hypersiphon_incursion_fleet = {
+                    giga_spawn_hypersiphon_major_incursion_fleet = {
                         owner = event_target:giga_hypersiphon_major_incrusion_country
                         budget = root.owner.giga_hypersiphon_incursion_power
+                        situation = event_target:situation
+                        target = root.owner
                     }
-                    last_created_fleet = {
-                        set_fleet_flag = hypersiphon_incursion@event_target:situation
-                        set_fleet_flag = hypersiphon_incursion_target@root.owner
-                        giga_hypersiphon_incursion_orders = yes
-                    }
-                    giga_spawn_hypersiphon_incursion_fleet = {
+                    giga_spawn_hypersiphon_major_incursion_fleet = {
                         owner = event_target:giga_hypersiphon_major_incrusion_country
                         budget = root.owner.giga_hypersiphon_incursion_power
+                        situation = event_target:situation
+                        target = root.owner
                     }
-                    last_created_fleet = {
-                        set_fleet_flag = hypersiphon_incursion@event_target:situation
-                        set_fleet_flag = hypersiphon_incursion_target@root.owner
-                        giga_hypersiphon_incursion_orders = yes
-                    }
+                    #last_created_fleet = {
+                    #    set_fleet_flag = hypersiphon_incursion@event_target:situation
+                    #    set_fleet_flag = hypersiphon_incursion_target@root.owner
+                    #    giga_hypersiphon_incursion_orders = yes
+                    #}
                 }
             }
 
@@ -1259,26 +1299,14 @@ starbase_event = {
     }
 
     immediate = {
+        #owner = {
+        #    giga_hypersiphon_calculate_empire_power = yes
+        #}
+
         solar_system = {
-            create_starbase = {
-                owner = from.owner
-                size = giga_hypersiphon_incursion_starbase
-                effect = {
-                    save_event_target_as = starbase
-                    from.owner = {
-                        random_situation = {
-                            limit = {
-                                is_situation_type = giga_situation_hypersiphon_incursion_tracker
-                                from = {
-                                    has_fleet_flag = hypersiphon_incursion@prev
-                                }
-                            }
-                            event_target:starbase = {
-                                set_starbase_flag = hypersiphon_incursion@prev
-                            }
-                        }
-                    }
-                }
+            giga_spawn_hypersiphon_incursion_starbase = {
+                budget = root.from.spawn_budget #root.owner.giga_hypersiphon_incursion_power
+                fleet = root.from
             }
         }
     }
@@ -1307,6 +1335,15 @@ planet_event = {
         # handles colony destruction etc
         giga_shroud_planet = yes
 
+        random_fleet_in_orbit = {
+            limit = {
+                owner = {
+                    is_same_empire = from
+                }
+            }
+            save_event_target_as = bombarding_fleet
+        }
+
         solar_system = {
             if = { # Build starbase if no other colonies are left
                 limit = {
@@ -1320,26 +1357,31 @@ planet_event = {
                         }
                     }
                 }
-                create_starbase = {
-                    size = giga_hypersiphon_incursion_starbase
-                    owner = from
-                    effect = {
-                        save_event_target_as = starbase
-                        from = {
-                            random_situation = {
-                                limit = {
-                                    is_situation_type = giga_situation_hypersiphon_incursion_tracker
-                                    fromfrom = {
-                                        has_fleet_flag = hypersiphon_incursion@prev
-                                    }
-                                }
-                                event_target:starbase = {
-                                    set_starbase_flag = hypersiphon_incursion@prev
-                                }
-                            }
-                        }
-                    }
+
+                giga_spawn_hypersiphon_incursion_starbase = {
+                    budget = event_target:bombarding_fleet.spawn_budget
+                    fleet = event_target:bombarding_fleet
                 }
+                #create_starbase = {
+                #    size = giga_hypersiphon_incursion_starbase
+                #    owner = from
+                #    effect = {
+                #        save_event_target_as = starbase
+                #        from = {
+                #            random_situation = {
+                #                limit = {
+                #                    is_situation_type = giga_situation_hypersiphon_incursion_tracker
+                #                    fromfrom = {
+                #                        has_fleet_flag = hypersiphon_incursion@prev
+                #                    }
+                #                }
+                #                event_target:starbase = {
+                #                    set_starbase_flag = hypersiphon_incursion@prev
+                #                }
+                #            }
+                #        }
+                #    }
+                #}
             }
         }
     }
@@ -1549,5 +1591,117 @@ country_event = {
         name = giga_hypersiphon.109.a
 
         custom_tooltip = giga_hypersiphon.109.effect
+    }
+}
+
+# reinforcement pulse
+situation_event = {
+    id = giga_hypersiphon.110
+    hide_window = yes
+    is_triggered_only = yes
+
+    trigger = {
+        not = { has_situation_flag = reinforced_recently }
+    }
+
+    immediate = {
+        random_country = {
+            limit = {
+                root = {
+                    has_situation_flag = hypersiphon_incursion_target@prev
+                }
+            }
+            save_event_target_as = target
+        }
+        set_variable = { which = reinforcement_budget value = 50000 }
+        if = {
+            limit = { exists = event_target:target }
+            event_target:target = {
+                giga_hypersiphon_calculate_empire_power = yes
+                multiply_variable = { which = giga_hypersiphon_incursion_power value = 0.8 }
+                root = {
+                    set_variable = {
+                        which = reinforcement_budget
+                        value = prev.giga_hypersiphon_incursion_power
+                    }
+                }
+            }
+        }
+        else = {
+            owner = {
+                save_event_target_as = target # backup if the target is dead
+            }
+        }
+
+        owner = {
+            if = {
+                limit = {
+                    count_owned_fleet = {
+                        limit = {
+                            has_fleet_flag = hypersiphon_incursion@root
+                        }
+                        count = 0
+                    }
+                }
+                # we have no fleets at all, better spawn one
+                root.target = {
+                    giga_spawn_hypersiphon_major_incursion_fleet = {
+                        owner = event_target:giga_hypersiphon_major_incrusion_country
+                        budget = root.reinforcement_budget
+                        situation = root
+                        target = event_target:target
+                    }
+                }
+                root = {
+                    set_timed_situation_flag = {
+                        flag = reinforced_recently
+                        months = 15
+                    }
+                }
+            }
+            else = {
+                # total up the active fleet power for this incursion
+                root = { set_variable = { which = active_fleet_power value = 0 } }
+                every_owned_fleet = {
+                    limit = {
+                        has_fleet_flag = hypersiphon_incursion@root
+                    }
+                    root = {
+                        change_variable = {
+                            which = active_fleet_power
+                            value = prev.trigger:fleet_power
+                        }
+                    }
+                }
+
+                # if we do have fleets but our total fleet power is less than a threshold, spawn a new fleet
+                if = {
+                    limit = {
+                        root = {
+                            check_variable_arithmetic = {
+                                which = active_fleet_power
+                                value < reinforcement_budget
+                                multiply = 1.2 # third fleet when one is really busted maybe
+                            }
+                        }
+                    }
+
+                    root.target = {
+                        giga_spawn_hypersiphon_major_incursion_fleet = {
+                            owner = event_target:giga_hypersiphon_major_incrusion_country
+                            budget = root.reinforcement_budget
+                            situation = root
+                            target = event_target:target
+                        }
+                    }
+                    root = {
+                        set_timed_situation_flag = {
+                            flag = reinforced_recently
+                            months = 15
+                        }
+                    }
+                }
+            }
+        }
     }
 }

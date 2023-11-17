@@ -472,13 +472,12 @@ giga_spawn_hypersiphon_incursion_fleet = {
                         min = 500000
                     }
                     inline_script = {
-                        script = systems/fleet_spawning/giga_ship_entry
+                        script = systems/fleet_spawning/giga_ship_entry_top
                         weight = 32
 
                         design = giga_hypersiphon_shroud_entity_small_6
 
                         cost = 13968
-                        max = 100000000
                         min = 1000000
                     }
 
@@ -534,28 +533,35 @@ giga_spawn_hypersiphon_incursion_fleet = {
                         min = 500000
                     }
                     inline_script = {
-                        script = systems/fleet_spawning/giga_ship_entry
+                        script = systems/fleet_spawning/giga_ship_entry_top
                         weight = 32
 
                         design = giga_hypersiphon_shroud_entity_large_6
 
                         cost = 233613
-                        max = 100000000
                         min = 1000000
                     }
-
-
-                    # just in case
-                    #1 = { change_variable = { which = current_spawn_budget value = -1 }}
                 }
             }
 
             set_location = prev
             set_fleet_stance = aggressive
+            set_fleet_bombardment_stance = indiscriminate
             set_aggro_range_measure_from = return_point
             set_aggro_range = 2000
             set_fleet_flag = hypersiphon_minor_incursion
         }
+    }
+}
+giga_spawn_hypersiphon_major_incursion_fleet = {
+    giga_spawn_hypersiphon_incursion_fleet = {
+        owner = $owner$
+        budget = $budget$
+    }
+    last_created_fleet = {
+        set_fleet_flag = hypersiphon_incursion@$situation$
+        set_fleet_flag = hypersiphon_incursion_target@$target$
+        giga_hypersiphon_incursion_orders = yes
     }
 }
 
@@ -626,6 +632,40 @@ giga_hypersiphon_incursion_orders = {
     }
 }
 
+giga_spawn_hypersiphon_incursion_starbase = {
+    create_starbase = {
+        owner = event_target:giga_hypersiphon_major_incrusion_country
+        size = giga_hypersiphon_incursion_starbase
+        effect = {
+            set_variable = {
+                which = spawn_budget
+                value = prev.$budget$
+            }
+
+            save_event_target_as = starbase
+            event_target:giga_hypersiphon_major_incrusion_country = {
+                random_situation = {
+                    limit = {
+                        is_situation_type = giga_situation_hypersiphon_incursion_tracker
+                        $fleet$ = {
+                            has_fleet_flag = hypersiphon_incursion@prev
+                        }
+                    }
+                    event_target:starbase = {
+                        set_starbase_flag = hypersiphon_incursion@prev
+                    }
+                }
+            }
+            fleet = {
+                add_modifier = {
+                    modifier = giga_fleet_power_scaling_buff
+                    multiplier = value:giga_calculate_buff_scale|target|prev.spawn_budget|power|7000| # apparently 7700 properly but it's off somehow
+                }
+            }
+        }
+    }
+}
+
 giga_spawn_hypersiphon_incursion_portal = {
     # do a spawn series
     create_fleet = {
@@ -650,6 +690,11 @@ giga_spawn_hypersiphon_incursion_portal = {
             }
             set_fleet_flag = hypersiphon_major_incursion
             set_fleet_flag = hypersiphon_incursion_portal
+
+            add_modifier = {
+                modifier = giga_fleet_power_scaling_buff
+                multiplier = value:giga_calculate_buff_scale|target|spawn_budget|power|6500| #8000 "properly"
+            }
         }
     }
 }
