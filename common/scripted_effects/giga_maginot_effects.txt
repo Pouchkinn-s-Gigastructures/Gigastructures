@@ -117,51 +117,61 @@ assign_giga_maginot_id = {
 	}
 }
 
-# Checks Maginot World for possible upgrade points by checking actively worked jobs (building districts is not enough),
+# Checks Maginot World for possible upgrade points by checking modifiers from actively worked jobs (building districts is not enough),
 # and then checks how many are used by orbiting defences (SD Platforms cost 2 offensive points each)
 # * call from planet scope (a Maginot World specifically)
 maginot_check_upgrade_points = {
 	save_event_target_as = maginot_world_location
 	## max points
 	# offensive
-	if = {
-		limit = { planet_owner = { is_gestalt = no } }
-		export_trigger_value_to_variable = {
-			trigger = num_assigned_jobs
-			parameters = { job = maginot_planetary_cannon_operator }
-			variable = maginot_offensive_upgrade_points_max
-			#rounded = yes
-		}
-	}
-	if = {
-		limit = { planet_owner = { is_gestalt = yes } }
-		export_trigger_value_to_variable = {
-			trigger = num_assigned_jobs
-			parameters = { job = maginot_planetary_cannon_operator_gestalt }
-			variable = maginot_offensive_upgrade_points_max
-			#rounded = yes
-		}
+	export_modifier_to_variable = {
+		modifier = maginot_offensive_upgrade_point_add
+		variable =  maginot_offensive_upgrade_points_max
 	}
 
+	#if = {
+	#	limit = { planet_owner = { is_gestalt = no } }
+	#	export_trigger_value_to_variable = {
+	#		trigger = num_assigned_jobs
+	#		parameters = { job = maginot_planetary_cannon_operator }
+	#		variable = maginot_offensive_upgrade_points_max
+	#		#rounded = yes
+	#	}
+	#}
+	#if = {
+	#	limit = { planet_owner = { is_gestalt = yes } }
+	#	export_trigger_value_to_variable = {
+	#		trigger = num_assigned_jobs
+	#		parameters = { job = maginot_planetary_cannon_operator_gestalt }
+	#		variable = maginot_offensive_upgrade_points_max
+	#		#rounded = yes
+	#	}
+	#}
+
 	# defensive
-	if = {
-		limit = { planet_owner = { is_gestalt = no } }
-		export_trigger_value_to_variable = {
-			trigger = num_assigned_jobs
-			parameters = { job = maginot_shield_generator_operator }
-			variable = maginot_defensive_upgrade_points_max
-			#rounded = yes
-		}
+	export_modifier_to_variable = {
+		modifier = maginot_defensive_upgrade_point_add
+		variable =  maginot_defensive_upgrade_points_max
 	}
-	if = {
-		limit = { planet_owner = { is_gestalt = yes } }
-		export_trigger_value_to_variable = {
-			trigger = num_assigned_jobs
-			parameters = { job = maginot_shield_generator_operator_gestalt }
-			variable = maginot_defensive_upgrade_points_max
-			#rounded = yes
-		}
-	}
+
+	#if = {
+	#	limit = { planet_owner = { is_gestalt = no } }
+	#	export_trigger_value_to_variable = {
+	#		trigger = num_assigned_jobs
+	#		parameters = { job = maginot_shield_generator_operator }
+	#		variable = maginot_defensive_upgrade_points_max
+	#		#rounded = yes
+	#	}
+	#}
+	#if = {
+	#	limit = { planet_owner = { is_gestalt = yes } }
+	#	export_trigger_value_to_variable = {
+	#		trigger = num_assigned_jobs
+	#		parameters = { job = maginot_shield_generator_operator_gestalt }
+	#		variable = maginot_defensive_upgrade_points_max
+	#		#rounded = yes
+	#	}
+	#}
 
 	## used points
 	# secondary platforms can die, so check how many there are
@@ -195,6 +205,8 @@ maginot_check_upgrade_points = {
 		# 		}
 		# 	}
 		# }
+		# below is paradox math for
+		# total_offensive_points = atk_upgrades + (2 * current_SD_platforms)
 		set_variable = {
 			which = current_SD_platform_point_use
 			value = 0
@@ -222,6 +234,7 @@ maginot_check_upgrade_points = {
 	# other variable values should be fine
 
 	## available points
+	# points = max - used
 	set_variable = {
 		which = maginot_offensive_upgrade_points_current
 		value = maginot_offensive_upgrade_points_max
@@ -353,6 +366,43 @@ maginot_reapply_upgrades = {
 # Counts and spawns proper number of armies for Maginot
 # * call from planet scope (a Maginot World specifically)
 maginot_refresh_ground_armies = {
+	# basic
+	if = {
+		limit = { exists = planet_owner planet_owner = { is_machine_empire = no } }
+		every_planet_army = {
+			limit = {
+				OR = {
+					army_type = "heavy_defender"
+					army_type = "robot_heavy_defender"
+					army_type = "machine_heavy_defender"
+				}
+			}
+			remove_army = yes
+		}
+		while = {
+			count = 5
+			create_army = { name = "NAME_heavy_defender"	owner = planet.owner species = planet.owner.species type = "heavy_defender"}
+		}
+	}
+	else_if = {
+		limit = { exists = planet_owner planet_owner = { is_machine_empire = yes } }
+		every_planet_army = {
+			limit = {
+				OR = {
+					army_type = "heavy_defender"
+					army_type = "robot_heavy_defender"
+					army_type = "machine_heavy_defender"
+				}
+			}
+			remove_army = yes
+		}
+		while = {
+			count = 5
+			create_army = { name = "NAME_heavy_defender"	owner = planet.owner species = planet.owner.species type = "machine_heavy_defender"}
+		}
+	}
+
+	# artillery
 	if = {
 		limit = { exists = planet_owner }
 		every_planet_army = {
@@ -366,6 +416,7 @@ maginot_refresh_ground_armies = {
 			create_army = { name = "NAME_planetary_artillery"	owner = planet_owner type = "maginot_artillery_army"} 
 		}
 	}
+	# shield
 	if = {
 		limit = { exists = planet_owner }
 		every_planet_army = {
@@ -379,6 +430,7 @@ maginot_refresh_ground_armies = {
 			create_army = { name = "NAME_shield_battery"	owner = planet_owner type = "maginot_shield_army"} 
 		}
 	}
+	# bunker
 	if = {
 		limit = { exists = planet_owner }
 		every_planet_army = {
