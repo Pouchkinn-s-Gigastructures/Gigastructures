@@ -1,0 +1,1704 @@
+namespace = giga_hypersiphon
+
+# tracker situation attached to hypersiphon mega starts the instability situation for owning player if they have instability gain
+situation_event = {
+    id = giga_hypersiphon.001
+    hide_window = yes
+    is_triggered_only = yes
+
+    trigger = {
+        target = {
+            exists = owner
+            owner = {
+                giga_is_playable_country = yes
+                not = {
+                    country_has_situation = {
+                        SITUATION = giga_situation_hypersiphon_instability
+                    }
+                }
+                check_modifier_value = {
+                    modifier = giga_shroud_conduit_instability
+                    value > 0
+                }
+            }
+        }
+    }
+
+    immediate = {
+        target.owner = {
+            start_situation = {
+                type = giga_situation_hypersiphon_instability
+            }
+        }
+    }
+}
+
+# instability intro event
+country_event = {
+    id = giga_hypersiphon.002
+    title = giga_hypersiphon.002.name
+    desc = giga_hypersiphon.002.desc
+    picture = GFX_evt_shroudwalker_enclave
+    show_sound = event_psionic
+    is_triggered_only = yes
+
+    trigger = {
+        not = { has_country_flag = hypersiphon_instability_intro }
+    }
+
+    immediate = {
+        set_country_flag = hypersiphon_instability_intro
+    }
+
+    option = {
+        name = giga_hypersiphon.002.a
+
+        tooltip = {
+            start_situation = {
+                type = giga_situation_hypersiphon_instability
+            }
+        }
+    }
+}
+
+# instability random event gateway
+situation_event = {
+    id = giga_hypersiphon.003
+    hide_window = yes
+    is_triggered_only = yes
+
+    immediate = {
+        random_list = {
+            0 = {
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_1
+                    add = 96 # every 8 years
+                }
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_2
+                    add = 72 # every 6 years
+                }
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_3
+                    add = 48 # every 4 years
+                }
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_4
+                    add = 24 # every 2 years
+                }
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_5
+                    add = 12 # every year
+                }
+                modifier = {
+                multiply = 4 # these seem to be happening way too often...
+                }
+                # mitigation
+                modifier = {
+                    current_situation_approach = giga_situation_hypersiphon_instability_approach_mitigate
+                    multiply = 2 # twice as likely to be nothing when mitigating
+                }
+                # encouragement
+                modifier = {
+                    current_situation_approach = giga_situation_hypersiphon_instability_approach_encourage
+                    multiply = 0.75 # less likely to be nothing when encouraging
+                }
+            }
+            1 = {
+                modifier = {
+                    multiply = 0
+                    has_situation_flag = negative_event_recently
+                }
+                switch = {
+                    trigger = current_stage
+                    giga_situation_hypersiphon_instability_stage_1 = { set_timed_situation_flag = { flag = negative_event_recently years = 10  } }
+                    giga_situation_hypersiphon_instability_stage_2 = { set_timed_situation_flag = { flag = negative_event_recently years = 7  } }
+                    giga_situation_hypersiphon_instability_stage_3 = { set_timed_situation_flag = { flag = negative_event_recently years = 5  } }
+                    giga_situation_hypersiphon_instability_stage_4 = { set_timed_situation_flag = { flag = negative_event_recently years = 4  } }
+                    giga_situation_hypersiphon_instability_stage_5 = { set_timed_situation_flag = { flag = negative_event_recently years = 3 } }
+                }
+                # random bad effect
+                situation_event = {
+                    id = giga_hypersiphon.004
+                    random = 29
+                }
+
+            }
+        }
+    }
+}
+
+# bad effect gateway
+situation_event = {
+    id = giga_hypersiphon.004
+    hide_window = yes
+    is_triggered_only = yes
+
+    trigger = {
+        not = {
+            has_situation_flag = random_event_cooldown
+        }
+    }
+
+    immediate = {
+        set_timed_situation_flag = {
+            flag = random_event_cooldown
+            days = 75
+        }
+        random_list = {
+            100 = {
+                # sludge and other planet issues
+                situation_event = {
+                    id = giga_hypersiphon.010
+                }
+            }
+            50 = {
+                # shroud cows
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_1
+                    multiply = 2 # more common in stage 1
+                }
+
+                situation_event = {
+                    id = giga_hypersiphon.020
+                }
+            }
+            100 = {
+                # visions of doom and other pop problems
+                modifier = {
+                    or = {
+                        current_stage = giga_situation_hypersiphon_instability_stage_4
+                        current_stage = giga_situation_hypersiphon_instability_stage_5
+                    }
+                    multiply = 2 # more common stage 4+
+                }
+
+                situation_event = {
+                    id = giga_hypersiphon.030
+                }
+            }
+            10 = {
+                # minor incursion
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_2
+                    multiply = 2
+                }
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_3
+                    multiply = 4
+                }
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_4
+                    multiply = 16
+                }
+                modifier = {
+                    current_stage = giga_situation_hypersiphon_instability_stage_5
+                    multiply = 32 # gets more likely with later stages
+                }
+
+                situation_event = {
+                    id = giga_hypersiphon.040
+                }
+            }
+        }
+    }
+}
+
+########################################################################################################################
+# a series of unfortunate events (random bad things)
+
+########################################################################################################################
+# random planet gets nasty blocker
+situation_event = {
+    id = giga_hypersiphon.010
+    title = giga_hypersiphon.010.name
+    desc = giga_hypersiphon.010.desc
+    picture = GFX_evt_shrouded_planet
+    show_sound = event_psionic
+    is_triggered_only = yes
+    situation = this
+    location = event_target:hypersiphon_target
+
+    immediate = {
+        # pick a target planet
+        owner = {
+            random_owned_planet = {
+                weights = {
+                    base = 1
+                    modifier = {
+                        has_planet_flag = hypersipon_instability_effect
+                        multiply = 0.01
+                    }
+                    modifier = {
+                        not = {
+                            has_active_building = building_giga_shroud_conduit
+                        }
+                        multiply = 0.01
+                    }
+                }
+
+                save_event_target_as = hypersiphon_target
+                set_timed_planet_flag = {
+                    flag = hypersipon_instability_effect
+                    years = 10
+                }
+
+                random_list = {
+                    1 = {
+                        set_planet_flag = hypersiphon_instability_1_1
+                    }
+                    1 = {
+                        set_planet_flag = hypersiphon_instability_1_2
+                    }
+                    1 = {
+                        set_planet_flag = hypersiphon_instability_1_3
+                    }
+                    1 = {
+                        modifier = {
+                            root = {
+                                or = {
+                                    current_stage = giga_situation_hypersiphon_instability_stage_3
+                                    current_stage = giga_situation_hypersiphon_instability_stage_4
+                                    current_stage = giga_situation_hypersiphon_instability_stage_5
+                                }
+                            }
+                            multiply = 1.5
+                        }
+                        set_planet_flag = hypersiphon_instability_1_4
+                    }
+                    1 = {
+                        modifier = {
+                            root = { current_stage = giga_situation_hypersiphon_instability_stage_3 }
+                            multiply = 1.5
+                        }
+                        modifier = {
+                            root = {
+                                or = {
+                                    current_stage = giga_situation_hypersiphon_instability_stage_4
+                                    current_stage = giga_situation_hypersiphon_instability_stage_5
+                                }
+                            }
+                            multiply = 5
+                        }
+                        set_planet_flag = hypersiphon_instability_1_5
+                    }
+                }
+            }
+        }
+    }
+
+    option = {
+        name = giga_hypersiphon.010.a
+
+        event_target:hypersiphon_target = {
+            switch = {
+                trigger = has_planet_flag
+                hypersiphon_instability_1_1 = {
+                    custom_tooltip = giga_hypersiphon.010.result.1
+                    add_planet_devastation = 5
+                    add_deposit = d_giga_hypersiphon_goop
+                    remove_planet_flag = hypersiphon_instability_1_1
+                }
+                hypersiphon_instability_1_2 = {
+                    custom_tooltip = giga_hypersiphon.010.result.2
+                    add_planet_devastation = 5
+                    add_deposit = d_giga_hypersiphon_goop
+                    add_deposit = d_giga_hypersiphon_goop
+                    remove_planet_flag = hypersiphon_instability_1_2
+                }
+                hypersiphon_instability_1_3 = {
+                    custom_tooltip = giga_hypersiphon.010.result.3
+                    add_planet_devastation = 5
+                    add_deposit = d_giga_hypersiphon_goop
+                    add_deposit = d_giga_hypersiphon_psionic_anomaly
+                    remove_planet_flag = hypersiphon_instability_1_3
+                }
+                hypersiphon_instability_1_4 = {
+                    custom_tooltip = giga_hypersiphon.010.result.4
+                    add_planet_devastation = 5
+                    add_deposit = d_giga_hypersiphon_goop
+                    add_deposit = d_giga_hypersiphon_goop
+                    add_deposit = d_giga_hypersiphon_psionic_anomaly
+                    remove_planet_flag = hypersiphon_instability_1_4
+                }
+                hypersiphon_instability_1_5 = {
+                    custom_tooltip = giga_hypersiphon.010.result.5
+                    add_planet_devastation = 10
+                    add_deposit = d_giga_hypersiphon_goop
+                    add_deposit = d_giga_hypersiphon_goop
+                    add_deposit = d_giga_hypersiphon_psionic_anomaly
+                    if = { limit = { is_artificial = yes}
+                        add_deposit = d_giga_hypersiphon_psionic_supercell_artificial
+                    }
+                    else = {
+                        add_deposit = d_giga_hypersiphon_psionic_supercell_planet
+                    }
+                    remove_planet_flag = hypersiphon_instability_1_5
+                }
+            }
+        }
+    }
+}
+
+########################################################################################################################
+# random system gets a space debuff and shroud cows
+situation_event = {
+    id = giga_hypersiphon.020
+    title = giga_hypersiphon.020.name
+    desc = {
+        trigger = {
+            not = { owner = { has_country_flag = hypersiphon_instability_cows_seen } }
+        }
+        text = giga_hypersiphon.020.desc.first
+    }
+    desc = {
+        trigger = {
+            owner = {
+                has_country_flag = hypersiphon_instability_cows_seen
+                not = { has_country_flag = hypersiphon_instability_cows_damage }
+            }
+        }
+        text = giga_hypersiphon.020.desc.normal
+    }
+    desc = {
+        trigger = {
+            owner = {
+                has_country_flag = hypersiphon_instability_cows_seen
+                has_country_flag = hypersiphon_instability_cows_damage
+            }
+        }
+        text = giga_hypersiphon.020.desc.damage
+    }
+    picture = {
+        picture = GFX_evt_tiyanki_observation
+        trigger = { owner = { not = { has_country_flag = hypersiphon_instability_cows_damage } } }
+    }
+    picture = {
+        picture = GFX_evt_exploding_ship
+        trigger = { owner = { has_country_flag = hypersiphon_instability_cows_damage } }
+    }
+    show_sound = event_psionic
+    is_triggered_only = yes
+    situation = this
+    location = event_target:hypersiphon_target
+
+    immediate = {
+        owner = {
+            if = {
+                limit = {
+                    any_system_within_border = {
+                        not = {
+                            has_star_flag = hypersiphon_instability_effect
+                        }
+                    }
+                }
+
+                random_system_within_border = {
+                    limit = {
+                        not = {
+                            has_star_flag = hypersiphon_instability_effect
+                        }
+                    }
+
+                    weights = {
+                        base = 1
+                        modifier = {
+                            is_bottleneck_system = yes
+                            multiply = 10
+                        }
+                    }
+
+                    save_event_target_as = hypersiphon_target
+                    set_star_flag = hypersiphon_instability_effect
+
+                    random_list = {
+                        10 = {
+                            # slow, shield weakening
+                            add_modifier = {
+                                modifier = giga_hypersiphon_storm_1
+                            }
+                            create_ambient_object = {
+                                type = giga_hypersiphon_storm_1
+                                location = star
+                                effect = {
+                                    set_ambient_object_flag = hypersiphon_cows
+                                    set_location = {
+                                        target = prev
+                                        distance = 0
+                                        angle = random
+                                    }
+                                }
+                            }
+                            # spawn cows
+                            while = {
+                                count = 3
+                                random_system_planet = {
+                                    giga_spawn_shroud_cows = yes
+                                }
+                            }
+                        }
+                        10 = {
+                            # armour weakened, hull weakened
+                            add_modifier = {
+                                modifier = giga_hypersiphon_storm_2
+                            }
+                            create_ambient_object = {
+                                type = giga_hypersiphon_storm_2
+                                location = star
+                                effect = {
+                                    set_ambient_object_flag = hypersiphon_cows
+                                    set_location = {
+                                        target = prev
+                                        distance = 0
+                                        angle = random
+                                    }
+                                }
+                            }
+                            # spawn cows
+                            while = {
+                                count = 5
+                                random_system_planet = {
+                                    giga_spawn_shroud_cows = yes
+                                }
+                            }
+                        }
+                        10 = {
+                            modifier = {
+                                root = {
+                                    or = {
+                                        current_stage = giga_situation_hypersiphon_instability_stage_4
+                                        current_stage = giga_situation_hypersiphon_instability_stage_5
+                                    }
+                                }
+                                multiply = 2
+                            }
+
+                            # slow, shield AND armour weakened
+                            add_modifier = {
+                                modifier = giga_hypersiphon_storm_3
+                            }
+                            create_ambient_object = {
+                                type = giga_hypersiphon_storm_3
+                                location = star
+                                effect = {
+                                    set_ambient_object_flag = hypersiphon_cows
+                                    set_location = {
+                                        target = prev
+                                        distance = 0
+                                        angle = random
+                                    }
+                                }
+                            }
+                            # spawn cows
+                            while = {
+                                count = 7
+                                random_system_planet = {
+                                    giga_spawn_shroud_cows = yes
+                                }
+                            }
+                        }
+                        1 = {
+                            modifier = {
+                                root = { current_stage = giga_situation_hypersiphon_instability_stage_4}
+                                multiply = 10
+                            }
+                            modifier = {
+                                root = { current_stage = giga_situation_hypersiphon_instability_stage_5}
+                                multiply = 50
+                            }
+
+                            # slowed, shield, armour and hull weakened, DEGEN
+                            add_modifier = {
+                                modifier = giga_hypersiphon_storm_4
+                            }
+                            create_ambient_object = {
+                                type = giga_hypersiphon_storm_4
+                                location = star
+                                effect = {
+                                    set_ambient_object_flag = hypersiphon_cows
+                                    set_location = {
+                                        target = prev
+                                        distance = 0
+                                        angle = random
+                                    }
+                                }
+                            }
+                            # spawn cows
+                            while = {
+                                count = 9
+                                random_system_planet = {
+                                    giga_spawn_shroud_cows = yes
+                                }
+                            }
+                        }
+                    }
+                    # clean out the storm spawned here
+                    system_event = {
+                        id = giga_hypersiphon.021
+                        days = 1000
+                        random = 800
+                    }
+                }
+            }
+            else = {
+                random_system_within_border = {
+                    save_event_target_as = hypersiphon_target
+
+                    # spawn cows
+                    while = {
+                        count = 3
+                        random_system_planet = {
+                            giga_spawn_shroud_cows = yes
+                        }
+                    }
+
+                    # damage every colony in the system
+                    every_system_colony = {
+                        add_planet_devastation = 20
+                    }
+
+                    # damage every station in the system
+                    every_orbital_station = {
+                        every_owned_ship = {
+                            limit = { not = { is_ship_class = shipclass_starbase } }
+                            random_list = {
+                                1 = { reduce_hp = 500 }
+                                1 = { reduce_hp = 5000 }
+                                1 = { reduce_hp = 20000 }
+                                1 = { reduce_hp = 50000 }
+                            }
+                        }
+                    }
+                }
+                set_country_flag = hypersiphon_instability_cows_damage
+            }
+
+            # instant communications - everyone else gets it at month turnover
+            giga_establish_shroud_cow_communications = yes
+        }
+    }
+
+    # first encounter
+    option = {
+        name = giga_hypersiphon.020.a
+
+        trigger = {
+            not = { owner = { has_country_flag = hypersiphon_instability_cows_seen } }
+        }
+    }
+
+    # neutral followups
+    option = {
+        name = giga_hypersiphon.020.b
+
+        trigger = {
+            owner = {
+                has_country_flag = hypersiphon_instability_cows_seen
+                not = { is_hostile = event_target:giga_shroud_cow_country }
+            }
+        }
+    }
+
+    # hostile
+    option = {
+        name = giga_hypersiphon.020.c
+
+        trigger = {
+            owner = {
+                has_country_flag = hypersiphon_instability_cows_seen
+                is_hostile = event_target:giga_shroud_cow_country
+            }
+        }
+    }
+
+    # make sure they're known for next time
+    after = {
+        custom_tooltip = giga_hypersiphon.020.effect
+
+        hidden_effect = {
+            owner = {
+                set_country_flag = hypersiphon_instability_cows_seen
+                remove_country_flag = hypersiphon_instability_cows_damage # clear description flag if present
+            }
+        }
+    }
+}
+
+# shroud cows get cleaned out on timer
+system_event = {
+    id = giga_hypersiphon.021
+    hide_window = yes
+    is_triggered_only = yes
+
+    immediate = {
+        remove_star_flag = hypersiphon_instability_effect
+
+        # remove modifiers
+        switch = {
+            trigger = has_modifier
+            giga_hypersiphon_storm_1 = { remove_modifier = giga_hypersiphon_storm_1 }
+            giga_hypersiphon_storm_2 = { remove_modifier = giga_hypersiphon_storm_2 }
+            giga_hypersiphon_storm_3 = { remove_modifier = giga_hypersiphon_storm_3 }
+            giga_hypersiphon_storm_4 = { remove_modifier = giga_hypersiphon_storm_4 }
+        }
+
+        # remove storm effects
+        every_system_ambient_object = {
+            limit = {
+                has_ambient_object_flag = hypersiphon_cows
+            }
+            destroy_ambient_object = this
+        }
+
+        # remove cows
+        every_fleet_in_system = {
+            limit = {
+                has_fleet_flag = hypersiphon_cows
+            }
+            delete_fleet = this
+        }
+
+        # notify system owner
+        if = {
+            limit = {
+                exists = space_owner
+            }
+            space_owner = {
+                country_event = {
+                    id = giga_hypersiphon.022
+                }
+            }
+        }
+    }
+}
+
+# shroud cow clean out notification
+country_event = {
+    id = giga_hypersiphon.022
+    title = giga_hypersiphon.022.name
+    desc = giga_hypersiphon.022.desc
+    picture = GFX_evt_surreal_visions
+    show_sound = event_psionic
+    location = from.star
+    is_triggered_only = yes
+
+    option = {
+        name = giga_hypersiphon.022.a
+    }
+}
+
+########################################################################################################################
+# visions of doom (planet modifiers, pop modifiers, deaths)
+
+@debuff_days = 1080
+situation_event = {
+    id = giga_hypersiphon.030
+    title = giga_hypersiphon.030.name
+    desc = giga_hypersiphon.030.desc
+    picture = GFX_evt_ongoing_disaster
+    show_sound = event_psionic
+    is_triggered_only = yes
+    situation = this
+    location = event_target:hypersiphon_target
+
+    immediate = {
+        # pick a target planet
+        owner = {
+            random_owned_planet = {
+                weights = {
+                    base = 1
+                    modifier = {
+                        has_planet_flag = hypersipon_instability_effect
+                        multiply = 0.01
+                    }
+                    modifier = {
+                        not = {
+                            has_active_building = building_giga_shroud_conduit
+                        }
+                        multiply = 0.01
+                    }
+                }
+
+                save_event_target_as = hypersiphon_target
+                set_timed_planet_flag = {
+                    flag = hypersipon_instability_effect
+                    years = 10
+                }
+
+                # roll 1: killing pops and devastation
+                random_list = {
+                    50 = {
+                        # no pops die
+                        set_planet_flag = hypersiphon_instability_3_1_0
+                    }
+                    10 = {
+                        # one pop dies
+                        modifier = {
+                            root = {
+                                or = {
+                                    current_stage = giga_situation_hypersiphon_instability_stage_3
+                                    current_stage = giga_situation_hypersiphon_instability_stage_4
+                                    current_stage = giga_situation_hypersiphon_instability_stage_5
+                                }
+                            }
+                            multiply = 1.5
+                        }
+                        set_planet_flag = hypersiphon_instability_3_1_1
+                    }
+                    10 = {
+                        # two pops die
+                        modifier = {
+                            root = { current_stage = giga_situation_hypersiphon_instability_stage_3 }
+                            multiply = 1.5
+                        }
+                        modifier = {
+                            root = {
+                                or = {
+                                    current_stage = giga_situation_hypersiphon_instability_stage_4
+                                    current_stage = giga_situation_hypersiphon_instability_stage_5
+                                }
+                            }
+                            multiply = 5
+                        }
+                        set_planet_flag = hypersiphon_instability_3_1_2
+                    }
+                    2 = {
+                        # three pops die
+                        modifier = {
+                            root = { current_stage = giga_situation_hypersiphon_instability_stage_3 }
+                            multiply = 1.5
+                        }
+                        modifier = {
+                            root = {
+                                or = {
+                                    current_stage = giga_situation_hypersiphon_instability_stage_4
+                                    current_stage = giga_situation_hypersiphon_instability_stage_5
+                                }
+                            }
+                            multiply = 8
+                        }
+                        set_planet_flag = hypersiphon_instability_3_1_3
+                    }
+                }
+
+                # roll 2: debuff
+                random_list = {
+                    1 = {
+                        # energy
+                        modifier = {
+                            has_generator_designation = yes
+                            multiply = 3
+                        }
+                        modifier = {
+                            planet_resource_compare = {
+                                type = produces
+                                resource = energy
+                                value >= 100
+                            }
+                            multiply = 3
+                        }
+                        modifier = {
+                            has_modifier = giga_hypersiphon_instability_resources_energy
+                            multiply = 0
+                        }
+                        set_planet_flag = hypersiphon_instability_3_2_energy
+                    }
+                    1 = {
+                        # minerals
+                        modifier = {
+                            has_mining_designation = yes
+                            multiply = 3
+                        }
+                        modifier = {
+                            planet_resource_compare = {
+                                type = produces
+                                resource = minerals
+                                value >= 100
+                            }
+                            multiply = 3
+                        }
+                        modifier = {
+                            has_modifier = giga_hypersiphon_instability_resources_minerals
+                            multiply = 0
+                        }
+                        set_planet_flag = hypersiphon_instability_3_2_minerals
+                    }
+                    1 = {
+                        # food
+                        modifier = {
+                            has_farming_designation = yes
+                            multiply = 3
+                        }
+                        modifier = {
+                            planet_resource_compare = {
+                                type = produces
+                                resource = food
+                                value >= 100
+                            }
+                            multiply = 3
+                        }
+                        modifier = {
+                            has_modifier = giga_hypersiphon_instability_resources_food
+                            multiply = 0
+                        }
+                        modifier = {
+                            owner = { country_uses_food = no }
+                            multiply = 0
+                        }
+                        set_planet_flag = hypersiphon_instability_3_2_food
+                    }
+                    1 = {
+                        # alloys
+                        modifier = {
+                            has_foundry_designation = yes
+                            multiply = 3
+                        }
+                        modifier = {
+                            planet_resource_compare = {
+                                type = produces
+                                resource = alloys
+                                value >= 100
+                            }
+                            multiply = 3
+                        }
+                        modifier = {
+                            has_modifier = giga_hypersiphon_instability_resources_alloys
+                            multiply = 0
+                        }
+                        set_planet_flag = hypersiphon_instability_3_2_alloys
+                    }
+                    1 = {
+                        # CGs
+                        modifier = {
+                            has_factory_designation = yes
+                            multiply = 3
+                        }
+                        modifier = {
+                            planet_resource_compare = {
+                                type = produces
+                                resource = consumer_goods
+                                value >= 100
+                            }
+                            multiply = 3
+                        }
+                        modifier = {
+                            has_modifier = giga_hypersiphon_instability_resources_consumer_goods
+                            multiply = 0
+                        }
+                        modifier = {
+                            owner = { country_uses_consumer_goods = no }
+                            multiply = 0
+                        }
+                        set_planet_flag = hypersiphon_instability_3_2_consumer_goods
+                    }
+                    1 = {
+                        # unity
+                        modifier = {
+                            has_unity_designation = yes
+                            multiply = 3
+                        }
+                        modifier = {
+                            planet_resource_compare = {
+                                type = produces
+                                resource = unity
+                                value >= 100
+                            }
+                            multiply = 3
+                        }
+                        modifier = {
+                            has_modifier = giga_hypersiphon_instability_resources_unity
+                            multiply = 0
+                        }
+                        set_planet_flag = hypersiphon_instability_3_2_unity
+                    }
+                    1 = {
+                        # research
+                        modifier = {
+                            has_research_designation = yes
+                            multiply = 3
+                        }
+                        modifier = {
+                            or = {
+                                planet_resource_compare = {
+                                    type = produces
+                                    resource = physics_research
+                                    value >= 100
+                                }
+                                planet_resource_compare = {
+                                    type = produces
+                                    resource = society_research
+                                    value >= 100
+                                }
+                                planet_resource_compare = {
+                                    type = produces
+                                    resource = engineering_research
+                                    value >= 100
+                                }
+                            }
+                            multiply = 3
+                        }
+                        modifier = {
+                            has_modifier = giga_hypersiphon_instability_resources_research
+                            multiply = 0
+                        }
+                        set_planet_flag = hypersiphon_instability_3_2_research
+                    }
+                }
+            }
+        }
+    }
+
+    option = {
+        name = giga_hypersiphon.030.a
+
+        event_target:hypersiphon_target = {
+            # pop deaths
+            switch = {
+                trigger = has_planet_flag
+                # hypersiphon_instability_3_1_0 (nothing happens)
+                hypersiphon_instability_3_1_1 = {
+                    custom_tooltip = giga_hypersiphon.030.result.1.1
+                    add_planet_devastation = 5
+                    random_owned_pop = { kill_pop = yes }
+                    remove_planet_flag = hypersiphon_instability_3_1_1
+                }
+                hypersiphon_instability_3_1_2 = {
+                    custom_tooltip = giga_hypersiphon.030.result.1.2
+                    add_planet_devastation = 5
+                    random_owned_pop = { kill_pop = yes }
+                    random_owned_pop = { kill_pop = yes }
+                    remove_planet_flag = hypersiphon_instability_3_1_2
+                }
+                hypersiphon_instability_3_1_3 = {
+                    custom_tooltip = giga_hypersiphon.030.result.1.3
+                    add_planet_devastation = 10
+                    random_owned_pop = { kill_pop = yes }
+                    random_owned_pop = { kill_pop = yes }
+                    random_owned_pop = { kill_pop = yes }
+                    remove_planet_flag = hypersiphon_instability_3_1_3
+                }
+            }
+
+            # debuff
+            switch = {
+                trigger = has_planet_flag
+                # hypersiphon_instability_3_1_0 (nothing happens)
+                hypersiphon_instability_3_2_energy = {
+                    add_modifier = { modifier = giga_hypersiphon_instability_resources_energy days = @debuff_days }
+                    remove_planet_flag = hypersiphon_instability_3_2_energy
+                }
+                hypersiphon_instability_3_2_minerals = {
+                    add_modifier = { modifier = giga_hypersiphon_instability_resources_minerals days = @debuff_days }
+                    remove_planet_flag = hypersiphon_instability_3_2_minerals
+                }
+                hypersiphon_instability_3_2_food = {
+                    add_modifier = { modifier = giga_hypersiphon_instability_resources_food days = @debuff_days }
+                    remove_planet_flag = hypersiphon_instability_3_2_food
+                }
+                hypersiphon_instability_3_2_alloys = {
+                    add_modifier = { modifier = giga_hypersiphon_instability_resources_alloys days = @debuff_days }
+                    remove_planet_flag = hypersiphon_instability_3_2_alloys
+                }
+                hypersiphon_instability_3_2_consumer_goods = {
+                    add_modifier = { modifier = giga_hypersiphon_instability_resources_consumer_goods days = @debuff_days }
+                    remove_planet_flag = hypersiphon_instability_3_2_consumer_goods
+                }
+                hypersiphon_instability_3_2_unity = {
+                    add_modifier = { modifier = giga_hypersiphon_instability_resources_unity days = @debuff_days }
+                    remove_planet_flag = hypersiphon_instability_3_2_unity
+                }
+                hypersiphon_instability_3_2_research = {
+                    add_modifier = { modifier = giga_hypersiphon_instability_resources_research days = @debuff_days }
+                    remove_planet_flag = hypersiphon_instability_3_2_research
+                }
+            }
+        }
+    }
+}
+
+########################################################################################################################
+# minor incursion (shroud monsters spawn in a system and cause chaos)
+
+situation_event = {
+    id = giga_hypersiphon.040
+    title = giga_hypersiphon.040.name
+    desc = giga_hypersiphon.040.desc
+    picture = GFX_evt_wormhole
+    show_sound = event_psionic
+    is_triggered_only = yes
+    situation = this
+    location = event_target:hypersiphon_target
+
+    immediate = {
+        # pick a spawn system
+        owner = {
+            giga_hypersiphon_calculate_empire_power = yes
+            giga_create_hypersiphon_minor_incrusion_country = yes
+            giga_establish_incursion_communications = yes
+            multiply_variable = { which = giga_hypersiphon_incursion_power value = 0.75 }
+
+            root = {
+                switch = {
+                    trigger = current_stage
+                    giga_situation_hypersiphon_instability_stage_1 = { prev = { multiply_variable = { which = giga_hypersiphon_incursion_power value = 0.3 } } }
+                    giga_situation_hypersiphon_instability_stage_2 = { prev = { multiply_variable = { which = giga_hypersiphon_incursion_power value = 0.4 } } }
+                    giga_situation_hypersiphon_instability_stage_3 = { prev = { multiply_variable = { which = giga_hypersiphon_incursion_power value = 0.5 } } }
+                    giga_situation_hypersiphon_instability_stage_4 = { prev = { multiply_variable = { which = giga_hypersiphon_incursion_power value = 0.6 } } }
+                    giga_situation_hypersiphon_instability_stage_5 = { prev = { multiply_variable = { which = giga_hypersiphon_incursion_power value = 0.7 } } }
+                }
+            }
+
+            random_system_within_border = {
+                weights = {
+                    base = 10
+                    modifier = {
+                        is_bottleneck_system = yes
+                        multiply = 5
+                    }
+                    modifier = {
+                        any_system_planet = {
+                            is_colony = yes
+                        }
+                        multiply = 0.5
+                    }
+                    modifier = {
+                        exists = starbase
+                        starbase = {
+                            has_starbase_size > starbase_outpost
+                        }
+                        multiply = 0.25
+                    }
+                    modifier = {
+                        exists = starbase
+                        starbase = {
+                            has_starbase_size > starbase_starport
+                        }
+                        multiply = 0.5
+                    }
+                    modifier = {
+                        exists = starbase
+                        starbase = {
+                            has_starbase_size >= starbase_citadel
+                        }
+                        multiply = 0.1
+                    }
+                }
+
+                save_event_target_as = hypersiphon_target
+
+                star = {
+                    giga_spawn_hypersiphon_incursion_fleet = {
+                        owner = event_target:giga_hypersiphon_minor_incrusion_country
+                        budget = root.owner.giga_hypersiphon_incursion_power
+                    }
+                }
+            }
+        }
+    }
+
+    option = {
+        name = giga_hypersiphon.040.a
+
+        event_target:hypersiphon_target = {
+            custom_tooltip = giga_hypersiphon.040.result
+        }
+    }
+}
+
+# have minor incursion fleets decay over time
+event = {
+    id = giga_hypersiphon.041
+    hide_window = yes
+    is_triggered_only = yes
+
+    trigger = {
+        exists = event_target:giga_hypersiphon_minor_incrusion_country
+    }
+
+    immediate = {
+        event_target:giga_hypersiphon_minor_incrusion_country = {
+            every_owned_fleet = {
+                limit = {
+                    is_in_combat = no
+                }
+                random_list = {
+                    20 = {}
+                    1 = {
+                        random_owned_ship = {
+                            weights = {
+                                base = 1
+                                modifier = {
+                                    is_ship_size = giga_hypersiphon_shroud_entity_small
+                                    multiply = 4
+                                }
+                            }
+                            delete_ship = this
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+########################################################################################################################
+# major incursion (situation end/restart, powerful shroud monsters spawn in a system and can hold space, kill colonies)
+
+situation_event = {
+    id = giga_hypersiphon.100
+    title = giga_hypersiphon.100.name
+    desc = giga_hypersiphon.100.desc
+    picture = GFX_evt_space_monster
+    show_sound = event_ex_started
+    is_triggered_only = yes
+    situation = this
+    location = event_target:hypersiphon_target
+
+    immediate = {
+        owner = {
+            giga_create_hypersiphon_major_incrusion_country = yes
+            giga_establish_incursion_communications = yes
+            giga_hypersiphon_calculate_empire_power = yes
+            multiply_variable = { which = giga_hypersiphon_incursion_power value = 0.65 }
+            multiply_variable = { which = giga_hypersiphon_incursion_power value = 0.75 }
+
+            random_system_within_border = {
+                weights = {
+                    base = 10
+                    modifier = {
+                        is_bottleneck_system = yes
+                        multiply = 5
+                    }
+                    modifier = {
+                        any_system_planet = {
+                            is_colony = yes
+                        }
+                        multiply = 0.5
+                    }
+                    modifier = {
+                        exists = starbase
+                        starbase = {
+                            has_starbase_size > starbase_outpost
+                        }
+                        multiply = 0.25
+                    }
+                    modifier = {
+                        exists = starbase
+                        starbase = {
+                            has_starbase_size > starbase_starport
+                        }
+                        multiply = 0.5
+                    }
+                    modifier = {
+                        exists = starbase
+                        starbase = {
+                            has_starbase_size >= starbase_citadel
+                        }
+                        multiply = 0.1
+                    }
+                }
+
+                save_event_target_as = hypersiphon_target
+
+                star = {
+                    # spawn station
+                    giga_spawn_hypersiphon_incursion_portal = {
+                        owner = event_target:giga_hypersiphon_major_incrusion_country
+                        budget = root.owner.giga_hypersiphon_incursion_power
+                    }
+                    event_target:giga_hypersiphon_major_incrusion_country = {
+                        start_situation = {
+                            type = giga_situation_hypersiphon_incursion_tracker
+                            target = last_created_fleet
+                            effect = {
+                                save_event_target_as = situation
+                                set_situation_flag = hypersiphon_incursion_target@root.owner
+                            }
+                        }
+                    }
+                    last_created_fleet = {
+                        set_fleet_flag = hypersiphon_incursion@event_target:situation
+                        set_fleet_flag = hypersiphon_incursion_target@root.owner
+                    }
+
+                    # spawn initial fleets
+                    giga_spawn_hypersiphon_major_incursion_fleet = {
+                        owner = event_target:giga_hypersiphon_major_incrusion_country
+                        budget = root.owner.giga_hypersiphon_incursion_power
+                        situation = event_target:situation
+                        target = root.owner
+                    }
+                    giga_spawn_hypersiphon_major_incursion_fleet = {
+                        owner = event_target:giga_hypersiphon_major_incrusion_country
+                        budget = root.owner.giga_hypersiphon_incursion_power
+                        situation = event_target:situation
+                        target = root.owner
+                    }
+                    #last_created_fleet = {
+                    #    set_fleet_flag = hypersiphon_incursion@event_target:situation
+                    #    set_fleet_flag = hypersiphon_incursion_target@root.owner
+                    #    giga_hypersiphon_incursion_orders = yes
+                    #}
+                }
+            }
+
+            # notify people
+            every_relation = {
+                limit = {
+                    is_ai = no
+                    has_communications = root
+                    OR = {
+                        has_intel_level = {
+                            who = root
+                            category = military
+                            level >= 1
+                        }
+                        has_intel_level = {
+                            who = root
+                            category = economy
+                            level >= 2
+                        }
+                    }
+                }
+                country_event = { id = giga_hypersiphon.101 }
+            }
+
+            # re start the situation (no escape!)
+            start_situation = {
+                type = giga_situation_hypersiphon_instability
+            }
+        }
+        # end this loop's situation
+        destroy_situation = this
+    }
+
+    option = {
+        name = giga_hypersiphon.100.a
+    }
+
+    after = {
+        custom_tooltip = giga_hypersiphon.100.restart
+    }
+}
+
+# notification for other countries
+country_event = {
+    id = giga_hypersiphon.101
+    title = giga_hypersiphon.101.name
+    desc = giga_hypersiphon.101.desc
+    picture = GFX_evt_space_monster
+    show_sound = event_ex_started
+    is_triggered_only = yes
+    location = event_target:hypersiphon_target
+
+    option = {
+        name = giga_hypersiphon.101.a
+    }
+}
+
+# starbase destroyed by incursion
+starbase_event = {
+    id = giga_hypersiphon.102
+    hide_window = yes
+    is_triggered_only = yes
+
+    trigger = {
+        exists = from
+        exists = from.owner
+        from.owner = {
+            is_country_type = giga_hypersiphon_major_incursion
+        }
+        NOT = {
+            solar_system = {
+                any_system_planet = { is_colony = yes } # For populated systems, they need to destroy the colonies
+            }
+        }
+    }
+
+    immediate = {
+        #owner = {
+        #    giga_hypersiphon_calculate_empire_power = yes
+        #}
+
+        solar_system = {
+            giga_spawn_hypersiphon_incursion_starbase = {
+                budget = root.from.spawn_budget #root.owner.giga_hypersiphon_incursion_power
+                fleet = root.from
+            }
+        }
+    }
+}
+
+# shroud colony on bombardment
+planet_event = {
+    id = giga_hypersiphon.103
+    title = giga_hypersiphon.103.name
+    desc = giga_hypersiphon.103.desc
+    picture = GFX_evt_shrouded_planet
+    show_sound = event_ghost_town
+
+    is_triggered_only = yes
+
+    trigger = {
+        planet_devastation >= 100
+        FROM = {
+            is_country_type = giga_hypersiphon_major_incursion
+        }
+    }
+
+    immediate = {
+        add_threat = { who = from amount = 2 }
+
+        # handles colony destruction etc
+        giga_shroud_planet = yes
+
+        random_fleet_in_orbit = {
+            limit = {
+                owner = {
+                    is_same_empire = from
+                }
+            }
+            save_event_target_as = bombarding_fleet
+        }
+
+        solar_system = {
+            if = { # Build starbase if no other colonies are left
+                limit = {
+                    NOT = {
+                        exists = starbase
+                        any_system_planet = {
+                            has_owner = yes
+                            owner = {
+                                NOT = { is_same_value = from }
+                            }
+                        }
+                    }
+                }
+
+                giga_spawn_hypersiphon_incursion_starbase = {
+                    budget = event_target:bombarding_fleet.spawn_budget
+                    fleet = event_target:bombarding_fleet
+                }
+            }
+        }
+    }
+
+    option = {
+        name = giga_hypersiphon.103.a
+    }
+}
+
+# portal is killed, hidden
+country_event = {
+    id = giga_hypersiphon.104
+    hide_window = yes
+    is_triggered_only = yes
+
+    trigger = {
+        is_country_type = giga_hypersiphon_major_incursion
+        from = {
+            has_fleet_flag = hypersiphon_incursion_portal
+        }
+    }
+
+    immediate = {
+        fromfrom.solar_system = {
+            save_event_target_as = hypersiphon_target
+        }
+        random_country = {
+            limit = {
+                fromfrom = {
+                    has_fleet_flag = hypersiphon_incursion_target@prev
+                }
+            }
+            save_event_target_as = target
+        }
+
+        # if the killer is the target
+        if = {
+            limit = {
+                from = {
+                    is_same_empire = event_target:target
+                }
+            }
+            # notify killer/target
+            from = {
+                country_event = {
+                    id = giga_hypersiphon.105
+                }
+            }
+        }
+        else = {
+            # notify killer
+            country_event = {
+                id = giga_hypersiphon.106
+            }
+            # notify target
+            country_event = {
+                id = giga_hypersiphon.107
+            }
+        }
+
+        # notify everyone else
+        from = {
+            every_relation = {
+                limit = {
+                    is_ai = no
+                    has_communications = root
+                    not = {
+                        is_same_empire = event_target:target
+                    }
+                    OR = {
+                        has_intel_level = {
+                            who = root
+                            category = military
+                            level >= 1
+                        }
+                        has_intel_level = {
+                            who = root
+                            category = economy
+                            level >= 2
+                        }
+                    }
+                }
+                country_event = { id = giga_hypersiphon.108 }
+            }
+        }
+    }
+}
+
+# you killed the portal and are the target
+country_event = {
+    id = giga_hypersiphon.105
+    title = giga_hypersiphon.105.name
+    desc = {
+        text = giga_hypersiphon.105.desc.first
+        trigger = { not = { has_country_flag = giga_hypersiphon_closed_portal } }
+    }
+    desc = {
+        text = giga_hypersiphon.105.desc.other
+        trigger = { has_country_flag = giga_hypersiphon_closed_portal }
+    }
+    picture = GFX_evt_large_explosion
+    show_sound = event_super_explosion
+    is_triggered_only = yes
+    location = event_target:hypersiphon_target
+
+    option = {
+        trigger = {
+            not = { has_country_flag = giga_hypersiphon_closed_portal }
+        }
+        name = giga_hypersiphon.105.a
+
+        enable_special_project = {
+            name = giga_project_hypersiphon_portal
+        }
+    }
+    option = {
+        trigger = {
+            has_country_flag = giga_hypersiphon_closed_portal
+        }
+        name = giga_hypersiphon.105.b
+    }
+
+    after = {
+        set_country_flag = giga_hypersiphon_closed_portal
+    }
+}
+
+# you killed the portal and are not the target
+country_event = {
+    id = giga_hypersiphon.106
+    title = giga_hypersiphon.106.name
+    desc = giga_hypersiphon.106.desc
+    picture = GFX_evt_large_explosion
+    show_sound = event_super_explosion
+    is_triggered_only = yes
+    location = event_target:hypersiphon_target
+
+    option = {
+        name = giga_hypersiphon.106.a
+    }
+}
+
+# the portal was killed but not by you, the target
+country_event = {
+    id = giga_hypersiphon.107
+    title = giga_hypersiphon.107.name
+    desc = {
+        text = giga_hypersiphon.107.desc.first
+        trigger = { not = { has_country_flag = giga_hypersiphon_closed_portal } }
+    }
+    desc = {
+        text = giga_hypersiphon.107.desc.other
+        trigger = { has_country_flag = giga_hypersiphon_closed_portal }
+    }
+    picture = GFX_evt_large_explosion
+    show_sound = event_super_explosion
+    is_triggered_only = yes
+    location = event_target:hypersiphon_target
+
+    option = {
+        trigger = {
+            not = { has_country_flag = giga_hypersiphon_closed_portal }
+        }
+        name = giga_hypersiphon.107.a
+
+        enable_special_project = {
+            name = giga_project_hypersiphon_portal
+        }
+    }
+    option = {
+        trigger = {
+            has_country_flag = giga_hypersiphon_closed_portal
+        }
+        name = giga_hypersiphon.107.b
+    }
+
+    after = {
+        set_country_flag = giga_hypersiphon_closed_portal
+    }
+}
+
+# everyone else learns about it being killed
+country_event = {
+    id = giga_hypersiphon.108
+    title = giga_hypersiphon.108.name
+    desc = giga_hypersiphon.108.desc
+    picture = GFX_evt_surreal_visions
+    show_sound = event_psionic
+    is_triggered_only = yes
+    location = event_target:hypersiphon_target
+
+    option = {
+        name = giga_hypersiphon.108.a
+    }
+}
+
+# special project completed to unlock additional approaches
+country_event = {
+    id = giga_hypersiphon.109
+    title = giga_hypersiphon.109.name
+    desc = giga_hypersiphon.109.desc
+    picture = GFX_evt_shroudwalker_enclave
+    show_sound = event_psionic
+    is_triggered_only = yes
+
+    option = {
+        name = giga_hypersiphon.109.a
+
+        custom_tooltip = giga_hypersiphon.109.effect
+    }
+}
+
+# reinforcement pulse
+situation_event = {
+    id = giga_hypersiphon.110
+    hide_window = yes
+    is_triggered_only = yes
+
+    trigger = {
+        not = { has_situation_flag = reinforced_recently }
+    }
+
+    immediate = {
+        random_country = {
+            limit = {
+                root = {
+                    has_situation_flag = hypersiphon_incursion_target@prev
+                }
+            }
+            save_event_target_as = target
+        }
+        set_variable = { which = reinforcement_budget value = 50000 }
+        if = {
+            limit = { exists = event_target:target }
+            event_target:target = {
+                giga_hypersiphon_calculate_empire_power = yes
+                multiply_variable = { which = giga_hypersiphon_incursion_power value = 0.8 }
+                root = {
+                    set_variable = {
+                        which = reinforcement_budget
+                        value = prev.giga_hypersiphon_incursion_power
+                    }
+                }
+            }
+        }
+        else = {
+            owner = {
+                save_event_target_as = target # backup if the target is dead
+            }
+        }
+
+        owner = {
+            if = {
+                limit = {
+                    count_owned_fleet = {
+                        limit = {
+                            has_fleet_flag = hypersiphon_incursion@root
+                        }
+                        count = 0
+                    }
+                }
+                # we have no fleets at all, better spawn one
+                root.target = {
+                    giga_spawn_hypersiphon_major_incursion_fleet = {
+                        owner = event_target:giga_hypersiphon_major_incrusion_country
+                        budget = root.reinforcement_budget
+                        situation = root
+                        target = event_target:target
+                    }
+                }
+                root = {
+                    set_timed_situation_flag = {
+                        flag = reinforced_recently
+                        months = 15
+                    }
+                }
+            }
+            else = {
+                # total up the active fleet power for this incursion
+                root = { set_variable = { which = active_fleet_power value = 0 } }
+                every_owned_fleet = {
+                    limit = {
+                        has_fleet_flag = hypersiphon_incursion@root
+                    }
+                    root = {
+                        change_variable = {
+                            which = active_fleet_power
+                            value = prev.trigger:fleet_power
+                        }
+                    }
+                }
+
+                # if we do have fleets but our total fleet power is less than a threshold, spawn a new fleet
+                if = {
+                    limit = {
+                        root = {
+                            check_variable_arithmetic = {
+                                which = active_fleet_power
+                                value < reinforcement_budget
+                                multiply = 1.2 # third fleet when one is really busted maybe
+                            }
+                        }
+                    }
+
+                    root.target = {
+                        giga_spawn_hypersiphon_major_incursion_fleet = {
+                            owner = event_target:giga_hypersiphon_major_incrusion_country
+                            budget = root.reinforcement_budget
+                            situation = root
+                            target = event_target:target
+                        }
+                    }
+                    root = {
+                        set_timed_situation_flag = {
+                            flag = reinforced_recently
+                            months = 15
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

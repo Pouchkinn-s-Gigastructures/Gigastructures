@@ -1,0 +1,235 @@
+giga_situation_hypersiphon_tracker = {
+    inline_script = situations/giga_targeted_event_situation_boilerplate
+
+    on_monthly = {
+        events = {
+            giga_hypersiphon.001
+        }
+    }
+}
+
+@instability_total = 5000
+@stage_count = 5
+
+giga_situation_hypersiphon_instability = {
+    picture = GFX_evt_wormhole
+    category = negative
+
+    complete_icon = GFX_situation_outcome_giga_hypersiphon
+    complete_icon_frame = GFX_situation_outcome_frame_red
+
+    fail_icon = GFX_situation_outcome_giga_calm
+    fail_icon_frame = GFX_situation_outcome_frame_green
+
+    on_start = {
+        owner = {
+            country_event = { id = giga_hypersiphon.002 }
+        }
+    }
+    on_progress_complete = {
+        if = {
+            limit = {
+                owner = {
+                    has_country_flag = hypersiphon_incursion_happened
+                }
+            }
+            custom_tooltip = giga_situation_hypersiphon_instability_complete_effect
+        }
+        else = {
+            custom_tooltip = giga_situation_hypersiphon_instability_complete_effect_unknown
+        }
+        hidden_effect = {
+            situation_event = {
+                id = giga_hypersiphon.100
+            }
+        }
+    }
+    on_fail = {
+        custom_tooltip = giga_situation_hypersiphon_instability_fail_effect
+    }
+
+    stages = {
+        giga_situation_hypersiphon_instability_stage_1 = {
+            icon = GFX_situation_stage_1
+            icon_background = GFX_situation_stage_frame_blue
+            end = @[1 * (instability_total / stage_count)]
+            custom_tooltip = giga_situation_hypersiphon_instability_stage_1_effect
+        }
+        giga_situation_hypersiphon_instability_stage_2 = {
+            icon = GFX_situation_stage_2
+            icon_background = GFX_situation_stage_frame_green
+            end = @[2 * (instability_total / stage_count)]
+            custom_tooltip = giga_situation_hypersiphon_instability_stage_2_effect
+        }
+        giga_situation_hypersiphon_instability_stage_3 = {
+            icon = GFX_situation_stage_3
+            icon_background = GFX_giga_situation_stage_frame_yellow
+            end = @[3 * (instability_total / stage_count)]
+            custom_tooltip = giga_situation_hypersiphon_instability_stage_3_effect
+        }
+        giga_situation_hypersiphon_instability_stage_4 = {
+            icon = GFX_situation_stage_4
+            icon_background = GFX_giga_situation_stage_frame_orange
+            end = @[4 * (instability_total / stage_count)]
+            custom_tooltip = giga_situation_hypersiphon_instability_stage_4_effect
+        }
+        giga_situation_hypersiphon_instability_stage_5 = {
+            icon = GFX_situation_stage_5
+            icon_background = GFX_situation_stage_frame_red
+            end = @[5 * (instability_total / stage_count)]
+            custom_tooltip = giga_situation_hypersiphon_instability_stage_5_effect
+        }
+    }
+
+    monthly_progress = {
+        base = 0
+        modifier = {
+            desc = giga_situation_hypersiphon_instability_progress_instability
+            add = owner.modifier:giga_shroud_conduit_instability
+        }
+
+        modifier = {
+            desc = giga_situation_hypersiphon_instability_progress_mitigate
+            current_situation_approach = giga_situation_hypersiphon_instability_approach_mitigate
+            owner = {
+                check_modifier_value = {
+                    modifier = giga_shroud_conduit_instability
+                    value > 0
+                }
+            }
+            multiply = 0.5
+        }
+
+        modifier = {
+            desc = giga_situation_hypersiphon_instability_progress_encourage
+            current_situation_approach = giga_situation_hypersiphon_instability_approach_encourage
+            owner = {
+                check_modifier_value = {
+                    modifier = giga_shroud_conduit_instability
+                    value > 0
+                }
+            }
+            multiply = 1.25
+        }
+
+        modifier = {
+            desc = giga_situation_hypersiphon_instability_progress_decay
+            owner = {
+                check_modifier_value = {
+                    modifier = giga_shroud_conduit_instability
+                    value <= 0
+                }
+            }
+            subtract = @[0.01 * instability_total]
+        }
+    }
+
+    approach = {
+        name = giga_situation_hypersiphon_instability_approach_encourage
+        icon_background = GFX_situation_approach_bg_red
+        icon = GFX_situation_approach_this_is_fine
+
+        potential = {
+            owner = {
+                has_country_flag = hypersiphon_incursion_researched
+            }
+        }
+
+        modifier = {
+            giga_shroud_conduit_worker_bonus_mult = 0.2
+        }
+
+        on_select = {
+            custom_tooltip = giga_situation_hypersiphon_instability_approach_encourage_effect
+        }
+
+        resources = {
+            category = situations
+            produces = {
+                sr_zro = 5
+            }
+            upkeep = {
+                energy = 200
+            }
+        }
+
+        ai_weight = { weight = 0 }
+    }
+
+    approach = {
+        default = yes
+        name = giga_situation_hypersiphon_instability_approach_neutral
+        icon_background = GFX_situation_approach_bg_yellow
+        icon = GFX_situation_approach_balance_sheet
+
+        on_select = {
+            custom_tooltip = giga_situation_hypersiphon_instability_approach_neutral_effect
+        }
+
+        ai_weight = { weight = 1 }
+    }
+
+    approach = {
+        name = giga_situation_hypersiphon_instability_approach_mitigate
+        icon_background = GFX_situation_approach_bg_green
+        icon = GFX_situation_approach_unity
+
+        potential = {
+            owner = {
+                has_country_flag = hypersiphon_incursion_researched
+            }
+        }
+
+        modifier = {
+            giga_shroud_conduit_worker_bonus_mult = -0.2
+        }
+
+        on_select = {
+            custom_tooltip = giga_situation_hypersiphon_instability_approach_mitigate_effect
+        }
+
+        resources = {
+            category = situations
+            upkeep = {
+                society_research = 300
+                sr_zro = 2
+            }
+        }
+
+        ai_weight = { weight = 0 }
+    }
+
+    on_monthly = {
+        events = {
+            giga_hypersiphon.003 # random event gateway, not random_events because weightings
+        }
+    }
+}
+
+giga_situation_hypersiphon_incursion_tracker = {
+    inline_script = situations/giga_targeted_event_situation_boilerplate
+
+    # clear out fleets if this incursion is terminated
+    on_abort = {
+        if = {
+            limit = { exists = event_target:giga_hypersiphon_major_incrusion_country }
+            event_target:giga_hypersiphon_major_incrusion_country = {
+                every_owned_fleet = {
+                    limit = { has_fleet_flag = hypersiphon_incursion@root }
+                    destroy_fleet = this
+                }
+                every_owned_starbase = {
+                    limit = { has_starbase_flag = hypersiphon_incursion@root}
+                    destroy_fleet = fleet
+                }
+            }
+        }
+    }
+
+    on_monthly = {
+        random_events = {
+            11 = 0 # no-op
+            1 = giga_hypersiphon.110
+        }
+    }
+}
