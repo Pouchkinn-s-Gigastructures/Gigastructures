@@ -10,7 +10,7 @@ asteroid_manufactory_0 = {
 	resources = {
 		category = giga_kilostructures
 		cost = {
-			alloys = 2500
+			alloys = 750
 			unity = @giga_kilo_unity_cost
 		}
 		upkeep = { energy = 5 }
@@ -48,54 +48,6 @@ asteroid_manufactory_0 = {
 	}
 
 	ai_weight = {
-		# weight = 100	# Default = 100
-
-		# # Can we afford the upkeep
-		# modifier = { factor = 1.00	chk_afford_energy_10 = yes }
-		# modifier = { factor = 0.90	chk_afford_energy_09 = yes }
-		# modifier = { factor = 0.80	chk_afford_energy_08 = yes }
-		# modifier = { factor = 0.70	chk_afford_energy_07 = yes }
-		# modifier = { factor = 0.60	chk_afford_energy_06 = yes }
-		# modifier = { factor = 0.50	chk_afford_energy_05 = yes }
-		# modifier = { factor = 0.40	chk_afford_energy_04 = yes }
-		# modifier = { factor = 0.30	chk_afford_energy_03 = yes }
-		# modifier = { factor = 0.20	chk_afford_energy_25 = yes }
-		# modifier = { factor = 0.10	chk_afford_energy_02 = yes }
-		# modifier = { factor = 0.00	chk_afford_energy_15 = yes }
-
-		# # Do we want the production
-		# modifier = { factor = 3.75	chk_needs_consumer_goods_10 = yes }
-		# modifier = { factor = 3.50	chk_needs_consumer_goods_09 = yes }
-		# modifier = { factor = 3.25	chk_needs_consumer_goods_08 = yes }
-		# modifier = { factor = 3.00	chk_needs_consumer_goods_07 = yes }
-		# modifier = { factor = 2.75	chk_needs_consumer_goods_06 = yes }
-		# modifier = { factor = 2.50	chk_needs_consumer_goods_05 = yes }
-		# modifier = { factor = 2.25	chk_needs_consumer_goods_04 = yes }
-		# modifier = { factor = 2.00	chk_needs_consumer_goods_03 = yes }
-		# modifier = { factor = 1.75	chk_needs_consumer_goods_25 = yes }
-		# modifier = { factor = 1.50	chk_needs_consumer_goods_02 = yes }
-		# modifier = { factor = 1.25	chk_needs_consumer_goods_15 = yes }
-
-		# # Is this system a good location?
-		# modifier = { factor = 0.1	any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } }
-		# modifier = { factor = 0.5	any_neighbor_system = { any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } } }
-
-		# # Do we lean towards this from federation/ethic/civic?
-		# modifier = { factor = 2		from = { country_uses_consumer_goods = yes } }
-		# modifier = { factor = 0		from = { country_uses_consumer_goods = no } }
-
-		# # How many of this megastructure can the AI build?
-		# modifier = { factor = 0.00 from = { has_country_flag = has_recently_built_asteroid_manufactory } }
-		# modifier = {
-		# 	factor = 0
-		# 	from = {
-		# 		OR = {
-		# 			has_megastructure = asteroid_manufactory_0
-		# 			has_megastructure = asteroid_manufactory_1
-		# 		}
-		# 	}
-		# }
-
 		weight = value:giga_ai_base_kilo
 		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|125|MIN|0.5|
 		mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|25|MIN|0.25|
@@ -108,6 +60,22 @@ asteroid_manufactory_0 = {
 		modifier = { factor = 0		from = { country_uses_consumer_goods = no } }
 	}
 
+	on_build_queued = {
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_asteroid_manufactory years = 10 }
+		}
+	}
+	on_build_unqueued = {
+		from = {
+			remove_country_flag = has_recently_built_asteroid_manufactory
+		}
+	}
+	on_build_cancel = {
+		from = {
+			remove_country_flag = has_recently_built_asteroid_manufactory
+		}
+	}
+
 	on_build_complete = {
 		save_event_target_as = giga_system
 		fromfrom.planet = {
@@ -117,73 +85,20 @@ asteroid_manufactory_0 = {
 			giga_set_has_mega_flag = yes
 		}
 		from = {
-			set_timed_country_flag = { flag = has_recently_built_asteroid_manufactory years = 20 }
 			country_event = { id = giga_dialog.10901 }	# Notification
 			change_variable = { which = giga_current_asteroid_manufactory value = 1 }
 		}
 	}
 }
 
-asteroid_manufactory_1 = {
-	entity = "asteroid_cw_01_entity"
-	portrait = "GFX_megastructure_asteroid_manufactory"
-	upgrade_from = { asteroid_manufactory_0 }
+asteroid_manufactory_consumer_goods = {
+	inline_script = {
+		script = megastructures/asteroid_industry
 
-	build_time = 1350
-	resources = {
-		category = giga_kilostructures
-		cost = { alloys = 2500 unity = @giga_kilo_unity_cost }
-		upkeep = { energy = 100 }
-	}
+		potential = ""
 
-	potential = { NOT = { has_global_flag = asteroid_manufactory_disabled } }
-	possible = { from = { has_technology = giga_tech_asteroid_manufactory } }
+		modifier = ""
 
-	ai_weight = { factor = 10 } # If we can build it, we will build it
-	on_build_complete = {
-		save_event_target_as = giga_system
-		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
-		from = { country_event = { id = giga_dialog.10902 } }	# Notification
-	}
-}
-
-asteroid_manufactory_2 = {
-	entity = "asteroid_cw_02_entity"
-	construction_entity = "asteroid_cw_02_entity"
-	portrait = "GFX_megastructure_asteroid_manufactory"
-	upgrade_from = { asteroid_manufactory_1 }
-
-	build_time = 1800
-	resources = {
-		category = giga_kilostructures
-		cost = { alloys = 5000 unity = @giga_kilo_unity_cost }
-		upkeep = { 
-			energy = 125
-			alloys = 25
-		}
-		produces = { consumer_goods = 200 }
-	}
-
-	potential = { NOT = { has_global_flag = asteroid_manufactory_disabled } }
-	possible = { from = { has_technology = giga_tech_asteroid_manufactory } }
-
-	ai_weight = { factor = 10 } # If we can build it, we will build it
-	on_build_complete = {
-		save_event_target_as = giga_system
-		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
-		from = {
-			country_event = { id = giga_dialog.10903 }				# Notification
-			if = {
-				limit = {
-					NOR = {
-						has_global_flag = giga_achievements_disabled
-						has_country_flag = giga_achievement_54
-					}
-				}
-				set_country_flag = giga_achievement_54
-				set_timed_country_flag = { flag = giga_achievement_54_notification days = 30 }
-				giga_achievement_sound = yes
-			}
-		}
+		ai_weight = "mult = value:giga_ai_output|RESOURCE|consumer_goods|AMOUNT|200|"
 	}
 }
