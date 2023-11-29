@@ -1,104 +1,78 @@
+########################################################################################################################
+# player gateway mega
 asteroid_manufactory_0 = {
-	entity = "giga_consite_5_5_entity"
-	construction_entity = "giga_consite_5_5_entity"
-	# construction_blocks_and_blocked_by = none # BLOCKING TEST
-	portrait = "GFX_megastructure_construction_background"
-	place_entity_on_planet_plane = no
-	prerequisites = { giga_tech_asteroid_manufactory }
-
-	build_time = 900
-	resources = {
-		category = giga_kilostructures
-		cost = {
-			alloys = 750
-			unity = @giga_kilo_unity_cost
-		}
-		upkeep = { energy = 5 }
-	}
-
-	potential = {
-		has_technology = giga_tech_asteroid_manufactory
-		NOT = { has_global_flag = asteroid_manufactory_disabled }
-		OR = {
-			check_variable = { which = giga_asteroid_manufactory_cap value = 0 }						# No Cap
-			check_variable = { which = giga_current_asteroid_manufactory value < giga_asteroid_manufactory_cap }
-		}
-	}
-
-	possible = {
-		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
-		custom_tooltip = {
-			fail_text = "requires_not_capped"
+	inline_script = {
+		script = megastructures/asteroid_industry/asteroid_industry_construction
+		placement_script = megastructures/asteroid_industry/placement/asteroid_industry_player
+		potential = "is_ai = no"
+		ai_weight = ""
+		on_build_complete = "
 			from = {
-				OR = {
-					check_variable = { which = giga_asteroid_manufactory_cap value = 0 }						# No Cap
-					check_variable = { which = giga_current_asteroid_manufactory value < giga_asteroid_manufactory_cap }
+				country_event = {
+					id = giga_dialog.10901
+					scopes = {
+						from = root.fromfrom
+					}
 				}
 			}
-		}
-	}
-
-	placement_rules = {
-		planet_possible = {
-			custom_tooltip = { fail_text = "must_build_around_asteroid"			is_asteroid = yes }
-			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
-			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
-			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
-		}
-	}
-
-	ai_weight = {
-		weight = value:giga_ai_base_kilo
-		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|125|MIN|0.5|
-		mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|25|MIN|0.25|
-		mult = value:giga_ai_output|RESOURCE|consumer_goods|AMOUNT|200|
-		mult = value:giga_ai_prevent_spam|MEGA|asteroid_manufactory|
-		mult = value:giga_ai_unlock_low_priority
-		mult = value:giga_ai_cap_availability_boost
-		mult = value:giga_ai_core_territory
-
-		modifier = { factor = 0		from = { country_uses_consumer_goods = no } }
-	}
-
-	on_build_queued = {
-		from = {
-			set_timed_country_flag = { flag = has_recently_built_asteroid_manufactory years = 10 }
-		}
-	}
-	on_build_unqueued = {
-		from = {
-			remove_country_flag = has_recently_built_asteroid_manufactory
-		}
-	}
-	on_build_cancel = {
-		from = {
-			remove_country_flag = has_recently_built_asteroid_manufactory
-		}
-	}
-
-	on_build_complete = {
-		save_event_target_as = giga_system
-		fromfrom.planet = {
-			save_event_target_as = giga_planet
-			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
-			set_planet_flag = megastructure
-			giga_set_has_mega_flag = yes
-		}
-		from = {
-			country_event = { id = giga_dialog.10901 }	# Notification
-			change_variable = { which = giga_current_asteroid_manufactory value = 1 }
-		}
+		"
 	}
 }
 
+########################################################################################################################
+# consumer goods
+asteroid_manufactory_ai_consumer_goods = {
+	inline_script = {
+		script = megastructures/asteroid_industry/asteroid_industry_construction
+		placement_script = megastructures/asteroid_industry/placement/asteroid_industry_consumer_goods
+		potential = "is_ai = yes"
+		ai_weight = "
+			mult = value:giga_ai_output|RESOURCE|consumer_goods|AMOUNT|200|
+			modifier = { factor = 0		from = { country_uses_consumer_goods = no } }
+			modifier = { factor = 0		from = { is_anglers_empire = yes } }
+		"
+		on_build_complete = "upgrade_megastructure_to = asteroid_manufactory_platform_consumer_goods finish_upgrade = yes"
+	}
+}
+asteroid_manufactory_platform_consumer_goods = {
+	inline_script = {
+		script = megastructures/asteroid_industry/asteroid_industry_platform
+		upgrade_from = asteroid_manufactory_ai_consumer_goods
+	}
+}
 asteroid_manufactory_consumer_goods = {
 	inline_script = {
-		script = megastructures/asteroid_industry
-
-		potential = ""
-
+		script = megastructures/asteroid_industry/asteroid_industry
+		upgrades_from = asteroid_manufactory_platform_consumer_goods
 		modifier = ""
+	}
+}
 
-		ai_weight = "mult = value:giga_ai_output|RESOURCE|consumer_goods|AMOUNT|200|"
+########################################################################################################################
+# food
+asteroid_manufactory_ai_food = {
+	inline_script = {
+		script = megastructures/asteroid_industry/asteroid_industry_construction
+		placement_script = megastructures/asteroid_industry/placement/asteroid_industry_food
+		potential = "is_ai = yes"
+		ai_weight = "
+			mult = value:giga_ai_output|RESOURCE|food|AMOUNT|200|
+			modifier = { factor = 0		from = { country_uses_food = no } }
+			modifier = { factor = 4		from = { is_anglers_empire = yes } }
+		"
+		on_build_complete = "upgrade_megastructure_to = asteroid_manufactory_platform_food finish_upgrade = yes"
+	}
+}
+asteroid_manufactory_platform_food = {
+	inline_script = {
+		script = megastructures/asteroid_industry/asteroid_industry_platform
+		upgrade_from = asteroid_manufactory_ai_food
+	}
+}
+asteroid_manufactory_food = {
+	inline_script = {
+		script = megastructures/asteroid_industry/asteroid_industry
+		upgrades_from = asteroid_manufactory_platform_food
+		modifier = ""
 	}
 }
