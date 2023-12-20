@@ -27,5 +27,5 @@ Place the .mod file in `Documents/Paradox Interactive/Stellaris/mod/`. That is *
 
 After that you should be good to go and can find the mod in your launcher of choice. [See also the Wiki page on how local mods work.](https://stellaris.paradoxwikis.com/Modding#Mod_management)
 
-If experienced with Github use, it is also possible to clone the repository through the usual methods into the `Documents/Paradox Interactive/Stellaris/mod/` folder, create the necessary .mod file or generate it, and keep the mod up to date with Github tools.
+It is also possible to clone the repository through usual Github methods into the `Documents/Paradox Interactive/Stellaris/mod/` folder, create the necessary .mod file or generate it, and keep the mod up to date with Github tools. See [for example this page](https://docs.github.com/en/desktop/adding-and-cloning-repositories/cloning-a-repository-from-github-to-github-desktop). Getting updates for a local copy is much easier this way.
 
