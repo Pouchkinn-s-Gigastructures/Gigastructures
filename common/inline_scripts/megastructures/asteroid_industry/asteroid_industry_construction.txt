@@ -1,0 +1,98 @@
+entity = "giga_consite_5_5_entity"
+construction_entity = "giga_consite_5_5_entity"
+portrait = "GFX_megastructure_construction_background"
+place_entity_on_planet_plane = no
+prerequisites = { giga_tech_asteroid_manufactory }
+
+build_time = 900
+resources = {
+    category = giga_kilostructures
+    cost = {
+        alloys = 750
+        unity = @giga_kilo_unity_cost
+    }
+    upkeep = { energy = 5 }
+}
+
+potential = {
+    has_technology = giga_tech_asteroid_manufactory
+    NOT = { has_global_flag = asteroid_manufactory_disabled }
+    OR = {
+        check_variable = { which = giga_asteroid_manufactory_cap value = 0 }						# No Cap
+        check_variable = { which = giga_current_asteroid_manufactory value < giga_asteroid_manufactory_cap }
+    }
+
+    $potential$
+}
+
+possible = {
+    custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+    custom_tooltip = {
+        fail_text = "requires_not_capped"
+        from = {
+            OR = {
+                check_variable = { which = giga_asteroid_manufactory_cap value = 0 }						# No Cap
+                check_variable = { which = giga_current_asteroid_manufactory value < giga_asteroid_manufactory_cap }
+            }
+        }
+    }
+}
+
+placement_rules = {
+    planet_possible = {
+        custom_tooltip = { fail_text = "must_build_around_asteroid"			is_asteroid = yes }
+        custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+        custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+        custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+
+        inline_script = $placement_script$
+    }
+}
+
+ai_weight = {
+    weight = value:giga_ai_base_kilo
+
+    mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|50|MIN|0.5|
+    mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|10|MIN|0.25|
+
+    $ai_weight$
+
+    mult = value:giga_ai_prevent_spam|MEGA|asteroid_manufactory|
+    mult = value:giga_ai_unlock_low_priority
+    mult = value:giga_ai_cap_availability_boost
+    mult = value:giga_ai_core_territory
+
+    #modifier = { factor = 0		from = { country_uses_consumer_goods = no } }
+}
+
+on_build_queued = {
+    from = {
+        set_timed_country_flag = { flag = has_recently_built_asteroid_manufactory years = 10 }
+    }
+}
+on_build_unqueued = {
+    from = {
+        remove_country_flag = has_recently_built_asteroid_manufactory
+    }
+}
+on_build_cancel = {
+    from = {
+        remove_country_flag = has_recently_built_asteroid_manufactory
+    }
+}
+
+on_build_complete = {
+    save_event_target_as = giga_system
+    fromfrom.planet = {
+        save_event_target_as = giga_planet
+        if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+        set_planet_flag = megastructure
+        giga_set_has_mega_flag = yes
+    }
+    from = {
+        #country_event = { id = giga_dialog.10901 }	# Notification
+        change_variable = { which = giga_current_asteroid_manufactory value = 1 }
+    }
+
+    $on_build_complete$
+}
