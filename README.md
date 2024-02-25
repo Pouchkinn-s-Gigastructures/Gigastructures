@@ -20,10 +20,10 @@ tags={
     "Gameplay"
     "Megastructures"
 }
-supported_version="3.9.*"
+supported_version="3.10.*"
 ```
 
-Place the .mod file in `Documents/Paradox Interactive/Stellaris/mod/`. That is *alongside* the Gigastructures folder with the mod content, not inside it.
+Change `supported_version` to whatever the newest stellaris version is if necessary. Place the .mod file in `Documents/Paradox Interactive/Stellaris/mod/`. That is *alongside* the Gigastructures folder with the mod content, not inside it. You will need "file extensions shown" enabled in windows to verify the proper file type.
 
 After that you should be good to go and can find the mod in your launcher of choice. [See also the Wiki page on how local mods work.](https://stellaris.paradoxwikis.com/Modding#Mod_management)
 
