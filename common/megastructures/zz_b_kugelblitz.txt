@@ -1,0 +1,310 @@
+kugelblitz_0 = {
+	entity = "kugelblitz_new_empty_entity"
+	construction_entity = "kugelblitz_new_empty_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_kugelblitz }
+
+	build_time = 1800
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			alloys = 5000
+			unity = @giga_small_mega_unity_cost
+		}
+		upkeep = {
+			alloys = 5
+		}
+	}
+
+	potential = {
+		has_technology = giga_tech_kugelblitz
+		NOT = { has_global_flag = kugel_disabled }
+		OR = {
+			check_variable = { which = giga_kugel_cap value = 0 }						# No Cap
+			check_variable = { which = giga_current_kugel value < giga_kugel_cap }
+		}
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border" is_inside_border = from }
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					check_variable = { which = giga_kugel_cap value = 0 }						# No Cap
+					check_variable = { which = giga_current_kugel value < giga_kugel_cap }
+				}
+			}
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+			custom_tooltip = {
+				fail_text = "requires_not_astral_scar"
+				is_astral_scar = no
+			}
+		}
+	}
+
+	ai_weight = {
+		weight = value:giga_ai_base_mega
+
+		mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|15|
+		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|50|
+		mult = value:giga_ai_build_low_priority
+		mult = value:giga_ai_unlock_low_priority
+		mult = value:giga_ai_cap_availability_boost
+		mult = value:giga_ai_core_territory
+		mult = value:giga_ai_prevent_spam|MEGA|kugelblitz|
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			giga_set_has_mega_flag = yes
+		}
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_kugelblitz years = 20 }
+			# country_event = { id = giga_dialog.101 }	# Notification
+			# country_event = { id = giga_dialog.102 }	# Notification
+			change_variable = { which = giga_current_kugel value = 1 }
+		}
+	}
+}
+
+# kugelblitz_1 = {
+# 	entity = "kugelblitz_empty_entity"
+# 	construction_entity = "kugelblitz_empty_entity"
+# 	portrait = "GFX_megastructure_construction_background"
+# 	place_entity_on_planet_plane = no
+# 	upgrade_from = { kugelblitz_0 }
+
+# 	build_time = 1800
+# 	resources = {
+# 		category = giga_kilostructures
+# 		cost = { alloys = 7000 unity = @giga_small_mega_unity_cost }
+# 		upkeep = { alloys = 2 }
+# 	}
+
+# 	potential = { NOT = { has_global_flag = kugel_disabled } }
+# 	possible = { from = { has_technology = giga_tech_kugelblitz } }
+
+# 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+# 	on_build_complete = {
+# 		save_event_target_as = giga_system
+# 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+# 		from = { country_event = { id = giga_dialog.102 } }	# Notification
+# 	}
+# }
+
+kugelblitz_1 = {
+	entity = "kugelblitz_new_entity"
+	portrait = "GFX_megastructure_black_hole"
+	place_entity_on_planet_plane = no
+	upgrade_from = { kugelblitz_0 kugelblitz_restored }
+
+	build_time = 1800
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			alloys = 1000
+			energy = 25000
+			unity = @giga_small_mega_unity_cost
+		}
+		upkeep = { 
+			alloys = 15 
+			energy = 50
+		}
+	}
+
+	potential = { NOT = { has_global_flag = kugel_disabled } }
+	possible = { from = { has_technology = giga_tech_kugelblitz } }
+
+	country_modifier = { country_resource_max_add = 25000 }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = {
+			country_event = { id = giga_dialog.103 }	# Notification
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_64
+					}
+				}
+				set_country_flag = giga_achievement_64
+				set_timed_country_flag = { flag = giga_achievement_64_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+	}
+}
+
+kugelblitz_2 = { # Megastructur
+	entity = "kugelblitz_mega_entity"
+	portrait = "GFX_megastructure_black_hole"
+	place_entity_on_planet_plane = no
+	upgrade_from = { kugelblitz_1 }
+
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		cost = {
+			alloys = 2500
+			energy = 37500
+			unity = @giga_mega_unity_cost
+		}
+		upkeep = { 
+			alloys = 20 
+			energy = 75
+		}
+	}
+
+	potential = { NOT = { has_global_flag = kugel_disabled } }
+	possible = { from = { has_technology = giga_tech_kugelblitz has_technology = tech_mega_engineering } }
+
+	country_modifier = { country_resource_max_add = 75000 }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = {
+			save_event_target_as = giga_system_owner
+			set_country_flag = has_built_or_repaired_megastructure
+			country_event = { id = giga_dialog.106 }	# Notification
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_64
+					}
+				}
+				set_country_flag = giga_achievement_64
+				set_timed_country_flag = { flag = giga_achievement_64_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+	}
+}
+
+kugelblitz_3 = { # Gigastructur
+	entity = "kugelblitz_giga_entity"
+	portrait = "GFX_megastructure_black_hole"
+	place_entity_on_planet_plane = no
+	upgrade_from = { kugelblitz_2 }
+
+	build_time = 5400
+	resources = {
+		category = giga_gigastructures
+		cost = {
+			alloys = 5000
+			energy = 75000
+			unity = @giga_big_mega_unity_cost
+		}
+		upkeep = { 
+			alloys = 25
+			energy = 100
+		}
+	}
+
+	potential = { NOT = { has_global_flag = kugel_disabled } }
+	possible = { from = { has_technology = giga_tech_kugelblitz has_technology = giga_tech_tetradimensional_engineering } }
+
+	country_modifier = { country_resource_max_add = 150000 }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = {
+			set_country_flag = has_built_or_repaired_megastructure
+			country_event = { id = giga_dialog.107 }	# Notification
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_64
+					}
+				}
+				set_country_flag = giga_achievement_64
+				set_timed_country_flag = { flag = giga_achievement_64_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+	}
+}
+
+kugelblitz_ruined = {
+	entity = "broken_kugelblitz_empty_entity"
+	place_entity_on_planet_plane = no
+	portrait = "GFX_megastructure_construction_background"
+	potential = { always = no }
+	resources = { category = giga_kilostructures }
+}
+
+kugelblitz_restored = {
+	entity = "kugelblitz_new_entity"
+	construction_entity = "kugelblitz_empty_entity"
+	portrait = "GFX_megastructure_black_hole"
+	place_entity_on_planet_plane = no
+	upgrade_from = { kugelblitz_ruined }
+
+	build_time = 1800
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			alloys = 2500
+			energy = 25000
+			unity = @giga_small_mega_repair_unity_cost
+		}
+		upkeep = { 
+			alloys = 15 
+			energy = 50
+		}
+	}
+
+	potential = { NOT = { has_global_flag = kugel_disabled } }
+	possible = {
+		exists = from
+		from = { has_technology = giga_tech_kugelblitz }
+	}
+
+	country_modifier = { country_resource_max_add = 40000 }
+
+	ai_weight = { factor = value:giga_ai_base_repairs } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = {
+			country_event = { id = giga_dialog.105 }	# Notification
+			# if = {
+			# 	limit = {
+			# 		NOR = {
+			# 			has_global_flag = giga_achievements_disabled
+			# 			has_country_flag = giga_achievement_64
+			# 		}
+			# 	}
+			# 	set_country_flag = giga_achievement_64
+			# 	set_timed_country_flag = { flag = giga_achievement_64_notification days = 30 }
+			# 	giga_achievement_sound = yes
+			# }
+		}
+		giga_remove_system_debris = yes
+		fromfrom = {
+			upgrade_megastructure_to = kugelblitz_1
+			finish_upgrade = yes
+		}
+	}
+}
