@@ -1,0 +1,5105 @@
+namespace = giga_eawaf
+
+#Testing event that sets a flag which disables the regular EaW system and spawns the new one instead.
+event = {
+	id = giga_eawaf.1000
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_global_flag = giga_eaw_disabled
+
+		if = {
+			limit = { NOT = { any_system = { has_star_flag = eawaf_system } } }
+			random_system = {
+				limit = {
+					#any_neighbor_system = { space_owner = { is_ai = no } } #Debug for ease of access.
+					NOR = {
+						is_fe_cluster = yes 
+						any_neighbor_system = {
+							is_fe_cluster = yes
+						}
+						has_star_flag = giga_inner
+						has_star_flag = giga_outer_01
+						has_star_flag = giga_outer_02
+						has_star_flag = giga_outer_03
+						has_star_flag = giga_galactic_center
+					}
+				}
+				spawn_system = { initializer = "giga_eawaf_initializer" }
+			}
+		}
+
+		every_country = { #Points the player towards Faust at game start
+			limit = { is_ai = no }
+			country_event = { id = giga_eawaf.1001 days = 30 }
+		}
+	}
+}
+
+#Points the player towards Faust at game start
+country_event = {
+	id = giga_eawaf.1001
+	title = "giga_eawaf.1001.name"
+	desc = "giga_eawaf.1001.desc"
+	picture = GFX_evt_mysterious_signal
+	show_sound = event_sensor_ping
+    is_triggered_only = yes
+
+    trigger = {
+		exists = THIS
+		NOT = { has_country_flag = giga_eawaf_explored_faust }
+	}
+
+	option = { #How strange.
+		name = "giga_eawaf.1001.a"
+		begin_event_chain = {
+			event_chain = giga_eawaf_faust_chain
+			target = ROOT
+		}
+		create_point_of_interest = {
+			id = giga_eawaf_poi.1
+			name = "giga_eawaf_faust_name"
+			desc = "giga_eawaf_faust_desc"
+			event_chain = giga_eawaf_faust_chain
+			location = event_target:giga_eawaf_system
+		}
+		custom_tooltip = "giga_eawaf.1001.a.tooltip"
+	}
+}
+
+#Initial Survey Line
+
+#Entering Faust's system - Geocentric!
+ship_event = {
+	id = giga_eawaf.1010
+	title = "giga_eawaf.1010.name"
+	desc = "giga_eawaf.1010.desc"
+	picture = GFX_evt_binary_stars
+	show_sound = event_radio_chatter
+    location = THIS
+    is_triggered_only = yes
+
+    trigger = {
+		exists = owner
+		owner = { NOT = { has_country_flag = giga_eawaf_explored_faust } }
+        solar_system = { has_star_flag = eaw_system }
+	}
+
+	immediate = { owner = { set_country_flag = giga_eawaf_explored_faust } }
+
+	option = {
+		name = "giga_eawaf.1010.a"
+		owner = {
+			remove_point_of_interest = giga_eawaf_poi.1
+		}
+	}
+}
+
+#Surveyed Asteroid
+ship_event = {
+	id = giga_eawaf.1011
+	title = "giga_eawaf.1011.name"
+	desc = "giga_eawaf.1011.desc"
+	picture = GFX_evt_crystal_asteroids
+	show_sound = event_drilling
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = owner
+		owner = { NOT = { has_country_flag = giga_eawaf_surveyed_asteroid } }
+		from = { has_planet_flag = giga_eawaf_asteroid }
+	}
+
+	immediate = { owner = { set_country_flag = giga_eawaf_surveyed_asteroid } }
+
+	option = {
+		name = "giga_eawaf.1011.a"
+		owner = {
+			add_resource = { rare_crystals = 50 }
+			add_monthly_resource_mult = {
+				resource = engineering_research
+				value = @tier3researchreward
+				min = @tier3researchmin
+				max = @tier3researchmax
+			}
+		}
+	}
+}
+
+#Surveyed Selena
+ship_event = {
+	id = giga_eawaf.1012
+	title = "giga_eawaf.1012.name"
+	desc = "giga_eawaf.1012.desc"
+	picture = GFX_evt_cold_barren
+	show_sound = event_wind_ruins
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = owner
+		from = { has_planet_flag = giga_eawaf_moon }
+	}
+
+	option = {
+		name = "giga_eawaf.1012.a"
+		ROOT = { leader = { add_trait = leader_trait_paranoid } }
+	}
+}
+
+#Surveyed Helios
+ship_event = {
+	id = giga_eawaf.1013
+	title = "giga_eawaf.1013.name"
+	desc = "giga_eawaf.1013.desc"
+	picture = GFX_evt_star_yellow
+	show_sound = event_solar_fusion
+	location = from
+	is_triggered_only = yes
+	trigger = {
+		exists = owner
+		from = { has_planet_flag = giga_eawaf_sun }
+	}
+
+	option = {
+		name = "giga_eawaf.1013.a"
+		owner = {
+			add_monthly_resource_mult = {
+				resource = physics_research
+				value = @tier3researchreward
+				min = @tier3researchmin
+				max = @tier3researchmax
+			}
+		}
+	}
+}
+
+#Surveyed Faust itself
+ship_event = {
+	id = giga_eawaf.1014
+	title = "giga_eawaf.1014.name"
+	desc = "giga_eawaf.1014.desc"
+	picture = GFX_evt_continental_planet
+	show_sound = event_radio_chatter
+	location = from
+	is_triggered_only = yes
+	trigger = {
+		exists = owner
+		from = { has_planet_flag = giga_eawaf_planet }
+	}
+
+	option = {
+		name = "giga_eawaf.1014.a"
+		owner = {
+			add_monthly_resource_mult = {
+				resource = society_research
+				value = @tier2researchreward
+				min = @tier2researchmin
+				max = @tier2researchmax
+			}
+			establish_communications_no_message = event_target:giga_eawaf_country
+		}
+		hidden_effect = { owner = { country_event = { id = giga_eawaf.10141 days = 60 } } }
+	}
+}
+
+#Team dispatched after Faust survey, gives more data.
+country_event = {
+	id = giga_eawaf.10141
+	title = "giga_eawaf.10141.name"
+	desc = "giga_eawaf.10141.desc"
+	picture = GFX_evt_giga_eawaf_faust
+	show_sound = event_cityscape
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = ROOT
+	}
+
+	option = { #That is cool.
+		name = "giga_eawaf.10141.a"
+		small_artifact_reward = yes
+		add_monthly_resource_mult = {
+			resource = society_research
+			value = @tier4researchreward
+			min = @tier4researchmin
+			max = @tier4researchmax
+		}
+	}
+
+	# option = { #Investigate more for lore dump.
+	# 	name = "giga_eawaf.10141.b"
+	# }
+}
+
+#Surveyed the entire system - Outcome depends on whether or not psionics are known
+ship_event = {
+	id = giga_eawaf.1015
+	title = "giga_eawaf.1015.name"
+	desc = { #Psionics are not known - Put investigation on hold until they are known
+		text = "giga_eawaf.1015.desc.nopsi"
+		trigger = { owner = { NOT = { has_technology = tech_psionic_theory } } }
+	}
+	desc = { #Psionics are known - Begin investigation at once
+		text = "giga_eawaf.1015.desc.psi"
+		trigger = { owner = { has_technology = tech_psionic_theory } }
+	}
+	picture = GFX_evt_surreal_visions
+	show_sound = event_mystic_reveal
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = owner
+		from = { has_star_flag = eawaf_system }
+	}
+
+	immediate = {
+		owner = {
+			set_country_flag = giga_eawaf_surveyed_faust_system
+			if = {
+				limit = { is_ai = no }
+				country_event = { id = giga_eawaf.10151 days = 10 }
+			}
+		}
+	}
+
+	option = {
+		name = "giga_eawaf.1015.nopsi"
+		custom_tooltip = "giga_eawaf.1015.nopsi.tooltip"
+		trigger = { owner = { NOT = { has_technology = tech_psionic_theory } } }
+		hidden_effect = { root.owner = { set_country_flag = giga_eawaf_waiting_to_investigate_helios } }
+	}
+
+	option = {
+		name = "giga_eawaf.1015.psi"
+		trigger = { owner = { has_technology = tech_psionic_theory } }
+		event_target:giga_eawaf_sun = {
+			enable_special_project = {
+				name = GIGA_EAWAF_SURVEY_HELIOS
+				owner = root.owner
+				location = event_target:giga_eawaf_sun
+			}
+		}
+	}
+
+	option = { #Don't care.
+		name = "giga_eawaf.1015.b"
+		custom_tooltip = "giga_eawaf.1015.b.tooltip"
+		owner = { add_resource = { influence = 50 } }
+	}
+}
+
+#Make an outpost for cheap
+country_event = {
+	id = giga_eawaf.10151
+	title = "giga_eawaf.10151.name"
+	desc = "giga_eawaf.10151.desc"
+	picture = GFX_evt_giga_eawaf_faust
+	show_sound = event_radio_chatter
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = { #ok
+		name = "giga_eawaf.10151.a"
+		allow = { resource_stockpile_compare = { resource = influence value > 50 } }
+		allow = { resource_stockpile_compare = { resource = alloys value > 100 } }
+		event_target:giga_eawaf_system = { create_starbase = { size = starbase_outpost owner = ROOT } }
+		add_resource = { influence = -50 alloys = -100 }
+	}
+
+	option = { #Don't care.
+		name = "giga_eawaf.10151.b"
+		add_resource = { influence = 50 }
+	}
+}
+
+
+#We didn't have Psionic Theory at the time of Faust's surveying, but now we do.
+country_event = {
+	id = giga_eawaf.1016
+	title = "giga_eawaf.1016.name"
+	desc = "giga_eawaf.1016.desc"
+	picture = GFX_evt_surreal_visions
+	show_sound = event_mystic_reveal
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+		last_increased_tech = tech_psionic_theory
+		has_country_flag = giga_eawaf_waiting_to_investigate_helios
+		has_country_flag = giga_eawaf_surveyed_faust_system
+	}
+
+	option = { #Probe the Sun
+		name = "giga_eawaf.1016.a"
+		hidden_effect = { remove_country_flag = giga_eawaf_waiting_to_investigate_helios }
+
+		enable_special_project = {
+			name = GIGA_EAWAF_SURVEY_HELIOS
+			owner = root.owner
+			location = event_target:giga_eawaf_sun
+		}
+	}
+
+	option = { #Don't care.
+		name = "giga_eawaf.1015.b"
+		add_resource = { influence = 50 }
+		hidden_effect = { remove_country_flag = giga_eawaf_waiting_to_investigate_helios }
+	}
+}
+
+#Psionic Fusion
+country_event = {
+	id = giga_eawaf.1017
+	title = "giga_eawaf.1017.name"
+	desc = "giga_eawaf.1017.desc"
+	picture = GFX_evt_surreal_visions
+	show_sound = event_solar_fusion
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.1017.a"
+		custom_tooltip = "giga_eawaf.1017.a.tooltip"
+		add_resource = {
+			energy = -5000
+			influence = -50
+		}
+		enable_special_project = {
+			name = GIGA_EAWAF_PSIONIC_FUSION
+			owner = ROOT
+		}
+	}
+
+	option = {
+		name = "giga_eawaf.1017.b"
+		add_resource = {
+			influence = 50
+		}
+	}
+}
+
+#Success! Requires Shroud access and Zro
+country_event = {
+	id = giga_eawaf.10171
+	title = "giga_eawaf.10171.name"
+	desc = "giga_eawaf.10171.desc"
+	picture = GFX_evt_shroud_tunnel
+	show_sound = event_celebration
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.10171.a"
+		add_research_option = giga_tech_eawaf_psifusion
+		add_tech_progress = {
+			tech = giga_tech_eawaf_psifusion
+			progress = 0.20
+		}
+	}
+}
+
+#Failure... try again later
+country_event = {
+	id = giga_eawaf.10172
+	title = "giga_eawaf.10172.name"
+	desc = "giga_eawaf.10172.desc"
+	picture = GFX_evt_shroud_tunnel
+	show_sound = event_bad_omen
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = { #This can be retried until it works
+		name = "giga_eawaf.10172.a"
+		custom_tooltip = "giga_eawaf.10172.a.tooltip"
+		add_resource = {
+			energy = -10000
+			influence = -100
+		}
+		enable_special_project = {
+			name = GIGA_EAWAF_PSIONIC_FUSION
+			owner = ROOT
+		}
+	}
+
+	option = {
+		name = "giga_eawaf.10172.b"
+		add_resource = { influence = 100 }
+	}
+}
+
+# Sirens Takeover event chain
+# Starts after 25 years. Whoever owns the system gets an event. If no owner, the situation fires on Faust itself. If an owner is gained, transfer situation to that owner.
+planet_event = {
+	id = giga_eawaf.2000
+	location = from
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		exists = root
+		exists = owner
+		is_colony = yes
+		owner = { is_same_value = event_target:giga_eawaf_country }
+		NOT = { has_global_flag = giga_eawaf_sirens_event_chain_started }
+	}
+
+	immediate = {
+		set_global_flag = giga_eawaf_sirens_event_chain_started
+		if = { #Owned by player
+			limit = { 
+				solar_system = {
+					exists = starbase
+					starbase.owner = { is_ai = no }
+				}
+			}
+			solar_system = { starbase.owner = { country_event = { id = giga_eawaf.2001 } } }
+		}
+		else_if = { #Owned by AI or nobody, fire situation on the Faust country
+			limit = { 
+				solar_system = {
+					OR = {
+						NOT = { exists = starbase }
+						AND = {
+							exists = starbase
+							starbase.owner = { is_ai = yes }
+						}
+					}
+				}
+			}
+			event_target:giga_eawaf_country = {
+				start_situation = {
+					type = situation_eawaf_sirens_takeover
+					target = event_target:giga_eawaf_planet
+					effect = {
+						save_global_event_target_as = giga_eawaf_sirens_takeover_situation
+						set_situation_approach = approach_giga_eawaf_do_nothing
+					}
+				}
+			}
+		}
+	}
+}
+
+# First popup about Sirens, starts a Situation
+country_event = {
+	id = giga_eawaf.2001
+	title = "giga_eawaf.2001.name"
+	desc = "giga_eawaf.2001.desc"
+	picture = GFX_evt_giga_eawaf_sirens
+	show_sound = event_whispering
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.2001.a"
+		start_situation = {
+			type = situation_eawaf_sirens_takeover
+			target = event_target:giga_eawaf_planet
+			effect = { save_global_event_target_as = giga_eawaf_sirens_takeover_situation set_situation_approach = approach_giga_eawaf_do_nothing }
+		}
+		event_target:giga_eawaf_planet = {
+			while = { count = 1	create_army = { name = "Enthralled Legions"	owner = event_target:giga_eawaf_country species = event_target:eawaf_griffons  type = "eawaf_army" land_army = yes } }
+		}
+	}
+}
+
+# Phase 1 done, Hippogriffia secured
+country_event = {
+	id = giga_eawaf.2002
+	title = "giga_eawaf.2002.name"
+	desc = "giga_eawaf.2002.desc"
+	picture = GFX_evt_giga_eawaf_pony
+	show_sound = event_mystic_reveal
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.2002.a"
+		add_monthly_resource_mult = {
+			resource = society_research
+			value = @tier4researchreward
+			min = @tier4researchmin
+			max = @tier4researchmax
+		}
+		event_target:giga_eawaf_planet = {
+			while = { count = 2	create_army = { name = "Enthralled Legions"	owner = event_target:giga_eawaf_country species = event_target:eawaf_griffons  type = "eawaf_army" land_army = yes } }
+		}
+	}
+}
+
+#Failure to take Hippogriffia
+country_event = {
+	id = giga_eawaf.20021
+	title = "giga_eawaf.20021.name"
+	desc = "giga_eawaf.20021.desc"
+	picture = GFX_evt_giga_eawaf_planes
+	show_sound = event_planetary_riot
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.20021.a"
+		destroy_situation = event_target:giga_eawaf_sirens_takeover_situation
+		hidden_effect = { event_target:giga_eawaf_planet = { giga_eawaf_reset_faust_armies = yes } }
+	}
+}
+
+# Phase 2 done, takeover of NZ and Maregypt
+country_event = {
+	id = giga_eawaf.2003
+	title = "giga_eawaf.2003.name"
+	desc = "giga_eawaf.2003.desc"
+	picture = GFX_evt_giga_eawaf_tanks
+	show_sound = event_ground_battle
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.2003.a"
+		event_target:giga_eawaf_planet = {
+			while = { count = 5	create_army = { name = "Enthralled Legions"	owner = event_target:giga_eawaf_country species = event_target:eawaf_griffons  type = "eawaf_army" land_army = yes } }
+		}
+	}
+}
+
+#Failure to take NZ
+country_event = {
+	id = giga_eawaf.20031
+	title = "giga_eawaf.20031.name"
+	desc = "giga_eawaf.20031.desc"
+	picture = GFX_evt_giga_eawaf_boats
+	show_sound = event_planetary_riot
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.20031.a"
+		destroy_situation = event_target:giga_eawaf_sirens_takeover_situation
+		hidden_effect = { event_target:giga_eawaf_planet = { giga_eawaf_reset_faust_armies = yes } }
+	}
+}
+
+# Phase 3 done, takeover of Equestria
+country_event = {
+	id = giga_eawaf.2004
+	title = "giga_eawaf.2004.name"
+	desc = "giga_eawaf.2004.desc"
+	picture = GFX_evt_giga_eawaf_planes_2
+	show_sound = event_ground_battle
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.2004.a"
+		custom_tooltip = "giga_eawaf.2004.a.tooltip"
+		if = {
+			limit = { event_target:giga_eawaf_sirens_takeover_situation = { current_situation_approach = approach_giga_eawaf_stop_sirens } }
+			event_target:giga_eawaf_sirens_takeover_situation = { set_situation_approach = approach_giga_eawaf_do_nothing }
+		}
+		event_target:giga_eawaf_planet = {
+			while = { count = 10 create_army = { name = "Enthralled Legions"	owner = event_target:giga_eawaf_country species = event_target:eawaf_griffons  type = "eawaf_army" land_army = yes } }
+		}
+	}
+}
+
+#Failure to take Equestria
+country_event = {
+	id = giga_eawaf.20041
+	title = "giga_eawaf.20041.name"
+	desc = "giga_eawaf.20041.desc"
+	picture = GFX_evt_giga_eawaf_pony_dead
+	show_sound = event_air_raid_siren
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.20041.a"
+		destroy_situation = event_target:giga_eawaf_sirens_takeover_situation
+		hidden_effect = { event_target:giga_eawaf_planet = { giga_eawaf_reset_faust_armies = yes } }
+	}
+}
+
+#psionic theory
+country_event = {
+	id = giga_eawaf.20042
+	title = "giga_eawaf.20042.name"
+	desc = "giga_eawaf.20042.desc"
+	picture = GFX_evt_giga_eawaf_sirens
+	show_sound = event_mystic_reveal
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.20042.a"
+		add_research_option = tech_psionic_theory
+	}
+
+	option = {
+		name = "giga_eawaf.20042.b"
+		add_resource = { influence = 150 }
+	}
+}
+
+
+#Sirens win all.
+country_event = {
+	id = giga_eawaf.2005
+	title = "giga_eawaf.2005.name"
+	desc = "giga_eawaf.2005.desc"
+	picture = GFX_evt_giga_eawaf_sirens
+	show_sound = event_whispering
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.2005.a"
+		destroy_situation = event_target:giga_eawaf_sirens_takeover_situation
+		hidden_effect = {
+			event_target:giga_eawaf_planet = {
+				giga_eawaf_reset_faust_armies = yes
+				while = { count = 100 create_army = { name = "Enthralled Legions"	owner = event_target:giga_eawaf_country species = event_target:eawaf_griffons  type = "eawaf_army" land_army = yes } }
+				planet_event = { id = giga_eawaf.2006 days = 30 } #Trigger Spell event chain
+			}
+			event_target:giga_eawaf_country = {
+				set_name = "Sirenalia"
+				change_country_flag = {
+					icon={
+						category="flusionian"
+						file="eawaf_sirens_flag.dds"
+					}
+					background={
+						category="backgrounds"
+						file="circle.dds"
+					}
+					colors={
+						"red"
+						"red"
+						"null"
+						"null"
+					}
+				}
+			}
+		}
+	}
+}
+
+#cool insight
+country_event = {
+	id = giga_eawaf.20051
+	title = "giga_eawaf.20051.name"
+	desc = "giga_eawaf.20051.desc"
+	picture = GFX_evt_giga_eawaf_sirens
+	show_sound = event_mystic_reveal
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	immediate = { set_country_flag = giga_tech_eawaf_sirens_secret_possible }
+
+	option = {
+		name = "giga_eawaf.20051.a"
+		add_research_option = giga_tech_eawaf_sirens_secret
+	}
+
+	option = {
+		name = "giga_eawaf.20051.b"
+		add_resource = { influence = 250 }
+	}
+}
+
+
+#The Spell begins
+planet_event = {
+	id = giga_eawaf.2006
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	immediate = {
+		solar_system = {
+			if = {
+				limit = { exists = space_owner }
+				space_owner = { country_event = { id = giga_eawaf.20061 } }
+			}
+		}
+		planet_event = { id = giga_eawaf.2007 days = 120 } #The spell proper
+	}
+}
+
+country_event = {
+	id = giga_eawaf.20061
+	title = "giga_eawaf.20061.name"
+	desc = "giga_eawaf.20061.desc"
+	picture = GFX_evt_giga_eawaf_sirens
+	show_sound = event_red_alert
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.20061.a"
+	}
+}
+
+#Faust is kill
+planet_event = {
+	id = giga_eawaf.2007
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	immediate = {
+		event_target:global_event_country = { #Crisis Spawn
+			if = {
+				limit = { check_variable = { which = sirens_spawn_date value = 2200 } }
+				country_event = { id = giga_eawaf.30011 days = 30 }
+			}
+			else_if = {
+				limit = { check_variable = { which = sirens_spawn_date value = 2250 } }
+				country_event = { id = giga_eawaf.30011 days = 5400 random = 360 }
+			}
+			else_if = {
+				limit = { check_variable = { which = sirens_spawn_date value = 2300 } }
+				country_event = { id = giga_eawaf.30011 days = 23400 random = 360 }
+			}
+			else_if = {
+				limit = { check_variable = { which = sirens_spawn_date value = 2350 } }
+				country_event = { id = giga_eawaf.30011 days = 41400 random = 360 }
+			}
+			else_if = {
+				limit = { check_variable = { which = sirens_spawn_date value = 2400 } }
+				country_event = { id = giga_eawaf.30011 days = 59400 random = 360 }
+			}
+			else_if = {
+				limit = { check_variable = { which = sirens_spawn_date value = 2450 } }
+				country_event = { id = giga_eawaf.30011 days = 77400 random = 360 }
+			}
+			else_if = {
+				limit = { check_variable = { which = sirens_spawn_date value = 2500 } }
+				country_event = { id = giga_eawaf.30011 days = 95400 random = 360 }
+			}
+			else_if = {
+				limit = { check_variable = { which = sirens_spawn_date value = 2550 } }
+				country_event = { id = giga_eawaf.30011 days = 360 random = 95400 }
+			}
+		}
+		solar_system = { #Delete everything
+			if = {
+				limit = { exists = space_owner } #Message to system owner
+				space_owner = { country_event = { id = giga_eawaf.20071 } }
+				every_country = { #Message to everyone else
+					limit = { is_regular_empire = yes NOT = { is_country = PREV.space_owner } }
+					country_event = { id = giga_eawaf.20072 }
+				}
+			}
+			else = {
+				every_country = { #Message to everyone else
+					limit = { is_regular_empire = yes }
+					country_event = { id = giga_eawaf.20072 }
+				}
+			}
+			set_star_class = sc_giga_eawaf_faust_shroud
+			set_star_flag = siegfried_anti_jump_star #To prevent jumps, don't want to overwrite
+			every_system_ambient_object = { destroy_ambient_object = this }
+			event_target:giga_eawaf_planet = {
+				create_ambient_object = {
+					type = giga_eawaf_faust_system_shroud_object
+					location = this
+					use_3d_location = yes
+				}
+				create_ambient_object = {
+					type = "star_explosion"
+					play_animation_once = yes
+					location = THIS
+				}
+			}
+			every_system_planet = {
+				limit = { is_colony = yes }
+				destroy_colony = yes
+			}
+			every_system_planet = { #Remove all but the central empty space "star"
+				limit = { NOT = { is_planet_class = pc_giga_empty_space } }
+				remove_planet = yes
+			}
+			every_fleet_in_system = { destroy_fleet = this }
+			every_system_megastructure = {
+				limit = { NOT = { mega_blokkats_wont_stripmine = yes } }
+				remove_megastructure = THIS
+			}
+			set_asteroid_belt = { radius = 0 }
+			every_neighbor_system = { remove_hyperlane = { from = this to = prev } }
+		}
+	}
+}
+
+# Message to Faust system owner about Ethereal Shroud
+country_event = {
+	id = giga_eawaf.20071
+	title = "giga_eawaf.20071.name"
+	desc = "giga_eawaf.20071.desc"
+	picture = GFX_evt_supernova
+	show_sound = event_activating_unknown_technology
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.20071.a"
+		custom_tooltip = "giga_eawaf.20071.a.tooltip"
+		if = {
+			limit = { has_event_chain = giga_eawaf_faust_chain }
+			end_event_chain = giga_eawaf_faust_chain
+		}
+	}
+}
+
+# Message to everyone else about Ethereal Shroud
+country_event = {
+	id = giga_eawaf.20072
+	title = "giga_eawaf.20072.name"
+	desc = "giga_eawaf.20072.desc"
+	picture = GFX_evt_supernova
+	show_sound = event_activating_unknown_technology
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.20072.a"
+		custom_tooltip = "giga_eawaf.20071.a.tooltip"
+		if = {
+			limit = { has_event_chain = giga_eawaf_faust_chain }
+			end_event_chain = giga_eawaf_faust_chain
+		}
+	}
+}
+
+# THE SIRENS PROPER
+# Something is happening. Warn the galaxy that the shroud will dissipate in five years.
+country_event = {
+	id = giga_eawaf.30001
+	title = "giga_eawaf.30001.name"
+	desc = "giga_eawaf.30001.desc"
+	picture = GFX_evt_surreal_visions
+	show_sound = event_red_alert
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.30001.a"
+	}
+}
+
+#Start the crisis, send notification that field is about to dissipate
+event = {
+	id = giga_eawaf.30011
+	hide_window = yes
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	immediate = {
+		every_playable_country = {
+			country_event = { id = giga_eawaf.30001 days = 2 } #Notification
+		}
+		event_target:giga_eawaf_system = {
+			system_event = { id = giga_eawaf.3000 days = 1400 random = 800 } #Start the Crisis proper
+		}
+	}
+}
+
+# Faust reappears... but it is different.
+system_event = {
+	id = giga_eawaf.3000
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	immediate = {
+		save_global_event_target_as = giga_eawaf_faust_system
+		random_system_planet = {
+			limit = { is_planet_class = pc_giga_empty_space }
+			save_global_event_target_as = giga_eawaf_faust_system_center
+		}
+		
+		#Temporary of course
+		#set_star_class = sc_giga_eawaf_strife_field_5 #test
+
+		set_star_class = sc_k
+
+		event_target:giga_eawaf_faust_system_center = { change_pc = pc_giga_empty_space }
+
+		#Remake the country
+		create_country = {
+			name = "Sirenalia"
+			authority = auth_hive_mind
+			ethos = { ethic = ethic_gestalt_consciousness }
+			species = event_target:eawaf_ponies
+			ethos = random
+			type = giga_eawaf_sirens
+		}
+		last_created_country = {
+			set_graphical_culture = industrial_01
+			save_global_event_target_as = giga_eawaf_country
+			set_country_flag = giga_eawaf_country
+			change_country_flag = {
+				icon={
+					category="flusionian"
+					file="eawaf_sirens_flag.dds"
+				}
+				background={
+					category="backgrounds"
+					file="circle.dds"
+				}
+				colors={
+					"red"
+					"red"
+					"null"
+					"null"
+				}
+			}
+			if = {
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 7 } } }
+				set_name = "Abyssal Sirenalia"
+				change_country_flag = {
+					icon={
+						category="flusionian"
+						file="eawaf_sirens_flag.dds"
+					}
+					background={
+						category="backgrounds"
+						file="circle.dds"
+					}
+					colors={
+						"dark_purple"
+						"dark_purple"
+						"null"
+						"null"
+					}
+				}
+			}
+			set_timed_country_flag = { flag = giga_eawaf_strife_field_cooldown days = 900 }
+			#Difficulty stuff
+			set_variable = { which = giga_eawaf_strife_difficulty value = 1 } #Amount of strife
+			if = { #easy
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 1 } } }
+				set_variable = { which = giga_eawaf_field_potency_difficulty value = 0.25 } #The amount by which Potency increase per upgrade.
+			}
+			else_if = { #normal (gigas)
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 2 } } }
+				set_variable = { which = giga_eawaf_field_potency_difficulty value = 0.5 } #The amount by which Potency increase per upgrade.
+			}
+			else_if = { #hard (esc)
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 3 } } }
+				set_variable = { which = giga_eawaf_field_potency_difficulty value = 2 } #The amount by which Potency increase per upgrade.
+			}
+			else_if = { #very hard (acot)
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 4 } } }
+				set_variable = { which = giga_eawaf_field_potency_difficulty value = 5 } #The amount by which Potency increase per upgrade.
+			}
+			else_if = { #extreme (acot+)
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 5 } } }
+				set_variable = { which = giga_eawaf_field_potency_difficulty value = 10 } #The amount by which Potency increase per upgrade.
+			}
+			else_if = { #impossible
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 6 } } }
+				set_variable = { which = giga_eawaf_field_potency_difficulty value = 25 } #The amount by which Potency increase per upgrade.
+			}
+			else_if = { #Abyssal
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 7 } } }
+				set_variable = { which = giga_eawaf_field_potency_difficulty value = 500 } #The amount by which Potency increase per upgrade.
+			}
+
+			#Initialize Strife and War Materials
+			set_variable = { which = giga_eawaf_sirens_strife_count value = 0 }
+			set_variable = { which = giga_eawaf_sirens_warmaterial_count value = 0 }
+
+			#Field Potency
+			if = { #easy
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 1 } } }
+				set_variable = { which = giga_eawaf_field_potency_multiplier value = 0.5 } #Starting Potency level.
+			}
+			else_if = { #normal (gigas)
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 2 } } }
+				set_variable = { which = giga_eawaf_field_potency_multiplier value = 1 } #Starting Potency level.
+			}
+			else_if = { #hard (esc)
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 3 } } }
+				set_variable = { which = giga_eawaf_field_potency_multiplier value = 5 } #Starting Potency level.
+			}
+			else_if = { #very hard (acot)
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 4 } } }
+				set_variable = { which = giga_eawaf_field_potency_multiplier value = 10 } #Starting Potency level.
+			}
+			else_if = { #extreme (acot+)
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 5 } } }
+				set_variable = { which = giga_eawaf_field_potency_multiplier value = 25 } #Starting Potency level.
+			}
+			else_if = { #impossible
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 6 } } }
+				set_variable = { which = giga_eawaf_field_potency_multiplier value = 50 } #Starting Potency level.
+			}
+			else_if = { #Abyssal
+				limit = { event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 7 } } }
+				set_variable = { which = giga_eawaf_field_potency_multiplier value = 1000 } #Starting Potency level.
+			}
+
+			set_variable = { which = giga_eawaf_sirens_megaphone_level value = 1 } #Enthraller Level
+
+			set_variable = { which = giga_eawaf_sirens_megaphone_next_level_cost value = 2000 } #Warmaterial cost for next Enthraller level
+
+			set_variable = { which = giga_eawaf_strife_from_strifers value = 100 } #Strife from Srifers
+
+			#Strife Field variables. It is based upon the range of the Outer Field.
+			set_variable = { which = giga_eawaf_outer_strife_field_range_level value = 5 } #Starting Outer Field range value.
+
+			set_variable = { which = giga_eawaf_outer_strife_field_range_multiplier value = 25 } #What each Field 'range' corresponds to in in-game range units.
+
+			set_variable = { which = giga_eawaf_inner_strife_field_range_multiplier value = 5 } #Outer Field range is divided by this value to make Inner Strife field range.
+
+			set_variable = { which = giga_eawaf_strife_field_range_cost_power value = 1.3 } #The power used in the cost calculations for the next level of the strife field.
+
+			set_variable = { which = giga_eawaf_strife_field_range_cost_base value = 2000 } #Multiplier for strife cost. Strife cost is based on the surface area of the field, multiplied by this value.
+
+			#Actual 'in-game' Outer Field range
+			set_variable = { which = giga_eawaf_outer_strife_field_range value = value:giga_eawaf_outer_strife_field_range } 
+
+			#Actual 'in-game' Inner Field range
+			set_variable = { which = giga_eawaf_inner_strife_field_range value = value:giga_eawaf_inner_strife_field_range }
+
+			#How much the next level is going to cost
+			set_variable = { which = giga_eawaf_strife_field_range_next_level_cost value = value:giga_eawaf_strife_field_range_next_level_cost }
+
+			#How much the previous level would cost
+			set_variable = { which = giga_eawaf_strife_field_range_prev_level_cost value = value:giga_eawaf_strife_field_range_prev_level_cost }
+		}
+
+		#Reestablish communications
+		every_country = { establish_communications_no_message = event_target:giga_eawaf_country }
+
+		#Recreate Faust
+		spawn_planet = {
+			class = "pc_continental"
+			location = event_target:giga_eawaf_faust_system_center
+			orbit_distance_offset = 1
+			orbit_angle_offset = 1
+			size = 25
+			init_effect = {
+				set_name = "Faust"
+				set_planet_entity = { entity = "giga_new_dirt_planet_entity" }
+				set_all_comms_surveyed = yes
+				set_planet_flag = cant_build_here
+				save_global_event_target_as = giga_eawaf_planet
+				set_planet_flag = giga_eawaf_planet
+				set_owner = event_target:giga_eawaf_country
+				set_capital = yes
+				remove_all_buildings = yes
+				add_building = building_giga_eawaf_sirens_capital
+				while = { count = 60 create_pop = { species = event_target:eawaf_ponies } }
+				while = { count = 30 create_pop = { species = event_target:eawaf_griffons } }
+				while = { count = 15 create_pop = { species = event_target:eawaf_changelings } }
+				while = { count = 15 create_pop = { species = event_target:eawaf_yetis } }
+				#Sirens Portraits
+				#Adagio
+				create_species = {
+					name = "Siren"
+					plural = "Sirens"
+					class = GIGA_EAWAF_PORTRAITS
+					portrait = giga_eawaf_adagio
+					homeworld = THIS
+					namelist = MAM1
+					traits = { trait = trait_pc_continental_preference }
+					effect = { save_global_event_target_as = giga_eawaf_adagio_portrait }
+				}
+
+				#Aria
+				create_species = {
+					name = "Siren"
+					plural = "Sirens"
+					class = GIGA_EAWAF_PORTRAITS
+					portrait = giga_eawaf_aria
+					homeworld = THIS
+					namelist = MAM1
+					traits = { trait = trait_pc_continental_preference }
+					effect = { save_global_event_target_as = giga_eawaf_aria_portrait }
+				}
+			
+				#Sonata
+				create_species = {
+					name = "Siren"
+					plural = "Sirens"
+					class = GIGA_EAWAF_PORTRAITS
+					portrait = giga_eawaf_sonata
+					homeworld = THIS
+					namelist = MAM1
+					traits = { trait = trait_pc_continental_preference }
+					effect = { save_global_event_target_as = giga_eawaf_sonata_portrait }
+				}
+				while = { count = 20	create_army = { name = "Enthralled Legions"	owner = event_target:giga_eawaf_country species = event_target:eawaf_griffons  type = "eawaf_army" land_army = yes } }
+			}
+		}
+
+		#Recreate the 3 crystal asteroids, this time named after the Sirens instead of Griffon gods
+		spawn_planet = {
+			class = "pc_rare_crystal_asteroid"
+			orbit_distance = 45
+			orbit_angle = 90
+			init_effect = {
+				set_name = "Adagio"
+				set_all_comms_surveyed = yes
+			}
+		}
+
+		spawn_planet = {
+			class = "pc_rare_crystal_asteroid"
+			orbit_distance = 45
+			orbit_angle = 210
+			init_effect = {
+				set_name = "Aria"
+				set_all_comms_surveyed = yes
+			}
+		}
+
+		spawn_planet = {
+			class = "pc_rare_crystal_asteroid"
+			orbit_distance = 45
+			orbit_angle = 330
+			init_effect = {
+				set_name = "Sonata"
+				set_all_comms_surveyed = yes
+			}
+		}
+
+		#The Sirens themselves
+		event_target:giga_eawaf_country = {
+			create_leader = {
+				class = scientist
+				species = event_target:giga_eawaf_adagio_portrait
+				name = "Adagio Dazzle"
+				skill = 10
+				immortal = yes
+				gender = female
+				effect = { set_leader_flag = giga_eawaf_adagio_leader save_global_event_target_as = giga_eawaf_adagio_leader }
+			}
+			create_leader = {
+				class = scientist
+				species = event_target:giga_eawaf_aria_portrait
+				name = "Aria Blaze"
+				skill = 10
+				immortal = yes
+				gender = female
+				effect = { set_leader_flag = giga_eawaf_aria_leader save_global_event_target_as = giga_eawaf_aria_leader }
+			}
+			create_leader = {
+				class = scientist
+				species = event_target:giga_eawaf_sonata_portrait
+				name = "Sonata Dusk"
+				skill = 10
+				immortal = yes
+				gender = female
+				effect = { set_leader_flag = giga_eawaf_sonata_leader save_global_event_target_as = giga_eawaf_sonata_leader }
+			}
+			#Adagio leads first (fun times ahead!)
+			set_leader = event_target:giga_eawaf_adagio_leader
+			giga_eawaf_update_sirens_leader_modifiers = yes
+
+			#Create starting fleets
+			while = {
+				count = 10
+				giga_eawaf_create_standard_sirens_fleet = yes
+			}
+
+			# create_fleet = {
+			# 	name = "Abyssal Task Force 'Adagio'"
+			# 	settings = { spawn_debris = no can_upgrade = no uses_naval_capacity = yes }
+			# 	effect = {
+			# 		set_owner = event_target:giga_eawaf_country
+			# 		while = { count = 15 create_ship = { name = random design = "Sonata" prefix = no } }
+			# 		while = { count = 30 create_ship = { name = random design = "Aria" prefix = no } }
+			# 		while = { count = 60 create_ship = { name = random design = "Addagio" prefix = no } }
+			# 		while = { count = 2 create_ship = { name = random design = "Panopticon" prefix = no } }
+			# 		while = { count = 2 create_ship = { name = random design = "Enthraller" prefix = no } }
+			# 		set_location = { target = event_target:giga_eawaf_planet distance = 150 angle = random }
+			# 		set_fleet_stance = aggressive
+			# 	}
+			# }
+
+			# create_fleet = {
+			# 	name = "Abyssal Task Force 'Aria'"
+			# 	settings = { spawn_debris = no can_upgrade = no uses_naval_capacity = yes }
+			# 	effect = {
+			# 		set_owner = event_target:giga_eawaf_country
+			# 		while = { count = 15 create_ship = { name = random design = "Sonata" prefix = no } }
+			# 		while = { count = 30 create_ship = { name = random design = "Aria" prefix = no } }
+			# 		while = { count = 60 create_ship = { name = random design = "Addagio" prefix = no } }
+			# 		while = { count = 2 create_ship = { name = random design = "Panopticon" prefix = no } }
+			# 		while = { count = 2 create_ship = { name = random design = "Enthraller" prefix = no } }
+			# 		set_location = { target = event_target:giga_eawaf_planet distance = 150 angle = random }
+			# 		set_fleet_stance = aggressive
+			# 	}
+			# }
+
+			# create_fleet = {
+			# 	name = "Abyssal Task Force 'Sonata'"
+			# 	settings = { spawn_debris = no can_upgrade = no uses_naval_capacity = yes }
+			# 	effect = {
+			# 		set_owner = event_target:giga_eawaf_country
+			# 		while = { count = 15 create_ship = { name = random design = "Sonata" prefix = no } }
+			# 		while = { count = 30 create_ship = { name = random design = "Aria" prefix = no } }
+			# 		while = { count = 60 create_ship = { name = random design = "Addagio" prefix = no } }
+			# 		while = { count = 2 create_ship = { name = random design = "Panopticon" prefix = no } }
+			# 		while = { count = 2 create_ship = { name = random design = "Enthraller" prefix = no } }
+			# 		set_location = { target = event_target:giga_eawaf_planet distance = 150 angle = random }
+			# 		set_fleet_stance = aggressive
+			# 	}
+			# }
+		}
+
+		#Put a Siren Starbase
+		create_starbase = {
+			size = starbase_citadel
+			owner = event_target:giga_eawaf_country
+		}
+
+		#Regenerate Hyperlanes
+		while = { count = 4 giga_generate_hyperlane = yes }
+
+		#Clear the Shroud
+		every_system_ambient_object = { destroy_ambient_object = this }
+		event_target:giga_eawaf_planet = { #Explosion animation
+			create_ambient_object = {
+				type = "star_explosion"
+				play_animation_once = yes
+				location = THIS
+			}
+		}
+		
+		#Make the megastructure
+		spawn_megastructure = {
+			type = "giga_eawaf_sirens_megaphone_1"
+			planet = event_target:giga_eawaf_planet
+			owner = event_target:giga_eawaf_country
+		}
+		
+		random_megastructure = {
+			limit = { is_megastructure_type = giga_eawaf_sirens_megaphone_1 }
+			set_name = "Hello There"
+			# set_name = {
+			# 	key = "NAME_Giga_Eawaf_Sirens_Megaphone"
+			# 	variable_string = "[giga_eawaf_country.giga_eawaf_sirens_megaphone_level]"
+			# }
+		}
+
+		#Start control situation
+		event_target:giga_eawaf_country = {
+			country_event = { id = giga_eawaf.3001 } #WIP
+			country_event = { id = giga_eawaf.3010 days = 1800 } #Leader swap
+			add_modifier = { modifier = giga_eawaf_base_sirens_modifier days = -1 } #Base stuff
+			add_modifier = { #Effect from Enthrallers
+				modifier = giga_eawaf_megaphone_modifier
+				mult = giga_eawaf_field_potency_multiplier
+				days = -1
+			}
+			# start_situation = {
+			# 	type = situation_eawaf_sirens_control
+			# 	target = event_target:giga_eawaf_planet
+			# 	effect = {
+			# 		save_global_event_target_as = giga_eawaf_sirens_control_situation
+			# 		set_situation_approach = approach_giga_eawaf_control
+			# 	}
+			# }
+		}
+
+		event_target:global_event_country = { #Control events for if Sirens die
+			set_global_flag = giga_eawaf_loss_checker_active
+			country_event = { id = giga_eawaf.60023 }
+		}
+
+		every_playable_country = {
+			country_event = { id = giga_eawaf.30002 } #Message
+		}
+
+		#Spawn defences around enthraller
+		create_fleet = {
+			name = "Abyssal Bulwark"
+			effect = {
+				set_owner = event_target:giga_eawaf_country
+				create_ship = { name = "Abyssal Bulwark" design = "Deflector" prefix = no upgradable = no }
+				set_location = { target = event_target:giga_eawaf_planet distance = 50 angle = 0 }
+			}
+		}
+
+		create_fleet = {
+			name = "Abyssal Bulwark"
+			effect = {
+				set_owner = event_target:giga_eawaf_country
+				create_ship = { name = "Abyssal Bulwark" design = "Deflector" prefix = no upgradable = no }
+				set_location = { target = event_target:giga_eawaf_planet distance = 50 angle = 45 }
+			}
+		}
+
+		create_fleet = {
+			name = "Abyssal Bulwark"
+			effect = {
+				set_owner = event_target:giga_eawaf_country
+				create_ship = { name = "Abyssal Bulwark" design = "Deflector" prefix = no upgradable = no }
+				set_location = { target = event_target:giga_eawaf_planet distance = 50 angle = 90 }
+			}
+		}
+
+		create_fleet = {
+			name = "Abyssal Bulwark"
+			effect = {
+				set_owner = event_target:giga_eawaf_country
+				create_ship = { name = "Abyssal Bulwark" design = "Deflector" prefix = no upgradable = no }
+				set_location = { target = event_target:giga_eawaf_planet distance = 50 angle = 135 }
+			}
+		}
+
+		create_fleet = {
+			name = "Abyssal Bulwark"
+			effect = {
+				set_owner = event_target:giga_eawaf_country
+				create_ship = { name = "Abyssal Bulwark" design = "Deflector" prefix = no upgradable = no }
+				set_location = { target = event_target:giga_eawaf_planet distance = 50 angle = 180 }
+			}
+		}
+
+		create_fleet = {
+			name = "Abyssal Bulwark"
+			effect = {
+				set_owner = event_target:giga_eawaf_country
+				create_ship = { name = "Abyssal Bulwark" design = "Deflector" prefix = no upgradable = no }
+				set_location = { target = event_target:giga_eawaf_planet distance = 50 angle = 225 }
+			}
+		}
+
+		create_fleet = {
+			name = "Abyssal Bulwark"
+			effect = {
+				set_owner = event_target:giga_eawaf_country
+				create_ship = { name = "Abyssal Bulwark" design = "Deflector" prefix = no upgradable = no }
+				set_location = { target = event_target:giga_eawaf_planet distance = 50 angle = 270 }
+			}
+		}
+
+		create_fleet = {
+			name = "Abyssal Bulwark"
+			effect = {
+				set_owner = event_target:giga_eawaf_country
+				create_ship = { name = "Abyssal Bulwark" design = "Deflector" prefix = no upgradable = no }
+				set_location = { target = event_target:giga_eawaf_planet distance = 50 angle = 315 }
+			}
+		}
+	}
+}
+
+#The Sirens are here! Message by Addagio
+country_event = {
+	id = giga_eawaf.30002
+	title = "giga_eawaf.30002.name"
+	desc = "giga_eawaf.30002.desc"
+
+	show_sound = sfx_amb_giga_eawaf_sirens_noise
+
+	location = event_target:giga_eawaf_system
+	is_triggered_only = yes
+	diplomatic = yes
+
+	trigger = {
+		NOT = { has_country_flag = giga_eawaf_sirens_diplomacy_engaged }
+	}
+
+	picture_event_data = {
+		portrait = event_target:giga_eawaf_country.ruler
+		room = giga_eawaf_sirens_room
+	}
+
+	immediate = { set_country_flag = giga_eawaf_sirens_diplomacy_engaged }
+
+	option = { #Uh oh
+		name = "giga_eawaf.30002.bye"
+		default_hide_option = yes
+		hidden_effect = { remove_country_flag = giga_eawaf_sirens_diplomacy_engaged country_event = { id = giga_eawaf.30003 } }
+	}
+}
+
+#Data about Sirens
+country_event = {
+	id = giga_eawaf.30003
+	title = "giga_eawaf.30003.name"
+	desc = "giga_eawaf.30003.desc"
+	picture = GFX_evt_giga_eawaf_sirens_2
+	show_sound = event_bad_omen
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	option = {
+		name = "giga_eawaf.30003.a"
+		begin_event_chain = {
+			event_chain = giga_eawaf_sirens_chain
+			target = ROOT
+		}
+		create_point_of_interest = {
+			id = giga_eawaf_poi_sirens_stats.1
+			name = "giga_eawaf_poi_sirens_stats_name"
+			desc = "giga_eawaf_poi_sirens_stats_desc"
+			event_chain = giga_eawaf_sirens_chain
+			location = event_target:giga_eawaf_system
+		}
+		start_situation = {
+			type = situation_eawaf_sirens_understanding
+			target = ROOT
+			effect = {
+				save_global_event_target_as = giga_eawaf_sirens_understanding_situation
+				set_situation_approach = approach_giga_eawaf_do_nothing
+			}
+		}
+	}
+}
+
+#TECHNICAL SIRENS SHENANIGANS
+#Monthly control event fired by the Situation
+country_event = {
+	id = giga_eawaf.3001
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	immediate = {
+		country_event = { id = giga_eawaf.3001 days = 30 }
+		event_target:giga_eawaf_system = {
+			if = {
+				limit = { 
+					NOT = { starbase = { exists = yes } } 
+				}
+				create_starbase = {
+					size = starbase_starport
+					owner = event_target:giga_eawaf_country
+				}
+			}
+		}
+		if = {
+			limit = { NOT = { has_global_flag = giga_eawaf_shroudsonic_enthraller_destroyed } }
+			if = {
+				limit = { NOT = { has_country_flag = giga_eawaf_sirens_expansion_cooldown } }
+				every_system_within_border = {
+					limit = {
+						any_neighbor_system = {
+							has_star_flag = giga_eawaf_outer_field_system
+							NOT = { exists = starbase }
+						}
+					}
+					every_neighbor_system = {
+						limit = {
+							has_star_flag = giga_eawaf_outer_field_system
+							NOT = { exists = starbase }
+						}
+						create_starbase = {
+							size = starbase_starport
+							owner = ROOT
+						}
+					}
+				}
+				set_timed_country_flag = {
+					flag = giga_eawaf_sirens_expansion_cooldown
+					days = 720
+				}
+			}
+			giga_eawaf_calculate_strife = yes
+			giga_eawaf_update_strife_field_size_2 = yes
+			giga_eawaf_apply_strife_field_effects = yes
+			giga_eawaf_calculate_war_materials = yes
+			#Let's build fleets! Every 2 levels of the Enthraller, the Sirens can produce one additional standard fleet at once.
+			#The Sirens will build up fleets to naval capacity, then save up to upgrade the Enthraller, UNLESS it has been over 5 years since the last enthraller upgrade, in which case they will stop saving up for fleets and focus on upgrading the Enthraller. If it has been less than 2.5 years since last enthraller upgrade, just make fleets.
+			if = {
+				limit = {
+					check_variable = { which = giga_eawaf_sirens_warmaterial_count value > giga_eawaf_sirens_megaphone_next_level_cost }
+					NOT = { has_country_flag = giga_eawaf_sirens_recently_upgraded_megaphone }
+					OR = {
+						used_naval_capacity_percent >= 1.0
+						NOT = { has_country_flag = giga_eawaf_sirens_dont_focus_on_upgrading_megaphone }
+					}
+				}
+				subtract_variable = { which = giga_eawaf_sirens_warmaterial_count value = giga_eawaf_sirens_megaphone_next_level_cost }
+				multiply_variable = { which = giga_eawaf_sirens_megaphone_next_level_cost value = 2 }
+				random_megastructure = {
+					limit = { is_megastructure_type = giga_eawaf_sirens_megaphone_1 }
+					upgrade_megastructure_to = giga_eawaf_sirens_megaphone_2
+				}
+				set_timed_country_flag = {
+					flag = giga_eawaf_sirens_recently_upgraded_megaphone
+					days = 2700
+				}
+				set_timed_country_flag = {
+					flag = giga_eawaf_sirens_dont_focus_on_upgrading_megaphone
+					days = 3600
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { which = giga_eawaf_sirens_warmaterial_count value > 100 }
+					used_naval_capacity_percent < 1.0
+				}
+				subtract_variable = { which = giga_eawaf_sirens_warmaterial_count value = 100 }
+				giga_eawaf_create_standard_sirens_fleet = yes
+			}
+		}
+	}
+}
+
+#Ship stolen by Enthraller
+country_event = {
+	id = giga_eawaf.3002
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		OR = {
+			FromFrom = { is_ship_size = giga_eawaf_sirens_enthraller }
+			event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 7 } }
+		}
+		FromFromFrom.owner = { giga_eawaf_is_immune_to_sirens = no }
+	}
+
+	immediate = {
+		create_fleet = {
+			name = "Enthralled Vessels"
+			effect = {
+				set_owner = root
+				create_ship = {
+					name = "Enthralled Vessels"
+					design = ROOT.FromFromFrom
+					prefix = no
+					upgradable = no
+				}
+				set_location = {
+					target = root.fromfromfrom
+					distance = 0
+					angle = random
+				}
+				#queue_actions = { merge_fleet = { target = Root.FromFrom.fleet } }
+			}
+		}
+	}
+}
+
+#Ship stolen by inner field
+fleet_event = {
+	id = giga_eawaf.3003
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		From = { has_star_flag = giga_eawaf_inner_field_system }
+		NOT = { #These are shielded automatically
+			OR = {
+				any_owned_ship = { is_ship_size = science }
+				any_owned_ship = { is_ship_size = constructor }
+				any_owned_ship = { is_ship_size = transport }
+			}
+			owner = { has_technology = giga_tech_eawaf_disenchanter_3 }
+		}
+		owner = { giga_eawaf_is_immune_to_sirens = no }
+	}
+
+	immediate = {
+		every_owned_ship = {
+			if = { #Unprotected by Disenchanters
+				limit = { NOR = { has_component = GIGA_EAWAF_DISENCHANTER_3 has_component = GIGA_EAWAF_DISENCHANTER_4 } }
+				fleet = { set_owner = event_target:giga_eawaf_country set_fleet_flag = giga_eawaf_enthralled_by_sirens }
+				giga_eawaf_clear_strife_field_ship_modifiers = yes
+			}
+		}
+	}
+}
+
+#Ship enters field system, debuff modifier is applied. If Disenchanters are present, add penalty instead.
+ship_event = {
+	id = giga_eawaf.3004
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		From = { giga_eawaf_is_field_system = yes }
+		FromFrom = { NOT = { is_country_type = giga_eawaf_sirens } }
+		NOT = { #These are shielded automatically
+			OR = {
+				is_ship_size = science
+				is_ship_size = constructor
+				is_ship_size = transport
+			}
+			owner = { has_technology = giga_tech_eawaf_disenchanter_3 }
+		}
+	}
+
+	immediate = {
+		remove_modifier = giga_eawaf_strife_field_ship_modifier
+		if = { #No Disenchanter?
+			limit = { giga_eawaf_has_disenchanter = no }
+			add_modifier = {
+				modifier = giga_eawaf_strife_field_ship_modifier
+				days = -1
+				mult = event_target:giga_eawaf_country.giga_eawaf_field_potency_multiplier
+			}
+		}
+		else_if = {
+			limit = { has_component = GIGA_EAWAF_DISENCHANTER_1 }
+			add_modifier = { modifier = giga_eawaf_disenchanter_1_speed_modifier days = -1 }
+			add_modifier = {
+				modifier = giga_eawaf_disenchanter_1_upkeep_modifier
+				days = -1
+				mult = event_target:giga_eawaf_country.giga_eawaf_field_potency_multiplier
+			}
+		}
+		else_if = {
+			limit = { has_component = GIGA_EAWAF_DISENCHANTER_2 }
+			#add_modifier = { modifier = giga_eawaf_disenchanter_2_speed_modifier days = -1 }
+			add_modifier = {
+				modifier = giga_eawaf_disenchanter_2_upkeep_modifier
+				days = -1
+				mult = event_target:giga_eawaf_country.giga_eawaf_field_potency_multiplier
+			}
+		}
+		else_if = {
+			limit = { has_component = GIGA_EAWAF_DISENCHANTER_3 }
+			if = {
+				limit = { ROOT.FROM = { has_star_flag = giga_eawaf_inner_field_system } }
+				add_modifier = { modifier = giga_eawaf_disenchanter_3_speed_modifier days = -1 }
+			}
+			add_modifier = {
+				modifier = giga_eawaf_disenchanter_3_upkeep_modifier
+				days = -1
+				mult = event_target:giga_eawaf_country.giga_eawaf_field_potency_multiplier
+			}
+		}
+		else_if = {
+			limit = { has_component = GIGA_EAWAF_DISENCHANTER_4 }
+			add_modifier = {
+				modifier = giga_eawaf_disenchanter_4_upkeep_modifier
+				days = -1
+				mult = event_target:giga_eawaf_country.giga_eawaf_field_potency_multiplier
+			}
+		}
+	}
+}
+
+#Ship enters non-field system with field modifiers
+ship_event = {
+	id = giga_eawaf.3005
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		giga_eawaf_has_strife_field_ship_modifiers = yes
+		From = { giga_eawaf_is_field_system = no }
+	}
+
+	immediate = {
+		giga_eawaf_clear_strife_field_ship_modifiers = yes
+	}
+}
+
+#Sirens take starbase if within strife field
+starbase_event = {
+	id = giga_eawaf.3006
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		FROM = { owner = { is_country_type = giga_eawaf_sirens } }
+		solar_system = {
+			OR = {
+				has_star_flag = giga_eawaf_inner_field_system
+				has_star_flag = giga_eawaf_outer_field_system
+			}
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = { exists = owner }
+			owner = { set_country_flag = giga_eawaf_former_owner@PREV } #Remember the former owner
+		}
+		set_owner = event_target:giga_eawaf_country
+	}
+}
+
+#Sirens go bomb planet
+planet_event = {
+	id = giga_eawaf.3007
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		FROM = { is_country_type = giga_eawaf_sirens }
+	}
+
+	immediate = {
+		while = {
+			count = 5
+			create_army = { name = "Mind Thralls" owner = event_target:giga_eawaf_country species = event_target:eawaf_ponies  type = "eawaf_sirens_army" land_army = yes }
+		}
+	}
+}
+
+#Planet taken by Sirens
+country_event = {
+	id = giga_eawaf.3008
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = THIS
+		is_country_type = giga_eawaf_sirens
+	}
+
+	immediate = {
+		FromFrom = {
+			set_owner = event_target:giga_eawaf_country
+			katzen_clear_capitals = yes
+			add_building = building_giga_eawaf_sirens_capital
+		}
+	}
+}
+
+#Starbase taken back if within outer field or within inner field w/ disenchanter
+starbase_event = {
+	id = giga_eawaf.3009
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		owner = { is_country_type = giga_eawaf_sirens }
+		OR = {
+			solar_system = { has_star_flag = giga_eawaf_outer_field_system }
+			AND = {
+				solar_system = { has_star_flag = giga_eawaf_inner_field_system }
+				FROM.owner = { has_technology = giga_tech_eawaf_disenchanter_3 }
+			}
+		}
+	}
+
+	immediate = {
+		set_owner = FROM.owner
+	}
+}
+
+#Siren leadership swap event: Adagio --> Aria --> Sonata
+country_event = {
+	id = giga_eawaf.3010
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	immediate = {
+		if = { #Adagio --> Aria
+			limit = { ruler = { has_leader_flag = giga_eawaf_adagio_leader } }
+			set_leader = event_target:giga_eawaf_aria_leader
+			every_playable_country = {
+				create_message = {
+					type = SIRENS_SWAPPING_LEADER
+					localization = SIRENS_SWAPPING_LEADER_DESC_ARIA
+					days = 30
+				}
+			}
+		}
+		else_if = { #Aria --> Sonata
+			limit = { ruler = { has_leader_flag = giga_eawaf_aria_leader } }
+			set_leader = event_target:giga_eawaf_sonata_leader
+			every_playable_country = {
+				create_message = {
+					type = SIRENS_SWAPPING_LEADER
+					localization = SIRENS_SWAPPING_LEADER_DESC_SONATA
+					days = 30
+				}
+			}
+		}
+		else_if = { #Sonata --> Adagio
+			limit = { ruler = { has_leader_flag = giga_eawaf_sonata_leader } }
+			set_leader = event_target:giga_eawaf_adagio_leader
+			every_playable_country = {
+				create_message = {
+					type = SIRENS_SWAPPING_LEADER
+					localization = SIRENS_SWAPPING_LEADER_DESC_ADAGIO
+					days = 30
+				}
+			}
+		}
+		giga_eawaf_update_sirens_leader_modifiers = yes
+		country_event = { id = giga_eawaf.3010 days = 1800 } #CHANGE TO 5 - 10 YEARS
+	}
+}
+
+#Trying to land on inner field planet without disenchanter 3, armies taken over lol
+planet_event = {
+	id = giga_eawaf.3011
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		solar_system = { has_star_flag = giga_eawaf_inner_field_system }
+		From = { NOT = { has_technology = giga_tech_eawaf_disenchanter_3 } }
+	}
+
+	immediate = {
+		every_planet_army = { set_owner = event_target:giga_eawaf_country }
+	}
+}
+
+#Sirens planet taken over
+country_event = {
+	id = giga_eawaf.3012
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		From = { is_country_type = giga_eawaf_sirens }
+		FromFrom.solar_system = { has_star_flag = giga_eawaf_inner_field_system }
+	}
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_technology = giga_tech_eawaf_disenchanter_3 } }
+			FromFrom = {
+				set_controller = event_target:giga_eawaf_country
+				set_owner = event_target:giga_eawaf_country
+			}
+		}
+		else = {
+			FromFrom = {
+				set_owner = ROOT
+				set_controller = ROOT
+				add_building = building_giga_eawaf_disenchanter_building_2
+			}
+		}
+	}
+}
+
+# #Kamikaze kills enemy ship, and kills itself too.
+# country_event = {
+# 	id = giga_eawaf.30061
+# 	hide_window = yes
+# 	is_triggered_only = yes
+
+# 	trigger = {
+# 		FromFrom = { is_ship_size = giga_eawaf_sirens_kamikaze }
+# 		exists = owner
+# 	}
+
+# 	immediate = {
+# 		FromFrom = {
+# 			solar_system = {
+# 				create_ambient_object = {
+# 					type = explosion_particle_object
+# 					play_animation_once = yes
+# 					location = root.FromFrom
+# 				}
+# 			}
+# 			destroy_ship = THIS
+# 		}
+# 	}
+# }
+
+# #Fleet with Kamikazes enters combat, start countdown in 10 days. This is to avoid cheesing Kamikazes by just sending one corvette to trigger their killswitch.
+# fleet_event = {
+# 	id = giga_eawaf.30062
+# 	hide_window = yes
+# 	is_triggered_only = yes
+
+# 	trigger = {
+# 		any_owned_ship = { is_ship_size = giga_eawaf_sirens_kamikaze }
+# 		exists = owner
+# 	}
+
+# 	immediate = {
+# 		every_owned_ship = { limit = { is_ship_size = giga_eawaf_sirens_kamikaze } ship_event = { id = giga_eawaf.30063 days = 10 } }
+# 	}
+# }
+
+# #If ship is in combat, then destroy it in 60 days.
+# ship_event = {
+# 	id = giga_eawaf.30063
+# 	hide_window = yes
+# 	is_triggered_only = yes
+
+# 	trigger = { exists = owner }
+
+# 	immediate = {
+# 		if = { limit = { is_in_combat = yes } ship_event = { id = giga_eawaf.30064 days = 60 } }
+# 	}
+# }
+
+# #Kamikaze timeout.
+# ship_event = {
+# 	id = giga_eawaf.30064
+# 	hide_window = yes
+# 	is_triggered_only = yes
+
+# 	trigger = { exists = owner }
+
+# 	immediate = {
+# 		destroy_ship = THIS
+# 	}
+#}
+
+#Sirens are contacted
+country_event = {
+	id = giga_eawaf.4000
+	title = "giga_eawaf.4000.name"
+	desc = {
+		trigger = { event_target:giga_eawaf_country = { ruler = { has_leader_flag = giga_eawaf_aria_leader } } }
+		text = "giga_eawaf.4000.desc.aria"
+	}
+	desc = {
+		trigger = { event_target:giga_eawaf_country = { ruler = { has_leader_flag = giga_eawaf_sonata_leader } } }
+		text = "giga_eawaf.4000.desc.sonata"
+	}
+	desc = {
+		trigger = { event_target:giga_eawaf_country = { ruler = { has_leader_flag = giga_eawaf_adagio_leader } } }
+		text = "giga_eawaf.4000.desc.adagio"
+	}
+	location = event_target:giga_eawaf_system
+	is_triggered_only = yes
+	diplomatic = yes
+
+	trigger = {
+		From = { is_country_type = giga_eawaf_sirens }
+		NOT = { has_country_flag = giga_eawaf_sirens_diplomacy_engaged }
+	}
+
+	picture_event_data = {
+		portrait = event_target:giga_eawaf_country.ruler
+		room = giga_eawaf_sirens_room
+	}
+
+	immediate = { set_country_flag = giga_eawaf_sirens_diplomacy_engaged }
+
+	option = { #Uh oh
+		name = "giga_eawaf.4000.bye"
+		default_hide_option = yes
+		hidden_effect = { remove_country_flag = giga_eawaf_sirens_diplomacy_engaged }
+	}
+}
+
+#Situation Events
+#First stage
+country_event = {
+	id = giga_eawaf.5001
+	title = "giga_eawaf.5001.name"
+	desc = "giga_eawaf.5001.desc"
+	picture = GFX_evt_giga_eawaf_sirens_2
+	show_sound = event_bad_omen
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	immediate = { set_country_flag = giga_tech_eawaf_disenchanter_1_possible }
+
+	option = {
+		name = "giga_eawaf.5001.a"
+		custom_tooltip = "giga_eawaf.5001.a.tooltip"
+		add_research_option = giga_tech_eawaf_disenchanter_1
+	}
+}
+
+country_event = {
+	id = giga_eawaf.5002
+	title = "giga_eawaf.5002.name"
+	desc = "giga_eawaf.5002.desc"
+	picture = GFX_evt_giga_eawaf_sirens_2
+	show_sound = event_bad_omen
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	immediate = { set_country_flag = giga_tech_eawaf_disenchanter_2_possible }
+
+	option = {
+		name = "giga_eawaf.5002.a"
+		custom_tooltip = "giga_eawaf.5001.a.tooltip"
+		add_research_option = giga_tech_eawaf_disenchanter_2
+	}
+}
+
+country_event = {
+	id = giga_eawaf.5003
+	title = "giga_eawaf.5003.name"
+	desc = "giga_eawaf.5003.desc"
+	picture = GFX_evt_giga_eawaf_sirens_2
+	show_sound = event_bad_omen
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	immediate = { set_country_flag = giga_tech_eawaf_disenchanter_3_possible }
+
+	option = {
+		name = "giga_eawaf.5003.a"
+		custom_tooltip = "giga_eawaf.5001.a.tooltip"
+		add_research_option = giga_tech_eawaf_disenchanter_3
+	}
+}
+
+country_event = {
+	id = giga_eawaf.5004
+	title = "giga_eawaf.5004.name"
+	desc = "giga_eawaf.5004.desc"
+	picture = GFX_evt_giga_eawaf_sirens_2
+	show_sound = event_bad_omen
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+	}
+
+	immediate = { set_country_flag = giga_tech_eawaf_disenchanter_4_possible }
+
+	option = {
+		name = "giga_eawaf.5004.a"
+		add_research_option = giga_tech_eawaf_disenchanter_4
+		destroy_situation = event_target:giga_eawaf_sirens_understanding_situation
+		giga_eawaf_clear_sirens_research_modifiers = yes
+	}
+}
+
+#Pause situation until techs are researched
+country_event = {
+	id = giga_eawaf.5005
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+		OR = {
+			last_increased_tech = giga_tech_eawaf_disenchanter_1
+			last_increased_tech = giga_tech_eawaf_disenchanter_2
+			last_increased_tech = giga_tech_eawaf_disenchanter_3
+		}
+	}
+
+	immediate = {
+		random_situation = {
+			limit = { is_situation_type = situation_eawaf_sirens_understanding }
+			set_situation_locked = no
+		}
+	}
+}
+
+#reset if insufficient income
+situation_event = {
+	id = giga_eawaf.5006
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				owner = {
+					OR = {
+						NOT = {	has_monthly_income = { resource = unity value > 0 } }
+						NOT = {	has_monthly_income = { resource = society_research value > 0 } }
+						NOT = {	has_monthly_income = { resource = physics_research value > 0 } }
+					}
+				}
+			}
+			owner = { giga_eawaf_clear_sirens_research_modifiers = yes }
+			remove_situation_flag = approach_giga_eawaf_sirens_research_2
+			remove_situation_flag = approach_giga_eawaf_sirens_research_3
+			remove_situation_flag = approach_giga_eawaf_sirens_research_4
+			set_situation_flag = approach_giga_eawaf_sirens_research_1
+			set_situation_approach = approach_giga_eawaf_sirens_research_1
+		}
+	}
+}
+
+#Enthraller defenses are destroyed, exposing heart!
+country_event = {
+	id = giga_eawaf.6000
+	title = "giga_eawaf.6000.name"
+	desc = "giga_eawaf.6000.desc"
+	picture = GFX_evt_exploding_ship
+	show_sound = event_collapsing_ruins
+	is_triggered_only = yes
+
+	trigger = {
+		FromFromFrom = { is_ship_size = giga_eawaf_sirens_fortress }
+		FromFromFrom.solar_system = { #No other fortresses left
+			NOT = { any_ship_in_system = { is_ship_size = giga_eawaf_sirens_fortress } }
+		}
+	}
+
+	immediate = {
+		create_fleet = {
+			name = "Shroudsonic Enthraller Core"
+			effect = {
+				set_owner = event_target:giga_eawaf_country
+				create_ship = { name = "Shroudsonic Enthraller Core" design = "Apotheosis" prefix = no upgradable = no }
+				set_location = { target = event_target:giga_eawaf_planet distance = 0 angle = 0 }
+			}
+		}
+	}
+
+	option = {
+		name = "giga_eawaf.6000.a"
+	}
+}
+
+#Enthraller core down, end of field!
+country_event = {
+	id = giga_eawaf.6001
+	title = "giga_eawaf.6001.name"
+	desc = "giga_eawaf.6001.desc"
+	picture = GFX_evt_exploding_ship
+	show_sound = event_collapsing_ruins
+	is_triggered_only = yes
+
+	trigger = {
+		FromFromFrom = { is_ship_size = giga_eawaf_sirens_megastructure_core }
+	}
+
+	immediate = {
+		set_update_modifiers_batch = begin
+		set_global_flag = giga_eawaf_shroudsonic_enthraller_destroyed
+		event_target:giga_eawaf_planet.solar_system = {
+			every_system_megastructure = {
+				limit = { is_megastructure_type = giga_eawaf_sirens_megaphone_1 }
+				remove_megastructure = THIS
+			}
+		}
+		event_target:giga_eawaf_country = {
+			set_variable = { which = giga_eawaf_total_strife value = 0 }
+		}
+		every_galaxy_planet = {
+			limit = { is_colony = yes }
+			remove_modifier = giga_eawaf_outer_strife_field_modifier
+			remove_modifier = giga_eawaf_outer_strife_field_modifier_halved
+			remove_modifier = giga_eawaf_outer_strife_field_modifier_quartered
+		}
+		every_system = { #The field is gone
+			limit = {
+				OR = {
+					has_star_flag = giga_eawaf_inner_field_system
+					has_star_flag = giga_eawaf_outer_field_system
+				}
+			}
+			#Clear Strife Fields
+			every_system_ambient_object = {
+				limit = { OR = { is_ambient_object_type = giga_eawaf_strife_field_outer_object is_ambient_object_type = giga_eawaf_strife_field_inner_object } }
+				destroy_ambient_object = this
+			}
+			#Remove Strife Field Modifiers
+			every_system_planet = {
+				limit = { is_colony = yes }
+				giga_eawaf_clear_outer_strife_field_modifier = yes
+			}
+			if = {
+				limit = { has_star_flag = giga_eawaf_outer_field_system }
+				remove_star_flag = giga_eawaf_outer_field_system
+			}
+			if = {
+				limit = { has_star_flag = giga_eawaf_inner_field_system }
+				remove_star_flag = giga_eawaf_inner_field_system
+			}
+			every_ship_in_system = { #Return ships to owners
+				limit = {
+					controller = { is_country_type = giga_eawaf_sirens }
+					has_ship_flag = giga_eawaf_enthralled_by_sirens
+				}
+				random_country = {
+					limit = { has_country_flag = giga_eawaf_former_owner@PREV }
+					save_event_target_as = giga_eawaf_former_owner
+				}
+				fleet = { set_owner = event_target:giga_eawaf_former_owner set_controller = event_target:giga_eawaf_former_owner }
+			}
+			starbase = { #Return starbases to owners
+				if = {
+					limit = {
+						controller = { is_country_type = giga_eawaf_sirens }
+						any_country = { has_country_flag = giga_eawaf_former_owner@PREV }
+					}
+					random_country = {
+						limit = { has_country_flag = giga_eawaf_former_owner@PREV }
+						save_event_target_as = giga_eawaf_former_owner
+					}
+					set_owner = event_target:giga_eawaf_former_owner
+				}
+			}
+			every_system_planet = { #Return planets to owners
+				limit = {
+					owner = { is_country_type = giga_eawaf_sirens }
+					is_colony = yes
+					has_planet_flag = giga_eawaf_enthralled_by_sirens
+				}
+				random_country = {
+					limit = { has_country_flag = giga_eawaf_former_owner@PREV }
+					save_event_target_as = giga_eawaf_former_owner
+				}
+				set_owner = event_target:giga_eawaf_former_owner
+				solar_system = { starbase = { set_owner = event_target:giga_eawaf_former_owner } }
+			}
+			every_galaxy_fleet = { #Clear all strife field modifiers
+				every_owned_ship = { giga_eawaf_clear_strife_field_ship_modifiers = yes }
+			}
+		}
+		event_target:giga_eawaf_country = {
+			every_system_within_border = {
+				limit = {
+					any_system_planet = {
+						is_colony = yes
+						owner = { is_country_type = giga_eawaf_sirens }
+					}
+					NOR = { has_star_flag = eawaf_system }
+				}
+				random_system_planet = {
+					limit = {
+						is_colony = yes
+						owner = { is_country_type = giga_eawaf_sirens }
+					}
+					create_sirens_splinter_state = yes
+				}
+			}
+		}
+		#Clear stragglers
+		every_galaxy_planet = {
+			limit = {
+				owner = { is_country_type = giga_eawaf_sirens }
+				is_colony = yes
+				NOT = { has_planet_flag = giga_eawaf_planet }
+				solar_system.starbase.owner = { NOT = { is_country_type = giga_eawaf_sirens } }
+			}
+			set_owner = solar_system.starbase.owner
+		}
+		every_galaxy_planet = {
+			limit = {
+				owner = { is_country_type = giga_eawaf_sirens }
+				is_colony = yes
+				NOT = { has_planet_flag = giga_eawaf_planet }
+			}
+			destroy_colony = yes
+		}
+		#TEMP
+		event_target:giga_eawaf_planet = {
+			while = {
+				count = 10
+				create_army = { name = "Mind Thralls" owner = event_target:giga_eawaf_country species = event_target:eawaf_ponies  type = "eawaf_sirens_army" land_army = yes }
+			}
+			set_controller = event_target:giga_eawaf_country
+			set_owner = event_target:giga_eawaf_country
+			planet_event = { id = giga_eawaf.60013 days = 1 }
+		}
+		event_target:global_event_country = {
+			if = {
+				limit = { NOT = { has_global_flag = giga_eawaf_loss_checker_active } }
+				country_event = { id = giga_eawaf.60023 days = 5 }
+			}
+		}
+		set_update_modifiers_batch = end
+	}
+
+	option = {
+		name = "giga_eawaf.6001.a"
+	}
+}
+
+planet_event = {
+	id = giga_eawaf.60013
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_controller = event_target:giga_eawaf_country
+		set_owner = event_target:giga_eawaf_country
+	}
+}
+
+#Now the player lands on Faust. However the sirens start throwing all of Faust's pop at the player!
+country_event = {
+	id = giga_eawaf.60021
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		THIS = { is_country_type = giga_eawaf_sirens }
+		FromFromFrom = {
+			has_planet_flag = giga_eawaf_planet
+		}
+		count_owned_army = {
+			count < 12
+			limit = {
+				exists = planet
+				planet = { has_planet_flag = giga_eawaf_planet }
+			}
+		}
+	}
+
+	immediate = { #Kill a pop and make an army
+		event_target:giga_eawaf_planet = {
+			add_planet_devastation = -100
+			if = {
+				limit = { num_pops > 10 }
+				while = {
+					count = 7
+					random_owned_pop = { kill_pop = yes }
+				}
+				event_target:giga_eawaf_planet = {
+					while = {
+						count = 10
+						create_army = {
+							name = "Enthralled Legions"
+							owner = event_target:giga_eawaf_country
+							species = prev.species 
+							type = "eawaf_sirens_army"
+							land_army = yes
+						}
+					}
+				}
+			}
+		}
+		FromFrom = {
+			if = {
+				limit = { NOT = { has_country_flag = giga_eawaf_told_about_siren_tactics } }
+				set_country_flag = giga_eawaf_told_about_siren_tactics
+				country_event = { id = giga_eawaf.60022 days = 1 }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = giga_eawaf.60022
+	title = "giga_eawaf.60022.name"
+	desc = "giga_eawaf.60022.desc"
+	picture = GFX_evt_giga_eawaf_planes_2
+	show_sound = event_red_alert
+	is_triggered_only = yes
+
+	option = { #Do something!
+		name = "giga_eawaf.60022.a"
+		trigger = { katzen_is_genocidal = no }
+		event_target:giga_eawaf_planet = {
+			enable_special_project = {
+				name = GIGA_EAWAF_EQG_PORTAL
+				owner = ROOT
+				location = event_target:giga_eawaf_planet
+			}
+		}
+	}
+
+	option = { #Don't care.
+		name = "giga_eawaf.60022.b"
+	}
+}
+
+#ran on global event
+country_event = {
+	id = giga_eawaf.60023
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_global_flag = giga_eawaf_sirens_defeated }
+	}
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_global_flag = giga_eawaf_sirens_defeated } }
+			country_event = { id = giga_eawaf.60023 days = 30 }
+		}
+		if = { #Faust got nuked
+			limit = {
+				OR = {
+					NOT = { exists = event_target:giga_eawaf_planet }
+					event_target:giga_eawaf_planet = { is_colony = no }
+				}
+			}
+			every_playable_country = { country_event = { id = giga_eawaf.60024 } }
+			country_event = { id = giga_eawaf.60031 days = 10 } #end of sirens
+		}
+		if = { #Faust taken over by someone else
+			limit = {
+				event_target:giga_eawaf_planet = {
+					OR = {
+						owner = { NOT = { is_country_type = giga_eawaf_sirens } }
+						controller = { NOT = { is_country_type = giga_eawaf_sirens } }
+					}
+				}
+			}
+			event_target:giga_eawaf_planet = { set_owner = THIS.controller }
+			event_target:giga_eawaf_planet.controller = {
+				country_event = { id = giga_eawaf.60025 } #event about Faust having fallen with all the population being dead
+				save_global_event_target_as = giga_eawaf_sirens_killer_country
+			}
+			every_playable_country = {
+				limit = { NOT = { any_owned_planet = { has_planet_flag = giga_eawaf_planet } } }
+				country_event = { id = giga_eawaf.60026 }
+			}
+		}
+	}
+}
+
+#Endings:
+#1/ Faust is depopulated or nonexistent: a hyperweapon got it. Message to everyone
+country_event = {
+	id = giga_eawaf.60024
+	title = "giga_eawaf.60024.name"
+	desc = "giga_eawaf.60024.desc"
+	picture = GFX_evt_exploding_planet
+	show_sound = event_super_explosion
+	is_triggered_only = yes
+
+	option = { #Do something!
+		name = "giga_eawaf.60024.a"
+	}
+}
+
+#2/ Faust only has 2 pops or fewer left: the player let the sirens throw all of faust at them
+#EVENT TO CONTROLLER
+country_event = {
+	id = giga_eawaf.60025
+	title = "giga_eawaf.60025.name"
+	desc = "giga_eawaf.60025.desc"
+	picture = GFX_evt_giga_eawaf_pony_dead
+	show_sound = event_wind_ruins
+	is_triggered_only = yes
+
+	option = { #Do something!
+		name = "giga_eawaf.60025.a"
+		hidden_effect = { #confront the sirens and get their magic crystal
+			country_event = { id = giga_eawaf.60251 days = 10 }
+		}
+	}
+}
+
+#Killed the Sirens, found their Crystal
+country_event = {
+	id = giga_eawaf.60251
+	title = "giga_eawaf.60251.name"
+	desc = "giga_eawaf.60251.desc"
+	picture = GFX_evt_giga_eawaf_sirens
+	show_sound = event_bad_omen
+	is_triggered_only = yes
+
+	immediate = {
+		event_target:global_event_country = {
+			country_event = { id = giga_eawaf.60031 days = 10 } #Sirenalia collapses
+		}
+	}
+
+	option = { #Do something!
+		name = "giga_eawaf.60251.a"
+		add_relic = r_eawaf_sirens_crystal
+	}
+
+	option = { #no
+		name = "giga_eawaf.60251.b"
+		add_resource = { influence = 250 }
+	}
+}
+
+#Crystal used message
+country_event = {
+	id = giga_eawaf.60252
+	title = "giga_eawaf.60252.name"
+	desc = "giga_eawaf.60252.desc"
+	picture = GFX_evt_giga_eawaf_sirens
+	show_sound = event_bad_omen
+	is_triggered_only = yes
+
+	option = { #Do something!
+		name = "giga_eawaf.60252.a"
+		add_modifier = { modifier = giga_eawaf_crystal_relic_modifier days = 2700 }
+	}
+}
+
+#To caster
+country_event = {
+	id = giga_eawaf.60253
+	title = "giga_eawaf.60253.name"
+	desc = "giga_eawaf.60253.desc"
+	picture = GFX_evt_giga_eawaf_sirens
+	show_sound = event_bad_omen
+	is_triggered_only = yes
+
+	option = { #Do something!
+		name = "giga_eawaf.60253.a"
+		every_country = {
+			limit = {
+				OR = {
+					is_hostile_to = ROOT
+					is_at_war_with = ROOT
+				}
+				NOR = {
+					is_country_type = blokkat_stripminers
+					is_immune_to_giga_hyperweapon = yes
+				}
+			}
+			add_modifier = { modifier = giga_eawaf_crystal_relic_modifier days = 2700 }
+			country_event = { id = giga_eawaf.60252 }
+		}
+	}
+}
+
+
+#EVENT TO EVERYONE ELSE
+country_event = {
+	id = giga_eawaf.60026
+	title = "giga_eawaf.60026.name"
+	desc = "giga_eawaf.60026.desc"
+	picture = GFX_evt_giga_eawaf_pony_dead
+	show_sound = event_wind_ruins
+	is_triggered_only = yes
+
+	option = { #Do something!
+		name = "giga_eawaf.60026.a"
+	}
+}
+
+
+#sacrifice a scientist to end the crisis
+country_event = {
+	id = giga_eawaf.60027
+	title = "giga_eawaf.60027.name"
+	desc = "giga_eawaf.60027.desc"
+	picture = GFX_evt_physics_research
+	show_sound = event_mystic_reveal
+	is_triggered_only = yes
+
+	option = { #okay
+		name = "giga_eawaf.60027.a"
+		event_target:giga_eawaf_sirens_scientist_sacrifice = {
+			kill_leader = { show_notification = no }
+		}
+		hidden_effect = {
+			country_event = { id = giga_eawaf.60028 days = 10 }
+		}
+		allow = {
+			resource_stockpile_compare = { resource = energy value > 50000 }
+			resource_stockpile_compare = { resource = rare_crystals value > 10000 }
+			resource_stockpile_compare = { resource = sr_dark_matter value > 1500 }
+		}
+		add_resource = {
+			energy = -50000
+			rare_crystals = -10000
+			sr_dark_matter = -1500
+		}
+	}
+
+	option = { #no
+		name = "giga_eawaf.60027.b"
+		add_resource = { influence = 100 }
+	}
+}
+
+#sirens banished, crisis ends
+country_event = {
+	id = giga_eawaf.60028
+	title = "giga_eawaf.60028.name"
+	desc = "giga_eawaf.60028.desc"
+	picture = GFX_evt_giga_eawaf_sirens_2
+	show_sound = event_screams
+	is_triggered_only = yes
+
+	option = { #okay
+		name = "giga_eawaf.60028.a"
+		hidden_effect = {
+			event_target:giga_eawaf_planet = {
+				set_owner = ROOT
+				set_controller = ROOT
+			}
+			country_event = { id = giga_eawaf.60031 }
+			country_event = { id = giga_eawaf.60029 days = 30 } #portal relic
+		}
+	}
+}
+
+#Portal relic
+country_event = {
+	id = giga_eawaf.60029
+	title = "giga_eawaf.60029.name"
+	desc = "giga_eawaf.60029.desc"
+	picture = GFX_evt_wormhole
+	show_sound = event_mystic_reveal
+	is_triggered_only = yes
+
+	option = { #okay
+		name = "giga_eawaf.60029.a"
+		add_relic = r_eawaf_eqg_portal
+	}
+
+	option = { #no
+		name = "giga_eawaf.60029.b"
+		add_resource = { influence = 250 }
+	}
+}
+
+
+#End of sirens TECHNICAL
+country_event = {
+	id = giga_eawaf.60031
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		giga_eawaf_defeat_sirens = yes
+		every_playable_country = { country_event = { id = giga_eawaf.60032 days = 30 } } #end of sirenalia
+	}
+}
+
+#end of sirenalia
+country_event = {
+	id = giga_eawaf.60032
+	title = "giga_eawaf.60032.name"
+	desc = "giga_eawaf.60032.desc"
+	picture = GFX_evt_victorious_army
+	show_sound = event_celebration
+	is_triggered_only = yes
+
+	option = { #Do something!
+		name = "giga_eawaf.60032.a"
+		add_monthly_resource_mult = {
+			resource = unity
+			value = 12
+		}
+	}
+}
+
+# Components buff after tech is researched
+country_event = {
+	id = giga_eawaf.1101
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		last_increased_tech = giga_tech_eawaf_weapons_repeatable
+	}
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_country_flag = giga_eawaf_researched_weapons_repeatable } }
+			set_country_flag = giga_eawaf_researched_weapons_repeatable
+			set_variable = {
+				which = giga_eawaf_weapons_repeatable_level
+				value = 1
+			}
+		}
+		else = {
+			change_variable = {
+				which = giga_eawaf_weapons_repeatable_level
+				value = 1
+			}
+		}
+		every_owned_ship = {
+			limit = { giga_eawaf_has_thaumaturgic_component = yes }
+			if = {
+				limit = { has_modifier = giga_tech_eawaf_weapons_repeatable_modifier }
+				remove_modifier = giga_tech_eawaf_weapons_repeatable_modifier
+			}
+			add_modifier = {
+				modifier = giga_tech_eawaf_weapons_repeatable_modifier
+				days = -1
+				multiplier = root.giga_eawaf_weapons_repeatable_level
+			}
+		}
+	}
+}
+
+ship_event = {
+	id = giga_eawaf.1102
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+		giga_eawaf_has_thaumaturgic_component = yes
+		root.owner = { has_country_flag = giga_eawaf_researched_weapons_repeatable }
+	}
+
+	immediate = {
+		if = {
+			limit = { has_modifier = giga_tech_eawaf_weapons_repeatable_modifier }
+			remove_modifier = giga_tech_eawaf_weapons_repeatable_modifier
+		}
+		add_modifier = {
+			modifier = giga_tech_eawaf_weapons_repeatable_modifier
+			days = -1
+			multiplier = owner.giga_eawaf_weapons_repeatable_level
+		}
+		if = { #you can't put these on literal rocks sorry
+			limit = {
+				OR = {
+					is_ship_size = crisis_corvette
+					is_ship_size = crisis_destroyer
+					is_ship_size = crisis_cruiser
+				}
+			}
+			destroy_ship = THIS
+		}
+	}
+}
+
+#Upgraded
+ship_event = {
+	id = giga_eawaf.1103
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = root
+		root.owner = { has_country_flag = giga_eawaf_researched_weapons_repeatable }
+	}
+
+	immediate = {
+		if = {
+			limit = { has_modifier = giga_tech_eawaf_weapons_repeatable_modifier }
+			remove_modifier = giga_tech_eawaf_weapons_repeatable_modifier
+		}
+		if = {
+			limit = { giga_eawaf_has_thaumaturgic_component = yes }
+			add_modifier = {
+				modifier = giga_tech_eawaf_weapons_repeatable_modifier
+				days = -1
+				multiplier = owner.giga_eawaf_weapons_repeatable_level
+			}
+		}
+		if = { #you can't put these on literal rocks sorry
+			limit = {
+				OR = {
+					is_ship_size = crisis_corvette
+					is_ship_size = crisis_destroyer
+					is_ship_size = crisis_cruiser
+				}
+			}
+			destroy_ship = THIS
+		}
+	}
+}
+
+country_event = {
+	id = giga_eawaf.1104
+	title = "giga_eawaf.1104.name"
+	desc = "giga_eawaf.1104.desc"
+	picture = GFX_evt_unity_symbol
+	show_sound = event_mystic_reveal
+	location = from
+	is_triggered_only = yes
+
+	trigger = {
+		OR = {
+			last_increased_tech = giga_tech_eawaf_sirens_artillery
+			last_increased_tech = giga_tech_eawaf_sirens_autocannon
+			last_increased_tech = giga_tech_eawaf_sirens_impactor
+			last_increased_tech = giga_tech_eawaf_sirens_missile
+			last_increased_tech = giga_tech_eawaf_sirens_strike_craft
+			last_increased_tech = giga_tech_eawaf_sirens_voidbeam
+		}
+		NOT = { has_country_flag = giga_tech_eawaf_weapons_repeatable_possible }
+	}
+
+	immediate = {
+		set_country_flag = giga_tech_eawaf_weapons_repeatable_possible
+	}
+
+	option = {
+		name = "giga_eawaf.1104.a"
+		add_research_option = giga_tech_eawaf_weapons_repeatable
+	}
+}
+
+#NON-CRISIS STUFF: Faust primitives and empires remade
+#Faust spawns --> Atomic Age --> Sirens --> Early Space Age --> FTL
+#These events are allowed to fire once the Sirens are vanquished
+#eaw planet enters nuclear age
+country_event = {
+	id = giga_eawaf.7000
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_country_type = primitive
+		has_country_flag = machine_age
+	}
+
+	immediate = {
+		if = { # If Sirens are disabled, chance of a random nuclear war
+			limit = { has_global_flag = giga_eawaf_sirens_disabled }
+			random = {
+				chance = 40
+				country_event = { id = giga_eawaf.7003 days = 3000 random = 1200 } #Nuclear War, change
+			}
+			country_event = { id = giga_eawaf.7005 days = 7200 }
+		}
+		else = { #If Sirens are enabled, the Sirens start their takeover in five years.
+			if = {
+				limit = { event_target:global_event_country = { check_variable = { which = sirens_spawn_date value = 2200 } } }
+				event_target:giga_eawaf_planet = { planet_event = { id = giga_eawaf.2000 days = 30 } }
+			}
+			else = {
+				event_target:giga_eawaf_planet = { planet_event = { id = giga_eawaf.2000 days = 1800 random = 60 } }
+			}
+		}
+		remove_country_flag = machine_age
+		set_country_flag = atomic_age
+		set_pre_ftl_age = atomic_age
+		home_planet = {
+			while = { count = 2 create_pop = { species = event_target:eawaf_ponies } }
+			while = { count = 3 create_pop = { species = event_target:eawaf_griffons } }
+			while = { count = 2 create_pop = { species = event_target:eawaf_changelings } }
+			while = { count = 1 create_pop = { species = event_target:eawaf_yetis } }
+			while = { count = 2 create_pop = { species = event_target:eawaf_zebras } }
+			add_building = building_urban_dwellings
+			add_deposit = d_decrepit_dwellings
+			add_deposit = d_failing_infrastructure
+			if = {
+				limit = {
+					exists = observation_outpost_owner
+				}
+				observation_outpost_owner = {
+					country_event = { id = giga_eawaf.7002 }
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = giga_eawaf.7002
+	title = "giga_eawaf.7002.name"
+	desc = "giga_eawaf.7002.desc"
+	picture = GFX_evt_ground_combat
+	show_sound = event_mystic_reveal
+	location = from
+	is_triggered_only = yes
+
+	option = { 
+		name = "giga_eawaf.7002.a"
+		add_monthly_resource_mult = {
+			resource = society_research
+			value = @tier3researchreward
+			min = @tier3researchmin
+			max = @tier3researchmax
+		}
+		add_monthly_resource_mult = {
+			resource = physics_research
+			value = @tier3researchreward
+			min = @tier3researchmin
+			max = @tier3researchmax
+		}
+	}
+}
+
+#eaw planet gets atomic war
+country_event = {
+	id = giga_eawaf.7003
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_country_type = primitive
+		OR = {
+			has_country_flag = atomic_age
+			has_country_flag = early_space_age
+		}
+	}
+
+	immediate = {
+		home_planet = {
+			if = {
+				limit = {
+					exists = observation_outpost_owner
+				}
+				observation_outpost_owner = { country_event = { id = giga_eawaf.7004 } }
+				observation_outpost = { dismantle = yes }
+			}
+			destroy_colony = yes
+			set_planet_flag = primitives_nuked_themselves
+			change_pc = pc_shrouded
+			remove_all_buildings = yes
+			add_deposit = d_metal_boneyard
+			set_planet_flag = eaw_planet_nuked_itself
+			set_planet_flag = nuked_planet_anomalies_disabled
+		}
+		if = {
+			limit = { exists = event_target:giga_eawaf_country }
+			event_target:giga_eawaf_country = { destroy_country = yes }
+		}
+	}
+}
+
+country_event = {
+	id = giga_eawaf.7004
+	title = "giga_eawaf.7004.name"
+	desc = "giga_eawaf.7004.desc"
+	picture = GFX_evt_shrouded_planet
+	show_sound = event_super_explosion
+	location = from
+	is_triggered_only = yes
+
+	option = { 
+		name = "giga_eawaf.7004.a"
+		add_monthly_resource_mult = {
+			resource = physics_research
+			value = @tier4researchreward
+			min = @tier4researchmin
+			max = @tier4researchmax
+		}
+	}
+}
+
+#eaw planet enters early space age
+country_event = {
+	id = giga_eawaf.7005
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_country_type = primitive
+		has_country_flag = atomic_age
+	}
+
+	immediate = {
+		random = {
+			chance = 20
+			country_event = { id = giga_eawaf.7003 days = 3000 random = 600 } #Nuclear War, change
+		}
+		country_event = { id = giga_eawaf.7010 days = 6800 random = 1200 } #FTL
+		remove_country_flag = atomic_age
+		set_country_flag = early_space_age
+		set_pre_ftl_age = early_space_age
+		home_planet = {
+			while = { count = 2 create_pop = { species = event_target:eawaf_ponies } }
+			while = { count = 3 create_pop = { species = event_target:eawaf_griffons } }
+			while = { count = 2 create_pop = { species = event_target:eawaf_changelings } }
+			while = { count = 1 create_pop = { species = event_target:eawaf_yetis } }
+			while = { count = 2 create_pop = { species = event_target:eawaf_zebras } }
+			add_building = building_urban_dwellings
+			add_building = building_urban_dwellings
+			add_deposit = d_decrepit_dwellings
+			add_deposit = d_failing_infrastructure
+			if = {
+				limit = {
+					exists = observation_outpost_owner
+				}
+				observation_outpost_owner = {
+					country_event = { id = giga_eawaf.7006 }
+				}
+				observation_outpost = { dismantle = yes }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = giga_eawaf.7006
+	title = "giga_eawaf.7006.name"
+	desc = "giga_eawaf.7006.desc"
+	picture = GFX_evt_space_walk
+	show_sound = event_ship_thrusters
+	location = from
+	is_triggered_only = yes
+
+	option = { 
+		name = "giga_eawaf.7006.a"
+		add_monthly_resource_mult = {
+			resource = society_research
+			value = @tier3researchreward
+			min = @tier3researchmin
+			max = @tier3researchmax
+		}
+	}
+}
+
+#Unifiers:
+#Jungle Trek the 3rd --> UN
+#Grover IX --> Griffonian Empire
+#Supreme Soviet
+
+#Faust gets FTL
+country_event = {
+	id = giga_eawaf.7010
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_country_type = primitive
+	}
+	immediate = {
+		#Determine unifier
+		if = {
+			limit = { NOT = { has_country_flag = eaw_unifier_determined } }
+			random_list = {
+				30 = { 	#Equestria-led UN (egalitarian pacifist spiritualist)
+					set_country_flag = giga_eaw_un_unifier
+					modifier = { add = 10000 event_target:giga_eawaf_planet = { has_planet_flag = giga_eawaf_alicorns_mobilized } }
+				}
+				30 = { set_country_flag = giga_eaw_river_unifier } #Riverfed-led UN (fanaticegalitarian materialist)
+
+				30 = { set_country_flag = giga_eaw_griffon_unifier } #Griffonian Empire (authoritarian militarist)
+				30 = { set_country_flag = giga_eaw_wingaqui_unifier } #Aquileia-Wingbardy Empire (authoritarian materialist)
+				30 = { #Hypercapitalist Fickle Kiria (megacorp)
+					set_country_flag = giga_eaw_kiria_unifier
+					modifier = {
+						factor = 0
+						NOT = { host_has_dlc = "Megacorp" }
+					}
+				}
+
+				30 = { set_country_flag = giga_eaw_communist_unifier } #Skynavia-led Socialists (fanaticegalitarian militarist) 
+				30 = {  #Posada-led Socialists (egalitarian militarist materialist)
+					set_country_flag = giga_eaw_posada_unifier
+					modifier = { add = 10000 event_target:giga_eawaf_planet = { has_planet_flag = giga_eawaf_alicorns_mobilized } }
+				}
+
+				30 = { set_country_flag = giga_eaw_dread_unifier } #Dread Scourge (devouring swarm)
+				0 = { #Leopold (assimilators)
+					set_country_flag = giga_eaw_leopold_unifier
+					modifier = {
+						factor = 0
+						NOT = { host_has_dlc = "Synthetic Dawn Story Pack" }
+					}
+				}
+				0 = { #Kayzoo????
+					set_country_flag = giga_eaw_kaiser_unifier
+					modifier = {
+						add = 10000
+						OR = {
+							has_global_flag = giga_jublio_disabled
+							has_global_flag = meopa_spawned_as_fe
+							has_global_flag = pouchkinn_gatzo_fe
+							has_global_flag = nice_gatzo_fe
+						}
+					}
+				}
+			}
+			set_country_flag = eaw_unifier_determined
+		}
+		#All unifiers get this
+		remove_country_flag = early_space_age
+		set_country_type = default
+		event_target:giga_eawaf_planet = {
+    		create_country = {
+				name = "Subscribe to Equestria at War" #Best HOI4 mod
+				type = giga_t2_tech_dump
+				effect = { save_global_event_target_as = eaw_tech_dump }
+			}
+		}
+		copy_techs_from = { target = event_target:eaw_tech_dump }
+		event_target:eaw_tech_dump = { destroy_country = yes }
+		set_country_flag = giga_faust_weaponry_possible
+		country_event = {
+			id = giga_eawaf.70101
+			days = 1
+		}
+		force_remove_civic = civic_atmospheric_pollution
+		force_remove_civic = civic_increasing_urbanization
+		country_remove_ethic = ethic_fanatic_spiritualist
+		country_remove_ethic = ethic_egalitarian
+		create_ship_design = { design = "Griffonia" }
+		add_ship_design = last_created_design
+		create_ship_design = { design = "Zebrica" }
+		add_ship_design = last_created_design
+		add_resource = {
+			minerals = 10000
+			alloys = 5000
+			energy = 25000
+			food = 10000
+			consumer_goods = 10000
+			exotic_gases = 5000
+			volatile_motes = 5000
+			rare_crystals = 5000
+			influence = 250
+		}
+		home_planet = {
+			remove_all_buildings = yes
+			add_building = building_major_capital
+			set_capital = yes
+			while = {
+				count = 3
+				add_district = {
+					district_type = district_city
+					ignore_cap = yes
+				}
+			}
+			while = {
+				count = 2
+				add_district = {
+					district_type = district_industrial
+					ignore_cap = yes
+				}
+			}
+			while = {
+				count = 3
+				add_district = {
+					district_type = district_farming
+					ignore_cap = yes
+				}
+			}
+			while = {
+				count = 3
+				add_district = {
+					district_type = district_mining
+					ignore_cap = yes
+				}
+			}
+			while = {
+				count = 3
+				add_district = {
+					district_type = district_generator
+					ignore_cap = yes
+				}
+			}
+			add_building = building_research_lab_1
+			add_building = building_research_lab_1
+			add_building = building_foundry_1
+			add_building = building_temple
+			add_building = building_commercial_zone
+			remove_all_armies = yes
+			set_owner = event_target:giga_eawaf_country
+			set_controller = event_target:giga_eawaf_country
+		}
+		every_country = {
+			establish_communications_no_message = event_target:giga_eawaf_country
+		}
+		every_country = {
+			establish_contact = {
+				who = event_target:giga_eawaf_country
+				location = event_target:giga_eawaf_system
+			}
+		}
+		#Kaiser Kattail Real
+		if = {
+			limit = { has_country_flag = giga_eaw_kaiser_unifier }
+			if = {
+				limit = { has_global_flag = silly_flusionian_portraits_enabled_cattail }
+				create_species = {
+					name = "Abyssinian?"
+					plural = "Abyssinian?"
+					class = Flusionian
+					portrait = kaiser
+					homeworld = event_target:gigaflusion
+					traits = {
+						trait = trait_pc_continental_preference
+						trait = trait_quick_learners
+						trait = trait_talented
+						trait = trait_venerable
+					}
+					effect = {
+						set_global_flag = kaiser_portrait_defined
+						save_global_event_target_as = gigakaiserportrait
+					}
+				}
+			}
+			else = {
+				create_species = {
+					name = "Abyssinian?"
+					plural = "Abyssinian?"
+					class = POUCHKINN
+					portrait = Kattail_1
+					homeworld = event_target:gigaflusion
+					traits = {
+						trait = trait_pc_continental_preference
+						trait = trait_quick_learners
+						trait = trait_talented
+						trait = trait_venerable
+					}
+					effect = {
+						set_global_flag = kaiser_portrait_defined
+						save_global_event_target_as = gigakaiserportrait
+					}
+				}
+			}
+			create_leader = { # TODO BACKGROUND
+				traits = {
+					trait = trait_ruler_charismatic
+					trait = trait_kaiser_cattail
+					trait = trait_ruler_warlike
+				}
+				class = commander
+				species = event_target:gigakaiserportrait
+				gender = male
+				skill = 10
+				set_age = 189
+				name = "Kattail"
+				immortal = yes
+				effect = {
+					save_event_target_as = giga_eaw_un_ruler
+				}
+			}
+			set_graphical_culture = avian_01
+			set_leader = event_target:giga_eaw_un_ruler
+			country_add_ethic = ethic_xenophile
+			country_add_ethic = ethic_fanatic_militarist
+			change_government = {
+				remove_invalid_civics = yes
+				authority = auth_dictatorial
+				civics = {
+					civic = civic_nationalistic_zeal
+					civic = civic_citizen_service
+				}
+			}
+			set_origin = origin_default
+			change_country_flag = {
+				icon = {
+					category="domination"
+					file="domination_8.dds"
+				}
+				background = {
+					category="backgrounds"
+					file="v.dds"
+				}
+				colors = {
+					"blue"
+					"indigo"
+					"null"
+					"null"
+				}
+			}
+			event_target:giga_eawaf_system = {
+				random_system_planet = {
+					limit = { has_planet_flag = giga_eawaf_moon }
+					save_event_target_as = giga_eawaf_moon
+					spawn_megastructure = {
+						type = kaiser_moon_1
+						planet = event_target:giga_eawaf_moon
+						owner = event_target:giga_eawaf_country
+					}
+				}
+				random_system_megastructure = {
+					upgrade_megastructure_to = kaiser_moon_2
+				}
+			}
+			set_name = "Katzenartig Imperium"
+			event_target:giga_eawaf_planet = {
+				while = { count = 12	create_army = { name = "Katzenarmee"	owner = event_target:giga_eawaf_country species = event_target:eawaf_griffons  type = "eaw_early_army" } }
+			}
+			create_leader = {
+				class = commander
+				species = event_target:eawaf_griffons
+				name = "Grover II"
+				skill = 5
+				gender = male
+				immortal = yes
+				traits = { trait = leader_trait_aggressive }
+				effect = { save_event_target_as = eaw_admiral }
+			}
+			set_male_ruler_title = "Kaiser"
+			set_female_ruler_title = "Kaiserin"
+			create_fleet = { #Spawn a fleet
+				name = "Katzenflotte"
+				settings = { uses_naval_capacity = no }
+				effect = {
+					set_owner = event_target:giga_eawaf_country
+					while = {
+						count = 80
+						create_ship = {
+							name = random
+							design = "Griffonia"
+							prefix = no
+							graphical_culture = avian_01
+						}
+					}
+					while = {
+						count = 40
+						create_ship = {
+							name = random
+							design = "Zebrica"
+							prefix = no
+							graphical_culture = avian_01
+						}
+					}
+					assign_leader = event_target:eaw_admiral
+					set_location = {
+						target = event_target:giga_eawaf_planet
+						distance = 15
+						angle = random
+					}
+				}
+			}
+		}
+
+		#EaW UN
+		if = {
+			limit = { has_country_flag = giga_eaw_un_unifier }
+			set_graphical_culture = reptilian_01
+			create_leader = {
+				class = official
+				species = event_target:eawaf_ponies
+				gender = male
+				set_age = 37
+				name = "Jungle Trek 3"
+				effect = {
+					save_event_target_as = giga_eaw_un_ruler
+				}
+			}
+			set_leader = event_target:giga_eaw_un_ruler
+			country_add_ethic = ethic_egalitarian
+			country_add_ethic = ethic_spiritualist
+			country_add_ethic = ethic_xenophile
+			change_government = {
+				remove_invalid_civics = yes
+				authority = auth_oligarchic
+				civics = {
+					civic = civic_beacon_of_liberty
+					civic = civic_environmentalist
+				}
+			}
+			set_origin = origin_default
+			change_country_flag = {
+				icon={
+					category="flusionian"
+					file="eawaf_faust_flag.dds"
+				}
+				background={
+					category="backgrounds"
+					file="circle.dds"
+				}
+				colors={
+					"blue"
+					"dark_teal"
+					"null"
+					"null"
+				}
+			}
+			set_male_ruler_title = "President"
+			set_female_ruler_title = "President"
+			set_name = "Grand Faustian Convocation"
+			event_target:giga_eawaf_planet = {
+				while = { count = 6	create_army = { name = NAME_faust_guard	owner = event_target:giga_eawaf_country species = event_target:eawaf_ponies  type = "eaw_early_army" } }
+			}
+			create_leader = {
+				class = commander
+				species = event_target:eawaf_ponies
+				name = "Blueblood the 5th"
+				skill = 2
+				gender = male
+				traits = {
+					trait = leader_trait_adaptable 
+				}
+				effect = { save_event_target_as = eaw_admiral }
+			}
+			create_fleet = { #Spawn a fleet
+				name = "1st Faust Fleet"
+				settings = { uses_naval_capacity = no }
+				effect = {
+					set_owner = event_target:giga_eawaf_country
+					while = {
+						count = 2
+						create_ship = {
+							name = random
+							design = "Griffonia"
+							prefix = no
+							graphical_culture = reptilian_01
+						}
+					}
+					while = {
+						count = 9
+						create_ship = {
+							name = random
+							design = "Zebrica"
+							prefix = no
+							graphical_culture = reptilian_01
+						}
+					}
+					assign_leader = event_target:eaw_admiral
+					set_location = {
+						target = event_target:giga_eawaf_planet
+						distance = 15
+						angle = random
+					}
+				}
+			}
+			create_leader = {
+				class = commander
+				species = event_target:eawaf_ponies
+				name = "Ironside the 4th"
+				skill = 3
+				gender = male
+				traits = {
+					trait = leader_trait_engineer
+				}
+				effect = { save_event_target_as = eaw_admiral }
+			}
+			create_fleet = { #Spawn a fleet
+				name = "2nd Faust Fleet"
+				settings = { uses_naval_capacity = no }
+				effect = {
+					set_owner = event_target:giga_eawaf_country
+					while = {
+						count = 2
+						create_ship = {
+							name = random
+							design = "Griffonia"
+							prefix = no
+							graphical_culture = reptilian_01
+						}
+					}
+					while = {
+						count = 9
+						create_ship = {
+							name = random
+							design = "Zebrica"
+							prefix = no
+							graphical_culture = reptilian_01
+						}
+					}
+					assign_leader = event_target:eaw_admiral
+					set_location = {
+						target = event_target:giga_eawaf_planet
+						distance = 10
+						angle = random
+					}
+				}
+			}
+		}
+
+		#Griff Empire
+		if = {
+			limit = { has_country_flag = giga_eaw_griffon_unifier }
+			set_graphical_culture = avian_01
+			create_leader = {
+				class = official
+				species = event_target:eawaf_griffons
+				gender = male
+				set_age = 56
+				name = "Grover XI"
+				effect = {
+					save_event_target_as = giga_eaw_un_ruler
+				}
+			}
+			set_leader = event_target:giga_eaw_un_ruler
+			country_add_ethic = ethic_authoritarian
+			country_add_ethic = ethic_spiritualist
+			country_add_ethic = ethic_militarist
+			change_government = {
+				remove_invalid_civics = yes
+				authority = auth_imperial
+				civics = {
+					civic = civic_imperial_cult
+					civic = civic_aristocratic_elite
+				}
+			}
+			set_origin = origin_default
+			change_country_flag = {
+				icon={
+					category="flusionian"
+					file="griffon_flag.dds"
+				}
+				background={
+					category="backgrounds"
+					file="griffon.dds"
+				}
+				colors={
+					"orange"
+					"yellow"
+					"null"
+					"null"
+				}
+			}
+			set_male_ruler_title = "Kaiser"
+			set_female_ruler_title = "Kaiserin"
+			set_name = "Griffonian Empire"
+			event_target:giga_eawaf_planet = {
+				while = { count = 12	create_army = { name = NAME_reicsharmee_army	owner = event_target:giga_eawaf_country species = event_target:eawaf_griffons  type = "eaw_early_army" } }
+			}
+			create_leader = {
+				class = commander
+				species = event_target:eawaf_griffons
+				name = "Dawnclaw III"
+				skill = 3
+				gender = male
+				traits = { trait = leader_trait_aggressive }
+				effect = { save_event_target_as = eaw_admiral }
+			}
+			create_fleet = { #Spawn a fleet
+				name = "Task Force Grover"
+				settings = { uses_naval_capacity = no }
+				effect = {
+					set_owner = event_target:giga_eawaf_country
+					while = {
+						count = 8
+						create_ship = {
+							name = random
+							design = "Griffonia"
+							prefix = no
+							graphical_culture = avian_01
+						}
+					}
+					while = {
+						count = 24
+						create_ship = {
+							name = random
+							design = "Zebrica"
+							prefix = no
+							graphical_culture = avian_01
+						}
+					}
+					assign_leader = event_target:eaw_admiral
+					set_location = {
+						target = event_target:giga_eawaf_planet
+						distance = 15
+						angle = random
+					}
+				}
+			}
+		}
+
+		#Skynavia Socialists
+		if = {
+			limit = { has_country_flag = giga_eaw_communist_unifier }
+			set_graphical_culture = mammalian_01
+			create_leader = {
+				class = official
+				species = event_target:eawaf_griffons
+				gender = male
+				set_age = 261
+				immortal = yes
+				name = "Asper Sickleclaw"
+				effect = {
+					save_event_target_as = giga_eaw_un_ruler
+				}
+			}
+			set_leader = event_target:giga_eaw_un_ruler
+			country_add_ethic = ethic_fanatic_egalitarian
+			country_add_ethic = ethic_militarist
+			change_government = {
+				remove_invalid_civics = yes
+				authority = auth_democratic
+				civics = {
+					civic = civic_shared_burden
+					civic = civic_idealistic_foundation
+				}
+			}
+			set_origin = origin_default
+			change_country_flag = {
+				icon={
+					category="flusionian"
+					file="eawsocialist_flag.dds"
+				}
+				background={
+					category="backgrounds"
+					file="circle.dds"
+				}
+				colors={
+					"red"
+					"red"
+					"null"
+					"null"
+				}
+			}
+			set_male_ruler_title = "Supreme Soviet"
+			set_female_ruler_title = "Supreme Soviet"
+			set_name = "Faustwide Socialist Republic"
+			event_target:giga_eawaf_planet = {
+				while = { count = 9	create_army = { name = NAME_faust_pdf	owner = event_target:giga_eawaf_country species = event_target:eawaf_griffons  type = "eaw_early_army" } }
+			}
+			create_leader = {
+				class = commander
+				species = event_target:eawaf_griffons
+				name = "Nova Sickleclaw"
+				skill = 3
+				set_age = 54
+				gender = female
+				traits = {
+					trait = leader_trait_cautious 
+				}
+				effect = { save_event_target_as = eaw_admiral }
+			}
+			create_fleet = { #Spawn a fleet
+				name = "Liberation Flotilla"
+				settings = { uses_naval_capacity = no }
+				effect = {
+					set_owner = event_target:giga_eawaf_country
+					while = {
+						count = 6
+						create_ship = {
+							name = random
+							design = "Griffonia"
+							prefix = no
+							graphical_culture = mammalian_01
+						}
+					}
+					while = {
+						count = 20
+						create_ship = {
+							name = random
+							design = "Zebrica"
+							prefix = no
+							graphical_culture = mammalian_01
+						}
+					}
+					assign_leader = event_target:eaw_admiral
+					set_location = {
+						target = event_target:giga_eawaf_planet
+						distance = 15
+						angle = random
+					}
+				}
+			}
+		}
+
+		#Posada Socialists
+		if = {
+			limit = { has_country_flag = giga_eaw_posada_unifier }
+			set_graphical_culture = mammalian_01
+			create_leader = {
+				class = official
+				species = event_target:eawaf_ponies
+				gender = female
+				set_age = 261
+				immortal = yes
+				name = "Posada"
+				effect = {
+					save_event_target_as = giga_eaw_un_ruler
+				}
+			}
+			set_leader = event_target:giga_eaw_un_ruler
+			country_add_ethic = ethic_egalitarian
+			country_add_ethic = ethic_militarist
+			country_add_ethic = ethic_materialist
+			change_government = {
+				remove_invalid_civics = yes
+				authority = auth_democratic
+				civics = {
+					civic = civic_technocracy
+					civic = civic_shared_burden
+				}
+			}
+			set_origin = origin_default
+			change_country_flag = {
+				icon={
+					category="flusionian"
+					file="eawaf_posada_flag.dds"
+				}
+				background={
+					category="backgrounds"
+					file="posada.dds"
+				}
+				colors={
+					"light_grey"
+					"shadow_blue"
+					"null"
+					"null"
+				}
+			}
+			set_male_ruler_title = "Supreme Soviet"
+			set_female_ruler_title = "Supreme Soviet"
+			set_name = "Revolutionary Faust"
+			event_target:giga_eawaf_planet = {
+				while = { count = 9	create_army = { name = NAME_faust_pdf	owner = event_target:giga_eawaf_country species = event_target:eawaf_griffons  type = "eaw_early_army" } }
+			}
+			create_leader = {
+				class = commander
+				species = event_target:eawaf_griffons
+				name = "Nova Sickleclaw"
+				skill = 3
+				set_age = 54
+				gender = female
+				traits = {
+					trait = leader_trait_cautious 
+				}
+				effect = { save_event_target_as = eaw_admiral }
+			}
+			create_fleet = { #Spawn a fleet
+				name = "Liberation Flotilla"
+				settings = { uses_naval_capacity = no }
+				effect = {
+					set_owner = event_target:giga_eawaf_country
+					while = {
+						count = 6
+						create_ship = {
+							name = random
+							design = "Griffonia"
+							prefix = no
+							graphical_culture = mammalian_01
+						}
+					}
+					while = {
+						count = 20
+						create_ship = {
+							name = random
+							design = "Zebrica"
+							prefix = no
+							graphical_culture = mammalian_01
+						}
+					}
+					assign_leader = event_target:eaw_admiral
+					set_location = {
+						target = event_target:giga_eawaf_planet
+						distance = 15
+						angle = random
+					}
+				}
+			}
+		}
+
+		#Riverfed UN
+		if = {
+			limit = { has_country_flag = giga_eaw_river_unifier }
+			set_graphical_culture = reptilian_01
+			create_leader = {
+				class = official
+				species = event_target:eawaf_ponies
+				gender = male
+				set_age = 37
+				name = "River Swirl III"
+				effect = {
+					save_event_target_as = giga_eaw_un_ruler
+				}
+			}
+			set_leader = event_target:giga_eaw_un_ruler
+			country_add_ethic = ethic_fanatic_egalitarian
+			country_add_ethic = ethic_xenophile
+			change_government = {
+				remove_invalid_civics = yes
+				authority = auth_oligarchic
+				civics = {
+					civic = civic_free_haven
+					civic = civic_shadow_council
+				}
+			}
+			set_origin = origin_default
+			change_country_flag = {
+				icon={
+					category="flusionian"
+					file="eawaf_riverfed_flag.dds"
+				}
+				background={
+					category="backgrounds"
+					file="flag_BG_31.dds"
+				}
+				colors={
+					"dark_teal"
+					"blue"
+					"null"
+					"null"
+				}
+			}
+			set_male_ruler_title = "President"
+			set_female_ruler_title = "President"
+			set_name = "Faustian Federation"
+			event_target:giga_eawaf_planet = {
+				while = { count = 6	create_army = { name = NAME_faust_guard	owner = event_target:giga_eawaf_country species = event_target:eawaf_ponies  type = "eaw_early_army" } }
+			}
+			create_leader = {
+				class = commander
+				species = event_target:eawaf_ponies
+				name = "Arclight"
+				skill = 2
+				gender = male
+				traits = {
+					trait = leader_trait_adaptable 
+				}
+				effect = { save_event_target_as = eaw_admiral }
+			}
+			create_fleet = { #Spawn a fleet
+				name = "1st Faust Fleet"
+				settings = { uses_naval_capacity = no }
+				effect = {
+					set_owner = event_target:giga_eawaf_country
+					while = {
+						count = 2
+						create_ship = {
+							name = random
+							design = "Griffonia"
+							prefix = no
+							graphical_culture = reptilian_01
+						}
+					}
+					while = {
+						count = 9
+						create_ship = {
+							name = random
+							design = "Zebrica"
+							prefix = no
+							graphical_culture = reptilian_01
+						}
+					}
+					assign_leader = event_target:eaw_admiral
+					set_location = {
+						target = event_target:giga_eawaf_planet
+						distance = 15
+						angle = random
+					}
+				}
+			}
+			create_leader = {
+				class = commander
+				species = event_target:eawaf_ponies
+				name = "Ironside the 4th"
+				skill = 3
+				gender = male
+				traits = {
+					trait = leader_trait_engineer
+				}
+				effect = { save_event_target_as = eaw_admiral }
+			}
+			create_fleet = { #Spawn a fleet
+				name = "2nd Faust Fleet"
+				settings = { uses_naval_capacity = no }
+				effect = {
+					set_owner = event_target:giga_eawaf_country
+					while = {
+						count = 2
+						create_ship = {
+							name = random
+							design = "Griffonia"
+							prefix = no
+							graphical_culture = reptilian_01
+						}
+					}
+					while = {
+						count = 9
+						create_ship = {
+							name = random
+							design = "Zebrica"
+							prefix = no
+							graphical_culture = reptilian_01
+						}
+					}
+					assign_leader = event_target:eaw_admiral
+					set_location = {
+						target = event_target:giga_eawaf_planet
+						distance = 10
+						angle = random
+					}
+				}
+			}
+		}
+
+		#JER-WNG Empire
+		if = {
+			limit = { has_country_flag = giga_eaw_wingaqui_unifier }
+			set_graphical_culture = avian_01
+			create_leader = {
+				class = official
+				species = event_target:eawaf_griffons
+				gender = male
+				set_age = 56
+				name = "Alessandra Discret"
+				effect = {
+					save_event_target_as = giga_eaw_un_ruler
+				}
+			}
+			set_leader = event_target:giga_eaw_un_ruler
+			country_add_ethic = ethic_authoritarian
+			country_add_ethic = ethic_materialist
+			country_add_ethic = ethic_militarist
+			change_government = {
+				remove_invalid_civics = yes
+				authority = auth_dictatorial
+				civics = {
+					civic = civic_citizen_service
+					civic = civic_nationalistic_zeal
+				}
+			}
+			set_origin = origin_default
+			change_country_flag = {
+				icon={
+					category="flusionian"
+					file="eawaf_jerwng_flag.dds"
+				}
+				background={
+					category="backgrounds"
+					file="triangle_split.dds"
+				}
+				colors={
+					"light_indigo"
+					"blue"
+					"null"
+					"null"
+				}
+			}
+			set_male_ruler_title = "Emperor"
+			set_female_ruler_title = "Empress"
+			set_name = "Grand Empire of Aquileia-Wingbardy"
+			event_target:giga_eawaf_planet = {
+				while = { count = 12	create_army = { name = "Imperial Legions"	owner = event_target:giga_eawaf_country species = event_target:eawaf_griffons  type = "eaw_early_army" } }
+			}
+			create_leader = {
+				class = commander
+				species = event_target:eawaf_griffons
+				name = "Beakolini III"
+				skill = 3
+				gender = male
+				traits = { trait = leader_trait_aggressive }
+				effect = { save_event_target_as = eaw_admiral }
+			}
+			create_fleet = { #Spawn a fleet
+				name = "Task Force Aquila"
+				settings = { uses_naval_capacity = no }
+				effect = {
+					set_owner = event_target:giga_eawaf_country
+					while = {
+						count = 6
+						create_ship = {
+							name = random
+							design = "Griffonia"
+							prefix = no
+							graphical_culture = avian_01
+						}
+					}
+					while = {
+						count = 15
+						create_ship = {
+							name = random
+							design = "Zebrica"
+							prefix = no
+							graphical_culture = avian_01
+						}
+					}
+					assign_leader = event_target:eaw_admiral
+					set_location = {
+						target = event_target:giga_eawaf_planet
+						distance = 15
+						angle = random
+					}
+				}
+			}
+			create_fleet = { #Spawn a fleet
+				name = "Task Force Karthin"
+				settings = { uses_naval_capacity = no }
+				effect = {
+					set_owner = event_target:giga_eawaf_country
+					while = {
+						count = 6
+						create_ship = {
+							name = random
+							design = "Griffonia"
+							prefix = no
+							graphical_culture = avian_01
+						}
+					}
+					while = {
+						count = 15
+						create_ship = {
+							name = random
+							design = "Zebrica"
+							prefix = no
+							graphical_culture = avian_01
+						}
+					}
+					assign_leader = event_target:eaw_admiral
+					set_location = {
+						target = event_target:giga_eawaf_planet
+						distance = 15
+						angle = random
+					}
+				}
+			}
+		}
+
+		#Fickle
+		if = {
+			limit = { has_country_flag = giga_eaw_kiria_unifier }
+			set_graphical_culture = avian_01
+			create_leader = {
+				class = official
+				species = event_target:eawaf_griffons
+				gender = male
+				set_age = 56
+				name = "Fickle Voltage"
+				effect = {
+					save_event_target_as = giga_eaw_un_ruler
+				}
+			}
+			set_leader = event_target:giga_eaw_un_ruler
+			country_add_ethic = ethic_authoritarian
+			country_add_ethic = ethic_materialist
+			country_add_ethic = ethic_xenophile
+			change_government = {
+				remove_invalid_civics = yes
+				authority = auth_corporate
+				civics = {
+					civic = civic_ruthless_competition
+					civic = civic_relentless_industrialists
+				}
+			}
+			set_origin = origin_default
+			change_country_flag = {
+				icon={
+					category="flusionian"
+					file="eawaf_kiria_flag.dds"
+				}
+				background={
+					category="backgrounds"
+					file="circle.dds"
+				}
+				colors={
+					"blue"
+					"dark_blue"
+					"null"
+					"null"
+				}
+			}
+			set_male_ruler_title = "Director"
+			set_female_ruler_title = "Director"
+			set_name = "Faustian Corporation"
+			event_target:giga_eawaf_planet = {
+				while = { count = 12	create_army = { name = "Kirin Protectors"	owner = event_target:giga_eawaf_country species = event_target:eawaf_griffons  type = "eaw_early_army" } }
+			}
+			create_leader = {
+				class = commander
+				species = event_target:eawaf_griffons
+				name = "Summer Blaze"
+				skill = 3
+				gender = male
+				traits = { trait = leader_trait_aggressive }
+				effect = { save_event_target_as = eaw_admiral }
+			}
+			create_fleet = { #Spawn a fleet
+				name = "Rapid Delivery Service"
+				settings = { uses_naval_capacity = no }
+				effect = {
+					set_owner = event_target:giga_eawaf_country
+					while = {
+						count = 8
+						create_ship = {
+							name = random
+							design = "Griffonia"
+							prefix = no
+							graphical_culture = avian_01
+						}
+					}
+					while = {
+						count = 24
+						create_ship = {
+							name = random
+							design = "Zebrica"
+							prefix = no
+							graphical_culture = avian_01
+						}
+					}
+					assign_leader = event_target:eaw_admiral
+					set_location = {
+						target = event_target:giga_eawaf_planet
+						distance = 15
+						angle = random
+					}
+				}
+			}
+		}
+
+		#Dread League
+		if = {
+			limit = { has_country_flag = giga_eaw_dread_unifier }
+			set_graphical_culture = avian_01
+			create_leader = {
+				class = official
+				species = event_target:eawaf_ponies
+				gender = female
+				immortal = yes
+				set_age = 56
+				name = "Rosa Maledicta"
+				effect = {
+					save_event_target_as = giga_eaw_un_ruler
+				}
+			}
+			set_leader = event_target:giga_eaw_un_ruler
+			country_add_ethic = ethic_gestalt_consciousness
+			change_government = {
+				remove_invalid_civics = yes
+				authority = auth_hive_mind
+				civics = {
+					civic = civic_hive_devouring_swarm
+					civic = civic_hive_cordyceptic_drones
+				}
+			}
+			set_origin = origin_default
+			change_country_flag = {
+				icon={
+					category="flusionian"
+					file="eawaf_dread_flag.dds"
+				}
+				background={
+					category="backgrounds"
+					file="circle.dds"
+				}
+				colors={
+					"black"
+					"black"
+					"null"
+					"null"
+				}
+			}
+			set_male_ruler_title = "King of Bones"
+			set_female_ruler_title = "Queen of Bones"
+			set_name = "Dread Scourge"
+			event_target:giga_eawaf_planet = {
+				while = { count = 12	create_army = { name = "Undead Hordes"	owner = event_target:giga_eawaf_country species = event_target:eawaf_griffons  type = "eaw_early_army" } }
+				every_owned_pop = {
+					modify_species = {
+						species = this
+						add_trait = trait_hive_mind
+					}
+				}
+			}
+			create_leader = {
+				class = commander
+				species = event_target:eawaf_ponies
+				name = "Skellymare"
+				skill = 3
+				gender = male
+				traits = { trait = leader_trait_aggressive }
+				effect = { save_event_target_as = eaw_admiral }
+			}
+			create_fleet = { #Spawn a fleet
+				name = "Deathenders"
+				settings = { uses_naval_capacity = no }
+				effect = {
+					set_owner = event_target:giga_eawaf_country
+					while = {
+						count = 8
+						create_ship = {
+							name = random
+							design = "Griffonia"
+							prefix = no
+							graphical_culture = avian_01
+						}
+					}
+					while = {
+						count = 24
+						create_ship = {
+							name = random
+							design = "Zebrica"
+							prefix = no
+							graphical_culture = avian_01
+						}
+					}
+					assign_leader = event_target:eaw_admiral
+					set_location = {
+						target = event_target:giga_eawaf_planet
+						distance = 15
+						angle = random
+					}
+				}
+			}
+		}
+
+		#Leopold
+		if = {
+			limit = { has_country_flag = giga_eaw_leopold_unifier }
+			set_graphical_culture = avian_01
+			create_leader = {
+				class = official
+				species = event_target:eawaf_ponies
+				gender = male
+				set_age = 56
+				name = "Leopold Schmeller"
+				effect = {
+					save_event_target_as = giga_eaw_un_ruler
+				}
+			}
+			set_leader = event_target:giga_eaw_un_ruler
+			country_add_ethic = ethic_gestalt_consciousness
+			change_government = {
+				remove_invalid_civics = yes
+				authority = auth_machine_intelligence
+				civics = {
+					civic = civic_machine_assimilator
+					civic = civic_machine_warbots
+				}
+			}
+			set_origin = origin_default
+			change_country_flag = {
+				icon={
+					category="blocky"
+					file="flag_blocky_4.dds"
+				}
+				background={
+					category="backgrounds"
+					file="flag_BG_54.dds"
+				}
+				colors={
+					"intense_orange"
+					"light_orange"
+					"null"
+					"null"
+				}
+			}
+			set_male_ruler_title = "Machine Lord"
+			set_female_ruler_title = "Machine Lord"
+			set_name = "Faustian Directory"
+			event_target:giga_eawaf_planet = {
+				while = { count = 12	create_army = { name = "Clockwork Legions"	owner = event_target:giga_eawaf_country species = event_target:eawaf_griffons  type = "eaw_early_army" } }
+				every_owned_pop = {
+					modify_species = {
+						species = this
+						add_trait = trait_cyborg
+					}
+				}
+			}
+			create_leader = {
+				class = commander
+				species = event_target:eawaf_griffons
+				name = "Assault Unit"
+				skill = 3
+				gender = male
+				traits = { trait = leader_trait_aggressive }
+				effect = { save_event_target_as = eaw_admiral }
+			}
+			create_fleet = { #Spawn a fleet
+				name = "Assault Force"
+				settings = { uses_naval_capacity = no }
+				effect = {
+					set_owner = event_target:giga_eawaf_country
+					while = {
+						count = 8
+						create_ship = {
+							name = random
+							design = "Griffonia"
+							prefix = no
+							graphical_culture = avian_01
+						}
+					}
+					while = {
+						count = 24
+						create_ship = {
+							name = random
+							design = "Zebrica"
+							prefix = no
+							graphical_culture = avian_01
+						}
+					}
+					assign_leader = event_target:eaw_admiral
+					set_location = {
+						target = event_target:giga_eawaf_planet
+						distance = 15
+						angle = random
+					}
+				}
+			}
+		}
+
+		add_modifier = {
+			modifier = katzenartig_major_splinter
+			days = -1
+		}
+
+		event_target:giga_eawaf_system = {
+			if = {
+				limit = { exists = space_owner }
+				space_owner = {
+					establish_communications_no_message = event_target:giga_eawaf_country
+					country_event = { id = giga_eawaf.7011 days = 1 }
+				}
+			}
+			if = {
+				limit = { exists = starbase }
+				starbase = { 
+					set_owner = event_target:giga_eawaf_country 
+				}
+			}
+			else = {
+				create_starbase = {
+					size = starbase_starport
+					owner = event_target:giga_eawaf_country
+				}
+			}
+		}
+	}
+}
+country_event = {
+	id = giga_eawaf.70101
+	hide_window = yes
+	is_triggered_only = yes
+	immediate = {
+		give_technology = {
+			tech = giga_tech_thaumaturgic_weaponry
+		}
+	}
+}
+
+#Determine unifier popup
+country_event = {
+	id = giga_eawaf.7011
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = { #EaW UN led by Jungle Trek III
+			limit = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_un_unifier } }
+			country_event = { id = giga_eawaf.7012 }
+		}
+		else_if = { #Griffonian Empire
+			limit = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_griffon_unifier } }
+			country_event = { id = giga_eawaf.7013 }
+		}
+		else_if = { #Faustwide Socialist Republic
+			limit = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_communist_unifier } }
+			country_event = { id = giga_eawaf.7014 }
+		}
+		else_if = { #Riverfed UN
+			limit = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_river_unifier } }
+			country_event = { id = giga_eawaf.70141 }
+		}
+		else_if = { #JERWNG Empire
+			limit = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_wingaqui_unifier } }
+			country_event = { id = giga_eawaf.70142 }
+		}
+		else_if = { #Kiria
+			limit = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_kiria_unifier } }
+			country_event = { id = giga_eawaf.70143 }
+		}
+		else_if = { #Posada
+			limit = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_posada_unifier } }
+			country_event = { id = giga_eawaf.70144 }
+		}
+		else_if = { #Dread
+			limit = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_dread_unifier } }
+			country_event = { id = giga_eawaf.70145 }
+			event_target:giga_eawaf_country = {
+				declare_war = {
+					target = ROOT
+					attacker_war_goal = wg_absorption
+				}
+			}
+		}
+		else_if = { #Leopold
+			limit = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_leopold_unifier } }
+			country_event = { id = giga_eawaf.70146 }
+		}
+		else_if = { #The Kaiser
+			limit = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_kaiser_unifier } }
+			country_event = { id = giga_eawaf.70147 }
+		}
+	}
+}
+
+#EaW UN
+country_event = {
+	id = giga_eawaf.7012
+	title = "giga_eawaf.7012.name"
+	desc = {
+		text = "giga_eawaf.7011.desc.eawun"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_un_unifier } }
+	}
+	picture = GFX_evt_diplomatic_visit
+	show_sound = event_celebration
+	location = from
+	is_triggered_only = yes
+
+	option = { 
+		name = "giga_eawaf.7011.a"
+		hidden_effect = { country_event = { id = giga_eawaf.7015 } }
+	}
+}
+
+#Griffons
+country_event = {
+	id = giga_eawaf.7013
+	title = "giga_eawaf.7013.name"
+	desc = {
+		text = "giga_eawaf.7011.desc.eawgriffon"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_griffon_unifier } }
+	}
+	picture = GFX_evt_alien_propaganda
+	show_sound = event_celebration
+	location = from
+	is_triggered_only = yes
+
+	option = { 
+		name = "giga_eawaf.7011.a"
+		hidden_effect = { country_event = { id = giga_eawaf.7015 } }
+	}
+}
+
+#Communists
+country_event = {
+	id = giga_eawaf.7014
+	title = "giga_eawaf.7014.name"
+	desc = {
+		text = "giga_eawaf.7011.desc.eawcommunist"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_communist_unifier } }
+	}
+	picture = GFX_evt_hand_shake
+	show_sound = event_celebration
+	location = from
+	is_triggered_only = yes
+
+	option = { 
+		name = "giga_eawaf.7011.a"
+		hidden_effect = { country_event = { id = giga_eawaf.7015 } }
+	}
+}
+
+#Riverfed UN
+country_event = {
+	id = giga_eawaf.70141
+	title = "giga_eawaf.70141.name"
+	desc = {
+		text = "giga_eawaf.70141.desc"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_river_unifier } }
+	}
+	picture = GFX_evt_diplomatic_visit
+	show_sound = event_celebration
+	location = from
+	is_triggered_only = yes
+
+	option = { 
+		name = "giga_eawaf.7011.a"
+		hidden_effect = { country_event = { id = giga_eawaf.7015 } }
+	}
+}
+
+#JERWNG empire
+country_event = {
+	id = giga_eawaf.70142
+	title = "giga_eawaf.70142.name"
+	desc = {
+		text = "giga_eawaf.70142.desc"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_wingaqui_unifier } }
+	}
+	picture = GFX_evt_diplomatic_visit
+	show_sound = event_celebration
+	location = from
+	is_triggered_only = yes
+
+	option = { 
+		name = "giga_eawaf.7011.a"
+		hidden_effect = { country_event = { id = giga_eawaf.7015 } }
+	}
+}
+
+#Kiria
+country_event = {
+	id = giga_eawaf.70143
+	title = "giga_eawaf.70143.name"
+	desc = {
+		text = "giga_eawaf.70143.desc"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_kiria_unifier } }
+	}
+	picture = GFX_evt_diplomatic_visit
+	show_sound = event_celebration
+	location = from
+	is_triggered_only = yes
+
+	option = { 
+		name = "giga_eawaf.7011.a"
+		hidden_effect = { country_event = { id = giga_eawaf.7015 } }
+	}
+}
+
+#Posada
+country_event = {
+	id = giga_eawaf.70144
+	title = "giga_eawaf.70144.name"
+	desc = {
+		text = "giga_eawaf.70144.desc"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_posada_unifier } }
+	}
+	picture = GFX_evt_diplomatic_visit
+	show_sound = event_celebration
+	location = from
+	is_triggered_only = yes
+
+	option = { 
+		name = "giga_eawaf.7011.a"
+		hidden_effect = { country_event = { id = giga_eawaf.7015 } }
+	}
+}
+
+#Dread
+country_event = {
+	id = giga_eawaf.70145
+	title = "giga_eawaf.70145.name"
+	desc = {
+		text = "giga_eawaf.70145.desc"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_dread_unifier } }
+	}
+	picture = GFX_evt_diplomatic_visit
+	show_sound = event_celebration
+	location = from
+	is_triggered_only = yes
+
+	option = { 
+		name = "giga_eawaf.7011.a"
+		hidden_effect = { country_event = { id = giga_eawaf.7015 } }
+	}
+}
+
+#Leopold
+country_event = {
+	id = giga_eawaf.70146
+	title = "giga_eawaf.70146.name"
+	desc = {
+		text = "giga_eawaf.70146.desc"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_leopold_unifier } }
+	}
+	picture = GFX_evt_diplomatic_visit
+	show_sound = event_celebration
+	location = from
+	is_triggered_only = yes
+
+	option = { 
+		name = "giga_eawaf.7011.a"
+		hidden_effect = { country_event = { id = giga_eawaf.7015 } }
+	}
+}
+
+#Kaiser??
+country_event = {
+	id = giga_eawaf.70147
+	title = "giga_eawaf.70147.name"
+	desc = {
+		text = "giga_eawaf.70147.desc"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_kaiser_unifier } }
+	}
+	picture = GFX_evt_victorious_army
+	show_sound = event_celebration
+	location = from
+	is_triggered_only = yes
+
+	option = { 
+		name = "giga_eawaf.7011.a"
+		hidden_effect = { country_event = { id = giga_eawaf.7015 } }
+	}
+}
+
+#They ask for the system
+country_event = {
+	id = giga_eawaf.7015
+	title = "giga_eawaf.7015.name"
+	desc = {
+		text = "giga_eawaf.7015.desc.eawun"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_un_unifier } }
+	}
+	desc = {
+		text = "giga_eawaf.7015.desc.eawgriffon"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_griffon_unifier } }
+	}
+	desc = {
+		text = "giga_eawaf.7015.desc.eawcommunist"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_communist_unifier } }
+	}
+	desc = {
+		text = "giga_eawaf.7015.desc.riverun"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_river_unifier } }
+	}
+	desc = {
+		text = "giga_eawaf.7015.desc.jerwng"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_wingaqui_unifier } }
+	}
+	desc = {
+		text = "giga_eawaf.7015.desc.kiria"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_kiria_unifier } }
+	}
+	desc = {
+		text = "giga_eawaf.7015.desc.posada"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_posada_unifier } }
+	}
+	desc = {
+		text = "giga_eawaf.7015.desc.dread"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_dread_unifier } }
+	}
+	desc = {
+		text = "giga_eawaf.7015.desc.leopold"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_leopold_unifier } }
+	}
+	desc = {
+		text = "giga_eawaf.7015.desc.kaiser"
+		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_kaiser_unifier } }
+	}
+	location = from
+	is_triggered_only = yes
+
+	diplomatic = yes
+
+	picture_event_data = {
+		portrait = event_target:giga_eawaf_country.ruler
+		room = event_target:giga_eawaf_country
+		planet_background = event_target:giga_eawaf_country.capital_scope
+		city_level = event_target:giga_eawaf_country.capital_scope
+	}
+
+	option = { #Sure
+		name = "giga_eawaf.7015.a"
+		custom_tooltip = "giga_eawaf.7015.a.tooltip"
+		response_text = "giga_eawaf.7015.a.response"
+		trigger = {
+			is_ai = no
+			event_target:giga_eawaf_country = { NOT = { has_country_flag = giga_eaw_dread_unifier } }
+		}
+		hidden_effect = {
+			event_target:giga_eawaf_system = {
+				every_system_planet = {
+					limit = { is_colony = yes }
+					set_owner = event_target:giga_eawaf_country
+				}
+			}
+		}
+		event_target:giga_eawaf_country = {
+			add_opinion_modifier = {
+				who = root
+				modifier = opinion_eaw_gave_system
+			}
+		}
+		if = { 
+			limit = {
+				event_target:giga_eawaf_country = {
+					OR = {
+						has_country_flag = giga_eaw_un_unifier
+						has_country_flag = giga_eaw_leopold_unifier
+						has_country_flag = giga_eaw_kiria_unifier
+					} 
+				}
+			}
+			add_resource = { energy = 7500 }
+		}
+		if = {
+			limit = {
+				event_target:giga_eawaf_country = {
+					OR = {
+						has_country_flag = giga_eaw_communist_unifier
+						has_country_flag = giga_eaw_posada_unifier
+						has_country_flag = giga_eaw_river_unifier
+					} 
+				}
+			}
+			add_resource = { energy = 5000 consumer_goods = 2500 }
+		}
+	}
+
+	option = { #Sure + neighbors
+		name = "giga_eawaf.7015.b"
+		custom_tooltip = "giga_eawaf.7015.b.tooltip"
+		response_text = "giga_eawaf.7015.b.response"
+		trigger = {
+			event_target:giga_eawaf_country = { NOT = { has_country_flag = giga_eaw_dread_unifier } }
+		}
+		event_target:giga_eawaf_country = {
+			add_opinion_modifier = {
+				who = root
+				modifier = opinion_eaw_gave_system_neighbors
+			}
+		}
+		if = { 
+			limit = {
+				event_target:giga_eawaf_country = {
+					OR = {
+						has_country_flag = giga_eaw_un_unifier
+						has_country_flag = giga_eaw_leopold_unifier
+						has_country_flag = giga_eaw_kiria_unifier
+					} 
+				}
+			}
+			add_resource = { energy = 7500 }
+		}
+		if = {
+			limit = {
+				event_target:giga_eawaf_country = {
+					OR = {
+						has_country_flag = giga_eaw_communist_unifier
+						has_country_flag = giga_eaw_posada_unifier
+						has_country_flag = giga_eaw_river_unifier
+					} 
+				}
+			}
+			add_resource = { energy = 5000 consumer_goods = 2500 }
+		}
+		trigger = {
+			event_target:giga_eawaf_system = {
+				any_neighbor_system = {
+					exists = starbase
+					starbase = { owner = { is_country = ROOT } }
+				}
+			}
+		}
+		hidden_effect = {
+			event_target:giga_eawaf_system = {
+				every_system_planet = {
+					limit = { is_colony = yes }
+					set_owner = event_target:giga_eawaf_country
+				}
+				every_neighbor_system = {
+					limit = {
+						exists = starbase
+						starbase = { owner = { is_country = ROOT } }
+					}
+					starbase = { set_owner = event_target:giga_eawaf_country }
+					every_system_planet = {
+						limit = {
+							is_colony = yes
+							owner = { is_country = ROOT }
+						}
+						set_owner = event_target:giga_eawaf_country
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = "giga_flavor_systems.7005.c"
+		custom_tooltip = "giga_flavor_systems.7005.c.tooltip"
+		response_text = "giga_flavor_systems.7005.c.response"
+		trigger = {
+			event_target:giga_eawaf_country = { NOT = { has_country_flag = giga_eaw_dread_unifier } }
+			is_ai = no
+		}
+		hidden_effect = {
+			country_event = { id = giga_eawaf.7016 days = 1 }
+		}
+	}
+
+	option = {
+		name = "giga_flavor_systems.7005.dread"
+		trigger = {
+			event_target:giga_eawaf_country = { has_country_flag = giga_eaw_dread_unifier }
+		}
+	}
+}
+
+#They seize the system
+country_event = {
+	id = giga_eawaf.7016
+	title = "giga_eawaf.7016.name"
+	desc = "giga_eawaf.7016.desc"
+	show_sound = event_air_raid_siren
+	picture = GFX_evt_machine_space_battle
+	is_triggered_only = yes
+	location = event_target:giga_eawaf_system
+
+	option = {
+		name = "giga_eawaf.7016.a"
+		custom_tooltip = "giga_eawaf.7016.a.tooltip"
+		hidden_effect = {
+			event_target:giga_eawaf_system = {
+				add_claims = { 
+					who = ROOT
+					num_of_claims = 1
+					show_notification = yes 
+				}
+			}
+			declare_war = {
+				target = event_target:giga_eawaf_country
+				attacker_war_goal = wg_conquest
+			}
+		}
+	}
+
+	option = {
+		name = "giga_eawaf.7016.b"
+		custom_tooltip = "giga_eawaf.7016.b.tooltip"
+	}
+}
+
+# Faust is invaded
+country_event = {
+	id = giga_eawaf.7100
+	title = "giga_eawaf.7100.name"
+	desc = "giga_eawaf.7100.desc"
+	show_sound = event_ground_battle
+	picture = GFX_evt_ground_combat
+	is_triggered_only = yes
+
+	trigger = {
+		from = {
+			has_country_flag = giga_eawaf_country
+			is_country_type = primitive
+		}
+		FromFrom = {
+			has_planet_flag = giga_eawaf_planet
+		}
+	}
+
+	option = {
+		name = "giga_eawaf.7100.a"
+		hidden_effect = {
+			event_target:giga_eawaf_planet = {
+				add_modifier = {
+					modifier = giga_eaw_faust_harsh_resistance
+					days = 3600
+				}
+			}
+			country_event = { id = giga_eawaf.7101 days = 10 }
+			set_country_flag = giga_faust_weaponry_possible
+		}
+	}
+}
+
+country_event = {
+	id = giga_eawaf.7101
+	title = "giga_eawaf.7101.name"
+	desc = "giga_eawaf.7101.desc"
+	show_sound = event_laboratory_sound
+	picture = GFX_evt_engineering_research
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_eawaf.7101.a"
+		add_research_option = giga_tech_thaumaturgic_weaponry #magical guns
+	}
+}
+
+#The Alicorns spawn
+planet_event = {
+	id = giga_eawaf.7102
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_planet_flag = giga_eawaf_planet
+		owner = { is_country_type = primitive }
+		NOT = { has_planet_flag = giga_eawaf_alicorns_mobilized }
+	}
+
+	immediate = {
+		set_planet_flag = giga_eawaf_alicorns_mobilized #This makes the sirens essentially guaranteed to lose, as well as guaranteeing either Equestria or Posada UN.
+		create_army = { owner = event_target:giga_eawaf_country type = eawaf_army_celestia name = "Princess Celestia" species = event_target:eawaf_ponies}
+		create_army = { owner = event_target:giga_eawaf_country type = eawaf_army_luna name = "Princess Luna" species = event_target:eawaf_ponies }
+		From = { country_event = { id = giga_eawaf.7103 days = 5 } }
+	}
+}
+
+country_event = {
+	id = giga_eawaf.7103
+	title = "giga_eawaf.7103.name"
+	desc = "giga_eawaf.7103.desc"
+	show_sound = event_red_alert
+	picture = GFX_evt_giga_eawaf_daybreaker
+	is_triggered_only = yes
+
+	option = { #FIGHT
+		name = "giga_eawaf.7103.a"
+		custom_tooltip = "giga_eawaf.7103.a.tooltip"
+	}
+
+	option = { #Pull out
+		name = "giga_eawaf.7103.b"
+		custom_tooltip = "giga_eawaf.7103.b.tooltip"
+		set_faction_hostility = {
+			target = event_target:giga_eawaf_country
+			set_hostile = no
+		}
+	}
+}
+
+#Faust invaded during sirens, pause situation
+planet_event = {
+	id = giga_eawaf.7104
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_planet_flag = giga_eawaf_planet
+		owner = { is_country_type = primitive }
+		exists = event_target:giga_eawaf_sirens_takeover_situation
+	}
+
+	immediate = {
+		event_target:giga_eawaf_sirens_takeover_situation = { set_situation_locked = yes }
+	}
+}
+
+#Faust defended itself, unpause
+country_event = {
+	id = giga_eawaf.7105
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		FromFrom = { has_planet_flag = giga_eawaf_planet }
+		is_country_type = primitive
+		exists = event_target:giga_eawaf_sirens_takeover_situation
+	}
+
+	immediate = {
+		event_target:giga_eawaf_sirens_takeover_situation = { set_situation_locked = no }
+	}
+}
+
+
+#DEBUG/TESTING/CHEAT EVENTS
+namespace = giga_eawaf_debug
+
+#Upgrade Enthraller
+country_event = {
+	id = giga_eawaf_debug.1000
+	is_triggered_only = yes
+
+	immediate = {
+		random_megastructure = {
+			limit = { is_megastructure_type = giga_eawaf_sirens_megaphone_1 }
+			upgrade_megastructure_to = giga_eawaf_sirens_megaphone_2
+		}
+	}
+}
+
+country_event = {
+	id = giga_eawaf_debug.2000
+	is_triggered_only = yes
+	
+	immediate = {
+		every_owned_ship = {
+			add_modifier = {
+				modifier = giga_eawaf_modifier_test
+				days = -1
+				mult = 3
+			}
+		}
+	}
+}
+
+country_event = {
+	id = giga_eawaf_debug.20001
+	is_triggered_only = yes
+	hide_window = yes
+	
+	immediate = {
+		event_target:giga_eawaf_country = {
+			change_variable = { which = giga_eawaf_sirens_megaphone_level value = 1 }
+		}
+	}
+}
+
+country_event = {
+	id = giga_eawaf_debug.2002
+	is_triggered_only = yes
+	
+	immediate = {
+		set_country_flag = giga_tech_eawaf_weapons_repeatable_possible
+		add_research_option = giga_tech_eawaf_weapons_repeatable
+	}
+}
+
+country_event = {
+	id = giga_eawaf_debug.2003
+	is_triggered_only = yes
+	
+	immediate = {
+		set_country_flag = giga_tech_eawaf_sirens_voidbeam_possible
+		give_technology = { tech = giga_tech_eawaf_sirens_voidbeam }
+
+		set_country_flag = giga_tech_eawaf_sirens_impactor_possible
+		give_technology = { tech = giga_tech_eawaf_sirens_impactor }
+
+		set_country_flag = giga_tech_eawaf_sirens_missile_possible
+		give_technology = { tech = giga_tech_eawaf_sirens_missile }
+
+		set_country_flag = giga_tech_eawaf_sirens_artillery_possible
+		give_technology = { tech = giga_tech_eawaf_sirens_artillery }
+
+		set_country_flag = giga_tech_eawaf_sirens_autocannon_possible
+		give_technology = { tech = giga_tech_eawaf_sirens_autocannon }
+
+		set_country_flag = giga_tech_eawaf_sirens_strike_craft_possible
+		give_technology = { tech = giga_tech_eawaf_sirens_strike_craft }
+	}
+}
+
+country_event = {
+	id = giga_eawaf_debug.2004
+	is_triggered_only = yes
+	hide_window = yes
+	
+	immediate = {
+		event_target:giga_eawaf_country = {
+			change_variable = { which = giga_eawaf_field_potency_multiplier value = 1 }
+		}
+	}
+}
