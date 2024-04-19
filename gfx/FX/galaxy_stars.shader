@@ -137,7 +137,7 @@ PixelShader =
 	MainCode PixelShader
 	[[
 	    static const float PI = 3.14159265359f;
-	    static const float INNER_FIELD_FRACTION = 0.5;
+	    static const float INNER_FIELD_FRACTION = 0.2;
 
 		float4 main( VS_OUTPUT In ) : PDX_COLOR
 		{

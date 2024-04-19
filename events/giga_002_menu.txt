@@ -58,6 +58,8 @@ country_event = {
 				save_global_event_target_as = giga_global_situation_country
 			}
 		}
+		#FOR APRIL'S FOOL
+		set_global_flag = giga_eawaf_sirens_disabled
 	}
 }
 
@@ -344,6 +346,74 @@ country_event = {
 			remove_country_flag = giga_menu_page_02
 			remove_country_flag = giga_menu_page_03
 			set_country_flag = giga_menu_page_00
+
+			#THE SIRENS
+			event_target:global_event_country = {
+				if = {
+					limit = { NOT = { has_country_flag = sirens_spawndate_set } }
+					set_country_flag = sirens_spawndate_set
+					set_variable = {
+						which = sirens_spawn_date
+						value = 2400
+					}
+				}
+			}
+
+			#CHECK FOR SIRENS DIFFICULTY
+			if = {
+				limit = {
+					NOR = {
+						event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 6 } }
+						event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 5 } }
+						event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 4 } }
+						event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 3 } }
+						event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 2 } }
+						event_target:global_event_country = { check_variable = { which = giga_eawaf_sirens_difficulty value = 1 } }
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							any_country = { has_country_flag = oe_player }
+							any_country = { has_authority = auth_warshipgirls }
+							any_country = { has_authority = auth_shenhai }
+						}
+					}
+					event_target:global_event_country = { set_variable = { which = giga_eawaf_sirens_difficulty value = 7 } }
+				}
+				else_if = {
+					limit = {
+						OR = {
+							has_global_flag = acot_full_activated
+							has_global_flag = has_aot_mod
+							has_global_flag = has_sots_mod
+						}
+					}
+					event_target:global_event_country = { set_variable = { which = giga_eawaf_sirens_difficulty value = 6 } }
+				}
+				else_if = {
+					limit = {
+						OR = {
+							has_global_flag = acot_activated
+							has_global_flag = sofe_activated 
+						}
+					}
+					event_target:global_event_country = { set_variable = { which = giga_eawaf_sirens_difficulty value = 4 } }
+				}
+				else_if = {
+					limit = {
+						OR = {
+							has_global_flag = nhsc_v30
+							has_global_flag = nhsc_overwrites_v30
+							has_global_flag = has_nsc_active
+						}
+					}
+					event_target:global_event_country = { set_variable = { which = giga_eawaf_sirens_difficulty value = 3 } }
+				}
+				else = {
+					event_target:global_event_country = { set_variable = { which = giga_eawaf_sirens_difficulty value = 2 } }
+				}
+			}
 	
 			#Various submods that disable things
 			if = {
@@ -709,6 +779,7 @@ country_event = {
 					limit = {
 						NOT = { any_system = { has_star_flag = flusion_system } }
 						NOT = { has_global_flag = giga_jublio_disabled } 
+						NOT = { any_country = { has_origin = origin_eawafkaiser } }
 					}
 					random_system = { 
 						limit = { 
@@ -802,7 +873,30 @@ country_event = {
 						}
 					}
 				}
-
+				#Oxx-Oxx
+				if = {
+					limit = {
+						any_system = {
+							has_star_flag = giga_system_one 
+						}
+					}
+					random_system = {
+						limit = {
+							has_star_flag = giga_system_one 
+						}
+						giga_field_system_debris = yes
+						if = {
+							limit ={
+								NOT = { has_global_flag = kugel_disabled }
+							}
+							random_system_planet = {
+								limit = { has_planet_flag = kugelblitz_planet }
+								save_event_target_as = kugelblitz_planet
+							}
+							spawn_megastructure = { type = "kugelblitz_ruined" coords_from = event_target:kugelblitz_planet }
+						}
+					}
+				}
 				#Faust
 				if = {
 					limit = {
@@ -813,7 +907,7 @@ country_event = {
 						50 = {
 							random_system = { 
 								limit = { 
-									NOR = { 
+									NOR = {
 										is_fe_cluster = yes 
 										any_neighbor_system = {
 											is_fe_cluster = yes
@@ -821,7 +915,7 @@ country_event = {
 									}
 									hyperlane_eligible = yes #Don't target the core or AoaI or anyother forbidden systems
 								}
-								spawn_system = { initializer = "giga_eaw_initializer" hyperlane = no } 
+								spawn_system = { initializer = "giga_eawaf_initializer" hyperlane = no } 
 							}
 							last_created_system = {
 								# Add extra hyperlane
@@ -831,6 +925,13 @@ country_event = {
 								}
 							}
 							modifier = { add = 50 has_global_flag = giga_eaw_guaranteed }
+							if = {
+								limit = { has_global_flag = giga_eaw_guaranteed }
+								every_country = { #Points the player towards Faust at game start if it is guaranteed
+									limit = { is_ai = no }
+									country_event = { id = giga_eawaf.1001 days = 30 }
+								}
+							}
 						}
 						50 = {
 							modifier = { add = -50 has_global_flag = giga_eaw_guaranteed }
