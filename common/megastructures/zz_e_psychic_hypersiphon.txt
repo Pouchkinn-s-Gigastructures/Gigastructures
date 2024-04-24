@@ -1,24 +1,24 @@
 psychic_hypersiphon_0 = {
 	entity = "giga_consite_7_7_entity"
 	construction_entity = "giga_consite_7_7_entity"
-	# construction_blocks_and_blocked_by = none # BLOCKING TEST
 	portrait = "GFX_megastructure_construction_background"
 	place_entity_on_planet_plane = no
-	prerequisites = { giga_tech_psychic_hypersiphon_5 }
+	prerequisites = { giga_tech_psychic_hypersiphon }
 
 	build_time = 1800
 	resources = {
 		category = giga_megastructures
 		cost = {
-			alloys = 3000
-			unity = @giga_big_mega_start_unity_cost
+			alloys = 2500
+			unity = @giga_small_mega_unity_cost
 		}
-		upkeep = { energy = 10 }
+		upkeep = {
+			energy = 5
+		}
 	}
 
 	potential = {
 		has_tradition = tr_psionics_finish
-		has_technology = giga_tech_psychic_hypersiphon_5
 		NOT = { has_global_flag = siphon_disabled }
 		OR = {
 			check_variable = { which = giga_siphon_cap value = 0 }						# No Cap
@@ -28,7 +28,6 @@ psychic_hypersiphon_0 = {
 
 	possible = {
 		custom_tooltip = { fail_text = "requires_inside_border"						is_inside_border = from }
-		custom_tooltip = { fail_text = "requires_no_existing_psychic_hypersiphon"	from = { giga_has_psychic_hypersiphon = no } }
 		custom_tooltip = { fail_text = "requires_surveyed_system"					giga_system_is_surveyed = yes }
 		custom_tooltip = {
 			fail_text = "requires_not_capped"
@@ -51,31 +50,31 @@ psychic_hypersiphon_0 = {
 	}
 
 	ai_weight = { 
-		# Unbidden bad, m'kay?
-		#factor = 0 
-
-		# yeah you'd think, but I reckon it's fiiiiine if the crisis has already kicked off, right? - TTFTCUTS
-
 		weight = value:giga_ai_base_mega
 
-		mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|175|
-		mult = value:giga_ai_output|RESOURCE|energy|AMOUNT|7500|
+		mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|30|
+		mult = value:giga_ai_output|RESOURCE|energy|AMOUNT|500|
+		mult = value:giga_ai_build_low_priority
 		mult = value:giga_ai_core_territory
-		mult = value:giga_ai_unlocks_gigastructures
-		mult = value:giga_ai_no_colony
+		mult = value:giga_ai_prevent_spam|MEGA|hypersiphon|
 
-		mult = 5 # ;)
-
+		# curb enthusiasm for huge instability
 		modifier = {
-			not = { has_global_flag = galactic_crisis_happened }
-			weight = 0
+			from = {
+				check_modifier_value = {
+					modifier = giga_shroud_conduit_instability
+					value >= 5
+				}
+			}
+			multiply = 0
 		}
-	} 
+	}
 
 	on_build_complete = {
 		save_event_target_as = giga_system
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		from = {
+			set_timed_country_flag = { flag = has_recently_built_hypersiphon years = 20 }
 			country_event = { id = giga_dialog.1401 }	# Notification
 			change_variable = { which = giga_current_siphon value = 1 }
 		}
@@ -91,21 +90,21 @@ psychic_hypersiphon_1 = {
 	construction_entity = "psychic_hypersiphon_1_entity"
 	portrait = "GFX_megastructure_construction_background"
 	upgrade_from = { psychic_hypersiphon_0 }
+	prerequisites = { giga_tech_psychic_hypersiphon }
 
-	build_time = 2700
+	build_time = 1800
 	resources = {
 		category = giga_megastructures
-		cost = { alloys = 17500 unity = @giga_big_mega_unity_cost }
+		cost = { alloys = 7500 unity = @giga_small_mega_unity_cost }
 		upkeep = {
-			alloys = 20
-			energy = 25
+			alloys = 5
+			energy = 5
 		}
 	}
 
 	potential = { NOT = { has_global_flag = siphon_disabled } }
 	possible = {
 		from = {
-			has_technology = giga_tech_psychic_hypersiphon_5
 			has_tradition = tr_psionics_finish
 		}
 	}
@@ -120,75 +119,37 @@ psychic_hypersiphon_1 = {
 }
 
 psychic_hypersiphon_2 = {
-	entity = "psychic_hypersiphon_2_entity"
-	construction_entity = "psychic_hypersiphon_2_construction_entity"
-	portrait = "GFX_megastructure_construction_background"
-	upgrade_from = { psychic_hypersiphon_1 }
-
-	build_time = 2700
-	resources = {
-		category = giga_megastructures
-		cost = { alloys = 22000 unity = @giga_big_mega_unity_cost }
-		upkeep = {
-			alloys = 35
-			energy = 150
-		}
-	}
-
-	potential = { NOT = { has_global_flag = siphon_disabled } }
-	possible = {
-		from = {
-			has_technology = giga_tech_psychic_hypersiphon_5
-			has_tradition = tr_psionics_finish
-		}
-	}
-
-	ai_weight = { weight = value:giga_ai_base_continue }
-
-	on_build_complete = {
-		save_event_target_as = giga_system
-		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
-		from = { country_event = { id = giga_dialog.1403 } }	# Notification
-	}
-}
-
-psychic_hypersiphon_3 = {
 	entity = "psychic_hypersiphon_3_entity"
 	portrait = "GFX_megastructure_shroud_wormhole"
-	upgrade_from = { psychic_hypersiphon_2 }
+	upgrade_from = { psychic_hypersiphon_1 }
+	prerequisites = { giga_tech_psychic_hypersiphon }
+	show_prereqs = yes
 
-	build_time = 2700
+	build_time = 1500
 	resources = {
 		category = giga_megastructures
 		cost = {
-			alloys = 10000
+			alloys = 7500
 			energy = 20000
-			unity = @giga_big_mega_unity_cost
+			sr_zro = 500
 		}
-		upkeep = { alloys = 175 }
+		upkeep = {
+			alloys = 10
+			#sr_zro = 2
+		}
 		produces = {
-			physics_research = 750
-			society_research = 750
-			energy = 7500
-			sr_psionic_sublimate = 5
+			energy = 500
 		}
 	}
 
 	country_modifier = {
-		ship_interstellar_speed_mult = 0.15
-		ship_sensor_range_add = 3
-		pop_environment_tolerance = 0.075
-		country_engineering_tech_research_speed = 0.15
-		country_society_tech_research_speed = 0.15
-		country_physics_tech_research_speed = 0.15
-		planet_jobs_minerals_produces_mult = 0.15
+		giga_hypersiphon_network_size = 1
 	}
 
 	potential = { NOT = { has_global_flag = siphon_disabled } }
 	possible = {
 		from = {
 			NOT = { is_country_type = fallen_empire }
-			has_technology = giga_tech_psychic_hypersiphon_5
 			has_tradition = tr_psionics_finish
 		}
 	}
@@ -200,7 +161,6 @@ psychic_hypersiphon_3 = {
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		from = {
 			country_event = { id = giga_dialog.1404 }				# Notification
-			set_country_flag = has_built_or_repaired_gigastructure	# Triggers Gigastructural Constructs
 			if = {
 				limit = {
 					NOR = {
@@ -213,23 +173,18 @@ psychic_hypersiphon_3 = {
 				giga_achievement_sound = yes
 			}
 		}
-		if = {
-			limit = { 
-				NOT = { 
-					has_global_flag = drain_galactic_crisis_happened
-				}
-			}
-			set_global_flag = drain_galactic_crisis_happened
-			random_country = {
-				limit = { is_country_type = global_event }
-				country_event = { id = giga_mega.801 days = 1800 random = 3600 }
+		# start tracker situation
+		event_target:giga_global_situation_country = {
+			start_situation = {
+				type = giga_situation_hypersiphon_tracker
+				target = fromfrom
 			}
 		}
 	}
 }
 
 psychic_hypersiphon_3_aeternum = {
-	entity = "psychic_hypersiphon_3_entity"
+	entity = psychic_hypersiphon_aeternum_entity
 	portrait = "GFX_megastructure_shroud_wormhole"
 
 	build_time = 2700
@@ -244,25 +199,21 @@ psychic_hypersiphon_3_aeternum = {
 			energy = 20000
 			unity = @giga_big_mega_unity_cost
 		}
-		upkeep = { alloys = 175 }
+		upkeep = {
+			alloys = 50
+			sr_zro = 2
+		}
 		produces = {
 			trigger = {
 				NOT = { has_megastructure_flag = siphon_disabled }
 			}
-			physics_research = 750
-			society_research = 750
-			energy = 7500
-			sr_psionic_sublimate = 5
+			physics_research = 500
+			society_research = 500
+			energy = 2500
 		}
 	}
 
 	country_modifier = {
-		ship_interstellar_speed_mult = 0.15
-		ship_sensor_range_add = 3
-		pop_environment_tolerance = 0.075
-		country_engineering_tech_research_speed = 0.15
-		country_society_tech_research_speed = 0.15
-		country_physics_tech_research_speed = 0.15
-		planet_jobs_minerals_produces_mult = 0.15
+		giga_hypersiphon_safe_network_size = 2
 	}
 }

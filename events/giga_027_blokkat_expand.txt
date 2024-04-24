@@ -336,11 +336,8 @@ country_event = {
 			set_country_flag = giga_decided_to_fight_blokkats
 			remove_country_flag = blokkat_project_underway
 			remove_country_flag = blokkat_willingness_active
-			remove_modifier = giga_blokkat_blokkat_willingness_global
-			remove_modifier = giga_blokkat_blokkat_willingness_military
-			remove_modifier = giga_blokkat_blokkat_willingness_science
-			remove_modifier = giga_blokkat_blokkat_willingness_government
-			remove_modifier = giga_blokkat_blokkat_willingness_population
+			clear_willingness_modifiers = yes
+			remove_country_flag = blokkat_willingness_strikes_active
 			every_owned_leader = { clear_strike_leader_traits = yes }
 		}
 	}
@@ -816,21 +813,18 @@ country_event = {
 		set_name = "CE-1461 Dismantlement Zone"
 		update_blokkat_inquietude_display = yes
 		remove_country_flag = blokkat_willingness_active
-		remove_modifier = giga_blokkat_blokkat_willingness_global
-		remove_modifier = giga_blokkat_blokkat_willingness_military
-		remove_modifier = giga_blokkat_blokkat_willingness_science
-		remove_modifier = giga_blokkat_blokkat_willingness_government
-		remove_modifier = giga_blokkat_blokkat_willingness_population
+		clear_willingness_modifiers = yes
 		remove_country_flag = blokkat_bureau_unlocked
 		remove_country_flag = blokkat_inquietude_taught
 		set_country_flag = giga_ascended_blokkat_country
 		save_global_event_target_as = giga_ascended_blokkat_country
 		set_global_flag = blokkat_crisis_defeated
 		change_species = event_target:diverse_blokkat_species
+		remove_country_flag = blokkat_willingness_strikes_active
 		every_owned_leader = {
 			change_species = event_target:diverse_blokkat_species
 			clear_strike_leader_traits = yes
-			if = { limit = { leader_class = admiral } add_trait = admiral_trait_blokkat }
+			if = { limit = { leader_class = commander } add_trait = admiral_trait_blokkat }
 		}
 		ruler = {
 			change_species = event_target:diverse_blokkat_species
@@ -851,7 +845,7 @@ country_event = {
 				NOT = { any_system_megastructure = { is_megastructure_type = blokkat_gigarelay_2 } } 
 			}
 			every_system_planet = {
-				limit = { is_star = no }
+				limit = { is_star = no is_astral_scar = no }
 				if = { limit = { is_colony = yes } destroy_colony = yes }
 				giga_remove_planet = yes
 			}
@@ -893,7 +887,7 @@ country_event = {
 				save_global_event_target_as = blokkat_gigarelay_system_star
 			}
 			every_system_planet = {
-				limit = { is_star = no }
+				limit = { is_star = no is_astral_scar = no } 
 				if = { limit = { is_colony = yes } destroy_colony = yes }
 				giga_remove_planet = yes
 			}
@@ -1454,29 +1448,13 @@ country_event = {
 				limit = {
 					OR = {
 						leader_class = scientist
-						leader_class = governor
-						leader_class = admiral
-						leader_class = general
+						leader_class = official
+						leader_class = commander
 					}
 				}
 				random_list = {
 					65 = {
-						if = {
-							limit = { leader_class = scientist }
-							add_trait = trait_blokkat_on_strike_scientist
-						}
-						if = {
-							limit = { leader_class = governor }
-							add_trait = trait_blokkat_on_strike_governor
-						}
-						if = {
-							limit = { leader_class = admiral }
-							add_trait = trait_blokkat_on_strike_admiral
-						}
-						if = {
-							limit = { leader_class = general }
-							add_trait = trait_blokkat_on_strike_general
-						}
+						add_trait = trait_blokkat_on_strike_leader
 						modifier = { add = -5 ROOT = { has_ethic = ethic_authoritarian } }
 						modifier = { add = -15 ROOT = { has_ethic = ethic_fanatic_authoritarian } }
 						modifier = { add = 5 ROOT = { has_ethic = ethic_egalitarian } }
@@ -1977,19 +1955,19 @@ country_event = {
 		name = "giga_blokkat_join.5601.admirals"
 		trigger = {
 			any_owned_leader = {
-				leader_class = admiral
+				leader_class = commander
 				blokkat_leader_is_on_strike = yes 
 			}
 		}
 		hidden_effect = {
 			every_owned_leader = {
 				limit = { 
-					leader_class = admiral
+					leader_class = commander
 					blokkat_leader_is_on_strike = yes
 				}
 				set_leader_flag = blokkat_leader_strike_target #So we know which ones to check for
 			}
-			set_country_flag = blokkat_negotiating_admiral
+			set_country_flag = blokkat_negotiating_commander
 			country_event = { id= giga_blokkat_join.5602 } 
 		}
 	}
@@ -1998,14 +1976,14 @@ country_event = {
 		name = "giga_blokkat_join.5601.governor"
 		trigger = {
 			any_owned_leader = {
-				leader_class = governor
+				leader_class = official
 				blokkat_leader_is_on_strike = yes 
 			}
 		}
 		hidden_effect = {
 			every_owned_leader = {
 				limit = { 
-					leader_class = governor
+					leader_class = official
 					blokkat_leader_is_on_strike = yes
 				}
 				set_leader_flag = blokkat_leader_strike_target #So we know which ones to check for
@@ -2015,26 +1993,26 @@ country_event = {
 		}
 	}
 
-	option = { #Generals
-		name = "giga_blokkat_join.5601.generals"
-		trigger = {
-			any_owned_leader = {
-				leader_class = general
-				blokkat_leader_is_on_strike = yes 
-			}
-		}
-		hidden_effect = {
-			every_owned_leader = {
-				limit = { 
-					leader_class = general
-					blokkat_leader_is_on_strike = yes
-				}
-				set_leader_flag = blokkat_leader_strike_target #So we know which ones to check for
-			}
-			set_country_flag = blokkat_negotiating_general
-			country_event = { id= giga_blokkat_join.5602 } 
-		}
-	}
+	# option = { #Generals #TODO merge
+	# 	name = "giga_blokkat_join.5601.generals"
+	# 	trigger = {
+	# 		any_owned_leader = {
+	# 			leader_class = commander
+	# 			blokkat_leader_is_on_strike = yes 
+	# 		}
+	# 	}
+	# 	hidden_effect = {
+	# 		every_owned_leader = {
+	# 			limit = { 
+	# 				leader_class = commander 
+	# 				blokkat_leader_is_on_strike = yes
+	# 			}
+	# 			set_leader_flag = blokkat_leader_strike_target #So we know which ones to check for
+	# 		}
+	# 		set_country_flag = blokkat_negotiating_general
+	# 		country_event = { id= giga_blokkat_join.5602 } 
+	# 	}
+	# }
 
 	option = { #Nvm
 		name = "giga_blokkat_join.5601.bye"
@@ -2264,18 +2242,18 @@ country_event = {
 			which = blokkat_leader_negotiate_odds
 			value = 30
 		}
-		if = { 
+		if = {
 			limit = { has_country_flag = blokkat_negotiating_scientist }
 			change_variable = { which = blokkat_leader_negotiate_odds value = blokkat_willingness_science_value }
 		}
 		if = { 
-			limit = { has_country_flag = blokkat_negotiating_admiral }
+			limit = { has_country_flag = blokkat_negotiating_commander }
 			change_variable = { which = blokkat_leader_negotiate_odds value = blokkat_willingness_military_value }
 		}
-		if = { 
-			limit = { has_country_flag = blokkat_negotiating_general }
-			change_variable = { which = blokkat_leader_negotiate_odds value = blokkat_willingness_military_value }
-		}
+		# if = { 
+		# 	limit = { has_country_flag = blokkat_negotiating_general }
+		# 	change_variable = { which = blokkat_leader_negotiate_odds value = blokkat_willingness_military_value }
+		# }
 		if = { 
 			limit = { has_country_flag = blokkat_negotiating_governor }
 			change_variable = { which = blokkat_leader_negotiate_odds value = blokkat_willingness_government_value }

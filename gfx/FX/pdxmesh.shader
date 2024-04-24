@@ -6,6 +6,7 @@ Includes = {
 	"shadow.fxh"
 	"tiled_pointlights.fxh"
 	"pdxmesh_samplers.fxh"
+	"pdxmesh_astral_rift.fxh"
 	"pdxmesh_ship.fxh"
 	"giga_shaders.fxh"
 }
@@ -1208,7 +1209,7 @@ PixelShader =
 	]]
 
 	MainCode PixelPdxMeshPortrait
-		ConstantBuffers = { PortraitCommon, TwelthKind }
+		ConstantBuffers = { PortraitCommon, EigthKind }
 	[[
 		float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
 		{
@@ -1228,34 +1229,25 @@ PixelShader =
 				#endif
 			#endif
 
+			#ifdef FLOWMAP
+				float4 vFlow = tex2D( NormalMap, In.vUV0 );
+				vFlow.xy = ( ( vFlow.xy - 0.5f ) * 2.0f ) * FlowMapIntensity * vFlow.z;
+
+				float2 flowUVs = UVLod.xy + ( vFlow.xy * frac( vUVAnimationTime ) );
+				float2 offsetFlowUVs = UVLod.xy + ( vFlow.xy * frac( vUVAnimationTime + 0.5f ) );
+
+				float4 vEffect = tex2Dlod( SpecularMap, float4( flowUVs.xy, UVLod.zw ) );
+				float4 vEffectOffset = tex2Dlod( SpecularMap, float4( offsetFlowUVs.xy, UVLod.zw ) );
+
+				float blendValue = abs( ( frac( vUVAnimationTime ) * 2.0f ) - 1.0f );
+				float4 blendEffect = lerp( vEffect, vEffectOffset, blendValue );
+
+				float4 finalPixel = lerp( vDiffuse, blendEffect, vFlow.b );
+
+				return float4( ToGamma( finalPixel.rgb ), finalPixel.a );
+			#endif
+
 			return float4( ToGamma( vDiffuse.rgb ), vDiffuse.a );
-		}
-
-	]]
-
-		MainCode PixelPdxMeshPortraitAnimateUV
-		ConstantBuffers = { PortraitCommon, EigthKind }
-	[[
-		float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
-		{
-			float4 UVLod = float4( ( In.vUV0 ), 0.0f, PortraitMipLevel * 0.35f );
-
-			float4 vFlow = tex2D( NormalMap, In.vUV0 );
-			vFlow.xy = ( ( vFlow.xy - 0.5f ) * 2.0f ) * FlowMapIntensity * vFlow.z;
-
-			float2 flowUVs = UVLod.xy + ( vFlow.xy * frac( vUVAnimationTime ) );
-			float2 offsetFlowUVs = UVLod.xy + ( vFlow.xy * frac( vUVAnimationTime + 0.5f ) );
-
-			float4 vDiffuse = tex2Dlod( DiffuseMap, UVLod );
-			float4 vEffect = tex2Dlod( SpecularMap, float4(flowUVs.xy, UVLod.zw) );
-			float4 vEffectOffset = tex2Dlod( SpecularMap, float4( offsetFlowUVs.xy, UVLod.zw ) );
-
-			float blendValue = abs((frac(vUVAnimationTime ) * 2.0f) - 1.0f);
-			float4 blendEffect = lerp(vEffect, vEffectOffset, blendValue);
-
-			float4 finalPixel = lerp( vDiffuse, blendEffect, vFlow.b );
-
-			return float4( ToGamma( finalPixel.rgb ), finalPixel.a );
 		}
 
 	]]
@@ -1810,13 +1802,22 @@ Effect PdxMeshWPOAlphaBlendShadow
 }
 
 
+Effect PdxMeshPortraitAnimateUV
+{
+	VertexShader = "VertexPdxMeshPortraitStandard"
+	PixelShader = "PixelPdxMeshPortrait"
+	BlendState = "BlendStateAlphaBlendWriteAlpha"
+	DepthStencilState = "DepthStencilNoZ"
+	Defines = { "FLOWMAP" }
+}
+
 Effect PdxMeshPortraitAnimateUVSkinned
 {
 	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
-	PixelShader = "PixelPdxMeshPortraitAnimateUV"
+	PixelShader = "PixelPdxMeshPortrait"
 	BlendState = "BlendStateAlphaBlendWriteAlpha"
 	DepthStencilState = "DepthStencilNoZ"
-	Defines = { "ANIMATE_UV" }
+	Defines = { "FLOWMAP" }
 }
 
 Effect PdxMeshAlphaAdditiveAnimateUV
@@ -2763,6 +2764,20 @@ Effect PdxMeshRingsSkinned
 	Defines = { "IS_PLANET" "IS_RING"  }
 }
 
+Effect PdxMeshAstralRift
+{
+	VertexShader = "VertexPdxMeshStandard"
+	PixelShader = "PixelPdxMeshAstralRift"
+	BlendState = "BlendStateAlphaBlend";
+}
+
+Effect PdxMeshAstralRiftSkinned
+{
+	VertexShader = "VertexPdxMeshStandardSkinned"
+	PixelShader = "PixelPdxMeshAstralRift"
+	BlendState = "BlendStateAlphaBlend";
+}
+
 Effect PdxMeshAlphaBlendPlanet
 {
 	VertexShader = "VertexPdxMeshStandard"
@@ -2876,6 +2891,13 @@ Effect PdxMeshSimpleSkinned
 }
 
 ## ------------- SHADOWS UNUSED ------------------
+
+Effect PdxMeshPortraitAnimateUVShadow
+{
+	VertexShader = "VertexPdxMeshStandardSkinnedShadow"
+	PixelShader = "PixelPdxMeshNoShadow"
+	Defines = { "IS_SHADOW" }
+}
 
 Effect PdxMeshPortraitAnimateUVSkinnedShadow
 {
@@ -3124,6 +3146,20 @@ Effect PdxMeshRingsSkinnedShadow
 	VertexShader = "VertexPdxMeshStandardShadow"
 	PixelShader = "PixelPdxMeshStandardShadow"
 	Defines = { "IS_SHADOW" "IS_PLANET" "IS_RING" }
+}
+
+Effect PdxMeshAstralRiftShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+Effect PdxMeshAstralRiftSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardSkinnedShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
 }
 
 Effect PdxMeshAlphaBlendPlanetShadow
@@ -4065,7 +4101,24 @@ Effect PdxMeshTerraAnimateUVSkinnedShadow
 
 
 # // Additions
+# // Engineering Test Site Shield
+Effect PdxMeshAlphaAdditiveECB
+{
+	VertexShader = "VertexPdxMeshStandard"
+	PixelShader = "PixelPdxMeshAdditive"
+	BlendState = "BlendStateAdditiveBlend"
+	DepthStencilState = "DepthStencilNoZWrite"
+	Defines = { "ANIMATE_UV" "DISSOLVE" "USE_EMPIRE_COLOR"}
+}
 
+Effect PdxMeshAlphaAdditiveECBSkinned
+{
+	VertexShader = "VertexPdxMeshStandardSkinned"
+	PixelShader = "PixelPdxMeshAdditive"
+	BlendState = "BlendStateAdditiveBlend"
+	DepthStencilState = "DepthStencilNoZWrite"
+	Defines = { "ANIMATE_UV" "DISSOLVE" "USE_EMPIRE_COLOR" }
+}
 
 Effect OmniMeshShip
 {
@@ -4572,6 +4625,7 @@ Effect PdxMeshPortraitHairDepthSkinnedShadow
 	Defines = { "IS_SHADOW" }
 }
 
+#// old blokkat
 Effect PdxMeshRainbowBlokkatPortraitSkinned
 {
 	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
@@ -4586,6 +4640,90 @@ Effect PdxMeshRainbowBlokkatPortraitSkinnedShadow
 	Defines = { "IS_SHADOW" }
 }
 
+#// new blokkat
+Effect GigaBlokkatAnimateUVSkinned
+{
+	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
+	PixelShader = "GigaBlokkat"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+}
+Effect GigaBlokkatAnimateUVSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+Effect GigaBlokkatVerticalAnimateUVSkinned
+{
+	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
+	PixelShader = "GigaBlokkat"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+	Defines = { "VERTICAL" }
+}
+Effect GigaBlokkatVerticalAnimateUVSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "VERTICAL" "IS_SHADOW" }
+}
+
+#// cosmic blokkat
+Effect GigaBlokkatCosmicAnimateUVSkinned
+{
+	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
+	PixelShader = "GigaBlokkat"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+	Defines = { "EXTENDED_GRADIENT" "COSMIC" }
+}
+Effect GigaBlokkatCosmicAnimateUVSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "EXTENDED_GRADIENT" "COSMIC" "IS_SHADOW" }
+}
+Effect GigaBlokkatCosmicVerticalAnimateUVSkinned
+{
+	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
+	PixelShader = "GigaBlokkat"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+	Defines = { "EXTENDED_GRADIENT" "COSMIC" "VERTICAL" }
+}
+Effect GigaBlokkatCosmicVerticalAnimateUVSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "EXTENDED_GRADIENT" "COSMIC" "VERTICAL" "IS_SHADOW" }
+}
+
+#// screen space interior blokkat
+Effect GigaBlokkatScreenTextureAnimateUVSkinned
+{
+	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
+	PixelShader = "GigaBlokkat"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+	Defines = { "EXTENDED_GRADIENT" "SCREEN_TEXTURE" }
+}
+Effect GigaBlokkatScreenTextureAnimateUVSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "EXTENDED_GRADIENT" "SCREEN_TEXTURE" "IS_SHADOW" }
+}
+Effect GigaBlokkatScreenTextureVerticalAnimateUVSkinned
+{
+	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
+	PixelShader = "GigaBlokkat"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+	Defines = { "EXTENDED_GRADIENT" "SCREEN_TEXTURE" "VERTICAL" }
+}
+Effect GigaBlokkatScreenTextureVerticalAnimateUVSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "EXTENDED_GRADIENT" "SCREEN_TEXTURE" "VERTICAL" "IS_SHADOW" }
+}
+
+#// raymarching experiment
 Effect PdxMeshMarchPortrait
 {
 	VertexShader = GigaMarchedVertex
@@ -4622,6 +4760,22 @@ Effect PdxMeshMCPortraitSkinned
 }
 
 Effect PdxMeshMCPortraitSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+Effect PdxMeshMCPortrait128Skinned
+{
+	VertexShader = "VertexPdxMeshPortraitStandardSkinned"
+	PixelShader = "PixelMCPortrait"
+	BlendState = "BlendStateAlphaBlendWriteAlpha";
+	RasterizerState = "RasterizerStateNoCulling"
+	Defines = { "SIZE_128" }
+}
+
+Effect PdxMeshMCPortrait128SkinnedShadow
 {
 	VertexShader = "VertexPdxMeshStandardShadow"
 	PixelShader = "PixelPdxMeshStandardShadow"

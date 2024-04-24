@@ -1,0 +1,106 @@
+# body content of outpost construction megas
+
+    entity = "giga_frameworld_outpost_entity"
+    construction_entity = "giga_frameworld_outpost_entity"
+    construction_blocks_and_blocked_by = none
+    portrait = "GFX_megastructure_construction_background"
+    show_galactic_map_icon = no
+    place_entity_on_planet_plane = no
+    show_in_outliner = no
+
+    build_time = 720
+    resources = {
+        category = frameworld_outposts
+        cost = {
+            #alloys = 400 # machine colony ship cost
+            #influence = 50 # actually less because they struggle # 50% more than a colony ship because no influence cost on frame expansion
+            $cost$
+        }
+        upkeep = {
+            energy = 5
+        }
+    }
+
+    potential = {
+        giga_has_frameworld_origin = yes
+        $potential$
+    }
+
+    possible = { exists = starbase		custom_tooltip = { fail_text = "requires_inside_border" is_inside_border = from } }
+
+    placement_rules = {
+        planet_possible = {
+            can_have_frameworld_outpost = yes
+        }
+    }
+
+    ai_weight = {
+        weight = 100000 # VERY important, we should always build if possible
+    }
+
+    on_build_complete = {
+        from = {
+            save_event_target_as = outpost_owner
+        }
+
+        fromfrom.planet = {
+            # new outpost pops effect
+            if = {
+                limit = {
+                    event_target:outpost_owner = { giga_has_frameworld_origin = yes } # minor sanity check
+                    not = { has_planet_flag = giga_frameworld_outpost_pops }
+                }
+
+                set_planet_flag = giga_frameworld_outpost_pops
+
+                # add pops to home equal to bonus pops for colonies
+                event_target:outpost_owner = {
+                    random_owned_planet = {
+                        limit = {
+                            has_planet_flag = giga_frameworld@event_target:outpost_owner
+                        }
+                        save_event_target_as = giga_frameworld
+
+                        # add pops equal to colony pop bonus
+                        set_update_modifiers_batch = begin
+                        while = {
+                            count = value:giga_frameworld_outpost_pops|WHO|event_target:outpost_owner|WHERE|fromfrom.planet|
+
+                            create_pop = {
+                                species = event_target:outpost_owner
+                            }
+                        }
+                        set_update_modifiers_batch = end
+                    }
+                }
+            }
+            # end pops
+
+            giga_frameworld_create_outpost = { WHO = fromfrom.owner } # replace with a proper outpost on completion
+        }
+        from = {
+            giga_frameworld_recalculate_outpost_bonus = yes
+
+            # if this is our first outpost, fire off a notification event
+            if = {
+                limit = {
+                    not = { has_country_flag = first_colony }
+                }
+                set_country_flag = first_colony
+                country_event = {
+                    id = giga_frameworld_origin.107
+                    scopes = {
+                        from = from.planet
+                    }
+                }
+            }
+
+            # send notification if pops were spawned
+            # takes a lot of scopes from right here so don't use elsewhere
+            giga_frameworld_outpost_message = yes
+        }
+
+        fromfrom = {
+            remove_megastructure = this
+        }
+    }

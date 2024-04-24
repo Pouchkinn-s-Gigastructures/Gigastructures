@@ -1,6 +1,6 @@
-name="Gigastructural Engineering & More (BETA DEBUG)"
-version="3.8.*"
-supported_version="3.8.*"
+name="Gigastructural Engineering & More (DEBUG)"
+version="3.28.2"
+supported_version="3.11.*"
 tags={
 	"Gameplay"
 	"Megastructures"

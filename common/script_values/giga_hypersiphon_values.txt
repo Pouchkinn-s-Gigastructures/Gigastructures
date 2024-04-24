@@ -1,0 +1,96 @@
+giga_hypersiphon_calculate_empire_fleet_buffs = {
+    weight = value:giga_hypersiphon_calculate_empire_fleet_buffs_hp
+    multiply = value:giga_hypersiphon_calculate_empire_fleet_buffs_damage
+    multiply = value:giga_hypersiphon_calculate_empire_fleet_buffs_fire_rate
+    min = 0.5 # sanity check
+}
+
+giga_hypersiphon_calculate_empire_fleet_buffs_hp = {
+    weight = modifier:ship_hull_mult
+    multiply = 0.5
+    add = modifier:ship_armor_mult
+    add = modifier:ship_shield_mult
+    divide = 2.5
+    add = 1
+}
+
+giga_hypersiphon_calculate_empire_fleet_buffs_damage = {
+    base = 0
+
+    add = modifier:weapon_type_strike_craft_weapon_damage_mult
+    add = modifier:weapon_type_explosive_weapon_damage_mult
+    mult = 0.5
+    add = modifier:weapon_type_energy_weapon_damage_mult
+    add = modifier:weapon_type_kinetic_weapon_damage_mult
+    divide = 3
+    add = modifier:shipclass_military_damage_mult
+    add = 1
+}
+
+giga_hypersiphon_calculate_empire_fleet_buffs_fire_rate = {
+    base = 0
+    add = modifier:weapon_type_strike_craft_weapon_fire_rate_mult
+    add = modifier:weapon_type_explosive_weapon_fire_rate_mult
+    mult = 0.5
+    add = modifier:weapon_type_energy_weapon_fire_rate_mult
+    add = modifier:weapon_type_kinetic_weapon_fire_rate_mult
+    divide = 3
+    add = modifier:ship_fire_rate_mult
+    add = 1
+}
+
+giga_hypersiphon_calculate_empire_power_per_naval_cap = {
+    base = 200 # default in the case of an empty fleet
+
+    modifier = {
+        used_naval_capacity_integer > 0
+
+        weight = value:giga_hypersiphon_calculate_empire_power_per_naval_cap_calc
+    }
+}
+
+giga_hypersiphon_calculate_empire_power_per_naval_cap_calc = {
+    weight = trigger:fleet_power
+    divide = trigger:used_naval_capacity_integer
+
+    divide = value:giga_hypersiphon_calculate_empire_fleet_buffs
+
+    min = 100
+}
+
+giga_hypersiphon_calculate_empire_navy_size = {
+    # 3 years of alloy income
+    complex_trigger_modifier = {
+        trigger = resource_income_compare
+        parameters = {
+            resource = alloys
+        }
+        mode = weight
+    }
+    multiply = 36 # 3 years
+
+    # plus alloy stockpile
+    complex_trigger_modifier = {
+        trigger = resource_stockpile_compare
+        parameters = {
+            resource = alloys
+        }
+        mode = add
+    }
+
+    # divided by some arbitrary alloys-per-naval-cap
+    divide = 300
+
+    # add standing fleet
+    add = trigger:used_naval_capacity_integer
+
+    # cap to 2x naval cap
+    complex_trigger_modifier = {
+        trigger = max_naval_capacity
+        multiplier = 2
+        mode = max
+    }
+
+    # remove standing fleet again as we only want what they could build
+    subtract = trigger:used_naval_capacity_integer
+}

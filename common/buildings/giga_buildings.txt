@@ -156,8 +156,9 @@ building_giga_iodizium_plant = {
 
 	triggered_planet_modifier = {
 		potential = { always = yes }
-		multiplier = value:scripted_modifier_mult|MODIFIER|giga_planet_job_size|
-		planet_technician_energy_produces_add = 2
+		multiplier = value:giga_job_scaling_plus_base
+		planet_technician_energy_produces_add = 1
+		planet_technician_minerals_upkeep_add = 0.5
 		planet_technician_sr_iodizium_upkeep_add = 0.025
 	}
 	
@@ -168,10 +169,10 @@ building_giga_iodizium_plant = {
 			sr_iodizium = 50
 		}
 		upkeep = {
-			minerals = 5
+			minerals = 20
 			sr_iodizium = 1
 		}
-		produces = { energy = 35 }
+		produces = { energy = 20 }
 	}
 	
 	ai_resource_production = {
@@ -225,10 +226,33 @@ building_giga_iodizium_research = {
 	
 	triggered_planet_modifier = {
 		potential = { always = yes }
-		multiplier = value:scripted_modifier_mult|MODIFIER|giga_planet_job_size|
-		planet_researchers_physics_research_produces_add = 1
-		planet_researchers_society_research_produces_add = 1
-		planet_researchers_engineering_research_produces_add = 1
+		multiplier = value:giga_job_scaling_plus_base
+		planet_researchers_physics_research_produces_add = 0.5
+		planet_researchers_society_research_produces_add = 0.5
+		planet_researchers_engineering_research_produces_add = 0.5
+	}
+
+	triggered_planet_modifier = {
+		potential = { exists = owner owner = { is_gestalt = no } }
+		multiplier = value:giga_job_scaling_plus_base
+		planet_researchers_consumer_goods_upkeep_add = 1
+	}
+
+	triggered_planet_modifier = {
+		potential = { exists = owner owner = { is_hive_empire = yes } }
+		multiplier = value:giga_job_scaling_plus_base
+		planet_researchers_minerals_upkeep_add = 3
+	}
+
+	triggered_planet_modifier = {
+		potential = { exists = owner owner = { is_machine_empire = yes } }
+		multiplier = value:giga_job_scaling_plus_base
+		planet_researchers_energy_upkeep_add = 2
+	}
+
+	triggered_planet_modifier = {
+		potential = { always = yes }
+		multiplier = value:giga_job_scaling_plus_base
 		planet_researchers_sr_iodizium_upkeep_add = 0.025
 	}
 	
@@ -239,13 +263,8 @@ building_giga_iodizium_research = {
 			sr_iodizium = 50
 		}
 		upkeep = {
-			minerals = 5
+			minerals = 20
 			sr_iodizium = 1
-		}
-		produces = {
-			physics_research = 25
-			society_research = 25
-			engineering_research = 25
 		}
 	}
 	
@@ -312,34 +331,56 @@ building_giga_iodizium_mines = {
 	}
 }
 
-building_giga_shroud_capacitor = {
+building_giga_shroud_conduit = {
 	base_buildtime = 1000
 	base_cap_amount = 1
 	category = manufacturing
 	ai_weight = { weight = 5 }
-	allow = { has_upgraded_capital = yes }
-	prerequisites = { "giga_tech_psychic_hypersiphon_4" }
-	
-	planet_modifier = {
-		planet_jobs_energy_produces_mult = 0.10
-		planet_jobs_minerals_produces_mult = 0.10
-		planet_jobs_society_research_produces_mult = 0.10
-		planet_jobs_physics_research_produces_mult = 0.10
-		planet_jobs_engineering_research_produces_mult = 0.10
-		pop_happiness = 0.05
+
+	potential = {
+		# not on aiondia if it still has the aeternum super-capacitor
+		not = {
+			has_building = building_giga_aeternum_psi_halls
+		}
+		exists = owner
+		owner = {
+			has_tradition = tr_psionics_adopt
+		}
 	}
-	
+
+	allow = {
+		has_upgraded_capital = yes
+	}
+
+	prerequisites = { giga_tech_shroud_conduit }
+
 	resources = {
 		category = planet_buildings
 		cost = {
-			minerals = 1000
-			alloys = 50
+			minerals = 500
+			sr_zro = 100
 		}
 		upkeep = {
-			unity = 10
-			energy = 10
+			energy = 2
+			#sr_zro = 0.5
 		}
-		produces = { physics_research = 5 }
+
+		produces = {
+			sr_psionic_sublimate = 0.005
+
+			multiplier = value:giga_psychic_hypersiphon_psionic_sublimate
+		}
+	}
+
+	planet_modifier = {
+		planet_psionic_jobs_upkeep_mult = -0.1
+		planet_stability_add = 5
+	}
+
+	# all the jobs, and instability mechanic
+	inline_script = {
+		script = buildings/building_giga_shroud_conduit_jobs
+		condition = "" # no extra condition needed here as the building is for psionics only
 	}
 }
 
@@ -597,6 +638,12 @@ building_ministry_production = {
 		NOR = {
 			has_modifier = resort_colony
 			has_modifier = slave_colony
+		}
+		OR = {
+			owner = {
+				is_ai = no
+			}
+			has_any_industry_district = yes
 		}
 	}
 	
@@ -1607,7 +1654,7 @@ building_giga_institute_1 = {
 	}
 	
 	planet_modifier = {
-		planet_researchers_produces_mult = 0.3
+		planet_researchers_produces_mult = 0.15
 		job_head_researcher_add = 2
 	}
 	
@@ -1701,7 +1748,7 @@ building_giga_institute_2 = {
 	}
 	
 	planet_modifier = {
-		planet_researchers_produces_mult = 0.45
+		planet_researchers_produces_mult = 0.25
 		job_head_researcher_add = 3
 	}
 	
@@ -1808,7 +1855,7 @@ building_giga_supercomputer_1 = {
 	}
 	
 	planet_modifier = {
-		planet_researchers_produces_mult = 0.3
+		planet_researchers_produces_mult = 0.15
 	}
 	
 	triggered_planet_modifier = {
@@ -1925,7 +1972,7 @@ building_giga_supercomputer_2 = {
 	}
 	
 	planet_modifier = {
-		planet_researchers_produces_mult = 0.45
+		planet_researchers_produces_mult = 0.25
 	}
 	
 	triggered_planet_modifier = {
@@ -2023,6 +2070,19 @@ building_giga_energy_nexus_1 = {
 			has_modifier = slave_colony
 			has_modifier = crucible_colony
 		}
+		exists = owner
+		hidden_trigger = {
+			OR = {
+				AND = {		
+					owner = { is_ai = yes }
+					OR = {
+						has_any_generator_district_or_building = yes
+						has_designation = col_generator
+					}
+				}
+				owner = { is_ai = no }
+			}
+		}
 	}
 
 	destroy_trigger = {
@@ -2031,10 +2091,36 @@ building_giga_energy_nexus_1 = {
 			has_modifier = slave_colony
 			has_modifier = crucible_colony
 		}
+		exists = owner
+		hidden_trigger = {
+			OR = {
+				AND = {		
+					owner = { is_ai = yes }
+					NOR = {
+						has_any_generator_district_or_building = yes
+						has_designation = col_generator
+					}
+				}
+				owner = { is_ai = no }
+			}
+		}
 	}
 	
 	allow = {
 		has_major_upgraded_capital = yes
+		exists = owner
+		hidden_trigger = {
+			OR = {
+				AND = {		
+					owner = { is_ai = yes }
+					OR = {
+						has_any_generator_district_or_building = yes
+						has_designation = col_generator
+					}
+				}
+				owner = { is_ai = no }
+			}
+		}
 	}
 	
 	prerequisites = {

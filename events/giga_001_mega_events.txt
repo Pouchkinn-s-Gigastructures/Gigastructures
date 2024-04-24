@@ -62,7 +62,7 @@ event = {
 								has_star_flag = giga_galactic_center
 							}
 						}
-						spawn_system = { initializer = "ring_world_titanic_init_01" }
+						spawn_system = { initializer = "ring_world_titanic_init_01" hyperlane = no }
 					}
 				}
 				random_system = {
@@ -97,7 +97,7 @@ event = {
 								has_star_flag = giga_galactic_center
 							}
 						}
-						spawn_system = { initializer = "ring_world_behemoth_init_01" }
+						spawn_system = { initializer = "ring_world_behemoth_init_01" hyperlane = no }
 					}
 				}
 				random_system = {
@@ -132,7 +132,7 @@ event = {
 								has_star_flag = giga_galactic_center
 							}
 						}
-						spawn_system = { initializer = "ring_world_gargantuan_init_01" }
+						spawn_system = { initializer = "ring_world_gargantuan_init_01" hyperlane = no }
 					}
 				}
 				random_system = {
@@ -511,6 +511,24 @@ planet_event = {
 ####################################
 ### S.U.C.C. #######################
 ####################################
+situation_event = {
+	id = giga_mega.200
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		situation_progress >= 720 #don't even check until crust is cleared
+	}
+
+	immediate = {
+		add_situation_progress = -720 #Always cost 720 days for a planetsize, so speed controls work properly
+		target = {
+			planet = {
+				planet_event = { id = giga_mega.201 }
+			}
+		}
+	}
+}
 # Keep shrinking the planet till it's size 10, then deplete it.
 planet_event = {
 	id = giga_mega.201
@@ -518,6 +536,9 @@ planet_event = {
 	is_triggered_only = yes
 
 	immediate = {
+		# event_target:progress_situation_of_@this = {
+		# 	add_situation_progress = -720
+		# }
 		if = {
 			limit = {
 				has_planet_flag = delay_metalic_pc
@@ -526,7 +547,7 @@ planet_event = {
 			set_planet_flag = delay_barren_pc
 			change_pc = pc_metallic_hydrogen
 			change_planet_size = -1
-			planet_event = { id = giga_mega.201 days = 720 }
+			# planet_event = { id = giga_mega.201 days = 720 }
 		}
 		else_if = {
 			limit = {
@@ -535,7 +556,7 @@ planet_event = {
 				planet_size > 10
 			}
 			change_planet_size = -1
-			planet_event = { id = giga_mega.201 days = 720 }
+			# planet_event = { id = giga_mega.201 days = 720 }
 		}
 		else_if = {
 			limit = {
@@ -549,18 +570,22 @@ planet_event = {
 			solar_system = {
 				random_system_megastructure = {
 					limit = { 
-						is_megastructure_type = succ_2
+						is_megastructure_type = succ_1
 						planet = { is_same_value = root } 
 					}
 					remove_megastructure = this
+					event_target:progress_situation_of_@this = {
+						destroy_situation = this
+					}
 				}
 				owner = { country_event = { id = giga_dialog.1904 } }	# Notification
+				
 			}
 			create_mining_station = { owner = solar_system.owner }
 		}
 		else = {
 			change_planet_size = -1
-			planet_event = { id = giga_mega.201 days = 720 }
+			# planet_event = { id = giga_mega.201 days = 720 }
 		}
 	}
 
@@ -570,68 +595,336 @@ planet_event = {
 ####################################
 ### Automated Stripmine ############
 ####################################
-planet_event = {
-	id = giga_mega.301
+# planet_event = {
+# 	id = giga_mega.301
+# 	hide_window = yes
+# 	is_triggered_only = yes
+
+# 	immediate = {
+# 		planet_event = { id = giga_mega.302 days = 720 }
+# 		change_planet_size = -1
+# 	}
+# }
+
+situation_event = {
+	id = giga_mega.304
+	hide_window = yes
+	is_triggered_only = yes
+	situation = this
+
+	trigger = {
+		situation_progress >= 720
+	}
+
+	immediate = {
+		target = { 
+			giga_stripmine_size_drop = yes 
+		}
+		add_situation_progress = -720
+		if = {
+			limit = {
+				target.planet = { 
+					planet_size <= 5
+					NOT = { has_planet_flag = reached_inner_core }
+				}
+			}
+			target.planet = {
+				space_owner = { country_event = { id = giga_dialog.3304 days = 1 } }
+				set_planet_flag = reached_inner_core
+			}
+		}
+		else_if = {
+			limit = {
+				target.planet = { planet_size <= 3 }
+			}
+			target.planet = {
+				planet_event = { id = giga_mega.303 days = 1 } 
+			}
+			destroy_situation = this
+		}
+	}
+}
+
+# planet_event = {
+# 	id = giga_mega.302
+# 	hide_window = yes
+# 	is_triggered_only = yes
+
+# 	immediate = {
+# 		if = {
+# 			limit = { planet_size = 5 }
+# 			set_planet_flag = reached_inner_core
+# 			if = {
+# 				limit = {
+# 					exists = solar_system.owner
+# 				}
+# 				solar_system.owner = {  }
+# 			}
+# 		}
+# 		else_if = {
+# 			limit = { planet_size > 2 }
+# 			change_planet_size = -1
+# 			planet_event = { id = giga_mega.302 days = 720 }
+# 		}
+# 	}
+# }
+
+#on_size_stripmined
+#this = planet
+#From = stripmine
+#fromfrom = situation
+planet_event = { #general Deposit Gatekeeper
+	id = giga_mega.3021
+	picture = GFX_evt_physics_cache
+	show_sound = event_sensor_ping
 	hide_window = yes
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = { from = { has_megastructure_flag = stripmine_reached_crust } } 
+	}
+
 	immediate = {
-		planet_event = { id = giga_mega.302 days = 720 }
-		change_planet_size = -1
-		if = {
-			limit = { has_modifier = pd_diamond }
-			change_pc = pc_strip_mined
-			set_planet_flag = pc_diamond
-			# add_modifier = { modifier = "giga_pd_diamond_planet" days = -1 }
-		}
-		else_if = {
-			limit = { has_modifier = pd_chthonian }
-			change_pc = pc_strip_mined
-			set_planet_flag = pc_chthonian
-			# add_modifier = { modifier = "giga_pd_chthonian_planet" days = -1 }
-		}
-		else_if = {
-			limit = { has_modifier = pd_ethane_ocean }
-			change_pc = pc_strip_mined
-			set_planet_flag = pc_ethane_ocean
-			# add_modifier = { modifier = "giga_pd_ethane_planet" days = -1 }
+		save_event_target_as = giga_planet
+		from = { # Basically the whole thing needs to be executed from the megastructure, but there is no "megastructure_event"
+			if = {
+				limit = { exists = owner}
+				owner = { country_event = { id = giga_dialog.3306 days = 1 scopes = { from = prev fromfrom = prevprev } } }#Notify owner
+			}
+			random_list = {
+				64 = { # minerals 
+					set_megastructure_flag = new_mineral_deposit
+					if = {
+						limit = { NOT = { has_megastructure_flag = stripmine_rich_minerals_deposit } }
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_mineral_deposit_value 
+							min = 10 
+							max = 50 
+							rounded = yes 
+						}
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_rich_mineral_deposit_length 
+							min = 2 
+							max = 6 
+							rounded = yes 
+						}
+						set_megastructure_flag = stripmine_rich_minerals_deposit
+					}
+					else = {
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_deposit_value_increment 
+							min = 10 
+							max = 50 
+							rounded = yes 
+						}
+						set_variable_to_random_value = {
+							 which = gigas_stripmine_deposit_length_increment 
+							 min = 1 
+							 max = 3 
+							 rounded = yes 
+							}
+						change_variable = {
+							which = gigas_stripmine_mineral_deposit_value 
+							value = gigas_stripmine_deposit_value_increment
+						}
+						change_variable = {
+							which = gigas_stripmine_rich_mineral_deposit_length
+							value = gigas_stripmine_deposit_length_increment
+						}
+						clear_variable = gigas_stripmine_deposit_length_increment
+						clear_variable = gigas_stripmine_deposit_value_increment
+					}
+
+				} 
+				5 = { # alloys
+					set_megastructure_flag = new_alloy_deposit
+					if = {
+						limit = { NOT = { has_megastructure_flag = stripmine_alloy_deposit } }
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_alloy_deposit_value 
+							min = 5 
+							max = 25 
+							rounded = yes 
+						}
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_alloy_deposit_length 
+							min = 2
+							max = 3 
+							rounded = yes 
+						}
+						set_megastructure_flag = stripmine_alloy_deposit
+					}
+					else = {
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_deposit_value_increment 
+							min = 5 
+							max = 25 
+							rounded = yes 
+						}
+						set_variable_to_random_value = {
+							which = gigas_stripmine_deposit_length_increment 
+							min = 1 
+							max = 3 
+							rounded = yes 
+						}
+						change_variable = {
+							which = gigas_stripmine_alloy_deposit_value 
+							value = gigas_stripmine_deposit_value_increment
+						}
+						change_variable = {
+							which = gigas_stripmine_alloy_deposit_length
+							value = gigas_stripmine_deposit_length_increment
+						}
+						clear_variable = gigas_stripmine_deposit_length_increment
+						clear_variable = gigas_stripmine_deposit_value_increment
+					}
+				} 
+				10 = { # gas
+					set_megastructure_flag = new_gas_deposit
+					if = {
+						limit = { NOT = { has_megastructure_flag = stripmine_gas_deposit } }
+						set_variable_to_random_value = { which = gigas_stripmine_gas_deposit_value min = 1 max = 10 rounded = yes }
+						set_variable_to_random_value = { which = gigas_stripmine_gas_deposit_length min = 1 max = 5 rounded = yes }
+						set_megastructure_flag = stripmine_gas_deposit
+					}
+					else = {
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_deposit_value_increment 
+							min = 1 
+							max = 10 
+							rounded = yes 
+						}
+						set_variable_to_random_value = {
+							which = gigas_stripmine_deposit_length_increment 
+							min = 1 
+							max = 2 
+							rounded = yes 
+						}
+						change_variable = {
+							which = gigas_stripmine_gas_deposit_value 
+							value = gigas_stripmine_deposit_value_increment
+						}
+						change_variable = {
+							which = gigas_stripmine_gas_deposit_length
+							value = gigas_stripmine_deposit_length_increment
+						}
+						clear_variable = gigas_stripmine_deposit_length_increment
+						clear_variable = gigas_stripmine_deposit_value_increment
+					}
+				} 
+				10 = { # motes
+					set_megastructure_flag = new_motes_deposit
+					if = {
+						limit = { NOT = { has_megastructure_flag = stripmine_motes_deposit } }
+						set_variable_to_random_value = { which = gigas_stripmine_motes_deposit_value min = 1 max = 10 rounded = yes }
+						set_variable_to_random_value = { which = gigas_stripmine_motes_deposit_length min = 1 max = 5 rounded = yes }
+						set_megastructure_flag = stripmine_motes_deposit
+					}
+					else = {
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_deposit_value_increment 
+							min = 1 
+							max = 10 
+							rounded = yes 
+						}
+						set_variable_to_random_value = {
+							which = gigas_stripmine_deposit_length_increment 
+							min = 1 
+							max = 2 
+							rounded = yes 
+						}
+						change_variable = {
+							which = gigas_stripmine_motes_deposit_value 
+							value = gigas_stripmine_deposit_value_increment
+						}
+						change_variable = {
+							which = gigas_stripmine_motes_deposit_length
+							value = gigas_stripmine_deposit_length_increment
+						}
+						clear_variable = gigas_stripmine_deposit_length_increment
+						clear_variable = gigas_stripmine_deposit_value_increment
+					}
+				} 
+				10 = { # crystals
+					set_megastructure_flag = new_crystal_deposit
+					if = {
+						limit = { NOT = { has_megastructure_flag = stripmine_crystal_deposit } }
+						set_variable_to_random_value = { which = gigas_stripmine_crystal_deposit_value min = 1 max = 10 rounded = yes }
+						set_variable_to_random_value = { which = gigas_stripmine_crystal_deposit_length min = 1 max = 5 rounded = yes }
+						set_megastructure_flag = stripmine_crystal_deposit
+					}
+					else = {
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_deposit_value_increment 
+							min = 1 
+							max = 10 
+							rounded = yes 
+						}
+						set_variable_to_random_value = {
+							which = gigas_stripmine_deposit_length_increment 
+							min = 1 
+							max = 2 
+							rounded = yes 
+						}
+						change_variable = {
+							which = gigas_stripmine_crystal_deposit_value 
+							value = gigas_stripmine_deposit_value_increment
+						}
+						change_variable = {
+							which = gigas_stripmine_crystal_deposit_length
+							value = gigas_stripmine_deposit_length_increment
+						}
+						clear_variable = gigas_stripmine_deposit_length_increment
+						clear_variable = gigas_stripmine_deposit_value_increment
+					}
+				} 
+				1 = { # tensiles
+					modifier = { factor = 0 NOT = { has_global_flag = @giga_amb_flag } }
+					set_megastructure_flag = new_tensile_deposit # Look ma, the mega makes supertensiles
+					if = {
+						limit = { NOT = { has_megastructure_flag = stripmine_supertensile_deposit } }
+						set_variable_to_random_value = { which = gigas_stripmine_supertensile_deposit_value min = 3 max = 15 rounded = yes }
+						set_variable_to_random_value = { which = gigas_stripmine_supertensile_deposit_length min = 1 max = 3 rounded = yes }
+						set_megastructure_flag = stripmine_supertensile_deposit
+					}
+					else = {
+						set_variable_to_random_value = { 
+							which = gigas_stripmine_deposit_value_increment 
+							min = 2 
+							max = 8 
+							rounded = yes 
+						}
+						change_variable = {
+							which = gigas_stripmine_supertensile_deposit_value 
+							value = gigas_stripmine_deposit_value_increment
+						}
+						change_variable = {
+							which = gigas_stripmine_supertensile_deposit_length
+							value = 1
+						}
+						clear_variable = gigas_stripmine_deposit_value_increment
+					}
+				} 
+			}
 		}
 	}
 }
 
 planet_event = {
-	id = giga_mega.302
+	id = giga_mega.303
 	hide_window = yes
 	is_triggered_only = yes
 
 	immediate = {
+		change_planet_size = -1
+		change_pc = pc_core_mined
+		set_planet_flag = depletedstripmine
+		giga_clear_has_mega_flag = yes
 		if = {
-			limit = { planet_size = 5 }
-			set_planet_flag = reached_inner_core
-			if = {
-				limit = {
-					exists = solar_system.owner
-				}
-				solar_system.owner = { country_event = { id = giga_dialog.3304 days = 1 } }
+			limit = {
+				exists = solar_system.owner
 			}
-		}
-
-		if = {
-			limit = { planet_size = 2 }
-			change_pc = pc_core_mined
-			set_planet_flag = depletedstripmine
-			giga_clear_has_mega_flag = yes
-			if = {
-				limit = {
-					exists = solar_system.owner
-				}
-				solar_system.owner = { country_event = { id = giga_dialog.3305 days = 1 } }
-			}
-		}
-		else_if = {
-			limit = { planet_size > 2 }
-			change_planet_size = -1
-			planet_event = { id = giga_mega.302 days = 720 }
+			solar_system.owner = { country_event = { id = giga_dialog.3305 days = 1 } }
 		}
 	}
 }
@@ -706,14 +999,14 @@ country_event = {
 		set_spawn_system_batch = begin
 		if = {
 			limit = { has_global_flag = giga_core_aeternum }
-			no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_aeternum_initializer"	hyperlane = no  } }
+			no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_aeternum_initializer"	hyperlane = no  authorize_spawn_on_galactic_core = yes } }
 		}
 		else_if = {
 			limit = { NOT = { has_global_flag = giga_core_aeternum } has_global_flag = giga_core_birch }
-			no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_core_initializer"	hyperlane = no  } }
+			no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_core_initializer"	hyperlane = no  authorize_spawn_on_galactic_core = yes } }
 		}
 		else = {
-			no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_quasar_initializer"	hyperlane = no  } }
+			no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_quasar_initializer"	hyperlane = no  authorize_spawn_on_galactic_core = yes } }
 		}
 		event_target:giga_core_system = {
 			if = {
@@ -913,7 +1206,7 @@ planet_event = {
 				limit = { owner = { NOT = { is_immune_to_giga_hyperweapon = yes } } } 
 				destroy_fleet = this 
 			}
-			every_system_planet = { limit = { is_star = no } remove_planet = yes }
+			every_system_planet = { limit = { is_star = no is_astral_scar = no } remove_planet = yes }
 			giga_remove_system_debris = yes
 			every_system_megastructure = {
 				limit = {
@@ -1090,56 +1383,44 @@ planet_event = {
 			}
 
 			# Remove all hyperlanes
+			set_spawn_system_batch = begin
 			every_system = {
 				limit = {
-					NOR = {
-						is_star_class = sc_blokkat_stripmined
-						any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
-					}
 					distance = {
 						source = prev
 						max_jumps = 4
 						use_bypasses = no
 					}
-				}
-				every_neighbor_system = { remove_hyperlane_safe = { from = this to = prev } }
-				set_star_flag = has_no_hyperlane
-			}
-
-			# Add new hyperlanes
-			every_system = {
-				limit = {
-					has_star_flag = has_no_hyperlane
+					hyperlane_eligible = yes
 					NOR = {
 						is_star_class = sc_blokkat_stripmined
 						any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
 					}
 				}
-				while = {
-					limit = {
-						event_target:penrose_detonator = {
-							any_owned_fleet = {
-								exists = solar_system
-								solar_system = { NOT = { has_star_flag = has_no_hyperlane } }
-								NOT = { can_access_system = prevprev }
-							}
-						}
-					}
-					random_system = {
-						limit = { has_star_flag = has_no_hyperlane }
-						remove_star_flag = has_no_hyperlane
-						set_star_flag = has_new_hyperlane
-						random_list = {
-							1 = { while = { count = 1 giga_generate_hyperlane = yes } }
-							1 = { while = { count = 2 giga_generate_hyperlane = yes } }
-						}
-					}
-				}
+				isolate_system = yes
+				set_star_flag = has_no_hyperlane
 			}
+			set_spawn_system_batch = end
 
+
+			# Add new hyperlanes
+			while = { count = 3 giga_generate_hyperlane = yes }
+			save_event_target_as = hyperlane_check_system
 			every_system = {
-				limit = { has_star_flag = has_new_hyperlane }
-				remove_star_flag = has_new_hyperlane
+				limit = {
+					NOT = { is_same_value = event_target:penrose_bomb_hyperlanes }
+					has_star_flag = has_no_hyperlane
+					NOR = {
+						is_star_class = sc_blokkat_stripmined
+						any_ship_in_system = { owner = { is_country_type = blokkat_stripminers } }
+					}
+					hyperlane_eligible = yes
+				}
+				while = { count = 3 giga_reconnect_system_normal = yes} #3 passes to reconnect the systems, should be more than enough
+			}
+			every_system = {
+				limit = { has_star_flag = has_no_hyperlanes }
+				remove_star_flag = has_no_hyperlanes
 			}
 		}
 	}
@@ -1537,7 +1818,7 @@ country_event = {
 						}
 					}
 					create_leader = {
-						class = admiral
+						class = commander
 						species = event_target:extradimensional_species
 						name = random
 						skill = 3
@@ -2135,7 +2416,7 @@ planet_event = {
 				create_army = {
 					owner = THIS.owner
 					type = giga_defense_nexus_army
-					name = "Planetary Guardians"
+					name = NAME_nexus_army
 				}
 			}
 			set_timed_planet_flag = {
@@ -2664,10 +2945,7 @@ country_event = {
 		from = {
 			any_system_megastructure = {
 				OR = {
-					is_megastructure_type = nicoll_beam_cooldown
-					is_megastructure_type = nicoll_beam_menu
-					is_megastructure_type = nicoll_beam_ready
-					is_megastructure_type = nicoll_beam_firing
+					is_any_max_ndb = yes
 					is_megastructure_type = quasi_stellar_obliterator_5
 					is_megastructure_type = quasi_stellar_obliterator_6
 					is_megastructure_type = quasi_stellar_obliterator_firing_1
@@ -2683,10 +2961,7 @@ country_event = {
 				from = {
 					any_system_megastructure = {
 						OR = { 					
-							is_megastructure_type = nicoll_beam_cooldown
-							is_megastructure_type = nicoll_beam_menu
-							is_megastructure_type = nicoll_beam_ready
-							is_megastructure_type = nicoll_beam_firing
+							is_any_max_ndb = yes
 							is_megastructure_type = quasi_stellar_obliterator_5
 							is_megastructure_type = quasi_stellar_obliterator_6
 							is_megastructure_type = quasi_stellar_obliterator_firing_1
@@ -2706,10 +2981,7 @@ country_event = {
 				NOT = {
 					any_owned_megastructure = {
 						OR = {
-							is_megastructure_type = nicoll_beam_cooldown
-							is_megastructure_type = nicoll_beam_menu
-							is_megastructure_type = nicoll_beam_ready
-							is_megastructure_type = nicoll_beam_firing
+							is_any_max_ndb = yes
 							is_megastructure_type = quasi_stellar_obliterator_5
 							is_megastructure_type = quasi_stellar_obliterator_6
 							is_megastructure_type = quasi_stellar_obliterator_firing_1

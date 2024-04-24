@@ -1,0 +1,99 @@
+anti_sirens_shield = {
+	entity = "giga_eawaf_sirens_panopticon_entity"
+	construction_entity = "giga_eawaf_sirens_panopticon_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_eawaf_disenchanter_4 }
+
+	build_time = 2000
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 10000
+			unity = @giga_small_mega_unity_cost
+			rare_crystals = 1000
+			exotic_gases = 1000
+			volatile_motes = 1000
+		}
+		upkeep = {
+			energy = 100
+			rare_crystals = 3
+			exotic_gases = 3
+			volatile_motes = 3
+		}
+	}
+
+	potential = {
+		is_ai = no
+		has_technology = giga_tech_eawaf_disenchanter_4
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+			custom_tooltip = { fail_text = "requires_not_asteroid"				is_asteroid = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+			custom_tooltip = {
+				fail_text = "requires_not_astral_scar"
+				is_astral_scar = no
+			}
+		}
+	}
+
+	ai_weight = {
+		weight = 0
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			giga_set_has_mega_flag = yes
+		}
+		event_target:giga_eaw_country = {
+			giga_eawaf_apply_strife_field_effects = yes
+		}
+	}
+}
+
+anti_sirens_shield_dismantle = {
+	entity = ""
+	portrait = "GFX_megastructure_construction_background"
+	upgrade_from = { anti_sirens_shield }
+
+	build_time = 180
+	resources = {
+		category = giga_megastructures
+		cost = {
+			energy = 1000
+			alloys = -10000
+		}
+	}
+
+	possible = { 
+		from = { 
+			hidden_trigger = {
+				is_ai = no # AI please, stop taking these down
+			}  
+		} 
+	}
+
+	ai_weight = { factor = 0 } # the completed substellar compressor is very good and very cheap, the AI should not take it down
+	on_build_complete = {
+		remove_megastructure = fromfrom
+		fromfrom.planet = {
+			giga_clear_has_mega_flag = yes
+		}
+		event_target:giga_eaw_country = {
+			giga_eawaf_apply_strife_field_effects = yes
+		}
+	}
+}

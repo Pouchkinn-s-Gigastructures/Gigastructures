@@ -42,11 +42,14 @@ automated_stripmine_0 = {
 		planet_possible = {
 			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
 			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
-			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
 			custom_tooltip = { fail_text = "requires_no_crisis_planet"			NOT = { has_planet_flag = crisis_vital_planet } }
 			custom_tooltip = { fail_text = "already_stripmined"					NOR = { has_planet_flag = stripminedplanet is_planet_class = pc_core_mined } }
 			custom_tooltip = { fail_text = "requires_not_minor_planetary_body"	is_asteroid = no is_moon = no }
 			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+			custom_tooltip = {
+				fail_text = "requires_not_astral_scar"
+				is_astral_scar = no
+			}
 			custom_tooltip = {
 				fail_text = "cant_build_around_gas"
 				NOR = {
@@ -55,9 +58,13 @@ automated_stripmine_0 = {
 					giga_brown_dwarf = yes
 				}
 			}
-			or = {
-				is_colony = no
-				owner = {is_ai = no}
+			hidden_trigger = {
+				or = {
+					is_colonizable = no
+					and = {
+						from = { is_ai = no }
+					}
+				}
 			}
 		}
 	}
@@ -139,123 +146,80 @@ automated_stripmine_0 = {
 	}
 }
 
+# automated_stripmine_1 = {
+# 	entity = "automated_stripmine_01_rotation_ni_entity"
+# 	construction_entity = "automated_stripmine_01_rotation_ni_entity"
+# 	portrait = "GFX_megastructure_barren"
+# 	upgrade_from = { automated_stripmine_0 }
+# 	scales_with_planet = yes
+# 	build_time = 1800
+# 	resources = {
+# 		category = giga_megastructures
+# 		cost = { alloys = 3000 unity = @giga_small_mega_unity_cost }
+# 		upkeep = {
+# 			alloys = 25
+# 			energy = 5
+# 		}
+# 	}
+
+# 	potential = { NOT = { has_global_flag = drill_disabled } }
+# 	possible = { from = { has_technology = giga_tech_automated_stripmine_2 } }
+
+# 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+# 	on_build_complete = {
+# 		save_event_target_as = giga_system
+# 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+# 		from = { country_event = { id = giga_dialog.3302 } }	# Notification
+# 	}
+# }
+
 automated_stripmine_1 = {
-	entity = "automated_stripmine_1_part_big_no_beam_entity"
-	construction_entity = "automated_stripmine_1_part_big_no_beam_entity"
+	entity = "automated_stripmine_01_rotation_i_entity"
+	construction_entity = "automated_stripmine_01_rotation_ni_entity" #add animation on main drill for active entity
 	portrait = "GFX_megastructure_barren"
 	upgrade_from = { automated_stripmine_0 }
-
-	build_time = 1800
+	scales_with_planet = yes
+	build_time = 3600
 	resources = {
 		category = giga_megastructures
-		cost = { alloys = 3000 unity = @giga_small_mega_unity_cost }
-		upkeep = {
-			alloys = 25
-			energy = 5
-		}
+		cost = { alloys = 7500 unity = @giga_mega_unity_cost }
+		#Defaults
+		produces = { trigger = { NOT = { is_scope_type = megastructure } } minerals = 250 } #If the planet doesn't exist the mega hasn't been built in all likelihood
+		upkeep = { trigger = { NOT = { is_scope_type = megastructrue } } energy = 75 }
+
+		upkeep = { energy = 75 multiplier = value:giga_stripmine_speed_manage }
+		produces = { trigger = { is_scope_type = megastructure } minerals = 1 multiplier = value:giga_stripmine_mineral_output_final }
+		produces = { trigger = { is_scope_type = megastructure } alloys = 1 multiplier = value:giga_stripmine_alloy_output }
+		produces = { trigger = { is_scope_type = megastructure } exotic_gases = 1 multiplier = value:giga_stripmine_sr_exotic_gases_output }
+		produces = { trigger = { is_scope_type = megastructures } rare_crystals = 1 multiplier = value:giga_stripmine_sr_rare_crystals_output }
+		produces = { trigger = { is_scope_type = megastructure } volatile_motes = 1 multiplier = value:giga_stripmine_sr_volatile_motes_output }
+		produces = { trigger = { has_global_flag = @giga_amb_flag is_scope_type = megastructure } giga_sr_amb_megaconstruction = 1 multiplier = value:giga_stripmine_sr_amb_output }
+		produces = { trigger = { has_ancrel = yes is_scope_type = megastructure planet = { exists = archaeological_site } exists = this } minor_artifacts = 1 multiplier = value:giga_stripmine_minor_artifacts_output }
+		produces = { trigger = { is_scope_type = megastructure } food = 1 multiplier = value:giga_stripmine_food_output } # 1/6 of whatever the mineral output is 
 	}
 
 	potential = { NOT = { has_global_flag = drill_disabled } }
 	possible = { from = { has_technology = giga_tech_automated_stripmine_2 } }
 
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
-	on_build_complete = {
-		save_event_target_as = giga_system
-		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
-		from = { country_event = { id = giga_dialog.3302 } }	# Notification
-	}
-}
-
-automated_stripmine_2 = {
-	entity = "automated_stripmine_1_part_big_entity"
-	portrait = "GFX_megastructure_barren"
-	upgrade_from = { automated_stripmine_1 }
-
-	build_time = 720
-	resources = {
-		category = giga_megastructures
-		cost = {
-			alloys = 1500
-			energy = 5000
-			unity = @giga_small_mega_unity_cost
-		}
-		upkeep = { energy = 75 }
-		produces = {
-			trigger = {
-				planet = {
-					NOR = {
-						# is_planet_class = pc_diamond
-						# is_planet_class = pc_chthonian
-						# is_planet_class = pc_ethane_ocean
-						has_modifier = pd_diamond
-						has_modifier = pd_chthonian
-						has_modifier = pd_ethane_ocean
-						has_planet_flag = pc_diamond
-						has_planet_flag = pc_chthonian
-						has_planet_flag = pc_ethane_ocean
-					}
-				}
-			}
-			minerals = 250
-		}
-		produces = {
-			trigger = {
-				planet = {
-					OR = {
-						has_modifier = pd_diamond
-						has_planet_flag = pc_diamond
-					}
-				}
-			}
-			minerals = 300
-			rare_crystals = 15
-		}
-		produces = {
-			trigger = {
-				planet = {
-					OR = {
-						has_modifier = pd_chthonian
-						has_planet_flag = pc_chthonian
-					}
-				}
-			}
-			minerals = 350
-			alloys = 75
-		}
-		produces = {
-			trigger = {
-				planet = {
-					OR = {
-						has_modifier = pd_ethane_ocean
-						has_planet_flag = pc_ethane_ocean
-					}
-				}
-			}
-			minerals = 200
-			exotic_gases = 15
+	on_build_start = {
+		fromfrom = {
+			save_event_target_as = giga_stripmine
+			giga_set_stripmine_info = yes
 		}
 	}
-
-	potential = { NOT = { has_global_flag = drill_disabled } }
-	possible = { from = { has_technology = giga_tech_automated_stripmine_2 } }
-
-	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
 	on_build_complete = {
 		save_event_target_as = giga_system
 		fromfrom.planet = {
 			save_event_target_as = giga_planet
-			if = {
-				limit = { has_modifier = giga_pd_diamond_planet }
-				remove_modifier = giga_pd_diamond_planet
-			}
-			if = {
-				limit = { has_modifier = giga_pd_ethane_planet }
-				remove_modifier = giga_pd_ethane_planet
-			}
-			if = {
-				limit = { has_modifier = giga_pd_chthonian_planet }
-				remove_modifier = giga_pd_chthonian_planet
-			}
+		}
+		from = { 
+			save_event_target_as = giga_stripmine_builder
+		}
+		fromfrom = {
+			save_event_target_as = giga_stripmine
+			giga_set_stripmine_info = yes
+			giga_stripmine_colony_destruction = yes
 		}
 		from = {
 			country_event = { id = giga_dialog.3303 }	# Notification
@@ -269,6 +233,18 @@ automated_stripmine_2 = {
 				set_country_flag = giga_achievement_61
 				set_timed_country_flag = { flag = giga_achievement_61_notification days = 30 }
 				giga_achievement_sound = yes
+			}
+		}
+		event_target:giga_global_situation_country = {
+			start_situation = {
+				type = giga_situation_stripmine
+				target = fromfrom
+				effect = {
+					save_global_event_target_as = situation_of_stripmine_@target
+					target = {
+						set_megastructure_flag = stripmine_mega_of_@prev
+					}					
+				}
 			}
 		}
 	}

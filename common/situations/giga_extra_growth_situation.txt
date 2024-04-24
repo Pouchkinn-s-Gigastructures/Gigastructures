@@ -1,0 +1,82 @@
+giga_situation_extra_growth = {
+    picture = GFX_evt_clones
+
+    complete_icon = GFX_situation_outcome_unknown
+    complete_icon_frame = GFX_situation_outcome_frame_blue
+
+    monthly_progress = { base = 0 }
+    on_progress_complete = {}
+
+     stages = {
+        stage_1 = {
+            icon = GFX_situation_stage_giga_frameworld_outpost
+            icon_background = GFX_situation_stage_frame_blue
+            end = 100
+        }
+    }
+
+    approach = {
+        name = approach_observe
+        icon = GFX_situation_approach_balance_sheet
+        icon_background = GFX_situation_approach_bg_yellow
+        default = yes
+    }
+
+    abort_trigger = {
+        or = {
+            not = { exists = target }
+            target = {
+                is_scope_valid = no
+            }
+        }
+    }
+
+    on_abort = {
+        clear_global_event_target = giga_growth_situation@target
+    }
+
+    on_start = {
+        save_global_event_target_as = giga_growth_situation@target
+
+        # I guess we'll have to assume default growth settings for now
+        # since apparently the setting export doesn't include them!
+        set_variable = {
+            which = logistic_growth_ceiling
+            value = 1.5
+        }
+        set_variable = {
+            which = growth_required_scaling
+            value = 0.25
+        }
+
+        # can't get planet capacity either, so we'll need a per-empty-district capacity set by the planet
+        # and since we can't get THAT directly either... let's just assume the default for now
+        set_variable = {
+            which = capacity_per_empty_district
+            value = @carry_cap_normal
+        }
+
+        # set up growth tracker
+        set_variable = {
+            which = current_growth
+            value = 0
+        }
+
+        # assimilation tracker
+        set_variable = {
+            which = current_assimilation
+            value = 0
+        }
+
+        # run the monthly update event just to make sure stuff gets going
+        giga_extra_growth_tick = {
+            no_growth = yes # no growth for the initial tick
+        }
+    }
+
+    on_monthly = {
+        events = {
+            giga_extra_growth.001
+        }
+    }
+}

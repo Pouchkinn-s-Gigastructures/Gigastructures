@@ -67,7 +67,7 @@ country_event = {
 			}
 			if = {
 				limit = { NOT = { has_global_flag = giga_core_aeternum_4 } }
-				add_district = district_giga_birch_extraction
+				add_district = district_giga_birch_orykta
 				add_district = district_giga_birch_ktisma
 				add_district = district_giga_birch_physma
 			}
@@ -1661,6 +1661,9 @@ country_event = {
 				}
 			}
 		}
+		event_target:aeternum_crusade = {
+			set_war_flag = ignored_in_kaiser_fall
+		}
 		if = {
 			limit = {
 				any_country = { 
@@ -2466,12 +2469,15 @@ country_event = {
 				location = ROOT.fromfromfrom
 			}
 			last_created_ambient_object = {
-				save_event_target_as = giga_temp_aet_planet
+				save_event_target_as = giga_temp_aet_ambient_obj
 			}
 			spawn_megastructure = {
 				type = aeternum_planetcraft_ruined
 				owner = space_owner
 				coords_from = event_target:giga_temp_aet_aet_planet
+				init_effect = {
+					save_event_target_as = giga_temp_aet_planet
+				}
 			}
 			event_target:giga_temp_aet_aet_planet = { remove_planet = yes }
 		}
@@ -2529,7 +2535,7 @@ ship_event = {
 					count = 3
 					increase_aeternite_intel = yes
 				}
-				event_target:giga_temp_aet_planet = { destroy_ambient_object = this }
+				event_target:giga_temp_aet_ambient_obj = { destroy_ambient_object = this }
 			}
 		}
 	}
@@ -6006,11 +6012,9 @@ country_event = {
 			if = { limit = { has_country_flag = aet_exp_civ_space } remove_country_flag = aet_exp_civ_space }
 			if = { limit = { has_country_flag = aet_exp_civ_fe } remove_country_flag = aet_exp_civ_fe }
 			event_target:aeternum_birch_world = {
-				while = {
+				create_pop = {
+					species = event_target:aet_birch_civilisation
 					count = 20
-					create_pop = {
-						species = event_target:aet_birch_civilisation
-					}
 				}
 				every_owned_pop = {
 					limit = { is_species = event_target:aet_birch_civilisation }
@@ -6036,11 +6040,9 @@ country_event = {
 
 		hidden_effect = {
 			event_target:aeternum_birch_world = {
-				while = {
+				create_pop = {
+					species = event_target:aet_birch_civilisation
 					count = 40
-					create_pop = {
-						species = event_target:aet_birch_civilisation
-					}
 				}
 			}
 			if = { limit = { has_country_flag = aet_exp_civ_primitive } remove_country_flag = aet_exp_civ_primitive }
@@ -6066,11 +6068,9 @@ country_event = {
 		}
 		hidden_effect = {
 			event_target:aeternum_birch_world = {
-				while = {
+				create_pop = {
+					species = event_target:aet_birch_civilisation
 					count = 80
-					create_pop = {
-						species = event_target:aet_birch_civilisation
-					}
 				}
 			}
 			if = { limit = { has_country_flag = aet_exp_civ_primitive } remove_country_flag = aet_exp_civ_primitive }
@@ -6152,11 +6152,9 @@ country_event = {
 			has_country_flag = aet_exp_civ_primitive
 		}
 		event_target:aeternum_birch_world = {
-			while = {
+			create_pop = {
+				species = event_target:aet_birch_civilisation
 				count = 20
-				create_pop = {
-					species = event_target:aet_birch_civilisation
-				}
 			}
 		}
 		add_resource = {
@@ -6189,11 +6187,9 @@ country_event = {
 			has_country_flag = aet_exp_civ_space
 		}
 		event_target:aeternum_birch_world = {
-			while = {
+			create_pop = {
+				species = event_target:aet_birch_civilisation
 				count = 40
-				create_pop = {
-					species = event_target:aet_birch_civilisation
-				}
 			}
 		}
 		add_resource = {
@@ -6230,11 +6226,9 @@ country_event = {
 		}
 		event_target:aeternum_birch_world = {
 			set_update_modifiers_batch = begin #Helps reduce lag from making all the pops
-			while = {
+			create_pop = {
+				species = event_target:aet_birch_civilisation
 				count = 80
-				create_pop = {
-					species = event_target:aet_birch_civilisation
-				}
 			}
 			set_update_modifiers_batch = end
 		}
@@ -6632,7 +6626,7 @@ country_event = {
 		}
 		event_target:global_event_country = {
 			create_leader = {
-				class = admiral
+				class = commander
 				species = event_target:douclaw_portrait
 				name = "Douclaw MacCathur"
 				skill = 8
@@ -6670,7 +6664,7 @@ country_event = {
 		response_text = "giga_aeternum.43252.c.response"
 		custom_tooltip = "giga_aeternum.43252.c.tooltip"
 		create_leader = {
-			class = admiral
+			class = commander
 			species = event_target:douclaw_portrait
 			name = "Douclaw MacCathur"
 			skill = 8
@@ -6911,6 +6905,7 @@ country_event = { #agency established
 		name = "giga_aeternum.3009.a"
 		custom_tooltip = "giga_aeternum.3009.a.tooltip"
 		hidden_effect = {
+			set_country_flag = gigas_diplo_engaged
 			set_country_flag = aeternite_agency_unlocked
 			set_variable = {
 				which = aeternite_intel_count
@@ -8973,18 +8968,14 @@ planet_event = {
 			}
 			set_owner = event_target:birch_aeternum
 			set_capital = yes
-			while = { count = 10	create_army = { name = "Aeternite Guardians"	owner = last_created_country species = event_target:birch_aeternites type = "aeternite_defender" } }
-			while = { #here they come
+			while = { count = 10	create_army = { name = NAME_aeternite_defender	owner = last_created_country species = event_target:birch_aeternites type = "aeternite_defender" } }
+			create_pop = {
+				species = event_target:birch_aeternites
 				count = 250
-				create_pop = {
-					species = event_target:birch_aeternites
-				}
 			}
-			while = { #here they come
+			create_pop = {
+				species = event_target:birch_aeternites_robots
 				count = 100
-				create_pop = {
-					species = event_target:birch_aeternites_robots
-				}
 			}
 		}
 	}
@@ -9092,37 +9083,53 @@ ship_event = {
 	}
 
 	immediate = {
-		solar_system = {
-			starbase = {
-				set_owner = prevprev.from.owner
-				set_starbase_size = starbase_citadel
-				set_starbase_module = {
-					slot = 1
-					module = gun_battery
+		if = {
+			limit = { from.owner = { is_country_type = default } }
+			solar_system = {
+				starbase = {
+					set_owner = prevprev.from.owner
+					set_starbase_size = starbase_citadel
+					set_starbase_module = {
+						slot = 1
+						module = gun_battery
+					}
+					set_starbase_module = {
+						slot = 2
+						module = gun_battery
+					}
+					set_starbase_module = {
+						slot = 3
+						module = gun_battery
+					}
+					set_starbase_module = {
+						slot = 4
+						module = gun_battery
+					}
+					set_starbase_module = {
+						slot = 5
+						module = hangar_bay
+					}
+					set_starbase_module = {
+						slot = 6
+						module = hangar_bay
+					}
+					set_starbase_building = {
+						slot = 1
+						building = target_uplink_computer
+					}
 				}
-				set_starbase_module = {
-					slot = 2
-					module = gun_battery
-				}
-				set_starbase_module = {
-					slot = 3
-					module = gun_battery
-				}
-				set_starbase_module = {
-					slot = 4
-					module = gun_battery
-				}
-				set_starbase_module = {
-					slot = 5
-					module = hangar_bay
-				}
-				set_starbase_module = {
-					slot = 6
-					module = hangar_bay
-				}
-				set_starbase_building = {
-					slot = 1
-					building = target_uplink_computer
+			}
+		}
+		else = {
+			solar_system = {
+				starbase = { 
+					fire_on_action = {
+						on_action = on_starbase_destroyed
+						scopes = { from = prevprev.from }
+					}
+					fleet = {
+						delete_fleet = this
+					}
 				}
 			}
 		}

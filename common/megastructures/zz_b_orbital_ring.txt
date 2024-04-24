@@ -5,7 +5,11 @@ orbital_ring = {
 	place_entity_on_planet_plane = yes
 	entity_offset = { x = 0 y = 0 }
 	scales_with_planet = yes
+	show_galactic_map_icon = no
+	show_in_outliner = no
 	build_time = 720
+
+	starbase = starbase_level_orbital_ring_tier_1
 
 	resources = {
 		category = megastructures
@@ -90,12 +94,25 @@ orbital_ring = {
 						has_planet_flag = giga_planet_mega
 						is_planet_class = pc_giga_planetary_computer
 						is_planet_class = pc_habitable_gas_giant
+						# Special exception so you can build an orbital ring even if you have MSI's warship as a habitat.
+						has_planet_flag = has_payback_habitat
 						# any of these disqualify
 						AND = {
 							giga_habitable_structure = no # gigas own structures
 							habitable_structure = no # vanilla wrapper for is_artificial basically
 							is_regular_giga_maginot_world = no
+							NOT = { has_planet_flag = ruined_orbital_ring_planet }
 						}
+					}
+				}
+				else = { #If overwrite is active, we're only blocked from building it on ringworlds
+					NOR = {
+						is_planet_class = pc_ringworld_habitable_damaged
+						is_planet_class = pc_ringworld_tech
+						is_planet_class = pc_ringworld_tech_damaged
+						is_planet_class = pc_ringworld_seam
+						is_planet_class = pc_ringworld_seam_damaged
+						
 					}
 				}
 			}
@@ -120,16 +137,8 @@ orbital_ring = {
 		factor = 5
 
 		modifier = {
-			factor = 0
+			factor = 0.1
 			starbase = { NOT = { has_starbase_size >= starbase_starport } }
-		}
-
-		modifier = {
-			factor = 0
-			any_system_planet = {
-				is_planet_class = pc_habitat
-				is_colony = no
-			}
 		}
 
 		modifier = {
@@ -152,6 +161,13 @@ orbital_ring = {
 			any_neighbor_system = {
 				exists = owner
 				owner = { NOT = { is_same_value = from } }
+			}
+		}
+		modifier = {
+			factor = 3
+			any_system_colony = {
+				num_pops >= 50
+				NOT = { exists = orbital_defence }
 			}
 		}
 	}
@@ -205,6 +221,8 @@ orbital_ring_restored = {
 	place_entity_on_planet_plane = yes
 	entity_offset = { x = 0 y = 0 }
 	scales_with_planet = yes
+	show_galactic_map_icon = no
+	show_in_outliner = no
 	build_time = 720
 
 	resources = {
@@ -219,7 +237,10 @@ orbital_ring_restored = {
 
 	possible = {
 		from = { has_technology = tech_orbital_ring_tier_1 }
-		exists = starbase
+		custom_tooltip = {
+			fail_text = "requires_outpost"
+			exists = starbase
+		}
 		custom_tooltip = {
 			fail_text = "requires_inside_border"
 			is_inside_border = from
@@ -233,7 +254,7 @@ orbital_ring_restored = {
 		}
 		custom_tooltip = {
 			fail_text = "requires_colonized_planet_orbital_ring"
-			any_system_planet = {
+			any_system_colony = {
 				has_planet_flag = ruined_orbital_ring_planet
 				is_colony = yes
 				exists = owner
