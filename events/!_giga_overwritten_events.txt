@@ -372,6 +372,7 @@ planet_event = {
 				limit = {
 					NOR = {
 						giga_is_gas_giant = yes
+						is_planet_class = pc_shattered_ring_habitable
 						is_planet_class = pc_ringworld_habitable
 						is_planet_class = pc_ringworld_habitable_damaged
 						is_planet_class = pc_ringworld_tech
@@ -390,11 +391,49 @@ planet_event = {
 				}
 				every_owned_pop = {
 					limit = {
-						is_robot_pop = no
 						is_sapient = yes
 					}
+					# add planet class to organics
 					if = {
-						limit = { NOT = { has_trait = trait_natural_physicists } }
+						limit = { is_robot_pop = no }
+						modify_species = {
+							species = this
+							ideal_planet_class = pc_nuked
+						}
+					}
+					# add planet classes to basic machines
+					if = {
+						limit = { has_trait = trait_wet_planet_preference }
+						modify_species = {
+							species = this
+							remove_trait = trait_wet_planet_preference
+							add_trait = trait_machine_pc_nuked_preference
+						}
+					}
+					if = {
+						limit = { has_trait = trait_dry_planet_preference }
+						modify_species = {
+							species = this
+							remove_trait = trait_dry_planet_preference
+							add_trait = trait_machine_pc_nuked_preference
+						}
+					}
+					if = {
+						limit = { has_trait = trait_frozen_planet_preference }
+						modify_species = {
+							species = this
+							remove_trait = trait_frozen_planet_preference
+							add_trait = trait_machine_pc_nuked_preference
+						}
+					}
+					# add traits to organics
+					if = {
+						limit = { 
+							is_robot_pop = no
+							NOT = { 
+								has_trait = trait_natural_physicists 
+							} 
+						}
 						# remove opposite traits
 						if = {
 							limit = { has_trait = trait_natural_engineers }
@@ -424,7 +463,12 @@ planet_event = {
 						}
 					}
 					if = {
-						limit = { NOT = { has_trait = trait_repugnant } }
+						limit = {
+							is_robot_pop = no
+							NOT = { 
+								has_trait = trait_repugnant
+							}
+						}
 						# remove opposite traits
 						if = {
 							limit = { has_trait = trait_charismatic }
@@ -438,9 +482,55 @@ planet_event = {
 							add_trait = trait_repugnant
 						}
 					}
-					modify_species = {
-						species = this
-						ideal_planet_class = pc_nuked
+					#Add traits to machines
+					if = {
+						limit = { 
+							is_robot_pop = yes
+							NOT = { 
+								has_trait = trait_robot_artificial_physicists 
+							} 
+						}
+						# remove opposite traits
+						if = {
+							limit = { has_trait = trait_robot_artificial_engineers }
+							modify_species = {
+								species = this
+								remove_trait = trait_robot_artificial_engineers
+							}
+						}
+						if = {
+							limit = { has_trait = trait_robot_artificial_sociologists }
+							modify_species = {
+								species = this
+								remove_trait = trait_robot_artificial_sociologists
+							}
+						}
+						# add trait
+						modify_species = {
+							species = this
+							add_trait = trait_robot_artificial_engineers
+						}
+					}
+					if = { #IM trait
+						limit = { 
+							is_robot_pop = yes
+							NOT = { 
+								has_trait = trait_robot_uncanny
+							} 
+						}
+						# remove opposite traits
+						if = {
+							limit = { has_trait = trait_robot_emotion_emulators }
+							modify_species = {
+								species = this
+								remove_trait = trait_robot_emotion_emulators
+							}
+						}
+						# add trait
+						modify_species = {
+							species = this
+							add_trait = trait_robot_uncanny
+						}
 					}
 				}
 				change_pc = pc_nuked
@@ -451,6 +541,7 @@ planet_event = {
 				limit = { is_star = yes }
 				change_pc = pc_black_hole
 			}
+			set_star_flag = worm_black_hole
 			set_star_class = sc_black_hole
 		}
 		owner = { observer_event = { id = observer.71 } }
@@ -481,6 +572,7 @@ ship_event = {
 	picture = GFX_evt_gray_gooed_planet
 	show_sound = event_laboratory_sound
 	is_triggered_only = yes
+	event_chain = parvus_III_chain
 
 	option = {
 		name = anomaly.6715.a
@@ -517,6 +609,9 @@ ship_event = {
 					clear_blocker = yes
 				}
 			}
+		}
+		owner = {
+			end_event_chain = parvus_III_chain
 		}
 	}
 }
@@ -916,8 +1011,11 @@ system_event = {
 			bypass_type = strange_wormhole
 			in_place_of = from
 			graphics_entity_name = strange_wormhole_entity
+			init_effect = {
+				link_wormholes = event_target:strange_wormhole_bypass
+				clear_global_event_target = strange_wormhole_bypass
+			}
 		}
-		link_wormholes = event_target:formless_system
 		set_global_flag = strange_wormholes_locked
 		destroy_astral_rift = from
 		# Strange Wormhole encounter
