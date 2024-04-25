@@ -1,19 +1,37 @@
+@science_kilo_cost_1 		= 500 
+
+@science_kilo_cost_2 		= 1000
+
+@science_kilo_alloys_3 		= 1500 
+@science_kilo_unity_3 		= 2000 
+
+@science_kilo_alloys_4 		= 2000 
+@science_kilo_unity_4 		= 4000 
+
+@science_kilo_alloys_repair = 3000
+@science_kilo_unity_repair	= 2000
 atmosphere_shredder_0 = {
-	entity = "giga_consite_5_5_entity"
-	construction_entity = "giga_consite_5_5_entity"
-	# construction_blocks_and_blocked_by = none # BLOCKING TEST
-	portrait = "GFX_megastructure_construction_background"
-	place_entity_on_planet_plane = no
+	entity = "giga_storm_observatory_1"
+	construction_entity = "giga_storm_observatory_1_con"
+	portrait = "GFX_megastructure_cybernetics"
+	place_entity_on_planet_plane = yes
+	use_planet_resource = yes
+	entity_offset = { x = 0 y = 0 } 
+	scales_with_planet = yes
+
 	prerequisites = { giga_tech_macro_scale_weather_manipulation }
 
-	build_time = 1800
+	build_time = 360
 	resources = {
 		category = giga_kilostructures
 		cost = {
-			alloys = 5000
-			unity = @giga_kilo_unity_cost
+			alloys = @science_kilo_cost_1
+			unity = @science_kilo_cost_1
 		}
-		upkeep = { energy = 5 }
+		upkeep = { 
+			consumer_goods = 5
+			energy = 10 
+		}
 	}
 
 	potential = {
@@ -29,7 +47,7 @@ atmosphere_shredder_0 = {
 		custom_tooltip = { fail_text = "requires_inside_border" 			is_inside_border = from }
 		custom_tooltip = { fail_text = "requires_no_anomalies" 				NOT = { any_system_planet = { has_anomaly = yes } } }
 		custom_tooltip = { fail_text = "requires_more_planetary_bodies" 	num_planets_in_system >= 8 } #Placeholder key for until we have the arc furnace key
-		custom_tooltip = { fail_text = "requires_no_furnace"				always = yes } #placeholder
+		custom_tooltip = { fail_text = "requires_no_arc_furnace" 			system_has_arc_furnace = no }
 		custom_tooltip = { fail_text = "requires_no_atmosphere_shredder"		NOT = { any_system_megastructure = { ehof_giga_new_is_atmosphere_shredder = yes } } } 
 		custom_tooltip = {
 			fail_text = "requires_not_capped"
@@ -71,40 +89,67 @@ atmosphere_shredder_0 = {
 
 		modifier = { factor = 2.00	from = { has_federation = yes federation = { has_federation_type = research_federation } } }
 	}
-
+	on_build_start = {
+		set_star_flag = atmosphere_shredder_construction
+	}
+	on_build_cancel = {
+		remove_star_flag = atmosphere_shredder_construction
+	}
 	on_build_complete = {
 		save_event_target_as = giga_system
+		remove_star_flag = atmosphere_shredder_construction
 		fromfrom.planet = {
+			set_planet_flag = has_atmosphere_shredder
 			save_event_target_as = giga_planet
-			# if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
 			giga_set_has_mega_flag = yes
+			set_planet_entity = {
+				entity = storm_gas_giant_01_entity
+			}
 		}
 		from = {
 			set_timed_country_flag = { flag = has_recently_built_atmosphere_shredder years = 20 }
-			country_event = { id = giga_dialog.401 }	# Notification
+			country_event = { id = giga_dialog.13801 }	# Notification
 			change_variable = { which = giga_current_storm_observatory value = 1 }
+		}
+		every_system_planet = {
+			limit = {
+				NOT = { has_deposit_for = shipclass_mining_station }
+				is_star = no
+				is_astral_scar = no
+				colonizable_planet = no
+			}
+			save_event_target_as = target_planet
+			add_deposit = d_physics_2
+			science_kilo_update_orbital_effect = yes
+			add_modifier = {
+				modifier = orbital_atmosphere_shredder_1_mod
+				days = -1
+			}
 		}
 	}
 }
 
 atmosphere_shredder_1 = {
-	entity = "eng_storm_observatory_station_1"
-	# entity = "giga_test_site" 
-	construction_entity = "eng_storm_observatory_station_1"
+	entity = "giga_storm_observatory_2"
+	construction_entity = "giga_storm_observatory_2_con"
 	portrait = "GFX_megastructure_cybernetics"
-	place_entity_on_planet_plane = no # Yes
-
-	# Test Model settings
-	# entity_offset = { x = 0 y = 0 } 
-	# scales_with_planet = yes
+	place_entity_on_planet_plane = yes
+	use_planet_resource = yes
+	entity_offset = { x = 0 y = 0 } 
+	scales_with_planet = yes
 	upgrade_from = { atmosphere_shredder_0 }
 
-	build_time = 1800
+	build_time = 1080
 	resources = {
 		category = giga_kilostructures
-		cost = { alloys = 5000 unity = @giga_kilo_unity_cost }
+		cost = { 
+			alloys = @science_kilo_cost_2
+			unity = @science_kilo_cost_2 
+		}
 		upkeep = {
-			energy = 33
+			consumer_goods = 10
+			energy = 20
 		}
 	}
 
@@ -113,67 +158,59 @@ atmosphere_shredder_1 = {
 
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
 	on_build_complete = {
-		every_system_planet = {
-			if = {
-				limit = {
-					is_colonizable = no
-					is_star = no
-				}
-				if = {
-					limit = { 
-						OR = {
-							has_deposit_for = shipclass_mining_station 
-							has_trade_deposit = yes
-						}
-					#	has_any_strategic_resource = no  
-					}
-					set_deposit = d_physics_4
-				}
-				else = {
-					add_deposit = d_physics_2
-				}
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			set_planet_entity = {
+				entity = storm_gas_giant_01_entity
 			}
 		}
-		save_event_target_as = giga_system
-		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
-		# from = {
-		# 	if = {
-		# 		limit = { NOT = { has_country_flag = giga_repaired_mega_no_dialog } }
-		# 		country_event = { id = giga_dialog.402 }				# Notification
-		# 	}
-		# 	if = {
-		# 		limit = {
-		# 			NOR = {
-		# 				has_global_flag = giga_achievements_disabled
-		# 				has_country_flag = giga_achievement_55
-		# 			}
-		# 		}
-		# 		set_country_flag = giga_achievement_55
-		# 		set_timed_country_flag = { flag = giga_achievement_55_notification days = 30 }
-		# 		giga_achievement_sound = yes
-		# 	}
-		# }
+		from = {
+			country_event = { id = giga_dialog.13802 }	# Notification
+		}
+		every_system_planet = {
+			limit = {
+				NOT = { has_deposit_for = shipclass_mining_station }
+				is_star = no
+				is_astral_scar = no
+				colonizable_planet = no
+			}
+			save_event_target_as = target_planet
+			add_deposit = d_physics_2
+			science_kilo_update_orbital_effect = yes
+			add_modifier = {
+				modifier = orbital_atmosphere_shredder_2_mod
+				days = -1
+			}
+			if = {
+				limit = {
+					has_modifier = orbital_atmosphere_shredder_1_mod
+				}
+				remove_modifier = orbital_atmosphere_shredder_1_mod
+			}
+		}
 	}
 }
 
 atmosphere_shredder_2 = {
-	entity = "eng_storm_observatory_station_1"
-	# entity = "giga_test_site" 
-	construction_entity = "eng_storm_observatory_station_1"
+	entity = "giga_storm_observatory_3"
+	construction_entity = "giga_storm_observatory_3_con"
 	portrait = "GFX_megastructure_cybernetics"
-	place_entity_on_planet_plane = no # Yes
-
-	# Test Model settings
-	# entity_offset = { x = 0 y = 0 } 
-	# scales_with_planet = yes
+	place_entity_on_planet_plane = yes
+	use_planet_resource = yes
+	entity_offset = { x = 0 y = 0 } 
+	scales_with_planet = yes
 	upgrade_from = { atmosphere_shredder_1 }
 
-	build_time = 1800
+	build_time = 1080
 	resources = {
 		category = giga_kilostructures
-		cost = { alloys = 5000 unity = @giga_kilo_unity_cost }
+		cost = { 
+			alloys = @science_kilo_alloys_3
+			unity = @science_kilo_unity_3
+		}
 		upkeep = {
-			energy = 66
+			consumer_goods = 20
+			energy = 40
 		}
 	}
 
@@ -182,69 +219,59 @@ atmosphere_shredder_2 = {
 
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
 	on_build_complete = {
-		every_system_planet = {
-			if = {
-				limit = {
-					is_colonizable = no
-					is_star = no
-				}
-				# if = {
-				# 	limit = { 
-				# 		OR = {
-				# 			has_deposit_for = shipclass_mining_station 
-				# 			has_trade_deposit = yes
-				# 		}
-				# 	#	has_any_strategic_resource = no  
-				# 	}
-				# 	set_deposit = d_physics_4
-				# }
-				add_deposit = d_physics_3
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			set_planet_entity = {
+				entity = storm_gas_giant_01_entity
 			}
 		}
-		save_event_target_as = giga_system
-		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
-		# from = {
-		# 	if = {
-		# 		limit = { NOT = { has_country_flag = giga_repaired_mega_no_dialog } }
-		# 		country_event = { id = giga_dialog.402 }				# Notification
-		# 	}
-		# 	if = {
-		# 		limit = {
-		# 			NOR = {
-		# 				has_global_flag = giga_achievements_disabled
-		# 				has_country_flag = giga_achievement_55
-		# 			}
-		# 		}
-		# 		set_country_flag = giga_achievement_55
-		# 		set_timed_country_flag = { flag = giga_achievement_55_notification days = 30 }
-		# 		giga_achievement_sound = yes
-		# 	}
-		# }
+		from = {
+			country_event = { id = giga_dialog.13803 }	# Notification
+		}
+		every_system_planet = {
+			limit = {
+				NOT = { has_deposit_for = shipclass_mining_station }
+				is_star = no
+				is_astral_scar = no
+				colonizable_planet = no
+			}
+			save_event_target_as = target_planet
+			add_deposit = d_physics_2
+			science_kilo_update_orbital_effect = yes
+			add_modifier = {
+				modifier = orbital_atmosphere_shredder_3_mod
+				days = -1
+			}
+			if = {
+				limit = {
+					has_modifier = orbital_atmosphere_shredder_2_mod
+				}
+				remove_modifier = orbital_atmosphere_shredder_2_mod
+			}
+		}
 	}
 }
 
 atmosphere_shredder_3 = {
-	entity = "eng_storm_observatory_station_1"
-	# entity = "giga_test_site" 
-	construction_entity = "eng_storm_observatory_station_1"
+	entity = "giga_storm_observatory_4"
+	construction_entity = "giga_storm_observatory_4_con"
 	portrait = "GFX_megastructure_cybernetics"
-	place_entity_on_planet_plane = no # Yes
-
-	# Test Model settings
-	# entity_offset = { x = 0 y = 0 } 
-	# scales_with_planet = yes
+	place_entity_on_planet_plane = yes
+	use_planet_resource = yes
+	entity_offset = { x = 0 y = 0 } 
+	scales_with_planet = yes
 	upgrade_from = { atmosphere_shredder_2 }
 	
-	country_modifier = {#placeholder 
-		station_researchers_produces_mult = 0.33
-		station_researchers_physics_research_produces_mult = 0.33
-	}
-	build_time = 1800
+	build_time = 1080 # 3 years
 	resources = {
 		category = giga_kilostructures
-		cost = { alloys = 5000 unity = @giga_kilo_unity_cost }
+		cost = { 
+			alloys = @science_kilo_alloys_4
+			unity = @science_kilo_unity_4
+		}
 		upkeep = {
-			energy = 100
+			consumer_goods = 25
+			energy = 50
 		}
 	}
 
@@ -253,80 +280,51 @@ atmosphere_shredder_3 = {
 
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
 	on_build_complete = {
-		every_system_planet = {
-			if = {
-				limit = {
-					is_colonizable = no
-					is_star = no
-				}
-				# if = {
-				# 	limit = { 
-				# 		OR = {
-				# 			has_deposit_for = shipclass_mining_station 
-				# 			has_trade_deposit = yes
-				# 		}
-				# 	#	has_any_strategic_resource = no  
-				# 	}
-				# 	set_deposit = d_physics_4
-				# }
-				add_deposit = d_physics_3
-			}
-		}
-		save_event_target_as = giga_system
-		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
-		# from = {
-		# 	if = {
-		# 		limit = { NOT = { has_country_flag = giga_repaired_mega_no_dialog } }
-		# 		country_event = { id = giga_dialog.402 }				# Notification
-		# 	}
-		# 	if = {
-		# 		limit = {
-		# 			NOR = {
-		# 				has_global_flag = giga_achievements_disabled
-		# 				has_country_flag = giga_achievement_55
-		# 			}
-		# 		}
-		# 		set_country_flag = giga_achievement_55
-		# 		set_timed_country_flag = { flag = giga_achievement_55_notification days = 30 }
-		# 		giga_achievement_sound = yes
-		# 	}
-		# }
-	}
-}
-
-atmosphere_shredder_1_dismantle = {
-	entity = ""
-	portrait = "GFX_megastructure_physics_research"
-	upgrade_from = { atmosphere_shredder_1 }
-
-	build_time = 10
-	resources = {
-		category = giga_kilostructures
-		cost = {
-			alloys = -1500
-			energy = 100
-		}
-	}
-
-	potential = {
-		NOT = { has_global_flag = storm_observatory_disabled }
-		is_ai = no
-	}
-	possible = { from = { has_technology = giga_tech_macro_scale_weather_manipulation } }
-
-	on_build_complete = {
 		save_event_target_as = giga_system
 		fromfrom.planet = {
-			save_event_target_as = giga_planet
-			giga_clear_has_mega_flag = yes
+			set_planet_entity = {
+				entity = storm_gas_giant_01_entity
+			}
 		}
-		from = { subtract_variable = { which = giga_current_storm_observatory value = 1 } }
-		remove_megastructure = fromfrom
+		from = {
+			country_event = { id = giga_dialog.13804 }	# Notification
+		}
+		every_system_planet = {
+			limit = {
+				NOT = { has_deposit_for = shipclass_mining_station }
+				is_star = no
+				is_astral_scar = no
+				colonizable_planet = no
+			}
+			save_event_target_as = target_planet
+			add_deposit = d_physics_2
+			science_kilo_update_orbital_effect = yes
+			add_modifier = {
+				modifier = orbital_atmosphere_shredder_4_mod
+				days = -1
+			}
+			# add_modifier = {
+			# 	modifier = orbital_test_site_4_mod
+			# 	days = -1
+			# }
+			# add_modifier = {
+			# 	modifier = orbital_eco_arcology_4_mod
+			# 	days = -1
+			# }
+			if = {
+				limit = {
+					has_modifier = orbital_atmosphere_shredder_3_mod
+				}
+				remove_modifier = orbital_atmosphere_shredder_3_mod
+			}
+		}
 	}
 }
 
+
+
 atmosphere_shredder_ruined = {
-	entity = "eng_storm_observatory_station_1_ruined"
+	entity = "giga_storm_observatory_ruined"
 	place_entity_on_planet_plane = no
 	portrait = "GFX_megastructure_construction_background"
 	potential = { always = no }
@@ -334,19 +332,22 @@ atmosphere_shredder_ruined = {
 }
 
 atmosphere_shredder_restored = {
-	entity = "eng_storm_observatory_station_1"
-	construction_entity = "eng_storm_observatory_station_1"
+	entity = "giga_storm_observatory_4"
+	construction_entity = "giga_storm_observatory_4_con"
 	portrait = "GFX_megastructure_cybernetics"
-	place_entity_on_planet_plane = no
+	place_entity_on_planet_plane = yes
+	use_planet_resource = yes
+	entity_offset = { x = 0 y = 0 } 
+	scales_with_planet = yes
 	upgrade_from = { atmosphere_shredder_ruined }
 
-	build_time = 1800
+	build_time = 720 # 2 years
 	resources = {
 		category = giga_kilostructures
 		cost = { alloys = 5000 unity = @giga_kilo_repair_unity_cost }
 		upkeep = {
-			energy = 25
-			alloys = 5
+			consumer_goods = 25
+			energy = 50
 		}
 	}
 
@@ -359,10 +360,77 @@ atmosphere_shredder_restored = {
 	ai_weight = { factor = value:giga_ai_base_repairs } # If we can build it, we will build it
 	on_build_complete = {
 		save_event_target_as = giga_system
-		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
-		from = {
-			country_event = { id = giga_dialog.404 }	# Notification
+		fromfrom.planet = {
+			set_planet_entity = {
+				entity = storm_gas_giant_01_entity
+			}
 		}
-		giga_remove_system_debris = yes
+		from = {
+			country_event = { id = giga_dialog.13804 }	# Notification
+			change_variable = { which = giga_current_storm_observatory value = 1 }
+		}
+		every_system_planet = {
+			limit = {
+				NOT = { has_deposit_for = shipclass_mining_station }
+				is_star = no
+				is_astral_scar = no
+				colonizable_planet = no
+			}
+			save_event_target_as = target_planet
+			add_deposit = d_physics_2
+			add_deposit = d_physics_2
+			add_deposit = d_physics_2
+			add_deposit = d_physics_2
+			science_kilo_update_orbital_effect = yes
+			add_modifier = {
+				modifier = orbital_atmosphere_shredder_4_mod
+				days = -1
+			}
+			# add_modifier = {
+			# 	modifier = orbital_test_site_4_mod
+			# 	days = -1
+			# }
+			# add_modifier = {
+			# 	modifier = orbital_eco_arcology_4_mod
+			# 	days = -1
+			# }
+			if = {
+				limit = {
+					has_modifier = orbital_atmosphere_shredder_3_mod
+				}
+				remove_modifier = orbital_atmosphere_shredder_3_mod
+			}
+		}
 	}
 }
+
+# atmosphere_shredder_1_dismantle = {
+# 	entity = ""
+# 	portrait = "GFX_megastructure_physics_research"
+# 	upgrade_from = { atmosphere_shredder_1 }
+
+# 	build_time = 10
+# 	resources = {
+# 		category = giga_kilostructures
+# 		cost = {
+# 			alloys = -1500
+# 			energy = 100
+# 		}
+# 	}
+
+# 	potential = {
+# 		NOT = { has_global_flag = storm_observatory_disabled }
+# 		is_ai = no
+# 	}
+# 	possible = { from = { has_technology = giga_tech_macro_scale_weather_manipulation } }
+
+# 	on_build_complete = {
+# 		save_event_target_as = giga_system
+# 		fromfrom.planet = {
+# 			save_event_target_as = giga_planet
+# 			giga_clear_has_mega_flag = yes
+# 		}
+# 		from = { subtract_variable = { which = giga_current_storm_observatory value = 1 } }
+# 		remove_megastructure = fromfrom
+# 	}
+# }
