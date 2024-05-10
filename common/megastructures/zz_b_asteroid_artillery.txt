@@ -16,6 +16,11 @@ asteroid_artillery_0 = {
 		upkeep = { energy = 5 }
 	}
 
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
 	potential = {
 		has_technology = giga_tech_asteroid_artillery
 		NOT = { has_global_flag = asteroid_artillery_disabled }
@@ -83,7 +88,7 @@ asteroid_artillery_1 = {
 	entity = ""
 	construction_entity = "giga_asteroid_artillery_new_gun_entity"
 	portrait = "GFX_megastructure_asteroid_artillery"
-	upgrade_from = { asteroid_artillery_0 }
+	upgrade_from = { asteroid_artillery_0 asteroid_artillery_config asteroid_artillery_repaired }
 	place_entity_on_planet_plane = no
 
 	build_time = 1800
@@ -92,6 +97,11 @@ asteroid_artillery_1 = {
 		cost = { alloys = 5000 unity = @giga_kilo_unity_cost }
 	}
 
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
 	potential = { NOT = { has_global_flag = asteroid_artillery_disabled } }
 	possible = { from = { has_technology = giga_tech_asteroid_artillery } }
 
@@ -276,6 +286,11 @@ asteroid_artillery_config = {
 
 	build_time = 0
 
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
 	potential = { is_ai = no NOR = { has_global_flag = asteroid_artillery_disabled has_global_flag = upgrading_ast_art } }
 	possible = { from = { has_technology = giga_tech_asteroid_artillery } }
 
@@ -287,11 +302,11 @@ asteroid_artillery_config = {
 				limit = { is_megastructure_type = asteroid_artillery_config }
 				planet = { save_global_event_target_as = asteroid_artillery_location }
 				solar_system = {
-					spawn_megastructure = {
-						type = "asteroid_artillery_1"
-						planet = PREV.planet
-						owner = root
-					}
+					# spawn_megastructure = {
+					# 	type = "asteroid_artillery_1"
+					# 	planet = PREV.planet
+					# 	owner = root
+					# }
 					random_fleet_in_system = {
 						limit = {
 							check_variable = {
@@ -302,7 +317,9 @@ asteroid_artillery_config = {
 						save_global_event_target_as = asteroid_artillery_ship_config_target
 					}
 				}
-				remove_megastructure = this
+				# remove_megastructure = this
+				upgrade_megastructure_to = asteroid_artillery_1
+				finish_upgrade = yes
 			}
 			country_event = { id = giga_artillery.1000 }
 		}	# Notification
@@ -335,8 +352,21 @@ asteroid_artillery_repaired = {
 		cost = { alloys = 2500 unity = @giga_kilo_repair_unity_cost }
 	}
 
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
 	potential = { NOT = { has_global_flag = asteroid_artillery_disabled } }
-	possible = { from = { has_technology = giga_tech_asteroid_artillery } }
+	possible = { 
+		from = { has_technology = giga_tech_asteroid_artillery } 
+		from = { is_same_empire = prev.space_owner }
+		NOT = {
+			any_fleet_in_system = {
+				is_in_combat = yes
+			}
+		}
+	}
 
 	ai_weight = { 
 		factor = value:giga_ai_base_repairs
@@ -347,12 +377,14 @@ asteroid_artillery_repaired = {
 		fromfrom.planet = {
 			set_planet_flag = just_repaired_ast_art
 		}
-		spawn_megastructure = {
-			type = "asteroid_artillery_1"
-			planet = ROOT.fromfrom.planet
-			owner = ROOT.from
-		}
+		# spawn_megastructure = {
+		# 	type = "asteroid_artillery_1"
+		# 	planet = ROOT.fromfrom.planet
+		# 	owner = ROOT.from
+		# }
 		from = { country_event = { id = giga_artillery.1003 } }	# Notification
-		remove_megastructure = fromfrom
+		# remove_megastructure = fromfrom
+		upgrade_megastructure_to = asteroid_artillery_1
+		finish_upgrade = yes
 	}
 }

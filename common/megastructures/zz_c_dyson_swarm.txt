@@ -1,0 +1,318 @@
+# Dyson Swarm First Stage
+dyson_swarm_1 = {
+	entity = "dyson_swarm_phase_1_entity"
+	construction_entity = "dyson_swarm_phase_1_entity"
+	portrait = "GFX_megastructure_dyson_swarm_background"
+	entity_offset = { x = 0.1 y = 0.1 }
+	rotate_to_center = no
+	scale_offset = yes
+	place_entity_on_planet_plane = yes
+	#show_in_outliner = no
+	use_planet_resource = yes
+	build_time = 1080 # 3 years
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 500
+			unity = 1000
+		}
+
+		upkeep = {
+			alloys = 5
+		}
+	}
+
+	construction_blocks_and_blocked_by = none
+
+	prerequisites = { "tech_dyson_swarm" }
+
+	potential = {
+		has_machine_age_dlc = yes
+	}
+
+	possible = {
+		hidden_trigger = {
+			exists = starbase
+		}
+		custom_tooltip = {
+			fail_text = "requires_inside_border"
+			is_inside_border = from
+		}
+		custom_tooltip = {
+			fail_text = "requires_surveyed_system"
+			NOT = {
+				any_system_planet = {
+					is_surveyed = {
+						who = prev.from
+						status = no
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_binary_trinary"
+			NOR = {
+				is_star_class = sc_binary_1
+				is_star_class = sc_binary_2
+				is_star_class = sc_binary_3
+				is_star_class = sc_binary_4
+				is_star_class = sc_binary_5
+				is_star_class = sc_binary_6
+				is_star_class = sc_binary_7
+				is_star_class = sc_binary_8
+				is_star_class = sc_binary_9
+				is_star_class = sc_binary_10
+				is_star_class = sc_trinary_1
+				is_star_class = sc_trinary_2
+				is_star_class = sc_trinary_3
+				is_star_class = sc_trinary_4
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_black_hole_neutron_star_pulsar"
+			NOT = {
+				is_star_class = sc_black_hole
+				is_star_class = sc_neutron_star
+				is_star_class = sc_pulsar
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_less_than_x_dyson_swarms"
+			from = {
+				check_variable = {
+					which = dyson_swarm_counter
+					value < value:dyson_swarm_limit
+				}
+			}
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = {
+				fail_text = "must_build_around_star"
+				is_star = yes
+			}
+			custom_tooltip = {
+				fail_text = "requires_no_anomaly"
+				NOT = { has_anomaly = yes }
+			}
+			custom_tooltip = {
+				fail_text = "requires_no_existing_megastructure"
+				NOR = {
+					has_planet_flag = megastructure
+					has_planet_flag = has_megastructure
+				}
+			}
+			if = {
+				limit = {
+					from = { is_ai = yes }
+				}
+				NOR = {
+					has_deposit = d_energy_1
+					has_deposit = d_energy_2
+				}
+			}
+		}
+	}
+
+	country_modifier = {
+		custom_tooltip = dyson_swarm_1_mod_tooltip
+	}
+
+	# root = system
+	# from = country
+	ai_weight = {
+		factor = 5
+
+		modifier = {
+			factor = 0.1
+			starbase = { NOT = { has_starbase_size >= starbase_starfortress } }
+		}
+
+		modifier = {
+			factor = 0.1
+			any_neighbor_system = {
+				exists = owner
+				NOT = {
+					owner = { is_same_value = from }
+				}
+			}
+		}
+	}
+
+	on_build_start = {}
+	on_build_cancel = {}
+	on_build_complete = {
+		from = { country_event = { id = cybernetics.1020 } }
+		fromfrom.planet = {
+			set_planet_flag = has_megastructure
+			if = {
+				limit = { has_orbital_station = yes }
+				orbital_station = {
+					dismantle = yes
+				}
+			}
+		}
+		from = {
+			change_variable = {
+				which = dyson_swarm_counter
+				value = 1
+			}
+		}
+	}
+}
+
+# Dyson Swarm Middle Stage
+dyson_swarm_2 = {
+	entity = "dyson_swarm_phase_2_entity"
+	construction_entity = "dyson_swarm_phase_2_entity"
+	portrait = "GFX_megastructure_dyson_swarm_background"
+	entity_offset = { x = -0.1 y = -0.1 }
+	rotate_to_center = no
+	scale_offset = yes
+	place_entity_on_planet_plane = yes
+	#show_in_outliner = no
+	use_planet_resource = yes
+	build_time = 1080 # 3 years
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 1000
+			unity = 2500
+		}
+
+		upkeep = {
+			alloys = 10
+		}
+	}
+
+	construction_blocks_and_blocked_by = none
+
+	upgrade_from = {
+		dyson_swarm_1
+	}
+
+	prerequisites = { "tech_dyson_swarm" }
+
+	potential = {
+		always = yes
+	}
+
+	country_modifier = {
+		custom_tooltip = dyson_swarm_2_mod_tooltip
+	}
+
+	on_build_complete = {
+		from = { country_event = { id = cybernetics.1025 } }
+	}
+}
+
+# Dyson Swarm Final Stage
+dyson_swarm_3 = {
+	entity = "dyson_swarm_phase_3_entity"
+	construction_entity = "dyson_swarm_phase_3_entity"
+	portrait = "GFX_megastructure_dyson_swarm_background"
+	entity_offset = { x = -0.1 y = -0.1 }
+	rotate_to_center = no
+	scale_offset = yes
+	place_entity_on_planet_plane = yes
+	outliner_trigger = {
+		exists = owner
+		system_has_arc_furnace = no
+		NOT = {
+			solar_system = {
+				has_star_flag = arc_furnace_construction
+			}
+		}
+		NOT = {
+			solar_system = {
+				any_system_planet = {
+					is_colony = yes
+					is_artificial = no
+					exists = owner
+					owner = {
+						is_primitive = no
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				solar_system = {
+					any_system_planet = {
+						exists = owner
+						owner = {
+							is_primitive = yes
+						}
+					}
+				}
+			}
+			from = {
+				has_policy_flag = interference_aggressive
+			}
+		}
+		owner = {
+			has_technology = tech_dyson_sphere
+			OR = {
+				NOR = {
+					has_country_flag = built_dyson_sphere_swarm
+					has_country_flag = built_dyson_sphere
+				}
+				AND = {
+					has_relic = r_contingency_core
+					NOR = {
+						has_country_flag = built_dyson_sphere_contingency_swarm
+						has_country_flag = built_dyson_sphere_contingency
+					}
+				}
+			}
+		}
+	}
+
+	construction_blocks_and_blocked_by = none
+	use_planet_resource = yes
+
+	build_time = 1080 # 3 years
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 1500
+			unity = 5000
+		}
+
+		upkeep = {
+			alloys = 20
+		}
+	}
+	upgrade_from = {
+		dyson_swarm_2
+	}
+
+	prerequisites = { "tech_dyson_swarm" }
+
+	potential = {
+		always = yes
+	}
+
+	country_modifier = {
+		custom_tooltip = dyson_swarm_3_mod_tooltip
+	}
+
+	on_build_complete = {
+		from = { country_event = { id = cybernetics.1030 } }
+		if = {
+			limit = {
+				any_system_megastructure = {
+					OR = {
+						is_megastructure_type = orbital_arc_furnace_4
+						is_megastructure_type = orbital_arc_furnace_restored
+					}
+				}
+			}
+			from = {
+				set_country_flag = burning_brightly_achievement
+			}
+		}
+	}
+}
