@@ -8,6 +8,11 @@ dyson_sphere_0 = {
 	entity_offset = { x = -7 y = -7 }
 	prerequisites = { "tech_dyson_sphere" }
 
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
 	build_time = 1800
 	resources = {
 		category = giga_dyson_sphere
@@ -32,8 +37,21 @@ dyson_sphere_0 = {
 	potential = {
 		NOT = { has_global_flag = vanilla_dyson_disabled }
 		OR = {
-			check_variable = { which = giga_vanilla_dyson_cap value = 0 }						# No Cap
+			has_global_flag = vanilla_dyson_capped_u						# No Cap
 			check_variable = { which = giga_current_vanilla_dyson value < giga_vanilla_dyson_cap }
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_machine_age"
+			OR = {
+				has_machine_age_dlc = no
+				OR = {
+					has_global_flag = vanilla_dyson_swarm_replace_disabled
+					AND = {
+						NOT = { has_global_flag = giga_o_stars_disabled }
+						has_technology = giga_tech_dyson_o_star 
+					}
+				}
+			}
 		}
 	}
 
@@ -43,12 +61,19 @@ dyson_sphere_0 = {
 		}
 		custom_tooltip = { fail_text = "requires_inside_border"			is_inside_border = from }
 		custom_tooltip = { fail_text = "requires_surveyed_system"		giga_system_is_surveyed = yes }
-		custom_tooltip = { fail_text = "requires_no_habitable_planets"	giga_any_hab_planets = no }
+		custom_tooltip = { 
+			fail_text = "requires_no_habitable_planets"	
+			OR = {
+				giga_any_hab_planets = no 
+				from = { is_ai = no } # Players are allowed to be stupid, AI isn't. 
+			}
+		}
+
 		custom_tooltip = {
 			fail_text = "requires_not_capped"
 			from = {
 				OR = {
-					check_variable = { which = giga_vanilla_dyson_cap value = 0 }						# No Cap
+					has_global_flag = vanilla_dyson_capped_u									# No Cap
 					check_variable = { which = giga_current_vanilla_dyson value < giga_vanilla_dyson_cap }
 				}
 			}
@@ -61,6 +86,17 @@ dyson_sphere_0 = {
 			custom_tooltip = { fail_text = "must_build_around_star"					is_star = yes }
 			custom_tooltip = { fail_text = "requires_no_anomaly"					has_anomaly = no }
 			custom_tooltip = { fail_text = "requires_further_stars" 				NOR = { AND = { giga_is_close_pair_star = yes is_primary_star = no } giga_is_close_pair_primary = yes } }
+			custom_tooltip = {
+				fail_text = "requires_dyson_swarm"
+				OR = {
+					AND = {
+						giga_is_o_star_for_megas = yes
+						from = { has_technology = giga_tech_dyson_o_star }
+						NOT = { has_global_flag = vanilla_dyson_swarm_replace_disabled }
+					}
+					has_global_flag = vanilla_dyson_swarm_replace_disabled
+				}
+			}
 			custom_tooltip = {
 				fail_text = "requires_standard_planet_class_o_star"
 				OR = {
@@ -119,6 +155,11 @@ dyson_sphere_1 = {
 	prerequisites = { "tech_dyson_sphere" }
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
 
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
 	build_time = @dyson_p1_buildtime_g_star
 	resources = {
 		category = giga_megastructures
@@ -128,8 +169,21 @@ dyson_sphere_1 = {
 	}
 
 	on_build_start = {
+		set_star_flag = dyson_sphere_construction
 		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = @dyson_p1_cost_alloys_g_star }
 		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @dyson_cost_unity_g_star }
+	}
+	
+	on_build_cancel = {
+		remove_star_flag = dyson_sphere_construction
+	}
+	
+	on_build_complete = {
+		remove_star_flag = dyson_sphere_construction
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		remove_system_terraforming_candidates = yes
+
 	}
 }
 
@@ -138,10 +192,75 @@ dyson_sphere_2 = {
 	entity = "dyson_sphere_phase_02_entity"
 	construction_entity = "dyson_sphere_part_1_entity"
 	portrait = "GFX_megastructure_construction_background"
-	upgrade_from = { dyson_sphere_1 }
+	upgrade_from = { 
+		dyson_sphere_1 
+		dyson_swarm_3 
+	}
 	prerequisites = { "tech_dyson_sphere" }
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
 
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	potential = {
+		NOT = { has_global_flag = vanilla_dyson_disabled }
+		OR = {
+			has_global_flag = vanilla_dyson_capped_u						# No Cap
+			check_variable = { which = giga_current_vanilla_dyson value < giga_vanilla_dyson_cap }
+		}
+	}
+	possible = {
+		custom_tooltip = {
+			fail_text = "requires_no_arc_furnace"
+			system_has_arc_furnace = no
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_arc_furnace_construction"
+			if = {
+				limit = {
+					system_has_arc_furnace = no
+				}
+				NOT = {
+					solar_system = {
+						has_star_flag = arc_furnace_construction
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_colonies"
+			NOT = {
+				any_system_planet = {
+					OR = {
+						has_colony_progress > 0
+						is_colony = yes
+					}
+					is_artificial = no
+					exists = owner
+					owner = {
+						is_primitive = no
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "blocked_by_pre_ftl_policy"
+			if = {
+				limit = {
+					any_system_planet = {
+						exists = owner
+						owner = {
+							is_primitive = yes
+						}
+					}
+				}
+				from = {
+					has_policy_flag = interference_aggressive
+				}
+			}
+		}
+	}
 	build_time = @dyson_p2_buildtime_g_star
 	resources = {
 		category = giga_megastructures
@@ -152,8 +271,20 @@ dyson_sphere_2 = {
 	}
 
 	on_build_start = {
+		set_star_flag = dyson_sphere_construction
 		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = @dyson_p2_cost_alloys_g_star }
 		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @dyson_cost_unity_g_star }
+	}
+	
+	on_build_cancel = {
+		remove_star_flag = dyson_sphere_construction
+	}
+	
+	on_build_complete = {
+		remove_star_flag = dyson_sphere_construction
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		remove_system_terraforming_candidates = yes
 	}
 }
 
@@ -166,6 +297,11 @@ dyson_sphere_3 = {
 	prerequisites = { "tech_dyson_sphere" }
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
 
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
 	build_time = @dyson_p3_buildtime_g_star
 	resources = {
 		category = giga_megastructures
@@ -176,8 +312,21 @@ dyson_sphere_3 = {
 	}
 
 	on_build_start = {
+		set_star_flag = dyson_sphere_construction
 		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = @dyson_p3_cost_alloys_g_star }
 		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @dyson_cost_unity_g_star }
+	}
+	
+	on_build_cancel = {
+		remove_star_flag = dyson_sphere_construction
+	}
+	
+	on_build_complete = {
+		remove_star_flag = dyson_sphere_construction
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		remove_system_terraforming_candidates = yes
+
 	}
 }
 
@@ -190,6 +339,11 @@ dyson_sphere_4 = {
 	prerequisites = { "tech_dyson_sphere" }
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
 
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
 	build_time = @dyson_p4_buildtime_g_star
 	resources = {
 		category = giga_megastructures
@@ -200,8 +354,21 @@ dyson_sphere_4 = {
 	}
 
 	on_build_start = {
+		set_star_flag = dyson_sphere_construction
 		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = @dyson_p4_cost_alloys_g_star }
 		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @dyson_cost_unity_g_star }
+	}
+	
+	on_build_cancel = {
+		remove_star_flag = dyson_sphere_construction
+	}
+	
+	on_build_complete = {
+		remove_star_flag = dyson_sphere_construction
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		remove_system_terraforming_candidates = yes
+
 	}
 }
 
@@ -215,6 +382,11 @@ dyson_sphere_5 = {
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
 	show_prereqs = yes
 
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
 	build_time = @dyson_p5_buildtime_g_star
 	resources = {
 		category = giga_megastructures
@@ -227,17 +399,67 @@ dyson_sphere_5 = {
 	on_build_start = {
 		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = @dyson_p5_cost_alloys_g_star }
 		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @dyson_cost_unity_g_star }
+		set_star_flag = dyson_sphere_construction
 	}
-
+	
+	on_build_cancel = {
+		remove_star_flag = dyson_sphere_construction
+	}
+	
 	on_build_complete = {
-		from = {
-			set_country_flag = has_built_or_repaired_megastructure
-			set_country_flag = has_built_or_repaired_gigastructure	# Triggers Gigastructural Constructs
+		remove_star_flag = dyson_sphere_construction
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		remove_system_terraforming_candidates = yes
+
+		if = {
+            limit = {
+                count_system_planet = {
+                    limit = { is_star = yes }
+                    count = 1
+                }
+            }
+            set_star_class = sc_dyson_star
+            every_system_planet = {
+                limit = { is_star = yes }
+                change_pc = pc_$class$_star
+            }
+            every_system_ambient_object = {
+                limit = { has_ambient_object_flag = o_star_solar_wind }
+                destroy_ambient_object = THIS
+            }
+        }
+        from = {
+            set_country_flag = has_built_or_repaired_megastructure
+            set_country_flag = has_built_or_repaired_gigastructure	# Triggers Gigastructural Constructs
+        }
+        every_system_planet = {
+			limit = {
+				OR = {
+                    giga_is_molten = yes
+					giga_is_toxic = yes
+					habitable_planet = yes
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						has_colony_progress > 0
+						is_colony = yes
+					}
+				}
+				every_owned_pop = {
+					kill_pop = yes
+				}
+				destroy_colony = yes
+			}
+			change_pc = pc_frozen
 		}
 		every_system_planet = {
-			if = {		limit = { has_modifier = terraforming_candidate }				remove_modifier = terraforming_candidate }
-			if = {		limit = { giga_is_barren = yes }								change_pc = pc_barren_cold }
-			else_if = {	limit = { OR = { giga_is_molten = yes giga_is_toxic = yes } }	change_pc = pc_frozen }
+			limit = {
+				giga_is_barren
+			}
+			change_pc = pc_barren_cold
 		}
 	}
 }
@@ -247,6 +469,12 @@ dyson_sphere_ruined = {
 	entity = "dyson_sphere_destroyed_entity"
 	portrait = "GFX_megastructure_construction_background"
 	potential = { always = no }
+	
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
 }
 
 # Restored Dyson Sphere
@@ -256,6 +484,11 @@ dyson_sphere_restored = {
 	portrait = "GFX_megastructure_dyson_sphere_background"
 	upgrade_from = { dyson_sphere_ruined }
 
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
 	build_time = @dyson_r_buildtime_g_star
 	resources = {
 		category = giga_megastructures
