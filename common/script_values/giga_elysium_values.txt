@@ -62,8 +62,18 @@ giga_elysium_dystopian_stability_calc = {
 	}
 }
 
+# trash heap amenities
+giga_elysium_amenities_calc = {
+	complex_trigger_modifier = {
+		trigger = free_amenities
+		mode = weight
+		mult = 0.2
+	}
+	min = 0
+}
+
 # clerk count
-giga_elysium_clerk_count = {
+giga_elysium_clerk_count_for_amenities = {
 	complex_trigger_modifier = {
 		trigger = num_assigned_jobs
 		parameters = {
@@ -90,37 +100,32 @@ giga_elysium_clerk_count = {
 # adjustable value for civics like oppressive autocracy who want to replace a share of all the jobs with enforcers
 giga_elysium_jobs_per_100 = {
 	weight = @giga_elysium_jobs_per_100
-
-	modifier = {
-		exists = owner
-		owner = {
-			has_valid_civic = civic_dystopian_society
-		}
-		weight = @giga_elysium_jobs_per_100_dystopian
-	}
 }
 
 giga_elysium_job_mult = {
-	weight = value:giga_elysium_$TYPE$_$JOB$_count
+	weight = value:giga_elysium_$JOB$_count
 
-	multiply = value:giga_elysium_jobs_per_100 # adjust from a full 100 per 100 pops to 100 * ratio per 100 pops
-	multiply = 0.01 # the ratio is 100x larger for display purposes
+	[[!VIRTUAL]
+		multiply = value:giga_elysium_jobs_per_100 # adjust from a full 100 per 100 pops to 100 * ratio per 100 pops
+		multiply = 0.01 # the ratio is 100x larger for display purposes
+	]
+
+	[[VIRTUAL]
+		multiply = 2 # TODO: jobs per district
+		multiply = 3.5 # 3 would be 75 per 100 from districts but there's the capital too...
+
+		multiply = value:count_any_districts # num_districts with type = any, vanilla
+	]
 
 	multiply = 0.01 # our job distributions are defined as per 100 pops, but we need per 1
 
 	[[MULT]
 		multiply = $MULT$ # extra multiplier for splitting jobs
 	]
-}
 
-giga_elysium_regular_job_mult = {
-	weight = value:giga_elysium_job_mult|TYPE|regular|JOB|$JOB$|[[MULT]MULT|$MULT$]
-}
-giga_elysium_hive_job_mult = {
-	weight = value:giga_elysium_job_mult|TYPE|hive|JOB|$JOB$|[[MULT]MULT|$MULT$]
-}
-giga_elysium_machine_job_mult = {
-	weight = value:giga_elysium_job_mult|TYPE|machine|JOB|$JOB$|[[MULT]MULT|$MULT$]
+	[[VIRTUAL]
+		round = yes # we want to round the flat job values for virtual
+	]
 }
 
 ######################################################################################################################
@@ -129,10 +134,7 @@ giga_elysium_machine_job_mult = {
 ######################################################################################################################
 ######################################################################################################################
 
-######################################################################################################################
-# Regular empire general worker split
-
-giga_elysium_regular_worker_split = {
+giga_elysium_worker_split = {
 	[[farmer]
 		weight = 0.4
 
@@ -141,10 +143,10 @@ giga_elysium_regular_worker_split = {
 			owner = {
 				or = {
 					is_lithoid_empire = yes
-					is_mechanical_empire = yes
+					is_robot_empire = yes
 				}
 			}
-			subtract = 0.4
+			subtract = 0.2
 		}
 
 		modifier = {
@@ -153,6 +155,14 @@ giga_elysium_regular_worker_split = {
 				is_catalytic_empire = yes
 			}
 			add = 0.2
+		}
+
+		modifier = {
+			exists = owner
+			owner = {
+				country_uses_food = no
+			}
+			subtract = 0.2
 		}
 	]
 
@@ -163,15 +173,15 @@ giga_elysium_regular_worker_split = {
 			exists = owner
 			owner = {
 				is_lithoid_empire = yes
-				is_mechanical_empire = no
+				is_robot_empire = no
 			}
-			add = 0.4
+			add = 0.2
 		}
 
 		modifier = {
 			exists = owner
 			owner = {
-				is_mechanical_empire = yes
+				is_robot_empire = yes
 			}
 			add = 0.2
 		}
@@ -182,6 +192,14 @@ giga_elysium_regular_worker_split = {
 				is_catalytic_empire = yes
 			}
 			subtract = 0.2
+		}
+
+		modifier = {
+			exists = owner
+			owner = {
+				country_uses_food = no
+			}
+			add = 0.1
 		}
 	]
 
@@ -191,24 +209,7 @@ giga_elysium_regular_worker_split = {
 		modifier = {
 			exists = owner
 			owner = {
-				is_mechanical_empire = yes
-			}
-			add = 0.2
-		}
-	]
-}
-
-######################################################################################################################
-# Hive empire general worker split
-
-giga_elysium_hive_worker_split = {
-	[[farmer] 
-		weight = 0.3 
-
-		modifier = {
-			exists = owner
-			owner = {
-				is_catalytic_empire = yes
+				is_robot_empire = yes
 			}
 			add = 0.2
 		}
@@ -216,101 +217,9 @@ giga_elysium_hive_worker_split = {
 		modifier = {
 			exists = owner
 			owner = {
-				is_lithoid_empire = yes
+				country_uses_food = no
 			}
-			subtract = 0.3
-		}
-	]
-
-	[[miner] 
-		weight = 0.4 
-
-		modifier = {
-			exists = owner
-			owner = {
-				is_catalytic_empire = yes
-			}
-			subtract = 0.2
-		}
-
-		modifier = {
-			exists = owner
-			owner = {
-				is_lithoid_empire = yes
-			}
-			add = 0.3
-		}
-	]
-
-	[[technician] 
-		weight = 0.3 
-	]
-}
-
-######################################################################################################################
-# Machine empire general worker split
-
-giga_elysium_machine_worker_split = {
-	[[farmer] 
-		weight = 0.0 
-
-		modifier = {
-			exists = owner
-			owner = {
-				is_catalytic_empire = yes
-			}
-			add = 0.3
-		}
-
-		modifier = {
-			exists = owner
-			owner = {
-				or = {
-					has_valid_civic = civic_machine_assimilator
-					has_valid_civic = civic_machine_servitor
-				}
-				not = { has_country_flag = lithoid_subspecies }
-			}
-			add = 0.2
-		}
-	]
-
-	[[miner] 
-		weight = 0.4 
-
-		modifier = {
-			exists = owner
-			owner = {
-				is_catalytic_empire = yes
-			}
-			subtract = 0.3
-		}
-
-		modifier = {
-			exists = owner
-			owner = {
-				or = {
-					has_valid_civic = civic_machine_assimilator
-					has_valid_civic = civic_machine_servitor
-				}
-				has_country_flag = lithoid_subspecies
-			}
-			add = 0.2
-		}
-	]
-
-	[[technician] 
-		weight = 0.6 
-
-		modifier = {
-			exists = owner
-			owner = {
-				or = {
-					has_valid_civic = civic_machine_assimilator
-					has_valid_civic = civic_machine_servitor
-				}
-			}
-			subtract = 0.2
+			add = 0.1
 		}
 	]
 }
@@ -321,92 +230,32 @@ giga_elysium_machine_worker_split = {
 ######################################################################################################################
 ######################################################################################################################
 
-######################################################################################################################
-# Regular empires
-
-giga_elysium_regular_farmer_count = { 
-	weight = value:giga_elysium_regular_colony_split|JOB|worker| 
-	multiply = value:giga_elysium_regular_worker_split|farmer|yes|
-	add = value:giga_elysium_regular_colony_split|JOB|farmer| 
+giga_elysium_farmer_count = {
+	weight = value:giga_elysium_colony_split|JOB|worker|
+	multiply = value:giga_elysium_worker_split|farmer|yes|
+	add = value:giga_elysium_colony_split|JOB|farmer|
 }
-giga_elysium_regular_miner_count = { 
-	weight = value:giga_elysium_regular_colony_split|JOB|worker| 
-	multiply = value:giga_elysium_regular_worker_split|miner|yes|
-	add = value:giga_elysium_regular_colony_split|JOB|miner| 
+giga_elysium_miner_count = {
+	weight = value:giga_elysium_colony_split|JOB|worker|
+	multiply = value:giga_elysium_worker_split|miner|yes|
+	add = value:giga_elysium_colony_split|JOB|miner|
 }
-giga_elysium_regular_technician_count = { 
-	weight = value:giga_elysium_regular_colony_split|JOB|worker| 
-	multiply = value:giga_elysium_regular_worker_split|technician|yes|
-	add = value:giga_elysium_regular_colony_split|JOB|technician| 
+giga_elysium_technician_count = {
+	weight = value:giga_elysium_colony_split|JOB|worker|
+	multiply = value:giga_elysium_worker_split|technician|yes|
+	add = value:giga_elysium_colony_split|JOB|technician|
 }
-giga_elysium_regular_clerk_count = { weight = value:giga_elysium_regular_colony_split|JOB|clerk| }
-giga_elysium_regular_soldier_count = { weight = value:giga_elysium_regular_colony_split|JOB|soldier| }
-giga_elysium_regular_artisan_count = { weight = value:giga_elysium_regular_colony_split|JOB|artisan| }
-giga_elysium_regular_metallurgist_count = { weight = value:giga_elysium_regular_colony_split|JOB|metallurgist| }
-giga_elysium_regular_bureaucrat_count = { weight = value:giga_elysium_regular_colony_split|JOB|bureaucrat| }
-giga_elysium_regular_researcher_count = { weight = value:giga_elysium_regular_colony_split|JOB|researcher| }
-giga_elysium_regular_chemist_count = { weight = value:giga_elysium_regular_colony_split|JOB|chemist| }
-giga_elysium_regular_translucer_count = { weight = value:giga_elysium_regular_colony_split|JOB|translucer| }
-giga_elysium_regular_gas_refiner_count = { weight = value:giga_elysium_regular_colony_split|JOB|gas_refiner| }
-giga_elysium_regular_megaengineer_count = { weight = value:giga_elysium_regular_colony_split|JOB|megaengineer| }
-
-######################################################################################################################
-# Hive empires
-
-giga_elysium_hive_farmer_count = { 
-	weight = value:giga_elysium_hive_colony_split|JOB|worker| 
-	multiply = value:giga_elysium_hive_worker_split|farmer|yes|
-	add = value:giga_elysium_hive_colony_split|JOB|farmer| 
-}
-giga_elysium_hive_miner_count = { 
-	weight = value:giga_elysium_hive_colony_split|JOB|worker| 
-	multiply = value:giga_elysium_hive_worker_split|miner|yes|
-	add = value:giga_elysium_hive_colony_split|JOB|miner| 
-}
-giga_elysium_hive_technician_count = { 
-	weight = value:giga_elysium_hive_colony_split|JOB|worker| 
-	multiply = value:giga_elysium_hive_worker_split|technician|yes|
-	add = value:giga_elysium_hive_colony_split|JOB|technician| 
-}
-giga_elysium_hive_clerk_count = { weight = value:giga_elysium_hive_colony_split|JOB|clerk| }
-giga_elysium_hive_soldier_count = { weight = value:giga_elysium_hive_colony_split|JOB|soldier| }
-giga_elysium_hive_artisan_count = { weight = value:giga_elysium_hive_colony_split|JOB|artisan| }
-giga_elysium_hive_metallurgist_count = { weight = value:giga_elysium_hive_colony_split|JOB|metallurgist| }
-giga_elysium_hive_bureaucrat_count = { weight = value:giga_elysium_hive_colony_split|JOB|bureaucrat| }
-giga_elysium_hive_researcher_count = { weight = value:giga_elysium_hive_colony_split|JOB|researcher| }
-giga_elysium_hive_chemist_count = { weight = value:giga_elysium_hive_colony_split|JOB|chemist| }
-giga_elysium_hive_translucer_count = { weight = value:giga_elysium_hive_colony_split|JOB|translucer| }
-giga_elysium_hive_gas_refiner_count = { weight = value:giga_elysium_hive_colony_split|JOB|gas_refiner| }
-giga_elysium_hive_megaengineer_count = { weight = value:giga_elysium_hive_colony_split|JOB|megaengineer| }
-
-######################################################################################################################
-# Machine empires
-
-giga_elysium_machine_farmer_count = { 
-	weight = value:giga_elysium_machine_colony_split|JOB|worker| 
-	multiply = value:giga_elysium_machine_worker_split|farmer|yes|
-	add = value:giga_elysium_machine_colony_split|JOB|farmer| 
-}
-giga_elysium_machine_miner_count = { 
-	weight = value:giga_elysium_machine_colony_split|JOB|worker| 
-	multiply = value:giga_elysium_machine_worker_split|miner|yes|
-	add = value:giga_elysium_machine_colony_split|JOB|miner| 
-}
-giga_elysium_machine_technician_count = { 
-	weight = value:giga_elysium_machine_colony_split|JOB|worker| 
-	multiply = value:giga_elysium_machine_worker_split|technician|yes|
-	add = value:giga_elysium_machine_colony_split|JOB|technician| 
-}
-giga_elysium_machine_clerk_count = { weight = value:giga_elysium_machine_colony_split|JOB|clerk| }
-giga_elysium_machine_soldier_count = { weight = value:giga_elysium_machine_colony_split|JOB|soldier| }
-giga_elysium_machine_artisan_count = { weight = value:giga_elysium_machine_colony_split|JOB|artisan| }
-giga_elysium_machine_metallurgist_count = { weight = value:giga_elysium_machine_colony_split|JOB|metallurgist| }
-giga_elysium_machine_bureaucrat_count = { weight = value:giga_elysium_machine_colony_split|JOB|bureaucrat| }
-giga_elysium_machine_researcher_count = { weight = value:giga_elysium_machine_colony_split|JOB|researcher| }
-giga_elysium_machine_chemist_count = { weight = value:giga_elysium_machine_colony_split|JOB|chemist| }
-giga_elysium_machine_translucer_count = { weight = value:giga_elysium_machine_colony_split|JOB|translucer| }
-giga_elysium_machine_gas_refiner_count = { weight = value:giga_elysium_machine_colony_split|JOB|gas_refiner| }
-giga_elysium_machine_megaengineer_count = { weight = value:giga_elysium_machine_colony_split|JOB|megaengineer| }
+giga_elysium_clerk_count = { weight = value:giga_elysium_colony_split|JOB|clerk| }
+giga_elysium_soldier_count = { weight = value:giga_elysium_colony_split|JOB|soldier| }
+giga_elysium_artisan_count = { weight = value:giga_elysium_colony_split|JOB|artisan| }
+giga_elysium_metallurgist_count = { weight = value:giga_elysium_colony_split|JOB|metallurgist| }
+giga_elysium_bureaucrat_count = { weight = value:giga_elysium_colony_split|JOB|bureaucrat| }
+giga_elysium_researcher_count = { weight = value:giga_elysium_colony_split|JOB|researcher| }
+giga_elysium_chemist_count = { weight = value:giga_elysium_colony_split|JOB|chemist| }
+giga_elysium_translucer_count = { weight = value:giga_elysium_colony_split|JOB|translucer| }
+giga_elysium_gas_refiner_count = { weight = value:giga_elysium_colony_split|JOB|gas_refiner| }
+giga_elysium_megaengineer_count = { weight = value:giga_elysium_colony_split|JOB|megaengineer| }
+giga_elysium_enforcer_count = { weight = value:giga_elysium_colony_split|JOB|enforcer| }
 
 ######################################################################################################################
 ######################################################################################################################
@@ -414,204 +263,69 @@ giga_elysium_machine_megaengineer_count = { weight = value:giga_elysium_machine_
 ######################################################################################################################
 ######################################################################################################################
 
-######################################################################################################################
-# Regular empire colony type split
+giga_elysium_colony_split = {
+	weight = value:giga_elysium_default_jobs|$JOB$|yes|
 
-giga_elysium_regular_colony_split = {
-	weight = value:giga_elysium_regular_default_jobs|$JOB$|yes|
-
-	modifier = { 
+	modifier = {
 		or = {
 			colony_type = col_city
 			colony_type = col_hive
 			colony_type = col_nexus
 		}
-		weight = value:giga_elysium_regular_city_jobs|$JOB$|yes| 
+		weight = value:giga_elysium_city_jobs|$JOB$|yes|
 	}
-	modifier = { colony_type = col_mining 						weight = value:giga_elysium_regular_mining_jobs|$JOB$|yes| }
-	modifier = { colony_type = col_farming 						weight = value:giga_elysium_regular_farming_jobs|$JOB$|yes| }
-	modifier = { colony_type = col_generator 					weight = value:giga_elysium_regular_generator_jobs|$JOB$|yes| }
-
 	modifier = {
-		or = {
-			colony_type = col_industrial
-			colony_type = col_ecu_industrial
-		}
-		weight = value:giga_elysium_regular_industrial_jobs|$JOB$|yes| 
+		has_mining_designation = yes
+		weight = value:giga_elysium_mining_jobs|$JOB$|yes|
 	}
-	modifier = { 
-		or = {
-			colony_type = col_foundry
-			colony_type = col_hiv_foundry
-			colony_type = col_mac_foundry
-			colony_type = col_ecu_foundry
-		}
-		weight = value:giga_elysium_regular_foundry_jobs|$JOB$|yes| 
-	}
-	modifier = { 
-		or = {
-			colony_type = col_factory
-			colony_type = col_mac_factory
-			colony_type = col_ecu_factory
-		}
-		weight = value:giga_elysium_regular_factory_jobs|$JOB$|yes| 
-	}
-	modifier = { 
-		or = {
-			colony_type = col_research 	
-			colony_type = col_ecu_research				
-		}
-		weight = value:giga_elysium_regular_research_jobs|$JOB$|yes| 
-	}
-
-	modifier = { colony_type = col_refinery 					weight = value:giga_elysium_regular_refinery_jobs|$JOB$|yes| }
-	
-	modifier = { colony_type = col_giga_supertensiles_foundry 	weight = value:giga_elysium_regular_supertensiles_jobs|$JOB$|yes| }
-	modifier = { colony_type = col_fortress 					weight = value:giga_elysium_regular_fortress_jobs|$JOB$|yes| }
-	modifier = { 
-		or = {
-			colony_type = col_bureau 
-			colony_type = col_bureau_spiritualist
-			colony_type = col_bureau_hive
-			colony_type = col_bureau_machine
-		}
-		weight = value:giga_elysium_regular_bureau_jobs|$JOB$|yes| 
-	}
-	modifier = { colony_type = col_ecu_mix 						weight = value:giga_elysium_regular_ecu_jobs|$JOB$|yes| }
-}
-
-######################################################################################################################
-# Hive empire colony type split
-
-giga_elysium_hive_colony_split = {
-	weight = value:giga_elysium_hive_default_jobs|$JOB$|yes|
-
-	modifier = { 
-		or = {
-			colony_type = col_city
-			colony_type = col_hive
-			colony_type = col_nexus
-		}
-		weight = value:giga_elysium_hive_city_jobs|$JOB$|yes| 
-	}
-	modifier = { colony_type = col_mining 						weight = value:giga_elysium_hive_mining_jobs|$JOB$|yes| }
-	modifier = { colony_type = col_farming 						weight = value:giga_elysium_hive_farming_jobs|$JOB$|yes| }
-	modifier = { colony_type = col_generator 					weight = value:giga_elysium_hive_generator_jobs|$JOB$|yes| }
-
 	modifier = {
-		or = {
-			colony_type = col_industrial
-			colony_type = col_ecu_industrial
-		}
-		weight = value:giga_elysium_hive_industrial_jobs|$JOB$|yes| 
+		has_farming_designation = yes
+		weight = value:giga_elysium_farming_jobs|$JOB$|yes|
 	}
-	modifier = { 
-		or = {
-			colony_type = col_foundry
-			colony_type = col_hiv_foundry
-			colony_type = col_mac_foundry
-			colony_type = col_ecu_foundry
-		}
-		weight = value:giga_elysium_hive_foundry_jobs|$JOB$|yes| 
-	}
-	modifier = { 
-		or = {
-			colony_type = col_factory
-			colony_type = col_mac_factory
-			colony_type = col_ecu_factory
-		}
-		weight = value:giga_elysium_hive_factory_jobs|$JOB$|yes| 
-	}
-	modifier = { 
-		or = {
-			colony_type = col_research 	
-			colony_type = col_ecu_research				
-		}
-		weight = value:giga_elysium_hive_research_jobs|$JOB$|yes| 
-	}
-
-	modifier = { colony_type = col_refinery 					weight = value:giga_elysium_hive_refinery_jobs|$JOB$|yes| }
-	
-	modifier = { colony_type = col_giga_supertensiles_foundry 	weight = value:giga_elysium_hive_supertensiles_jobs|$JOB$|yes| }
-	modifier = { colony_type = col_fortress 					weight = value:giga_elysium_hive_fortress_jobs|$JOB$|yes| }
-	modifier = { 
-		or = {
-			colony_type = col_bureau 
-			colony_type = col_bureau_spiritualist
-			colony_type = col_bureau_hive
-			colony_type = col_bureau_machine
-		}
-		weight = value:giga_elysium_hive_bureau_jobs|$JOB$|yes| 
-	}
-	modifier = { colony_type = col_ecu_mix 						weight = value:giga_elysium_hive_ecu_jobs|$JOB$|yes| }
-}
-
-######################################################################################################################
-# Machine empire colony type split
-
-giga_elysium_machine_colony_split = {
-	weight = value:giga_elysium_machine_default_jobs|$JOB$|yes|
-
-	modifier = { 
-		or = {
-			colony_type = col_city
-			colony_type = col_hive
-			colony_type = col_nexus
-		}
-		weight = value:giga_elysium_machine_city_jobs|$JOB$|yes| 
-	}
-	modifier = { colony_type = col_mining 						weight = value:giga_elysium_machine_mining_jobs|$JOB$|yes| }
-	modifier = { colony_type = col_farming 						weight = value:giga_elysium_machine_farming_jobs|$JOB$|yes| }
-	modifier = { colony_type = col_generator 					weight = value:giga_elysium_machine_generator_jobs|$JOB$|yes| }
-
 	modifier = {
-		or = {
-			colony_type = col_industrial
-			colony_type = col_ecu_industrial
-		}
-		weight = value:giga_elysium_machine_industrial_jobs|$JOB$|yes| 
+		has_generator_designation = yes
+		weight = value:giga_elysium_generator_jobs|$JOB$|yes|
 	}
-	modifier = { 
-		or = {
-			colony_type = col_foundry
-			colony_type = col_hiv_foundry
-			colony_type = col_mac_foundry
-			colony_type = col_ecu_foundry
-		}
-		weight = value:giga_elysium_machine_foundry_jobs|$JOB$|yes| 
+	modifier = {
+		has_industrial_designation = yes
+		weight = value:giga_elysium_industrial_jobs|$JOB$|yes|
 	}
-	modifier = { 
-		or = {
-			colony_type = col_factory
-			colony_type = col_mac_factory
-			colony_type = col_ecu_factory
-		}
-		weight = value:giga_elysium_machine_factory_jobs|$JOB$|yes| 
+	modifier = {
+		has_foundry_designation = yes
+		weight = value:giga_elysium_foundry_jobs|$JOB$|yes|
 	}
-	modifier = { 
-		or = {
-			colony_type = col_research 	
-			colony_type = col_ecu_research				
-		}
-		weight = value:giga_elysium_machine_research_jobs|$JOB$|yes| 
+	modifier = {
+		has_factory_designation = yes
+		weight = value:giga_elysium_factory_jobs|$JOB$|yes|
 	}
-
-	modifier = { colony_type = col_refinery 					weight = value:giga_elysium_machine_refinery_jobs|$JOB$|yes| }
-	
-	modifier = { colony_type = col_giga_supertensiles_foundry 	weight = value:giga_elysium_machine_supertensiles_jobs|$JOB$|yes| }
-	modifier = { colony_type = col_fortress 					weight = value:giga_elysium_machine_fortress_jobs|$JOB$|yes| }
-	modifier = { 
-		or = {
-			colony_type = col_bureau 
-			colony_type = col_bureau_spiritualist
-			colony_type = col_bureau_hive
-			colony_type = col_bureau_machine
-		}
-		weight = value:giga_elysium_machine_bureau_jobs|$JOB$|yes| 
+	modifier = {
+		has_research_designation = yes
+		weight = value:giga_elysium_research_jobs|$JOB$|yes|
 	}
-	modifier = { colony_type = col_ecu_mix 						weight = value:giga_elysium_machine_ecu_jobs|$JOB$|yes| }
-
-	modifier = { colony_type = col_gestation 					weight = value:giga_elysium_crucible_jobs|$JOB$|yes| }
+	modifier = {
+		has_refinery_designation = yes
+		weight = value:giga_elysium_refinery_jobs|$JOB$|yes|
+	}
+	modifier = {
+		giga_has_supertensiles_designation= yes
+		weight = value:giga_elysium_supertensiles_jobs|$JOB$|yes|
+	}
+	modifier = {
+		has_fortress_designation = yes
+		weight = value:giga_elysium_fortress_jobs|$JOB$|yes|
+	}
+	modifier = {
+		has_unity_designation = yes
+		weight = value:giga_elysium_bureau_jobs|$JOB$|yes|
+	}
+	modifier = {
+		colony_type = col_ecu_mix
+		weight = value:giga_elysium_ecu_jobs|$JOB$|yes|
+	}
+	modifier = {
+		colony_type = col_gestation
+		weight = value:giga_elysium_gestation_jobs|$JOB$|yes|
+	}
 }
 
 ######################################################################################################################
@@ -620,11 +334,8 @@ giga_elysium_machine_colony_split = {
 ######################################################################################################################
 ######################################################################################################################
 
-######################################################################################################################
-# Regular empire colony type breakdowns
-
 # Default values
-giga_elysium_regular_default_jobs = {
+giga_elysium_default_jobs = {
 	base = 0
 
 	[[clerk] 			weight = 20 ]
@@ -632,7 +343,7 @@ giga_elysium_regular_default_jobs = {
 	[[farmer]]
 	[[miner]]
 	[[technician]]
-	[[soldier]			weight = 10 ]
+	[[soldier]			weight = 5  ]
 
 	[[artisan]]
 	[[metallurgist]]
@@ -643,10 +354,11 @@ giga_elysium_regular_default_jobs = {
 	[[translucer]]
 	[[gas_refiner]]
 	[[megaengineer]]
+	[[enforcer]			weight = 5  ]
 }
 
 # Urban world
-giga_elysium_regular_city_jobs = {
+giga_elysium_city_jobs = {
 	base = 0
 
 	[[clerk]			weight = 50 ]
@@ -654,7 +366,7 @@ giga_elysium_regular_city_jobs = {
 	[[farmer]]
 	[[miner]]
 	[[technician]]
-	[[soldier]			weight = 10 ]
+	[[soldier]			weight = 5  ]
 
 	[[artisan]]
 	[[metallurgist]]
@@ -665,18 +377,19 @@ giga_elysium_regular_city_jobs = {
 	[[translucer]]
 	[[gas_refiner]]
 	[[megaengineer]]
+	[[enforcer]			weight = 5  ]
 }
 
 # Mining world
-giga_elysium_regular_mining_jobs = {
+giga_elysium_mining_jobs = {
 	base = 0
-	
+
 	[[clerk]			weight = 20 ]
 	[[worker]			weight = 20 ]
 	[[farmer]]
 	[[miner]			weight = 50 ]
 	[[technician]]
-	[[soldier]			weight = 10 ]
+	[[soldier]			weight = 5  ]
 
 	[[artisan]]
 	[[metallurgist]]
@@ -687,18 +400,19 @@ giga_elysium_regular_mining_jobs = {
 	[[translucer]]
 	[[gas_refiner]]
 	[[megaengineer]]
+	[[enforcer]			weight = 5  ]
 }
 
 # Agri-world
-giga_elysium_regular_farming_jobs = {
+giga_elysium_farming_jobs = {
 	base = 0
-	
+
 	[[clerk]			weight = 20 ]
 	[[worker]			weight = 20 ]
 	[[farmer]			weight = 50 ]
 	[[miner]]
 	[[technician]]
-	[[soldier]			weight = 10 ]
+	[[soldier]			weight = 5  ]
 
 	[[artisan]]
 	[[metallurgist]]
@@ -709,18 +423,19 @@ giga_elysium_regular_farming_jobs = {
 	[[translucer]]
 	[[gas_refiner]]
 	[[megaengineer]]
+	[[enforcer]			weight = 5  ]
 }
 
 # Generator world
-giga_elysium_regular_generator_jobs = {
+giga_elysium_generator_jobs = {
 	base = 0
-	
+
 	[[clerk]			weight = 20 ]
 	[[worker]			weight = 20 ]
 	[[farmer]]
 	[[miner]]
 	[[technician]		weight = 50 ]
-	[[soldier]			weight = 10 ]
+	[[soldier]			weight = 5  ]
 
 	[[artisan]]
 	[[metallurgist]]
@@ -731,782 +446,82 @@ giga_elysium_regular_generator_jobs = {
 	[[translucer]]
 	[[gas_refiner]]
 	[[megaengineer]]
+	[[enforcer]			weight = 5  ]
 }
 
 # Industrial world + ecu industrial
-giga_elysium_regular_industrial_jobs = {
+giga_elysium_industrial_jobs = {
 	base = 0
-	
-	[[clerk]			weight = 30 ]
-	[[worker]			weight = 20 ]
-	[[farmer]
+
+	[[clerk]
+		weight = 15
 		modifier = {
-			exists = owner
-			owner = { is_catalytic_empire = yes }
-			weight = 10
-		}
-	]
-	[[miner]
-		weight = 10
-		modifier = {
-			exists = owner
-			owner = { is_catalytic_empire = no }
-			add = 10
-		}
-	]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]			weight = 10 ]
-	[[metallurgist]		weight = 10 ]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Forge world + forge ecu
-giga_elysium_regular_foundry_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 30 ]
-	[[worker]			weight = 20 ]
-	[[farmer]
-		modifier = {
-			exists = owner
-			owner = { is_catalytic_empire = yes }
-			weight = 20
-		}
-	]
-	[[miner]
-		modifier = {
-			exists = owner
-			owner = { is_catalytic_empire = no }
-			weight = 20
-		}
-	]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]		weight = 20 ]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Factory world + factory ecu
-giga_elysium_regular_factory_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 30 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]			weight = 20 ]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]			weight = 20 ]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Refinery world
-giga_elysium_regular_refinery_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 35 ]
-	[[farmer]
-		modifier = {
-			exists = owner
-			owner = { is_catalytic_empire = yes }
-			weight = 20
-		}
-	]
-	[[miner]
-		modifier = {
-			exists = owner
-			owner = { is_catalytic_empire = no }
-			weight = 20
-		}
-	]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]			weight = 5 ]
-	[[translucer]		weight = 5 ]
-	[[gas_refiner]		weight = 5 ]
-	[[megaengineer]]
-}
-
-# Tech world + research ecu
-giga_elysium_regular_research_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]			weight = 20 ]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]			weight = 20 ]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]		weight = 10 ]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Megalogistics hub
-giga_elysium_regular_supertensiles_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]			weight = 20 ]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]			weight = 5 ]
-	[[metallurgist]		weight = 5 ]
-	[[bureaucrat]		weight = 5 ]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]		weight = 15 ]
-}
-
-# Fortress world
-giga_elysium_regular_fortress_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 50 ]
-	[[farmer]]
-	[[miner]]
-	[[technician]]
-	[[soldier]			weight = 50 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Unification center
-giga_elysium_regular_bureau_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 30 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]			weight = 20 ]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]			weight = 20 ]
-	[[metallurgist]]
-	[[bureaucrat]		weight = 10 ]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Non-specialised ecumenopolis
-giga_elysium_regular_ecu_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 50 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]			weight = 5 ]
-	[[metallurgist]		weight = 5 ]
-	[[bureaucrat]		weight = 5 ]
-	[[researcher]		weight = 5 ]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-######################################################################################################################
-# Hive empire colony type breakdowns
-
-# Default values
-giga_elysium_hive_default_jobs = {
-	base = 0
-
-	[[clerk] 			weight = 20 ]
-	[[worker]			weight = 70 ]
-	[[farmer]]
-	[[miner]]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Urban world
-giga_elysium_hive_city_jobs = {
-	base = 0
-
-	[[clerk]			weight = 50 ]
-	[[worker]			weight = 40 ]
-	[[farmer]]
-	[[miner]]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Mining world
-giga_elysium_hive_mining_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]			weight = 50 ]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Agri-world
-giga_elysium_hive_farming_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 20 ]
-	[[farmer]			weight = 50 ]
-	[[miner]]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Generator world
-giga_elysium_hive_generator_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]]
-	[[technician]		weight = 50 ]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Industrial world + ecu industrial
-giga_elysium_hive_industrial_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 30 ]
-	[[worker]			weight = 20 ]
-	[[farmer]
-		modifier = {
-			exists = owner
-			owner = { is_catalytic_empire = yes }
-			weight = 20
-		}
-	]
-	[[miner]
-		modifier = {
-			exists = owner
-			owner = { is_catalytic_empire = no }
+			has_deposit = d_giga_elysium_origin_industry
 			add = 20
 		}
 	]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]		weight = 20 ]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Forge world + forge ecu
-giga_elysium_hive_foundry_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 30 ]
-	[[worker]			weight = 20 ]
+	[[worker]			weight = 10 ]
 	[[farmer]
+		# if we're catalytic and only making alloys
+		modifier = {
+			exists = owner
+			owner = {
+				is_catalytic_empire = yes
+				country_uses_consumer_goods = no
+			}
+			add = 7.5
+		}
+		# if we're catalytic
 		modifier = {
 			exists = owner
 			owner = { is_catalytic_empire = yes }
-			weight = 20
+			weight = 7.5
 		}
 	]
 	[[miner]
-		modifier = {
-			exists = owner
-			owner = { is_catalytic_empire = no }
-			weight = 20
-		}
-	]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]		weight = 20 ]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Factory world + factory ecu
-giga_elysium_hive_factory_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 30 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]			weight = 20 ]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]			weight = 20 ]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Refinery world
-giga_elysium_hive_refinery_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 35 ]
-	[[farmer]]
-	[[miner]			weight = 20 ]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]			weight = 5 ]
-	[[translucer]		weight = 5 ]
-	[[gas_refiner]		weight = 5 ]
-	[[megaengineer]]
-}
-
-# Tech world + research ecu
-giga_elysium_hive_research_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]			weight = 40 ]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]		weight = 10 ]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Megalogistics hub
-giga_elysium_hive_supertensiles_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 20 ]
-	[[farmer]
-		modifier = {
-			exists = owner
-			owner = { 
-				is_lithoid_empire = no 
-			}
-			weight = 5
-		}
-	]
-	[[miner]			
-		weight = 15 
-		modifier = {
-			exists = owner
-			owner = { 
-				is_lithoid_empire = yes
-			}
-			add = 5
-		}
-	]
-	[[technician]		weight = 5 ]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]		weight = 5 ]
-	[[bureaucrat]		weight = 5 ]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]		weight = 15 ]
-}
-
-# Fortress world
-giga_elysium_hive_fortress_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 50 ]
-	[[farmer]]
-	[[miner]]
-	[[technician]]
-	[[soldier]			weight = 50 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Unification center
-giga_elysium_hive_bureau_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 30 ]
-	[[worker]			weight = 20 ]
-	[[farmer]
-		modifier = {
-			exists = owner
-			owner = { 
-				is_lithoid_empire = no 
-			}
-			weight = 20
-		}
-	]
-	[[miner]
-		modifier = {
-			exists = owner
-			owner = { 
-				is_lithoid_empire = yes 
-			}
-			weight = 20
-		}
-	]
-	[[technician]		weight = 20 ]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]		weight = 10 ]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Non-specialised ecumenopolis
-giga_elysium_hive_ecu_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 50 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]		weight = 10 ]
-	[[bureaucrat]		weight = 5 ]
-	[[researcher]		weight = 5 ]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-######################################################################################################################
-# Machine empire colony type breakdowns
-
-# Default values
-giga_elysium_machine_default_jobs = {
-	base = 0
-
-	[[clerk] 			weight = 20 ]
-	[[worker]			weight = 70 ]
-	[[farmer]]
-	[[miner]]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Urban world
-giga_elysium_machine_city_jobs = {
-	base = 0
-
-	[[clerk]			weight = 50 ]
-	[[worker]			weight = 40 ]
-	[[farmer]]
-	[[miner]]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Mining world
-giga_elysium_machine_mining_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]			weight = 50 ]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Agri-world
-giga_elysium_machine_farming_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 20 ]
-	[[farmer]			weight = 50 ]
-	[[miner]]
-	[[technician]]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Generator world
-giga_elysium_machine_generator_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]]
-	[[technician]		weight = 50 ]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Industrial world + ecu industrial
-giga_elysium_machine_industrial_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 30 ]
-	[[worker]			weight = 20 ]
-	[[farmer]
-		modifier = {
-			exists = owner
-			owner = { 
-				is_catalytic_empire = yes 
-				not = { has_valid_civic = civic_machine_servitor }
-			}
-			weight = 10
-		}
-		modifier = {
-			exists = owner
-			owner = { is_catalytic_empire = yes }
-			weight = 10
-		}
-	]
-	[[miner]
+		# if we're making consumer goods or aren't catalytic
 		modifier = {
 			exists = owner
 			owner = {
 				or = {
 					is_catalytic_empire = no
-					has_valid_civic = civic_machine_servitor
+					country_uses_consumer_goods = yes
 				}
 			}
-			weight = 10
+			add = 7.5
 		}
+		# if we're not catalytic
 		modifier = {
 			exists = owner
 			owner = { is_catalytic_empire = no }
-			add = 10
+			add = 7.5
 		}
 	]
 	[[technician]]
-	[[soldier]			weight = 10 ]
+	[[soldier]			weight = 5  ]
 
 	[[artisan]
+		weight = 25
 		modifier = {
-			exists = owner
-			owner = {
-				has_valid_civic = civic_machine_servitor
-			}
-			weight = 10
+			has_deposit = d_giga_elysium_origin_industry
+			subtract = 10
+		}
+
+		modifier = {
+			owner = { country_uses_consumer_goods = no }
+			multiply = 0
 		}
 	]
 	[[metallurgist]
-		weight = 10 
+		weight = 25
 		modifier = {
-			exists = owner
-			owner = {
-				not = { has_valid_civic = civic_machine_servitor }
-			}
-			add = 10
+			has_deposit = d_giga_elysium_origin_industry
+			subtract = 10
+		}
+
+		modifier = {
+			owner = { country_uses_consumer_goods = no }
+			multiply = 2
 		}
 	]
 	[[bureaucrat]]
@@ -1516,33 +531,46 @@ giga_elysium_machine_industrial_jobs = {
 	[[translucer]]
 	[[gas_refiner]]
 	[[megaengineer]]
+	[[enforcer]			weight = 5  ]
 }
 
 # Forge world + forge ecu
-giga_elysium_machine_foundry_jobs = {
+giga_elysium_foundry_jobs = {
 	base = 0
-	
-	[[clerk]			weight = 30 ]
-	[[worker]			weight = 20 ]
+
+	[[clerk]
+		weight = 15
+		modifier = {
+			has_deposit = d_giga_elysium_origin_industry
+			add = 20
+		}
+	]
+	[[worker]			weight = 10 ]
 	[[farmer]
 		modifier = {
 			exists = owner
 			owner = { is_catalytic_empire = yes }
-			weight = 20
+			weight = 15
 		}
 	]
 	[[miner]
 		modifier = {
 			exists = owner
 			owner = { is_catalytic_empire = no }
-			weight = 20
+			weight = 15
 		}
 	]
 	[[technician]]
-	[[soldier]			weight = 10 ]
+	[[soldier]			weight = 5  ]
 
 	[[artisan]]
-	[[metallurgist]		weight = 20 ]
+	[[metallurgist]
+		weight = 50
+		modifier = {
+			has_deposit = d_giga_elysium_origin_industry
+			subtract = 20
+		}
+	]
 	[[bureaucrat]]
 	[[researcher]]
 
@@ -1550,20 +578,33 @@ giga_elysium_machine_foundry_jobs = {
 	[[translucer]]
 	[[gas_refiner]]
 	[[megaengineer]]
+	[[enforcer]			weight = 5  ]
 }
 
 # Factory world + factory ecu
-giga_elysium_machine_factory_jobs = {
+giga_elysium_factory_jobs = {
 	base = 0
-	
-	[[clerk]			weight = 30 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]			weight = 20 ]
-	[[technician]]
-	[[soldier]			weight = 10 ]
 
-	[[artisan]			weight = 20 ]
+	[[clerk]
+		weight = 15
+		modifier = {
+			has_deposit = d_giga_elysium_origin_industry
+			add = 20
+		}
+	]
+	[[worker]			weight = 10 ]
+	[[farmer]]
+	[[miner]			weight = 15 ]
+	[[technician]]
+	[[soldier]			weight = 5  ]
+
+	[[artisan]
+		weight = 50
+		modifier = {
+			has_deposit = d_giga_elysium_origin_industry
+			subtract = 20
+		}
+	]
 	[[metallurgist]]
 	[[bureaucrat]]
 	[[researcher]]
@@ -1572,229 +613,167 @@ giga_elysium_machine_factory_jobs = {
 	[[translucer]]
 	[[gas_refiner]]
 	[[megaengineer]]
+	[[enforcer]			weight = 5  ]
 }
 
 # Refinery world
-giga_elysium_machine_refinery_jobs = {
+giga_elysium_refinery_jobs = {
 	base = 0
-	
+
 	[[clerk]			weight = 20 ]
-	[[worker]			weight = 35 ]
-	[[farmer]]
-	[[miner]			weight = 20 ]
+	[[worker]			weight = 10 ]
+	[[farmer]
+		modifier = {
+			exists = owner
+			owner = { is_catalytic_empire = yes }
+			weight = 15
+		}
+	]
+	[[miner]
+		modifier = {
+			exists = owner
+			owner = { is_catalytic_empire = no }
+			weight = 15
+		}
+	]
 	[[technician]]
-	[[soldier]			weight = 10 ]
+	[[soldier]			weight = 5  ]
 
 	[[artisan]]
 	[[metallurgist]]
 	[[bureaucrat]]
 	[[researcher]]
 
-	[[chemist]			weight = 5 ]
-	[[translucer]		weight = 5 ]
-	[[gas_refiner]		weight = 5 ]
+	[[chemist]			weight = 15 ]
+	[[translucer]		weight = 15 ]
+	[[gas_refiner]		weight = 15 ]
 	[[megaengineer]]
+	[[enforcer]			weight = 5  ]
 }
 
 # Tech world + research ecu
-giga_elysium_machine_research_jobs = {
+giga_elysium_research_jobs = {
 	base = 0
-	
+
 	[[clerk]			weight = 20 ]
-	[[worker]			weight = 20 ]
+	[[worker]			weight = 10 ]
+	[[farmer]]
+	[[miner]			weight = 10 ]
+	[[technician]]
+	[[soldier]			weight = 5  ]
+
+	[[artisan]			weight = 10 ]
+	[[metallurgist]]
+	[[bureaucrat]]
+	[[researcher]		weight = 40 ]
+
+	[[chemist]]
+	[[translucer]]
+	[[gas_refiner]]
+	[[megaengineer]]
+	[[enforcer]			weight = 5  ]
+}
+
+# Megalogistics hub
+giga_elysium_supertensiles_jobs = {
+	base = 0
+
+	[[clerk]			weight = 15 ]
+	[[worker]			weight = 10 ]
+	[[farmer]]
+	[[miner]			weight = 15 ]
+	[[technician]]
+	[[soldier]			weight = 5  ]
+
+	[[artisan]]
+	[[metallurgist]		weight = 5  ]
+	[[bureaucrat]		weight = 5  ]
+	[[researcher]]
+
+	[[chemist]]
+	[[translucer]]
+	[[gas_refiner]]
+	[[megaengineer]		weight = 50 ]
+	[[enforcer]			weight = 5  ]
+}
+
+# Fortress world
+giga_elysium_fortress_jobs = {
+	base = 0
+
+	[[clerk]			weight = 15 ]
+	[[worker]			weight = 15 ]
 	[[farmer]]
 	[[miner]]
-	[[technician]		weight = 40 ]
-	[[soldier]			weight = 10 ]
+	[[technician]]
+	[[soldier]			weight = 60 ]
 
 	[[artisan]]
 	[[metallurgist]]
 	[[bureaucrat]]
+	[[researcher]]
+
+	[[chemist]]
+	[[translucer]]
+	[[gas_refiner]]
+	[[megaengineer]]
+	[[enforcer]			weight = 10 ]
+}
+
+# Unification center
+giga_elysium_bureau_jobs = {
+	base = 0
+
+	[[clerk]			weight = 20 ]
+	[[worker]			weight = 10 ]
+	[[farmer]]
+	[[miner]			weight = 5  ]
+	[[technician]]
+	[[soldier]			weight = 5  ]
+
+	[[artisan]			weight = 5  ]
+	[[metallurgist]]
+	[[bureaucrat]		weight = 50 ]
+	[[researcher]]
+
+	[[chemist]]
+	[[translucer]]
+	[[gas_refiner]]
+	[[megaengineer]]
+	[[enforcer]			weight = 5  ]
+}
+
+# Non-specialised ecumenopolis
+giga_elysium_ecu_jobs = {
+	base = 0
+
+	[[clerk]			weight = 20 ]
+	[[worker]			weight = 15 ]
+	[[farmer]]
+	[[miner]]
+	[[technician]]
+	[[soldier]			weight = 5  ]
+
+	[[artisan]			weight = 10 ]
+	[[metallurgist]		weight = 10 ]
+	[[bureaucrat]		weight = 15 ]
 	[[researcher]		weight = 10 ]
 
 	[[chemist]]
 	[[translucer]]
 	[[gas_refiner]]
 	[[megaengineer]]
+	[[enforcer]			weight = 5  ]
 }
 
-# Megalogistics hub
-giga_elysium_machine_supertensiles_jobs = {
+# Assimilator Gestation world
+giga_elysium_gestation_jobs = {
 	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]			weight = 20 ]
-	[[technician]		weight = 5 ]
-	[[soldier]			weight = 10 ]
 
-	[[artisan]]
-	[[metallurgist]		
-		weight = 5 
-		modifier = {
-			exists = owner
-			owner = {
-				has_valid_civic = civic_machine_servitor
-			}
-			weight = 5
-		}
-	]
-	[[bureaucrat]
-		modifier = {
-			exists = owner
-			owner = {
-				not = { has_valid_civic = civic_machine_servitor }
-			}
-			weight = 5
-		}
-	]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]		weight = 15 ]
-}
-
-# Fortress world
-giga_elysium_machine_fortress_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 20 ]
-	[[worker]			weight = 50 ]
-	[[farmer]]
-	[[miner]]
-	[[technician]]
-	[[soldier]			weight = 50 ]
-
-	[[artisan]]
-	[[metallurgist]]
-	[[bureaucrat]]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Unification center
-giga_elysium_machine_bureau_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 30 ]
-	[[worker]			weight = 20 ]
-	[[farmer]]
-	[[miner]
-		modifier = {
-			exists = owner
-			owner = {
-				has_valid_civic = civic_machine_servitor
-			}
-			weight = 40
-		}
-	]
-	[[technician]
-		modifier = {
-			exists = owner
-			owner = {
-				not = { has_valid_civic = civic_machine_servitor }
-			}
-			weight = 40
-		}
-	]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]
-		modifier = {
-			exists = owner
-			owner = {
-				has_valid_civic = civic_machine_servitor
-			}
-			weight = 10
-		}
-	]
-	[[metallurgist]]
-	[[bureaucrat]
-		modifier = {
-			exists = owner
-			owner = {
-				not = { has_valid_civic = civic_machine_servitor }
-			}
-			weight = 10
-		}
-	]
-	[[researcher]]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Non-specialised ecumenopolis
-giga_elysium_machine_ecu_jobs = {
-	base = 0
-	
-	[[clerk]			weight = 50 ]
+	[[clerk]			weight = 65 ] # includes a split for gestation drones
 	[[worker]			weight = 20 ]
 	[[farmer]]
 	[[miner]]
-	[[technician]		
-		modifier = {
-			exists = owner
-			owner = {
-				not = { has_valid_civic = civic_machine_servitor }
-			}
-			weight = 5
-		}
-	]
-	[[soldier]			weight = 10 ]
-
-	[[artisan]
-		modifier = {
-			exists = owner
-			owner = {
-				has_valid_civic = civic_machine_servitor
-			}
-			weight = 5
-		}
-	]
-	[[metallurgist]		weight = 5 ]
-	[[bureaucrat]		weight = 5 ]
-	[[researcher]		weight = 5 ]
-
-	[[chemist]]
-	[[translucer]]
-	[[gas_refiner]]
-	[[megaengineer]]
-}
-
-# Crucible world
-giga_elysium_crucible_jobs = {
-	base = 0
-
-	[[clerk] 			weight = 20 ]
-	[[worker]			weight = 40 ]
-	[[farmer]
-		modifier = {
-			exists = owner
-			owner = {
-				is_lithoid_empire = no
-			}
-			weight = 30
-		}
-	]
-	[[miner]
-		modifier = {
-			exists = owner
-			owner = {
-				is_lithoid_empire = yes
-			}
-			weight = 30
-		}
-	]
 	[[technician]]
 	[[soldier]			weight = 10 ]
 
@@ -1807,4 +786,5 @@ giga_elysium_crucible_jobs = {
 	[[translucer]]
 	[[gas_refiner]]
 	[[megaengineer]]
+	[[enforcer]			weight = 5  ]
 }
