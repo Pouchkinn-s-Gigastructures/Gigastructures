@@ -1,0 +1,476 @@
+# orbital Arc Furnace First Stage
+orbital_arc_furnace_1 = {
+	entity = "arc_crucible_stage_1_entity"
+	construction_entity = "arc_crucible_stage_1_entity"
+	construction_scale = 1.02 #to avoid z-fighting of consrucion entity with the base entity
+	portrait = "GFX_megastructure_arc_furnace_background"
+	place_entity_on_planet_plane = yes
+	entity_offset = { x = 0 y = 0 }
+	rotate_to_center = no
+	scale_offset = yes
+	#show_in_outliner = no
+	use_planet_resource = yes
+	scales_with_planet = yes
+	build_time = 360 # 1 year
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 500
+			unity = 500
+		}
+
+		upkeep = {
+			energy = 20
+		}
+	}
+
+	construction_blocks_and_blocked_by = self_type
+
+	prerequisites = { "tech_orbital_arc_furnace" }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	potential = {
+		has_machine_age_dlc = yes
+	}
+
+
+	possible = {
+		hidden_trigger = {
+			exists = starbase
+		}
+		custom_tooltip = {
+			fail_text = "requires_inside_border"
+			is_inside_border = from
+		}
+		custom_tooltip = {
+			fail_text = "requires_surveyed_system"
+			NOT = {
+				any_system_planet = {
+					is_surveyed = {
+						who = prev.from
+						status = no
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_dyson_sphere"
+			system_has_dyson_sphere = no
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_dyson_sphere_construction"
+			if = {
+				limit = {
+					system_has_dyson_sphere = no
+				}
+				NOT = {
+					solar_system = {
+						has_star_flag = dyson_sphere_construction
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_arc_furnace"
+			system_has_arc_furnace = no
+		}
+		custom_tooltip = { 
+			fail_text = "requires_no_macro_test_site"		
+			giga_system_has_macro_test = no
+		} 
+		custom_tooltip = { 
+			fail_text = "requires_no_atmosphere_shredder"	
+			giga_system_has_atmosphere_shredder = no 
+		} 
+		custom_tooltip = { 
+			fail_text = "requires_no_orb_eco_arc"			
+			giga_system_has_artificial_eco = no
+		}
+
+		custom_tooltip = {
+			fail_text = "requires_less_than_x_arc_furnaces"
+			from = {
+				check_variable = {
+					which = arc_furnace_counter
+					value < value:arc_furnace_limit
+				}
+			}
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = {
+				fail_text = "requires_no_anomaly"
+				NOT = { has_anomaly = yes }
+			}
+			is_planet_class = pc_molten
+			custom_tooltip = {
+				fail_text = "requires_no_existing_megastructure"
+				NOR = {
+					has_planet_flag = megastructure
+					has_planet_flag = has_megastructure
+				}
+			}
+			if = {
+				limit = {
+					from = { is_ai = yes }
+				}
+				solar_system = {
+					count_system_planet = {
+						count >= 8
+						limit = {
+							NOT = { has_deposit_for = shipclass_research_station }
+							is_star = no
+							is_astral_scar = no
+							colonizable_planet = no
+						}
+					}
+				}
+			}
+		}
+	}
+
+	country_modifier = {
+		custom_tooltip = orbital_arc_furnace_1_mod_tooltip
+	}
+
+	# root = system
+	# from = country
+	ai_weight = {
+		factor = 5
+
+		modifier = {
+			factor = 0.1
+			starbase = { NOT = { has_starbase_size >= starbase_starfortress } }
+		}
+
+		modifier = {
+			factor = 0.1
+			any_neighbor_system = {
+				exists = owner
+				NOT = {
+					owner = { is_same_value = from }
+				}
+			}
+		}
+	}
+
+	on_build_start = {
+		set_star_flag = arc_furnace_construction
+	}
+	on_build_cancel = {
+		remove_star_flag = arc_furnace_construction
+	}
+	on_build_complete = {
+		remove_star_flag = arc_furnace_construction
+		fromfrom.planet = {
+			set_planet_flag = has_megastructure
+			set_planet_flag = has_arc_furnace
+			if = {
+				limit = { has_orbital_station = yes }
+				orbital_station = {
+					dismantle = yes
+				}
+			}
+			set_planet_entity = { entity = invisible_turret_entity }
+		}
+		from = {
+			country_event = {
+				id = cybernetics.1000
+			}
+			country_event = {
+				id = machine_age.3405 #2nd Arc Furnace built
+			}
+			change_variable = {
+				which = arc_furnace_counter
+				value = 1
+			}
+		}
+	}
+}
+
+# orbital Arc Furnace Second Stage
+orbital_arc_furnace_2 = {
+	entity = "arc_crucible_stage_2_entity"
+	construction_entity = "arc_crucible_stage_2_entity"
+	construction_scale = 1.02 #to avoid z-fighting of consrucion entity with the base entity
+	portrait = "GFX_megastructure_arc_furnace_background"
+	entity_offset = { x = 0 y = 0 }
+	rotate_to_center = no
+	scale_offset = yes
+	#show_in_outliner = no
+	use_planet_resource = yes
+	scales_with_planet = yes
+	build_time = 1080 # 3 years
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 1000
+			unity = 1000
+		}
+
+		upkeep = {
+			energy = 40
+		}
+	}
+
+	construction_blocks_and_blocked_by = none
+
+	upgrade_from = {
+		orbital_arc_furnace_1
+	}
+
+	prerequisites = { "tech_orbital_arc_furnace" }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	potential = {
+		always = yes
+	}
+
+
+	country_modifier = {
+		custom_tooltip = orbital_arc_furnace_2_mod_tooltip
+	}
+
+	on_build_start = {
+		set_star_flag = arc_furnace_construction
+	}
+	on_build_cancel = {
+		remove_star_flag = arc_furnace_construction
+	}
+	on_build_complete = {
+		remove_star_flag = arc_furnace_construction
+		from = { country_event = { id = cybernetics.1005 } }
+	}
+}
+
+# Orbital arc furnace Third Stage
+orbital_arc_furnace_3 = {
+	entity = "arc_crucible_stage_3_entity"
+	construction_entity = "arc_crucible_stage_3_entity"
+	construction_scale = 1.02 #to avoid z-fighting of consrucion entity with the base entity
+	portrait = "GFX_megastructure_arc_furnace_background"
+	entity_offset = { x = 0 y = 0 }
+	rotate_to_center = no
+	scale_offset = yes
+	place_entity_on_planet_plane = yes
+	#show_in_outliner = no
+	use_planet_resource = yes
+	scales_with_planet = yes
+	build_time = 1080 # 3 years
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 1500
+			unity = 2000
+		}
+
+		upkeep = {
+			energy = 80
+		}
+	}
+
+	construction_blocks_and_blocked_by = none
+
+	upgrade_from = {
+		orbital_arc_furnace_2
+	}
+
+	prerequisites = { "tech_orbital_arc_furnace" }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	potential = {
+		always = yes
+	}
+
+
+	country_modifier = {
+		custom_tooltip = orbital_arc_furnace_3_mod_tooltip
+	}
+
+	on_build_start = {
+		set_star_flag = arc_furnace_construction
+	}
+	on_build_cancel = {
+		remove_star_flag = arc_furnace_construction
+	}
+	on_build_complete = {
+		remove_star_flag = arc_furnace_construction
+		from = { country_event = { id = cybernetics.1010 } }
+	}
+}
+
+# Orbital arc furnace Final Stage
+orbital_arc_furnace_4 = {
+	entity = "arc_crucible_stage_4_entity"
+	construction_entity = "arc_crucible_stage_4_entity"
+	construction_scale = 1.02 #to avoid z-fighting of consrucion entity with the base entity
+	portrait = "GFX_megastructure_arc_furnace_background"
+	entity_offset = { x = 0 y = 0 }
+	rotate_to_center = no
+	scale_offset = yes
+	place_entity_on_planet_plane = yes
+	show_in_outliner = no
+	use_planet_resource = yes
+	scales_with_planet = yes
+	build_time = 1080 # 3 years
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 2000
+			unity = 4000
+		}
+
+		upkeep = {
+			energy = 100
+		}
+	}
+
+	construction_blocks_and_blocked_by = none
+
+	upgrade_from = {
+		orbital_arc_furnace_3
+	}
+
+	prerequisites = { "tech_orbital_arc_furnace" }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	potential = {
+		always = yes
+	}
+
+
+	country_modifier = {
+		custom_tooltip = orbital_arc_furnace_4_mod_tooltip
+	}
+
+	on_build_start = {
+		set_star_flag = arc_furnace_construction
+	}
+	on_build_cancel = {
+		remove_star_flag = arc_furnace_construction
+	}
+	on_build_complete = {
+		remove_star_flag = arc_furnace_construction
+		from = { country_event = { id = cybernetics.1015 } }
+		if = {
+			limit = {
+				any_system_megastructure = {
+					is_megastructure_type = dyson_swarm_3
+				}
+			}
+			from = {
+				set_country_flag = burning_brightly_achievement
+			}
+		}
+	}
+}
+# Orbital Arc Furnace Destroyed
+orbital_arc_furnace_destroyed = {
+	entity = "arc_crucible_destroyed_entity"
+	portrait = "GFX_megastructure_construction_background"
+	entity_offset = { x = 0 y = 0 }
+	rotate_to_center = no
+	scale_offset = yes
+	place_entity_on_planet_plane = yes
+	show_in_outliner = no
+	scales_with_planet = yes
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	potential = {
+		always = no
+	}
+}
+
+# Orbital arc furnace Restored Stage
+orbital_arc_furnace_restored = {
+	entity = "arc_crucible_stage_4_entity"
+	construction_entity = "arc_crucible_stage_4_entity"
+	construction_scale = 1.02 #to avoid z-fighting of consrucion entity with the base entity
+	portrait = "GFX_megastructure_arc_furnace_background"
+	entity_offset = { x = 0 y = 0 }
+	rotate_to_center = no
+	scale_offset = yes
+	place_entity_on_planet_plane = yes
+	show_in_outliner = no
+	use_planet_resource = yes
+	scales_with_planet = yes
+	build_time = 720 # 2 years
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 3000
+			unity = 2000
+		}
+
+		upkeep = {
+			energy = 100
+		}
+	}
+
+	construction_blocks_and_blocked_by = none
+
+	upgrade_from = {
+		orbital_arc_furnace_destroyed
+	}
+
+	prerequisites = { "tech_orbital_arc_furnace" }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	potential = {
+		always = yes
+	}
+
+	country_modifier = {
+		custom_tooltip = orbital_arc_furnace_4_mod_tooltip
+	}
+
+	on_build_start = {
+		set_star_flag = arc_furnace_construction
+	}
+	on_build_cancel = {
+		remove_star_flag = arc_furnace_construction
+	}
+	on_build_complete = {
+		remove_star_flag = arc_furnace_construction
+		from = { country_event = { id = cybernetics.1016 } }
+		fromfrom.planet = {
+			set_planet_entity = { entity = invisible_turret_entity }
+		}
+		if = {
+			limit = {
+				any_system_megastructure = {
+					is_megastructure_type = dyson_swarm_3
+				}
+			}
+			from = {
+				set_country_flag = burning_brightly_achievement
+			}
+		}
+	}
+}

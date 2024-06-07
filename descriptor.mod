@@ -1,4 +1,4 @@
-name="Gigastructural Engineering & More (DEBUG)"
+name="Gigastructural Engineering & More (Private DEBUG)"
 version="3.28.2"
 supported_version="3.11.*"
 tags={

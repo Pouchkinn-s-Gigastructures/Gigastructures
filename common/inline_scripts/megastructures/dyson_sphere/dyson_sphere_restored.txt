@@ -1,0 +1,74 @@
+inline_script = {
+    script = megastructures/dyson_sphere/dyson_sphere_template
+    type = sphere
+    class = $class$
+    prev_stage = ruined
+    entity = $entity$
+    construction_entity = $construction_entity$
+    portrait = GFX_megastructure_construction_background
+	upgrade_from = ""
+    build_time = @[ 3600 * giga_$class$_star_time_mult ]
+    cost_alloys = @[ 20 * giga_$class$_star_cost_mult * 1000 ]
+    cost_unity = @[ 7.5 * giga_$class$_star_cost_mult * 1000 ]
+
+    produces = "
+        energy = @[ 4 * giga_$class$_star_production_mult * 1000 ]
+    "
+
+    upkeep = ""
+
+    potential = ""
+    possible = ""
+
+    on_complete = "
+        if = {
+            limit = {
+                count_system_planet = {
+                    limit = { is_star = yes }
+                    count = 1
+                }
+            }
+            set_star_class = sc_dyson_star
+            every_system_planet = {
+                limit = { is_star = yes }
+                change_pc = pc_$class$_star
+            }
+            every_system_ambient_object = {
+                limit = { has_ambient_object_flag = o_star_solar_wind }
+                destroy_ambient_object = THIS
+            }
+        }
+        from = {
+            set_country_flag = has_built_or_repaired_megastructure
+            set_country_flag = has_built_or_repaired_gigastructure	# Triggers Gigastructural Constructs
+        }
+        every_system_planet = {
+			limit = {
+				OR = {
+                    giga_is_molten = yes
+					giga_is_toxic = yes
+					habitable_planet = yes
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						has_colony_progress > 0
+						is_colony = yes
+					}
+				}
+				every_owned_pop = {
+					kill_pop = yes
+				}
+				destroy_colony = yes
+			}
+			change_pc = pc_frozen
+		}
+		every_system_planet = {
+			limit = {
+				giga_is_barren
+			}
+			change_pc = pc_barren_cold
+		}
+    "
+}

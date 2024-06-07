@@ -90,7 +90,10 @@ country_event = {
 				else_if = {
 					limit = {
 						root = {
-							is_machine_empire = yes
+							or = {
+								is_individual_machine = yes
+								is_machine_empire = yes
+							}
 						}
 					}
 					add_building = building_machine_assembly_plant
@@ -107,6 +110,13 @@ country_event = {
 
 			set_update_modifiers_batch = begin
 
+			clear_blockers = yes
+
+			create_pop = {
+				species = root.species
+				count = 1
+			}
+
 			if = {
 				limit = {
 					root = {
@@ -116,25 +126,54 @@ country_event = {
 				set_colony_type = col_rural # better job distribution for anglers
 			}
 			else = {
-				set_colony_type = col_industrial
+				if = {
+					limit = {
+						root = {
+							or = {
+								is_gestalt = no
+								has_civic = civic_machine_obsessional_directive
+							}
+						}
+					}
+					set_colony_type = col_industrial
+				}
+				else = {
+					set_colony_type = col_foundry
+				}
+
+				# tweak to reduce the sheer volume of industrial jobs
+				add_deposit = d_giga_elysium_origin_industry
 			}
 
-			while = {
-				count = 3
-				limit = {
-					has_district = district_mining
-				}
-				remove_district = district_mining
-				add_district = district_industrial
-			}
 			if = {
 				limit = {
 					num_districts = {
 						type = district_industrial
-						value > 1
+						value > 0
 					}
 				}
 				remove_district = district_industrial
+				if = {
+					limit = {
+						root = {
+							is_catalytic_empire = yes
+						}
+					}
+					if = {
+						limit = {
+							root = {
+								is_anglers_empire = yes
+							}
+						}
+						add_district = district_farming_uncapped
+					}
+					else = {
+						add_district = district_farming
+					}
+				}
+				else = {
+					add_district = district_mining
+				}
 			}
 			if = {
 				limit = {
@@ -145,19 +184,34 @@ country_event = {
 						has_district = district_generator
 					}
 					remove_district = district_generator
-					add_district = district_city
+					add_district = district_mining
 				}
 			}
-			#if = {
-			#	limit = {
-			#		root = {
-			#			is_gestalt = no
-			#			is_lithoid_empire = no
-			#		}
-			#	}
-			#	remove_district = district_city
-			#	add_district = district_farming
-			#}
+			if = {
+				limit = {
+					num_districts = {
+						type = district_mining
+						value > 2
+					}
+					root = {
+						is_lithoid_empire = no
+					}
+				}
+				remove_district = district_mining
+			}
+			if = {
+				limit = {
+					num_districts = {
+						type = district_industrial
+						value > 0
+					}
+					root = {
+						is_individual_machine = yes
+					}
+				}
+				remove_district = district_industrial
+				add_district = district_generator
+			}
 
 			if = {
 				limit = {
@@ -197,8 +251,31 @@ country_event = {
 			set_update_modifiers_batch = end
 
 			# shuffle pops back into jobs
+			#while = {
+			#	count = trigger:num_pops
+			#	check_planet_employment = yes
+			#}
+			#set_update_modifiers_batch = begin
+			#set_update_modifiers_batch = end
+			#while = {
+			#	count = trigger:num_pops
+			#	check_planet_employment = yes
+			#}
+
 			while = {
-				count = 10
+				count = 1000
+				limit = {
+					num_unemployed > 0
+				}
+				check_planet_employment = yes
+			}
+			set_update_modifiers_batch = begin
+			set_update_modifiers_batch = end
+			while = {
+				count = 1000
+				limit = {
+					num_unemployed > 0
+				}
 				check_planet_employment = yes
 			}
 
