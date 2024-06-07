@@ -1,4 +1,5 @@
 Includes = {
+	"constants.fxh"
 	"terra_incognita.fxh"
 	"giga_functions.fxh"
 	#// "giga_debug.fxh"

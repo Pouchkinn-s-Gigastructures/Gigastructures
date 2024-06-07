@@ -1,0 +1,101 @@
+# used in country scope, sets all owned leaders' background planet to $planet$, and mills the leader pool
+giga_set_all_leaders_homeworld = {
+    save_event_target_as = giga_new_homeworld_context
+    $planet$ = {
+        save_event_target_as = giga_new_homeworld
+    }
+
+    # since we can't set leader homeworlds, clone the lot of them with the new homeworld and reset them ALL
+    every_owned_leader = {
+        limit = {
+            is_gestalt_node = no
+        }
+        save_event_target_as = source_leader
+        event_target:giga_new_homeworld_context = {
+            clone_leader = {
+                target = event_target:source_leader
+                background_planet = event_target:giga_new_homeworld
+                effect = {
+                    save_event_target_as = cloned_leader
+                    copy_flags_and_variables_from= event_target:source_leader
+                }
+            }
+        }
+        # fleet and planet assignments
+        if = {
+            limit = {
+                exists = fleet
+            }
+            fleet = {
+                assign_leader = event_target:cloned_leader
+            }
+        }
+        else_if = {
+            limit = {
+                exists = planet
+            }
+            planet = {
+                assign_leader = event_target:cloned_leader
+            }
+        }
+        # council assignments
+        if = {
+            limit = {
+                is_ruler = yes
+            }
+            event_target:giga_new_homeworld_context = {
+                assign_leader = event_target:cloned_leader
+            }
+        }
+        else_if = {
+            limit = {
+                is_councilor_type = councilor_state
+            }
+            event_target:cloned_leader = {
+                set_council_position = councilor_state
+            }
+        }
+        else_if = {
+            limit = {
+                is_councilor_type = councilor_defense
+            }
+            event_target:cloned_leader = {
+                set_council_position = councilor_defense
+            }
+        }
+        else_if = {
+            limit = {
+                is_councilor_type = councilor_research
+            }
+            event_target:cloned_leader = {
+                set_council_position = councilor_research
+            }
+        }
+
+        # remove the original leader
+        kill_leader = { show_notification = no }
+    }
+
+    # and the leader pool - just destroy them all and make new ones
+
+    every_pool_leader = {
+        save_event_target_as = source_leader
+        event_target:giga_new_homeworld_context = {
+            clone_leader = {
+                target = event_target:source_leader
+                background_planet = event_target:giga_new_homeworld
+                effect = {
+                    copy_flags_and_variables_from= event_target:source_leader
+                    # if we don't do both of these the leader ends up in the active leaders list
+                    # even though if you just do the yes line they don't become recruitable
+                    # suggesting that they're somehow in the recruitable state but not in the pool?
+                    recruitable = no
+                    recruitable = yes
+                }
+            }
+        }
+
+        kill_leader = { show_notification = no }
+    }
+
+}
