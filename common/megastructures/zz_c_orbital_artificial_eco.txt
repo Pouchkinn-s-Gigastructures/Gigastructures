@@ -1,19 +1,57 @@
 orbital_artificial_eco_0 = {
-	entity = "giga_consite_5_5_entity"
-	construction_entity = "giga_consite_5_5_entity"
+	entity = "giga_zoo_new_1"
+	construction_entity = "giga_zoo_new_1_part"
 	# construction_blocks_and_blocked_by = none # BLOCKING TEST
 	portrait = "GFX_megastructure_construction_background"
-	place_entity_on_planet_plane = no
+	place_entity_on_planet_plane = yes
+	scales_with_planet = yes
+	use_planet_resource = yes
 	prerequisites = { giga_tech_orbital_artificial_eco }
 
-	build_time = 1800
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	build_time = 360
 	resources = {
 		category = giga_kilostructures
 		cost = {
-			alloys = 5000
-			unity = @giga_kilo_unity_cost
+			alloys = @science_kilo_cost_1
+			unity = @science_kilo_cost_1
 		}
-		upkeep = { energy = 5 }
+		upkeep = {
+			energy = 10
+		}
+		upkeep = {
+			trigger = { 
+				exists = owner
+				owner = { # Standard empire
+					country_uses_consumer_goods = yes 
+				}
+			}
+			consumer_goods = 5
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Hivemind / default
+					country_uses_consumer_goods = no 
+					is_machine_empire = no
+				}
+			}
+			minerals = 15
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Robot upkeep
+					country_uses_consumer_goods = no 
+					is_machine_empire = yes
+				}
+			}
+			energy = 10
+		}
 	}
 
 	potential = {
@@ -22,6 +60,7 @@ orbital_artificial_eco_0 = {
 		OR = {
 			check_variable = { which = giga_orbital_artificial_eco_cap value = 0 }						# No Cap
 			check_variable = { which = giga_current_orbital_artificial_eco value < giga_orbital_artificial_eco_cap }
+			has_global_flag = orbital_artificial_eco_capped_u
 		}
 	}
 
@@ -31,15 +70,6 @@ orbital_artificial_eco_0 = {
 		custom_tooltip = { fail_text = "requires_more_planetary_bodies" 	num_planets_in_system >= 8 } #Placeholder key for until we have the arc furnace key
 		custom_tooltip = { fail_text = "requires_no_arc_furnace" 			system_has_arc_furnace = no }
 		custom_tooltip = { fail_text = "requires_no_orb_eco_arc"			NOT = { any_system_megastructure = { ehof_giga_new_is_artificial_eco = yes } } }
-		custom_tooltip = {
-			fail_text = "requires_not_capped"
-			from = {
-				OR = {
-					check_variable = { which = giga_orbital_artificial_eco_cap value = 0 }						# No Cap
-					check_variable = { which = giga_current_orbital_artificial_eco value < giga_orbital_artificial_eco_cap }
-				}
-			}
-		}
 	}
 
 	placement_rules = {
@@ -52,6 +82,17 @@ orbital_artificial_eco_0 = {
 			custom_tooltip = {
 				fail_text = "requires_not_astral_scar"
 				is_astral_scar = no
+			}
+		}
+		OR = {
+			from = { is_ai = no }
+			solar_system = {
+				count_system_planet = {
+					count >= 8
+					limit = {
+						giga_is_science_candidate = yes
+					}
+				}
 			}
 		}
 	}
@@ -72,39 +113,105 @@ orbital_artificial_eco_0 = {
 		modifier = { factor = 2.00	from = { has_federation = yes federation = { has_federation_type = research_federation } } }
 	}
 
+
+	on_build_start = {
+		set_star_flag = mega_base_construction
+	}
+	on_build_cancel = {
+		remove_star_flag = mega_base_construction
+	}
 	on_build_complete = {
 		save_event_target_as = giga_system
+		remove_star_flag = mega_base_construction
 		fromfrom.planet = {
+			set_planet_flag = has_test_site
 			save_event_target_as = giga_planet
-			# if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
 			giga_set_has_mega_flag = yes
 		}
-
 		from = {
-			set_timed_country_flag = { flag = has_recently_built_orbital_artificial_eco years = 20 }
-			country_event = { id = giga_dialog.1001 }	# Notification
+			set_timed_country_flag = { flag = has_recently_built_orbital_artificial_eco years = 10 }
+			create_message = {
+				type = MEGASTRUCTURE_BUILT
+				localization = MESSAGE_MEGASTRUCTURE_BUILT
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
+				}
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
+			}
 			change_variable = { which = giga_current_orbital_artificial_eco value = 1 }
 		}
-
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			save_event_target_as = target_planet
+			add_deposit = d_society_2
+			science_kilo_update_orbital_effect = yes
+		}
 	}
 }
 
 orbital_artificial_eco_1 = {
-	entity = "zoo_new"
-	construction_entity = "orbital_artificial_eco_ring_2"
+	entity = "giga_zoo_new_2"
+	construction_entity = "giga_zoo_new_2_part"
 	portrait = "GFX_megastructure_continental_planet"
 	place_entity_on_planet_plane = yes
 	scales_with_planet = yes
+	use_planet_resource = yes
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
 	upgrade_from = { orbital_artificial_eco_0 }
 
-	build_time = 1800
+	build_time = 1080
 	resources = {
 		category = giga_kilostructures
-		cost = { alloys = 5000 unity = @giga_kilo_unity_cost }
-		upkeep = {
-			energy = 33
+		cost = { 
+			alloys = @science_kilo_cost_2
+			unity = @science_kilo_cost_2
 		}
-		# produces = { society_research = 150 }
+		upkeep = {
+			energy = 20
+		}
+		upkeep = {
+			trigger = { 
+				exists = owner
+				owner = { # Standard empire
+					country_uses_consumer_goods = yes 
+				}
+			}
+			consumer_goods = 10
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Hivemind / default
+					country_uses_consumer_goods = no 
+					is_machine_empire = no
+				}
+			}
+			minerals = 30
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Robot upkeep
+					country_uses_consumer_goods = no 
+					is_machine_empire = yes
+				}
+			}
+			energy = 20
+		}
 	}
 
 	potential = { NOT = { has_global_flag = orbital_artificial_eco_disabled } }
@@ -113,67 +220,88 @@ orbital_artificial_eco_1 = {
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
 	on_build_complete = {
 		save_event_target_as = giga_system
-		every_system_planet = {
-			if = {
-				limit = {
-					is_colonizable = no
-					is_star = no
+		fromfrom.planet = {
+			set_planet_flag = has_orbital_artificial_eco
+			save_event_target_as = giga_planet
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			giga_set_has_mega_flag = yes
+		}
+		from = { # Notification
+			create_message = {
+				type = MEGASTRUCTURE_UPGRADED
+				localization = MESSAGE_MEGASTRUCTURE_UPGRADED
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
 				}
-				if = {
-					limit = { 
-						OR = {
-							has_deposit_for = shipclass_mining_station 
-							has_trade_deposit = yes
-						}
-					#	has_any_strategic_resource = no  
-					}
-					set_deposit = d_society_4
-				}
-				else = {
-					add_deposit = d_society_2
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
 				}
 			}
 		}
-		if = { 
-			limit = { exists = fromfrom.planet } 
-			fromfrom.planet = { save_event_target_as = giga_planet set_planet_entity = { entity = zoo_toxic_planet_01_entity } }  
-		}
-		from = {
-			# if = {
-			# 	limit = { NOT = { has_country_flag = giga_repaired_mega_no_dialog } }
-			# 	country_event = { id = giga_dialog.1002 }				# Notification
-			# }
-
-			# if = { This should go to stage 4
-			# 	limit = {
-			# 		NOR = {
-			# 			has_global_flag = giga_achievements_disabled
-			# 			has_country_flag = giga_achievement_56
-			# 		}
-			# 	}
-			# 	set_country_flag = giga_achievement_56
-			# 	set_timed_country_flag = { flag = giga_achievement_56_notification days = 30 }
-			# 	giga_achievement_sound = yes
-			# }
-
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			save_event_target_as = target_planet
+			add_deposit = d_society_2
+			science_kilo_update_orbital_effect = yes
 		}
 	}
 }
 
 orbital_artificial_eco_2 = {
-	entity = "zoo_new"
-	construction_entity = "orbital_artificial_eco_ring_2"
+	entity = "giga_zoo_new_3"
+	construction_entity = "giga_zoo_new_3_part"
 	portrait = "GFX_megastructure_continental_planet"
 	place_entity_on_planet_plane = yes
 	scales_with_planet = yes
+	use_planet_resource = yes
 	upgrade_from = { orbital_artificial_eco_1 }
 
-	build_time = 1800
+	build_time = 1080
 	resources = {
 		category = giga_kilostructures
-		cost = { alloys = 5000 unity = @giga_kilo_unity_cost }
+		cost = { 
+			alloys = @science_kilo_alloys_3
+			unity = @science_kilo_unity_3
+		}
 		upkeep = {
-			energy = 66
+			energy = 40
+		}
+		upkeep = {
+			trigger = { 
+				exists = owner
+				owner = { # Standard empire
+					country_uses_consumer_goods = yes 
+				}
+			}
+			consumer_goods = 20
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Hivemind / default
+					country_uses_consumer_goods = no 
+					is_machine_empire = no
+				}
+			}
+			minerals = 60
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Robot upkeep
+					country_uses_consumer_goods = no 
+					is_machine_empire = yes
+				}
+			}
+			energy = 40
 		}
 	}
 
@@ -183,163 +311,138 @@ orbital_artificial_eco_2 = {
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
 	on_build_complete = {
 		save_event_target_as = giga_system
-		every_system_planet = {
-			if = {
-				limit = {
-					is_star = no
-					is_colonizable = no
+		from = {
+			create_message = {
+				type = MEGASTRUCTURE_UPGRADED
+				localization = MESSAGE_MEGASTRUCTURE_UPGRADED
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
 				}
-				# if = {
-				# 	limit = { has_deposit_for = shipclass_mining_station NOT = { has_any_strategic_resource = yes } }
-				# 	set_deposit = d_society_3
-				# }
-				add_deposit = d_society_3
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
 			}
 		}
-		if = { 
-			limit = { exists = fromfrom.planet } 
-			fromfrom.planet = { save_event_target_as = giga_planet set_planet_entity = { entity = zoo_toxic_planet_01_entity } }  
-		}
-		from = {
-			# if = {
-			# 	limit = { NOT = { has_country_flag = giga_repaired_mega_no_dialog } }
-			# 	country_event = { id = giga_dialog.1002 }				# Notification
-			# }
-
-			# if = { This should go to stage 4
-			# 	limit = {
-			# 		NOR = {
-			# 			has_global_flag = giga_achievements_disabled
-			# 			has_country_flag = giga_achievement_56
-			# 		}
-			# 	}
-			# 	set_country_flag = giga_achievement_56
-			# 	set_timed_country_flag = { flag = giga_achievement_56_notification days = 30 }
-			# 	giga_achievement_sound = yes
-			# }
-
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			save_event_target_as = target_planet
+			add_deposit = d_society_2
+			science_kilo_update_orbital_effect = yes
+			add_modifier = {
+				modifier = orbital_eco_arcology_3_mod
+				days = -1
+			}
 		}
 	}
 }
 
 orbital_artificial_eco_3 = {
-	entity = "zoo_new"
-	construction_entity = "orbital_artificial_eco_ring_2"
+	entity = "giga_zoo_new_4"
+	construction_entity = "giga_zoo_new_4_part"
 	portrait = "GFX_megastructure_continental_planet"
 	place_entity_on_planet_plane = yes
 	scales_with_planet = yes
+	use_planet_resource = yes
 	upgrade_from = { orbital_artificial_eco_2 }
 
-	build_time = 1800
+	build_time = 1080 # 3 years
 	resources = {
 		category = giga_kilostructures
-		cost = { alloys = 5000 unity = @giga_kilo_unity_cost }
+		cost = { 
+			alloys = @science_kilo_alloys_4
+			unity = @science_kilo_unity_4
+		}
 		upkeep = {
-			energy = 100
+			energy = 50
+		}
+		upkeep = {
+			trigger = { 
+				exists = owner
+				owner = { # Standard empire
+					country_uses_consumer_goods = yes 
+				}
+			}
+			consumer_goods = 25
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Hivemind / default
+					country_uses_consumer_goods = no 
+					is_machine_empire = no
+				}
+			}
+			minerals = 75
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Robot upkeep
+					country_uses_consumer_goods = no 
+					is_machine_empire = yes
+				}
+			}
+			energy = 50
 		}
 	}
 
-	country_modifier = { #placeholder 
-		station_researchers_produces_mult = 0.33
-		station_researchers_society_research_produces_mult = 0.33
-	}
 	potential = { NOT = { has_global_flag = orbital_artificial_eco_disabled } }
 	possible = { from = { has_technology = giga_tech_orbital_artificial_eco } }
 
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
 	on_build_complete = {
 		save_event_target_as = giga_system
-		if = { 
-			limit = { exists = fromfrom.planet } 
-			fromfrom.planet = { save_event_target_as = giga_planet set_planet_entity = { entity = zoo_toxic_planet_01_entity } }  
-		}
 		from = {
-			if = {
-				limit = { NOT = { has_country_flag = giga_repaired_mega_no_dialog } }
-				country_event = { id = giga_dialog.1002 }				# Notification
+			create_message = {
+				type = MEGASTRUCTURE_UPGRADED
+				localization = MESSAGE_MEGASTRUCTURE_UPGRADED
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
+				}
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
 			}
-
-			# if = { This should go to stage 4
-			# 	limit = {
-			# 		NOR = {
-			# 			has_global_flag = giga_achievements_disabled
-			# 			has_country_flag = giga_achievement_56
-			# 		}
-			# 	}
-			# 	set_country_flag = giga_achievement_56
-			# 	set_timed_country_flag = { flag = giga_achievement_56_notification days = 30 }
-			# 	giga_achievement_sound = yes
-			# }
-
 		}
-
-		# fromfrom = {
-		# 	set_name = "atmosphere_shredder_complete_name" 
-		# }
+		fromfrom.planet = {
+			set_planet_entity = {
+				entity = "zoo_toxic_planet_01_entity"
+			}
+		}
 		every_system_planet = {
 			limit = {
-				NOT = { has_deposit_for = shipclass_mining_station }
-				is_star = no
-				is_astral_scar = no
-				colonizable_planet = no
+				giga_is_science_candidate = yes
 			}
 			save_event_target_as = target_planet
-			add_deposit = d_society_1
+			add_deposit = d_society_2
 			science_kilo_update_orbital_effect = yes
-			# add_modifier = {
-			# 	modifier = orbital_atmosphere_shredder_4_mod
-			# 	days = -1
-			# }
-			# add_modifier = {
-			# 	modifier = orbital_test_site_4_mod
-			# 	days = -1
-			# }
 			add_modifier = {
 				modifier = orbital_eco_arcology_4_mod
 				days = -1
 			}
-			# if = {
-			# 	limit = {
-			# 		has_modifier = orbital_atmosphere_shredder_3_mod
-			# 	}
-			# 	remove_modifier = orbital_atmosphere_shredder_3_mod
-			# }
+			if = {
+				limit = {
+					has_modifier = orbital_eco_arcology_3_mod
+				}
+				remove_modifier = orbital_eco_arcology_3_mod
+			}
 		}
 	}
 }
-
-# # Nooooooo more dismantling
-# orbital_artificial_eco_1_dismantle = {
-# 	entity = ""
-# 	portrait = "GFX_megastructure_physics_research"
-# 	upgrade_from = { orbital_artificial_eco_1 }
-
-# 	build_time = 10
-# 	resources = {
-# 		category = giga_kilostructures
-# 		cost = {
-# 			alloys = -1500
-# 			energy = 100
-# 		}
-# 	}
-
-# 	potential = {
-# 		NOT = { has_global_flag = orbital_artificial_eco_disabled }
-# 		is_ai = no
-# 	}
-# 	possible = { from = { has_technology = giga_tech_orbital_artificial_eco } }
-
-# 	on_build_complete = {
-# 		save_event_target_as = giga_system
-# 		fromfrom.planet = {
-# 			save_event_target_as = giga_planet
-# 			giga_clear_has_mega_flag = yes
-# 		}
-# 		from = { subtract_variable = { which = giga_current_orbital_artificial_eco value = 1 } }
-# 		remove_megastructure = fromfrom
-# 	}
-# }
-
 #Ruined
 orbital_artificial_eco_ruined = {
 	entity = "broken_orbital_artificial_eco_ring_2"
@@ -347,6 +450,11 @@ orbital_artificial_eco_ruined = {
 	place_entity_on_planet_plane = no
 	potential = { always = no }
 	resources = { category = giga_kilostructures }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
 }
 
 #Restored
@@ -355,18 +463,22 @@ orbital_artificial_eco_restored = {
 	construction_entity = "orbital_artificial_eco_ring_2"
 	portrait = "GFX_megastructure_continental_planet"
 	place_entity_on_planet_plane = no
+	use_planet_resource = yes
 	upgrade_from = { orbital_artificial_eco_ruined }
-	country_modifier = { terraform_speed_mult = 0.075 }
 
-	build_time = 1800
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	build_time = 720 # 2 years
 	resources = {
 		category = giga_kilostructures
 		cost = { alloys = 5000 unity = @giga_kilo_repair_unity_cost }
 		upkeep = {
-			energy = 25
-			alloys = 5
+			consumer_goods = 25
+			energy = 50
 		}
-		produces = { society_research = 150 }
 	}
 
 	potential = { NOT = { has_global_flag = orbital_artificial_eco_disabled } }
@@ -378,17 +490,45 @@ orbital_artificial_eco_restored = {
 	ai_weight = { factor = value:giga_ai_base_repairs } # If we can build it, we will build it
 	on_build_complete = {
 		save_event_target_as = giga_system
-		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
-		giga_remove_system_debris = yes
 		from = {
-			country_event = { id = giga_dialog.1004 }	# Notification
+			create_message = {
+				type = MEGASTRUCTURE_UPGRADED
+				localization = MESSAGE_MEGASTRUCTURE_UPGRADED
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
+				}
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
+			}
+			change_variable = { which = giga_current_orbital_artificial_eco value = 1 }
+		}
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			save_event_target_as = target_planet
+			add_deposit = d_society_2
+			add_deposit = d_society_2
+			add_deposit = d_society_2
+			add_deposit = d_society_2
+			science_kilo_update_orbital_effect = yes
+			add_modifier = {
+				modifier = orbital_eco_arcology_4_mod
+				days = -1
+			}
+			if = {
+				limit = {
+					has_modifier = orbital_eco_arcology_3_mod
+				}
+				remove_modifier = orbital_eco_arcology_3_mod
+			}
 		}
 	}
 }
-
-#Notes
-#Toxic world for society?
-#4 stages
-#33.33% bonus to science production
-#33% bonus to society deposits
-#8 research per planet and asteroid
