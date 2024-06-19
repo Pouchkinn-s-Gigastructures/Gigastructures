@@ -525,53 +525,7 @@ country_event = {
 			modifier = katzen_economy_modifier
 			days = -1
 		}
-		#Warforge Capacity
-		set_variable = {
-			which = kaiser_warforge_build_capacity
-			value = 8
-		}
-		#SHIP COSTS
-		set_variable = {
-			which = min_kaiser_ship_cost
-			value = 350
-		}
-		set_variable = {
-			which = kaiser_panzer_cost
-			value = 350
-		}
-		set_variable = {
-			which = kaiser_bomber_cost
-			value = 640
-		}
-		set_variable = {
-			which = kaiser_cruiser_cost
-			value = 1500
-		}
-		set_variable = {
-			which = kaiser_moon_cost
-			value = 15000
-		}
-		#Upkeeps
-		set_variable = {
-			which = min_kaiser_ship_upkeep
-			value = 0.75
-		}
-		set_variable = {
-			which = kaiser_panzer_upkeep
-			value = 0.75
-		}
-		set_variable = {
-			which = kaiser_bomber_upkeep
-			value = 1
-		}
-		set_variable = {
-			which = kaiser_cruiser_upkeep
-			value = 3.5
-		}
-		set_variable = {
-			which = kaiser_moon_upkeep
-			value = 30
-		}
+
 		#ECO STUFF
 		set_variable = {
 			which = kaiser_tech_ship_hp_buff
@@ -5358,6 +5312,11 @@ country_event = { #Manage war forges and the Kaiser's eco
 			}
 
 			change_variable = {
+				which = kaiser_resource_income
+				value = 15
+			}
+
+			change_variable = {
 				which = kaiser_resource_stockpile
 				value = kaiser_resource_income
 			}
@@ -5468,16 +5427,6 @@ country_event = { #Manage war forges and the Kaiser's eco
 						}
 
 						delete_ship = this
-						every_country = {
-							limit = {
-								has_event_chain = "katzenartig_chain"
-							}
-							add_event_chain_counter = {
-								event_chain = "katzenartig_chain"
-								counter = "katzen_ship_count"
-								amount = -1
-							}
-						}
 					}
 					calculate_kaiser_spending = yes
 				}
@@ -8380,11 +8329,11 @@ planet_event = { #Every 6 months, warforges will randomly create a fleet
 				event_target:flusion_primitives_country = {
 					check_variable = {
 						which = kaiser_resource_stockpile
-						value > min_kaiser_ship_cost
+						value > value:min_kaiser_ship_cost
 					}
 					check_variable = {
 						which = kaiser_resource_balance
-						value > min_kaiser_ship_upkeep
+						value > value:min_kaiser_ship_cost
 					}
 				}
 			}
@@ -13174,10 +13123,13 @@ country_event = {
 	}
 
 	immediate = {
+		reset_event_chain_counter = { event_chain = katzenartig_chain counter = katzen_ship_count }
+		reset_event_chain_counter = { event_chain = katzenartig_chain counter = katzen_planet_count }
+		reset_event_chain_counter = { event_chain = katzenartig_chain counter = katzen_warforge_count }
+		reset_event_chain_counter = { event_chain = katzenartig_chain counter = katzen_system_count }
 		country_event = { id = giga_katzen.9999 days = 30 } #Count again
 		every_owned_ship = { #counts ships
 			limit = {
-				NOT = { has_ship_flag = katzen_already_counted }
 				OR = {
 					is_ship_size = giga_katzen_submarine
 					is_ship_size = giga_katzen_bomber
@@ -13186,7 +13138,6 @@ country_event = {
 					is_ship_size = giga_kaiser_moon_flusion
 				}
 			}
-			set_ship_flag = katzen_already_counted
 			every_country = {
 				limit = {
 					has_event_chain = "katzenartig_chain"
@@ -13200,12 +13151,10 @@ country_event = {
 		}
 		every_planet_within_border = { #count planets
 			limit = {
-				NOT = { has_planet_flag = katzen_already_counted }
 				is_colony = yes
 				exists = owner
 				owner = { is_country_type = katzenartig_imperium }
 			}
-			set_planet_flag = katzen_already_counted
 			every_country = {
 				limit = {
 					has_event_chain = "katzenartig_chain"
@@ -13214,38 +13163,12 @@ country_event = {
 					event_chain = "katzenartig_chain"
 					counter = "katzen_planet_count"
 					amount = 1
-				}
-			}
-		}
-		every_galaxy_planet = { #remove planets that got captured
-			limit = {
-				has_planet_flag = katzen_already_counted
-				exists = owner
-				owner = { NOT = { is_country_type = katzenartig_imperium } }
-			}
-			remove_planet_flag = katzen_already_counted
-			every_country = {
-				limit = {
-					has_event_chain = "katzenartig_chain"
-				}
-				add_event_chain_counter = {
-					event_chain = "katzenartig_chain"
-					counter = "katzen_planet_count"
-					amount = -1
 				}
 			}
 		}
 		every_owned_megastructure = { #count forges
 			limit = {
 				is_megastructure_type = katzen_forge_1
-				NOT = {
-					solar_system = {
-						has_star_flag = katzen_already_counted_forge
-					}
-				}
-			}
-			solar_system = {
-				set_star_flag = katzen_already_counted_forge
 			}
 			every_country = {
 				limit = {
@@ -13255,35 +13178,10 @@ country_event = {
 					event_chain = "katzenartig_chain"
 					counter = "katzen_warforge_count"
 					amount = 1
-				}
-			}
-		}
-		every_system = { #remove destroyed forges
-			limit = {
-				has_star_flag = katzen_already_counted_forge
-				NOT = {
-					any_system_megastructure = {
-						is_megastructure_type = katzen_forge_1
-					}
-				}
-			}
-			remove_star_flag = katzen_already_counted_forge
-			every_country = {
-				limit = {
-					has_event_chain = "katzenartig_chain"
-				}
-				add_event_chain_counter = {
-					event_chain = "katzenartig_chain"
-					counter = "katzen_warforge_count"
-					amount = -1
 				}
 			}
 		}
 		every_system_within_border = { #count systems
-			limit = {
-				NOT = { has_star_flag = katzen_already_counted }
-			}
-			set_star_flag = katzen_already_counted
 			every_country = {
 				limit = {
 					has_event_chain = "katzenartig_chain"
@@ -13292,31 +13190,6 @@ country_event = {
 					event_chain = "katzenartig_chain"
 					counter = "katzen_system_count"
 					amount = 1
-				}
-			}
-		}
-		every_system = { #remove captured systems
-			limit = {
-				has_star_flag = katzen_already_counted
-				OR = {
-					AND = {
-						exists = owner
-						owner = {
-							NOT = { is_country_type = katzenartig_imperium }
-						}
-					has_owner = no # something killed the starbase, removing the system from the kaiser
-					}
-				}
-			}
-			remove_star_flag = katzen_already_counted
-			every_country = {
-				limit = {
-					has_event_chain = "katzenartig_chain"
-				}
-				add_event_chain_counter = {
-					event_chain = "katzenartig_chain"
-					counter = "katzen_system_count"
-					amount = -1
 				}
 			}
 		}
