@@ -1,4 +1,10 @@
 
+@fraction_alloys = 0.2
+@fraction_consumer_goods = 0.2
+@fraction_energy = 0.08
+@fraction_food = 0.08
+@fraction_supertensiles = 0.04
+
 giga_asteroid_industry_spawn_game_start_candidates = {
     if = {
         limit = {
@@ -6,6 +12,7 @@ giga_asteroid_industry_spawn_game_start_candidates = {
         }
 
         event_target:global_event_country = {
+            # for counting how many asteroids there are
             set_variable = {
                 which = giga_asteroid_industry_asteroid_count
                 value = 0
@@ -13,8 +20,17 @@ giga_asteroid_industry_spawn_game_start_candidates = {
 
             # set up per type variables
             giga_asteroid_industry_setup_step_1 = { type = alloys }
+            giga_asteroid_industry_setup_step_1 = { type = consumer_goods }
+            giga_asteroid_industry_setup_step_1 = { type = energy }
+            giga_asteroid_industry_setup_step_1 = { type = food }
+            if = {
+                limit = { has_global_flag = @giga_amb_flag }
+                giga_asteroid_industry_setup_step_1 = { type = supertensiles }
+            }
+
 
             every_galaxy_planet = {
+                # count up every valid asteroid
                 if = {
                     limit = {
                         is_asteroid = yes
@@ -30,29 +46,65 @@ giga_asteroid_industry_spawn_game_start_candidates = {
 
                 # check and count up, set flags for perfect
                 giga_asteroid_industry_setup_step_2 = { type = alloys }
+                giga_asteroid_industry_setup_step_2 = { type = consumer_goods }
+                giga_asteroid_industry_setup_step_2 = { type = energy }
+                giga_asteroid_industry_setup_step_2 = { type = food }
+                if = {
+                    limit = { has_global_flag = @giga_amb_flag }
+                    giga_asteroid_industry_setup_step_2 = { type = supertensiles }
+                }
             }
 
-            giga_asteroid_industry_setup_step_3 = { type = alloys }
+            # do the math to get our final chances
+            giga_asteroid_industry_setup_step_3 = { type = alloys fraction = @fraction_alloys }
+            giga_asteroid_industry_setup_step_3 = { type = consumer_goods fraction = @fraction_consumer_goods }
+            giga_asteroid_industry_setup_step_3 = { type = energy fraction = @fraction_energy }
+            giga_asteroid_industry_setup_step_3 = { type = food fraction = @fraction_food }
+            if = {
+                limit = { has_global_flag = @giga_amb_flag }
+                giga_asteroid_industry_setup_step_3 = { type = supertensiles fraction = @fraction_supertensiles }
+            }
 
             every_galaxy_planet = {
+                if = {
+                    limit = {
+                        is_asteroid = yes
+                        is_moon = no
+                    }
 
+                    # randomly apply sites to potential candidates
+                    giga_asteroid_industry_setup_step_4 = { type = alloys }
+                    giga_asteroid_industry_setup_step_4 = { type = consumer_goods }
+                    giga_asteroid_industry_setup_step_4 = { type = energy }
+                    giga_asteroid_industry_setup_step_4 = { type = food }
+                    if = {
+                        limit = { has_global_flag = @giga_amb_flag }
+                        giga_asteroid_industry_setup_step_4 = { type = supertensiles }
+                    }
+                }
             }
 
-            clear_variable = giga_asteroid_industry_perfect_candidate_alloys
-            clear_variable = giga_asteroid_industry_perfect_candidate_consumer_goods
-            clear_variable = giga_asteroid_industry_perfect_candidate_energy
-            clear_variable = giga_asteroid_industry_perfect_candidate_food
-            clear_variable = giga_asteroid_industry_perfect_candidate_supertensiles
+            clear_variable = giga_asteroid_industry_asteroid_count
+            giga_asteroid_industry_setup_step_5 = { type = alloys }
+            giga_asteroid_industry_setup_step_5 = { type = consumer_goods }
+            giga_asteroid_industry_setup_step_5 = { type = energy }
+            giga_asteroid_industry_setup_step_5 = { type = food }
+            if = {
+                limit = { has_global_flag = @giga_amb_flag }
+                giga_asteroid_industry_setup_step_5 = { type = supertensiles }
+            }
         }
     }
 }
 
 # set up per type variables
 giga_asteroid_industry_setup_step_1 = {
+    # how many are perfect candidates and should always have a site on them
     set_variable = {
         which = giga_asteroid_industry_perfect_candidate_$type$
         value = 0
     }
+    # how many COULD be sites for this type
     set_variable = {
         which = giga_asteroid_industry_candidate_$type$
         value = 0
@@ -62,6 +114,7 @@ giga_asteroid_industry_setup_step_1 = {
 # check and count up, set flags for perfect
 giga_asteroid_industry_setup_step_2 = {
     if = {
+        # if it's a perfect candidate just go ahead and mark it, and also count it for later
         limit = {
             giga_asteroid_industry_perfect_candidate_$type$ = yes
         }
@@ -72,8 +125,12 @@ giga_asteroid_industry_setup_step_2 = {
             }
         }
         set_planet_flag = giga_asteroid_industry_candidate_$type$
+        add_modifier = {
+            modifier = giga_asteroid_industry_candidate_$type$
+        }
     }
     else_if = {
+        # otherwise, if it's a potential candidate, count it for later math
         limit = {
             giga_asteroid_industry_candidate_$type$ = yes
         }
@@ -88,5 +145,47 @@ giga_asteroid_industry_setup_step_2 = {
 
 # math between sweeps
 giga_asteroid_industry_setup_step_3 = {
+    set_variable = {
+        which = giga_asteroid_industry_candidate_chance_$type$
+        value = value:giga_asteroid_industry_candidate_chance|type|$type$|fraction|$fraction$|
+    }
+}
 
+# apply sites to random candidates
+giga_asteroid_industry_setup_step_4 = {
+    if = {
+        limit = {
+            not = { has_planet_flag = giga_asteroid_industry_candidate_$type$ }
+            giga_asteroid_industry_candidate_$type$ = yes
+        }
+
+        # value is pre-scaled by 10k
+        random_list = {
+            # chance to apply
+            # zero, plus the calculated chance
+            0 = {
+                modifier = {
+                    add = prev.giga_asteroid_industry_candidate_chance_$type$
+                }
+
+                set_planet_flag = giga_asteroid_industry_candidate_$type$
+                add_modifier = {
+                    modifier = giga_asteroid_industry_candidate_$type$
+                }
+            }
+            # chance to not apply
+            # one, minus the calculated chance
+            10000 = {
+                modifier = {
+                    subtract = prev.giga_asteroid_industry_candidate_chance_$type$
+                }
+            }
+        }
+    }
+}
+
+# clean up variables
+giga_asteroid_industry_setup_step_5 = {
+    clear_variable = giga_asteroid_industry_perfect_candidate_$type$
+    clear_variable = giga_asteroid_industry_candidate_$type$
 }
