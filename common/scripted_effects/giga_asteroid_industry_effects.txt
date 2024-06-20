@@ -1,15 +1,19 @@
 
+# incidence of different types of site as a fraction of *total* asteroid count, viable or not for that type
+# that's why the ice ones (energy, food) are lower, as there are fewer ice asteroids by default
 @fraction_alloys = 0.2
 @fraction_consumer_goods = 0.2
 @fraction_energy = 0.08
 @fraction_food = 0.08
 @fraction_supertensiles = 0.04
 
+# game setup effect for creating asteroid industry candidates
 giga_asteroid_industry_spawn_game_start_candidates = {
     if = {
         limit = {
             not = { has_global_flag = giga_spawned_asteroid_industry_candidates }
         }
+        set_global_flag = giga_spawned_asteroid_industry_candidates
 
         event_target:global_event_country = {
             # for counting how many asteroids there are
@@ -30,18 +34,14 @@ giga_asteroid_industry_spawn_game_start_candidates = {
 
 
             every_galaxy_planet = {
+                limit = {
+                    is_asteroid = yes
+                    is_moon = no
+                }
                 # count up every valid asteroid
-                if = {
-                    limit = {
-                        is_asteroid = yes
-                        is_moon = no
-                    }
-                    prev = {
-                        change_variable = {
-                            which = giga_asteroid_industry_asteroid_count
-                            value = 1
-                        }
-                    }
+                change_variable = {
+                    which = giga_asteroid_industry_asteroid_count
+                    value = 1
                 }
 
                 # check and count up, set flags for perfect
@@ -66,21 +66,19 @@ giga_asteroid_industry_spawn_game_start_candidates = {
             }
 
             every_galaxy_planet = {
-                if = {
-                    limit = {
-                        is_asteroid = yes
-                        is_moon = no
-                    }
+                limit = {
+                    is_asteroid = yes
+                    is_moon = no
+                }
 
-                    # randomly apply sites to potential candidates
-                    giga_asteroid_industry_setup_step_4 = { type = alloys }
-                    giga_asteroid_industry_setup_step_4 = { type = consumer_goods }
-                    giga_asteroid_industry_setup_step_4 = { type = energy }
-                    giga_asteroid_industry_setup_step_4 = { type = food }
-                    if = {
-                        limit = { has_global_flag = @giga_amb_flag }
-                        giga_asteroid_industry_setup_step_4 = { type = supertensiles }
-                    }
+                # randomly apply sites to potential candidates
+                giga_asteroid_industry_setup_step_4 = { type = alloys }
+                giga_asteroid_industry_setup_step_4 = { type = consumer_goods }
+                giga_asteroid_industry_setup_step_4 = { type = energy }
+                giga_asteroid_industry_setup_step_4 = { type = food }
+                if = {
+                    limit = { has_global_flag = @giga_amb_flag }
+                    giga_asteroid_industry_setup_step_4 = { type = supertensiles }
                 }
             }
 
@@ -97,7 +95,7 @@ giga_asteroid_industry_spawn_game_start_candidates = {
     }
 }
 
-# set up per type variables
+# INTERNAL: set up per type variables
 giga_asteroid_industry_setup_step_1 = {
     # how many are perfect candidates and should always have a site on them
     set_variable = {
@@ -111,7 +109,7 @@ giga_asteroid_industry_setup_step_1 = {
     }
 }
 
-# check and count up, set flags for perfect
+# INTERNAL: check and count up, set flags for perfect
 giga_asteroid_industry_setup_step_2 = {
     if = {
         # if it's a perfect candidate just go ahead and mark it, and also count it for later
@@ -143,7 +141,7 @@ giga_asteroid_industry_setup_step_2 = {
     }
 }
 
-# math between sweeps
+# INTERNAL: math between sweeps
 giga_asteroid_industry_setup_step_3 = {
     set_variable = {
         which = giga_asteroid_industry_candidate_chance_$type$
@@ -151,12 +149,15 @@ giga_asteroid_industry_setup_step_3 = {
     }
 }
 
-# apply sites to random candidates
+# INTERNAL: apply sites to random candidates
 giga_asteroid_industry_setup_step_4 = {
     if = {
         limit = {
             not = { has_planet_flag = giga_asteroid_industry_candidate_$type$ }
             giga_asteroid_industry_candidate_$type$ = yes
+            prev = {
+                is_variable_set = giga_asteroid_industry_candidate_chance_$type$
+            }
         }
 
         # value is pre-scaled by 10k
@@ -184,7 +185,7 @@ giga_asteroid_industry_setup_step_4 = {
     }
 }
 
-# clean up variables
+# INTERNAL: clean up variables
 giga_asteroid_industry_setup_step_5 = {
     clear_variable = giga_asteroid_industry_perfect_candidate_$type$
     clear_variable = giga_asteroid_industry_candidate_$type$
