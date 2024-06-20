@@ -6018,6 +6018,154 @@ country_event = { #every 10 years, Kaiser randomly declares war on an AI
 			is_country_type = katzenartig_imperium #Only occurs if katzens are around
 		}
 		event_target:flusion_primitives_country = { NOT = { has_country_flag = kaiser_moon_destroyed } }
+		OR = {
+			AND = {
+				is_at_war = yes
+				any_neighbor_country = {
+					NOR = {
+						is_country_type = katzenartig_imperium
+						has_country_flag = katzenartig_war_declaration_forbidden #for ACE
+					}
+					is_ai = yes
+					NAND = {
+						exists = federation
+						federation = {
+							any_member = {
+								is_ai = no
+							}
+						}
+					} #not in fed with player
+					NOT = { any_subject = { is_ai = no } } #not overlord of player
+					NAND = {
+						exists = overlord
+						overlord = {
+							is_ai = no
+						}
+					} #Not subject of player
+					NOT = { is_at_war_with = event_target:flusion_primitives_country }
+
+					OR = {
+						AND = {
+							NOT = { exists = federation }
+							is_country_type = default
+							OR = {
+								relative_power = {
+									who = event_target:flusion_primitives_country
+									category = fleet
+									value = inferior
+								}
+								relative_power = {
+									who = event_target:flusion_primitives_country
+									category = fleet
+									value = pathetic
+								}
+							}
+						}
+					}
+				}
+			}
+			AND = {
+				is_at_war = no
+				any_neighbor_country = {
+					NOR = {
+						is_country_type = katzenartig_imperium
+						has_country_flag = katzenartig_war_declaration_forbidden #for ACE
+					}
+					is_ai = yes
+					NAND = {
+						exists = federation
+						federation = {
+							any_member = {
+								is_ai = no
+							}
+						}
+					} #not in fed with player
+					NOT = { any_subject = { is_ai = no } } #not overlord of player
+					NAND = {
+						exists = overlord
+						overlord = {
+							is_ai = no
+						}
+					} #Not subject of player
+					NOT = { is_at_war_with = event_target:flusion_primitives_country }
+
+					OR = {
+						AND = {
+							NOT = { exists = federation }
+							is_country_type = default
+							OR = {
+								relative_power = {
+									who = event_target:flusion_primitives_country
+									category = fleet
+									value = equivalent
+								}
+								relative_power = {
+									who = event_target:flusion_primitives_country
+									category = fleet
+									value = inferior
+								}
+								relative_power = {
+									who = event_target:flusion_primitives_country
+									category = fleet
+									value = pathetic
+								}
+							}
+						}
+						AND = {
+							is_country_type = default
+							OR = {
+								relative_power = {
+									who = event_target:flusion_primitives_country
+									category = fleet
+									value = inferior
+								}
+								relative_power = {
+									who = event_target:flusion_primitives_country
+									category = fleet
+									value = pathetic
+								}
+							}
+							exists = federation
+							NOT = {
+								federation = {
+									any_member = {
+										OR = {
+											relative_power = {
+												who = event_target:flusion_primitives_country
+												category = fleet
+												value = equivalent
+											}
+											relative_power = {
+												who = event_target:flusion_primitives_country
+												category = fleet
+												value = superior
+											}
+											relative_power = {
+												who = event_target:flusion_primitives_country
+												category = fleet
+												value = overwhelming
+											}
+										}
+									}
+								}
+							}
+						}
+						AND = {
+							OR = {
+								is_country_type = fallen_empire
+								is_country_type = awakened_fallen_empire
+							}
+							mid_game_years_passed > 50
+							relative_power = {
+								who = event_target:flusion_primitives_country
+								category = fleet
+								value = pathetic
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	immediate = {
@@ -6054,8 +6202,10 @@ country_event = { #every 10 years, Kaiser randomly declares war on an AI
 						} 
 					} #Not subject of player
 					NOT = { is_at_war_with = event_target:flusion_primitives_country }
+
 					OR = {
 						AND = {
+							NOT = { exists = federation }
 							is_country_type = default
 							OR = {
 								relative_power = {
@@ -6072,6 +6222,45 @@ country_event = { #every 10 years, Kaiser randomly declares war on an AI
 									who = event_target:flusion_primitives_country
 									category = fleet
 									value = pathetic
+								}
+							}
+						}
+						AND = {
+							is_country_type = default
+							OR = {
+								relative_power = {
+									who = event_target:flusion_primitives_country
+									category = fleet
+									value = inferior
+								}
+								relative_power = {
+									who = event_target:flusion_primitives_country
+									category = fleet
+									value = pathetic
+								}
+							}
+							exists = federation
+							NOT = {
+								federation = {
+									any_member = {
+										OR = {
+											relative_power = {
+												who = event_target:flusion_primitives_country
+												category = fleet
+												value = equivalent
+											}
+											relative_power = {
+												who = event_target:flusion_primitives_country
+												category = fleet
+												value = superior
+											}
+											relative_power = {
+												who = event_target:flusion_primitives_country
+												category = fleet
+												value = overwhelming
+											}
+										}
+									}
 								}
 							}
 						}
@@ -6865,7 +7054,7 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 				}
 				check_variable = {
 					which = kaiser_resource_stockpile
-					value > 100
+					value > value:katzen_terraforming_cost
 				}
 			}
 			random_planet_within_border = {
@@ -6877,9 +7066,9 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 					NOT = { has_planet_flag = has_megastructure }
 				}
 				start_terraform_process = pc_continental
-				change_variable = {
+				subtract_variable = {
 					which = kaiser_resource_stockpile
-					value = -100
+					value = value:katzen_terraforming_cost
 				}
 			}
 		}
@@ -6904,7 +7093,7 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 				}
 				check_variable = {
 					which = kaiser_resource_stockpile
-					value > 100
+					value > value:katzen_terraforming_cost
 				}
 			}
 			random_planet_within_border = {
@@ -6920,9 +7109,9 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 					NOT = { has_planet_flag = has_megastructure }
 				}
 				start_terraform_process = pc_continental
-				change_variable = {
+				subtract_variable = {
 					which = kaiser_resource_stockpile
-					value = -100
+					value = value:katzen_terraforming_cost
 				}
 			}
 		}
@@ -6932,7 +7121,7 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 				event_target:flusion_primitives_country = {
 					check_variable = {
 						which = kaiser_resource_stockpile
-						value > 2000
+						value > value:katzen_mega_cost
 					}
 				}
 				any_owned_megastructure = {
@@ -6962,7 +7151,7 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 					event_target:flusion_primitives_country = {
 						check_variable = {
 							which = kaiser_resource_stockpile
-							value > 2000
+							value > value:katzen_mega_cost
 						}
 					}
 				}
@@ -6991,7 +7180,7 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 					event_target:flusion_primitives_country = {
 						subtract_variable = {
 							which = kaiser_resource_stockpile
-							value = 2000
+							value = value:katzen_mega_cost
 						}
 					}
 					if = {		limit = { is_megastructure_type = terraform_barren_0 }		upgrade_megastructure_to = terraform_barren_1 }
@@ -7040,7 +7229,7 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 						event_target:flusion_primitives_country = {
 							check_variable = {
 								which = kaiser_resource_stockpile
-								value > 2000
+								value > value:katzen_mega_cost
 							}
 						}
 						planet_size > 16
@@ -7103,7 +7292,7 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 					event_target:flusion_primitives_country = {
 						subtract_variable = {
 							which = kaiser_resource_stockpile
-							value = 2000
+							value = value:katzen_mega_cost
 						}
 					}
 				}
@@ -13119,10 +13308,15 @@ country_event = {
 	}
 
 	immediate = {
-		reset_event_chain_counter = { event_chain = katzenartig_chain counter = katzen_ship_count }
-		reset_event_chain_counter = { event_chain = katzenartig_chain counter = katzen_planet_count }
-		reset_event_chain_counter = { event_chain = katzenartig_chain counter = katzen_warforge_count }
-		reset_event_chain_counter = { event_chain = katzenartig_chain counter = katzen_system_count }
+		every_country = {
+			limit = {
+				has_event_chain = "katzenartig_chain"
+			}
+			reset_event_chain_counter = { event_chain = katzenartig_chain counter = katzen_ship_count }
+			reset_event_chain_counter = { event_chain = katzenartig_chain counter = katzen_planet_count }
+			reset_event_chain_counter = { event_chain = katzenartig_chain counter = katzen_warforge_count }
+			reset_event_chain_counter = { event_chain = katzenartig_chain counter = katzen_system_count }
+		}
 		country_event = { id = giga_katzen.9999 days = 30 } #Count again
 		every_owned_ship = { #counts ships
 			limit = {
