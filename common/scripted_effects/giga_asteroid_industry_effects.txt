@@ -11,9 +11,12 @@
 giga_asteroid_industry_spawn_game_start_candidates = {
     if = {
         limit = {
-            not = { has_global_flag = giga_spawned_asteroid_industry_candidates }
+            nor = {
+                has_global_flag = asteroid_manufactory_disabled
+                has_global_flag = @asteroid_industry_candidates_spawned_flag
+            }
         }
-        set_global_flag = giga_spawned_asteroid_industry_candidates
+        set_global_flag = @asteroid_industry_candidates_spawned_flag
 
         event_target:global_event_country = {
             # for counting how many asteroids there are
@@ -84,6 +87,11 @@ giga_asteroid_industry_spawn_game_start_candidates = {
                 }
             }
 
+            # mark every system as spawned in for later
+            every_system = {
+                set_star_flag = @asteroid_industry_candidates_spawned_flag
+            }
+
             clear_variable = giga_asteroid_industry_asteroid_count
             giga_asteroid_industry_setup_step_5 = { type = alloys }
             giga_asteroid_industry_setup_step_5 = { type = consumer_goods }
@@ -124,10 +132,7 @@ giga_asteroid_industry_setup_step_2 = {
                 value = 1
             }
         }
-        set_planet_flag = giga_asteroid_industry_candidate_$type$
-        add_modifier = {
-            modifier = giga_asteroid_industry_candidate_$type$
-        }
+        giga_asteroid_industry_mark_candidate = { type = $type$ }
     }
     else_if = {
         # otherwise, if it's a potential candidate, count it for later math
@@ -171,10 +176,7 @@ giga_asteroid_industry_setup_step_4 = {
                     add = prev.giga_asteroid_industry_candidate_chance_$type$
                 }
 
-                set_planet_flag = giga_asteroid_industry_candidate_$type$
-                add_modifier = {
-                    modifier = giga_asteroid_industry_candidate_$type$
-                }
+                giga_asteroid_industry_mark_candidate = { type = $type$ }
             }
             # chance to not apply
             # one, minus the calculated chance
@@ -191,4 +193,80 @@ giga_asteroid_industry_setup_step_4 = {
 giga_asteroid_industry_setup_step_5 = {
     clear_variable = giga_asteroid_industry_perfect_candidate_$type$
     clear_variable = giga_asteroid_industry_candidate_$type$
+}
+
+# mark a body as a candidate of type
+giga_asteroid_industry_mark_candidate = {
+    set_planet_flag = giga_asteroid_industry_candidate
+    set_planet_flag = giga_asteroid_industry_candidate_$type$
+    add_modifier = {
+        modifier = giga_asteroid_industry_candidate_$type$
+    }
+}
+
+# system scope, apply candidates to this system
+# used to mark new systems on first entry
+giga_asteroid_industry_spawn_system_candidates = {
+    if = {
+        limit = {
+            # global flag to say we have the values set up
+            has_global_flag = @asteroid_industry_candidates_spawned_flag
+
+            not = { has_star_flag = @asteroid_industry_candidates_spawned_flag }
+        }
+        set_star_flag = @asteroid_industry_candidates_spawned_flag
+
+        every_system_planet = {
+            giga_asteroid_industry_system_setup_step_1 = { type = alloys }
+            giga_asteroid_industry_system_setup_step_1 = { type = consumer_goods }
+            giga_asteroid_industry_system_setup_step_1 = { type = energy }
+            giga_asteroid_industry_system_setup_step_1 = { type = food }
+            if = {
+                limit = { has_global_flag = @giga_amb_flag }
+                giga_asteroid_industry_system_setup_step_1 = { type = supertensiles }
+            }
+        }
+    }
+}
+
+# INTERNAL: set up deposits for one type
+giga_asteroid_industry_system_setup_step_1 = {
+    if = {
+        limit = {
+            is_asteroid = yes
+            is_moon = no
+            giga_asteroid_industry_perfect_candidate_$type$ = yes
+        }
+        giga_asteroid_industry_mark_candidate = { type = $type$ }
+    }
+    else_if = {
+        limit = {
+            is_asteroid = yes
+            is_moon = no
+            giga_asteroid_industry_candidate_$type$ = yes
+            event_target:global_event_country = {
+                is_variable_set = giga_asteroid_industry_candidate_chance_$type$
+            }
+        }
+
+        # value is pre-scaled by 10k
+        random_list = {
+            # chance to apply
+            # zero, plus the calculated chance
+            0 = {
+                modifier = {
+                    add = event_target:global_event_country.giga_asteroid_industry_candidate_chance_$type$
+                }
+
+                giga_asteroid_industry_mark_candidate = { type = $type$ }
+            }
+            # chance to not apply
+            # one, minus the calculated chance
+            10000 = {
+                modifier = {
+                    subtract = event_target:global_event_country.giga_asteroid_industry_candidate_chance_$type$
+                }
+            }
+        }
+    }
 }
