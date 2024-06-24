@@ -351,6 +351,10 @@ country_event = {
     }
 }
 
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
 # Change blacklist in embracing the worm event
 namespace = akx
 planet_event = {
@@ -564,6 +568,10 @@ planet_event = {
 	}
 }
 
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
 # Change blacklist in nanite swarm event
 namespace = anomaly
 ship_event = {
@@ -616,6 +624,10 @@ ship_event = {
 		}
 	}
 }
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
 
 # Change blacklist in relentless industrialists event
 namespace = toxoids
@@ -746,6 +758,9 @@ planet_event = {
 	}
 }
 
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
 
 namespace = megastructures
 # This = Ship
@@ -989,6 +1004,10 @@ country_event = {
 	}
 }
 
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
 namespace = astral_rift
 system_event = {
 	id = astral_rift.1095
@@ -1025,6 +1044,143 @@ system_event = {
 				id = astral_planes.45
 				days = 1
 				scopes = { from = prev }
+			}
+		}
+	}
+}
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
+namespace = cybernetics
+
+# changing the planet condition for not spawning virtual pops
+
+### Create the Unemployed
+### Country scope gatekeeper
+### on_monthly_pulse_country
+country_event = {
+	id = cybernetics.5025
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		is_fallen_empire = no
+		has_active_tradition = tr_virtuality_finish
+		any_owned_planet = {
+			is_under_colonization = no
+			giga_exclude_planet_from_virtual_growth = no # EDITED HERE
+			free_jobs > 0
+			NOR = {
+				free_jobs_of_type = {
+					job = mortal_initiate
+					value >= 1
+				}
+				free_jobs_of_type = {
+					category = bio_trophy
+					value >= 1
+				}
+			}
+		}
+	}
+
+	immediate = {
+		random_owned_planet = {
+			limit = {
+				is_under_colonization = no
+				giga_exclude_planet_from_virtual_growth = no # EDITED HERE
+				free_jobs > 0
+				NOR = {
+					free_jobs_of_type = {
+						job = mortal_initiate
+						value >= 1
+					}
+					free_jobs_of_type = {
+						category = bio_trophy
+						value >= 1
+					}
+				}
+			}
+			planet_event = { id = cybernetics.2027 days = 1 }
+		}
+	}
+}
+
+### Create the Unemployed
+### Planet scope gatekeeper
+### on_building_complete, on_building_upgraded, on_building_demolished,
+### on_building_downgraded, on_building_replaced
+### on_district_complete, on_district_demolished
+planet_event = {
+	id = cybernetics.2026
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		is_under_colonization = no
+		giga_exclude_planet_from_virtual_growth = no # EDITED HERE
+		exists = owner
+		owner = {
+			is_fallen_empire = no
+			has_active_tradition = tr_virtuality_finish
+		}
+		free_jobs > 0
+	}
+
+	immediate = {
+		planet_event = { id = cybernetics.2027 days = 1 }
+	}
+}
+
+### Create the Unemployed
+### Fired by cybernetics.2025 and cybernetics.2026
+planet_event = {
+	id = cybernetics.2027
+	hide_window = yes
+
+	is_triggered_only = yes
+	trigger = {
+		is_under_colonization = no
+		giga_exclude_planet_from_virtual_growth = no # EDITED HERE
+		exists = owner
+		owner = {
+			is_fallen_empire = no
+			has_tradition = tr_virtuality_finish
+		}
+		free_jobs > 0
+	}
+
+	immediate = {
+		set_variable = {
+			which = num_pops
+			value = value:num_free_virtual_jobs
+		}
+		# Create pops for every free job
+		while = {
+			count = num_pops
+			create_pop = {
+				species = owner_main_species
+			}
+		}
+		# Kill pops generated in excess (e.g. from forbidden jobs)
+		if = {
+			limit = {
+				any_owned_pop = {
+					is_unemployed = yes
+					is_robotic_species = yes
+					has_virtual_species_trait = yes
+				}
+			}
+			every_owned_pop = {
+				limit = {
+					is_unemployed = yes
+					is_robotic_species = yes
+					has_virtual_species_trait = yes
+				}
+				kill_pop = yes
 			}
 		}
 	}
