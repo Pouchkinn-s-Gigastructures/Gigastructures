@@ -13,7 +13,7 @@ orbital_arc_furnace_1 = {
 	scales_with_planet = yes
 	build_time = 360 # 1 year
 	resources = {
-		category = megastructures
+		category = giga_kilostructures
 		cost = {
 			alloys = 500
 			unity = 500
@@ -107,7 +107,7 @@ orbital_arc_furnace_1 = {
 	}
 
 	dismantle_cost = {
-		category = megastructures
+		category = giga_kilostructures
 		cost = {
 			energy = 500
 		}
@@ -200,22 +200,16 @@ orbital_arc_furnace_1 = {
 	# root = system
 	# from = country
 	ai_weight = {
-		factor = 5
+		weight = value:giga_ai_base_kilo
 
-		modifier = {
-			factor = 0.1
-			starbase = { NOT = { has_starbase_size >= starbase_starfortress } }
-		}
-
-		modifier = {
-			factor = 0.1
-			any_neighbor_system = {
-				exists = owner
-				NOT = {
-					owner = { is_same_value = from }
-				}
-			}
-		}
+		mult = value:giga_ai_deposit_mult
+		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|20|
+		mult = value:giga_ai_core_territory
+		mult = value:giga_ai_build_low_priority
+		mult = value:giga_ai_large_system
+		mult = value:giga_ai_prevent_spam|MEGA|orbital_arc_furnace|
+		mult = value:giga_ai_militarist_plus
+		mult = value:giga_ai_xenophobe_plus
 	}
 
 	on_build_start = {
@@ -238,6 +232,7 @@ orbital_arc_furnace_1 = {
 			set_planet_entity = { entity = invisible_turret_entity }
 		}
 		from = {
+			set_timed_country_flag = { flag = has_recently_built_orbital_arc_furnace years = 3 }
 			country_event = {
 				id = cybernetics.1000
 			}
@@ -249,6 +244,7 @@ orbital_arc_furnace_1 = {
 				value = 1
 			}
 		}
+
 	}
 }
 
@@ -266,7 +262,7 @@ orbital_arc_furnace_2 = {
 	scales_with_planet = yes
 	build_time = 1080 # 3 years
 	resources = {
-		category = megastructures
+		category = giga_kilostructures
 		cost = {
 			alloys = 1000
 			unity = 1000
@@ -295,7 +291,7 @@ orbital_arc_furnace_2 = {
 	}
 
 	dismantle_cost = {
-		category = megastructures
+		category = giga_kilostructures
 		cost = {
 			energy = 1000
 		}
@@ -362,6 +358,7 @@ orbital_arc_furnace_2 = {
 		remove_star_flag = arc_furnace_construction
 		from = { country_event = { id = cybernetics.1005 } }
 	}
+	ai_weight = { factor = value:giga_ai_base_continue }
 }
 
 # Orbital arc furnace Third Stage
@@ -379,7 +376,7 @@ orbital_arc_furnace_3 = {
 	scales_with_planet = yes
 	build_time = 1080 # 3 years
 	resources = {
-		category = megastructures
+		category = giga_kilostructures
 		cost = {
 			alloys = 1500
 			unity = 2000
@@ -397,7 +394,7 @@ orbital_arc_furnace_3 = {
 	}
 
 	dismantle_cost = {
-		category = megastructures
+		category = giga_kilostructures
 		cost = {
 			energy = 1500
 		}
@@ -476,6 +473,7 @@ orbital_arc_furnace_3 = {
 		remove_star_flag = arc_furnace_construction
 		from = { country_event = { id = cybernetics.1010 } }
 	}
+	ai_weight = { factor = value:giga_ai_base_continue }
 }
 
 # Orbital arc furnace Final Stage
@@ -493,7 +491,7 @@ orbital_arc_furnace_4 = {
 	scales_with_planet = yes
 	build_time = 1080 # 3 years
 	resources = {
-		category = megastructures
+		category = giga_kilostructures
 		cost = {
 			alloys = 2000
 			unity = 4000
@@ -511,7 +509,7 @@ orbital_arc_furnace_4 = {
 	}
 
 	dismantle_cost = {
-		category = megastructures
+		category = giga_kilostructures
 		cost = {
 			energy = 2000
 		}
@@ -600,6 +598,7 @@ orbital_arc_furnace_4 = {
 			}
 		}
 	}
+	ai_weight = { factor = value:giga_ai_base_continue }
 }
 # Orbital Arc Furnace Destroyed
 orbital_arc_furnace_destroyed = {
@@ -637,7 +636,7 @@ orbital_arc_furnace_restored = {
 	scales_with_planet = yes
 	build_time = 720 # 2 years
 	resources = {
-		category = megastructures
+		category = giga_kilostructures
 		cost = {
 			alloys = 3000
 			unity = 2000
@@ -649,6 +648,60 @@ orbital_arc_furnace_restored = {
 	}
 
 	construction_blocks_and_blocked_by = none
+	
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 2000
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = tech_orbital_arc_furnace
+		}
+	}
+
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				has_modifier = orbital_arc_furnace_4_mod
+			}
+			dismantle_arc_furnace_effect = yes
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_arc_furnace
+			}
+			set_planet_entity = { entity = pc_molten }
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_arc_furnace
+		}
+		from = {
+			add_resource = {
+				alloys = 2000
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = arc_furnace_counter
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = arc_furnace_counter
+					value = -1
+				}
+			}
+		}
+	}
 
 	upgrade_from = {
 		orbital_arc_furnace_destroyed
@@ -692,4 +745,5 @@ orbital_arc_furnace_restored = {
 			}
 		}
 	}
+	ai_weight = { factor = value:giga_ai_base_continue }
 }

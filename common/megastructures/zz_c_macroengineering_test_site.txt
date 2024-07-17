@@ -25,7 +25,7 @@ macro_test_site_0 = {
 			trigger = { 
 				exists = owner
 				owner = { # Standard empire
-					country_uses_consumer_goods = yes 
+					is_gestalt = no
 				}
 			}
 			consumer_goods = 5
@@ -34,7 +34,7 @@ macro_test_site_0 = {
 			trigger = {
 				exists = owner
 				owner = { # Hivemind / default
-					country_uses_consumer_goods = no 
+					is_gestalt = yes
 					is_machine_empire = no
 				}
 			}
@@ -44,7 +44,7 @@ macro_test_site_0 = {
 			trigger = {
 				exists = owner
 				owner = { # Robot upkeep
-					country_uses_consumer_goods = no 
+					is_gestalt = yes
 					is_machine_empire = yes
 				}
 			}
@@ -80,14 +80,14 @@ macro_test_site_0 = {
 				fail_text = "requires_not_astral_scar"
 				is_astral_scar = no
 			}
-		}
-		OR = {
-			from = { is_ai = no }
-			solar_system = {
-				count_system_planet = {
-					count >= 8
-					limit = {
-						giga_is_science_candidate = yes
+			OR = {
+				from = { is_ai = no }
+				solar_system = {
+					count_system_planet = {
+						count >= 8
+						limit = {
+							giga_is_science_candidate = yes
+						}
 					}
 				}
 			}
@@ -124,6 +124,9 @@ macro_test_site_0 = {
 			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
 			giga_set_has_mega_flag = yes
 		}
+		fromfrom = {
+			set_megastructure_flag = giga_dismantle_ready
+		}
 		from = {
 			set_timed_country_flag = { flag = has_recently_built_macro_test_site years = 10 }
 			create_message = {
@@ -148,6 +151,8 @@ macro_test_site_0 = {
 			limit = {
 				giga_is_science_candidate = yes
 			}
+			remove_trade_deposits = yes
+			set_planet_flag = giga_test_site_stage_1
 			save_event_target_as = target_planet
 			add_deposit = d_engineering_2
 			science_kilo_update_orbital_effect = yes
@@ -157,12 +162,82 @@ macro_test_site_0 = {
 			# }
 		}
 	}
+
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 500
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_engineering_test_site
+		}
+		# custom_tooltip = {
+		# 	fail_text = "requires_not_old_update"
+		# 	has_megastructure_flag = giga_dismantle_ready
+		# }
+	}
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_test_site_stage_1 }
+			}
+			set_planet_flag = giga_test_site_stage_1
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_test_site
+		}
+	}
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = test_site
+				TYPE = engineering
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_test_site
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_test_site
+		}
+		from = {
+			add_resource = {
+				alloys = 500
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_megabase
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_megabase
+					value = -1
+				}
+			}
+		}
+	}
 }
 
 macro_test_site_1 = {
-	entity = "eng_megabase_station_1"
-	# entity = "giga_test_site" 
-	construction_entity = "eng_megabase_station_1"
+	entity = "eng_megabase_station_1" 
+	construction_entity = "eng_megabase_station_1" 
 	portrait = "GFX_megastructure_cybernetics"
 	place_entity_on_planet_plane = no # Yes
 	use_planet_resource = yes
@@ -190,7 +265,7 @@ macro_test_site_1 = {
 			trigger = { 
 				exists = owner
 				owner = { # Standard empire
-					country_uses_consumer_goods = yes 
+					is_gestalt = no
 				}
 			}
 			consumer_goods = 10
@@ -199,7 +274,7 @@ macro_test_site_1 = {
 			trigger = {
 				exists = owner
 				owner = { # Hivemind / default
-					country_uses_consumer_goods = no 
+					is_gestalt = yes
 					is_machine_empire = no
 				}
 			}
@@ -209,7 +284,7 @@ macro_test_site_1 = {
 			trigger = {
 				exists = owner
 				owner = { # Robot upkeep
-					country_uses_consumer_goods = no 
+					is_gestalt = yes
 					is_machine_empire = yes
 				}
 			}
@@ -230,11 +305,24 @@ macro_test_site_1 = {
 			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
 			giga_set_has_mega_flag = yes
 		}
-		from = { country_event = { id = giga_dialog.402 } }# Notification
+
+		fromfrom = {
+			if = {
+				limit = {
+					NOT = { has_megastructure_flag = giga_dismantle_ready }
+				}
+				set_megastructure_flag = giga_dismantle_ready
+			}
+		}
+
+		# from = { country_event = { id = giga_dialog.402 } }# Notification
+
 		every_system_planet = {
 			limit = {
 				giga_is_science_candidate = yes
 			}
+			set_planet_flag = giga_test_site_stage_2
+			remove_planet_flag = giga_test_site_stage_1
 			save_event_target_as = target_planet
 			add_deposit = d_engineering_2
 			science_kilo_update_orbital_effect = yes
@@ -244,12 +332,85 @@ macro_test_site_1 = {
 			# }
 		}
 	}
+
+	
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 1000
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_engineering_test_site
+		}
+		custom_tooltip = {
+			fail_text = "requires_not_old_update"
+			has_megastructure_flag = giga_dismantle_ready
+		}
+	}
+
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_test_site_stage_2 }
+			}
+			set_planet_flag = giga_test_site_stage_2
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_test_site
+		}
+	}
+
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = test_site
+				TYPE = engineering
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_test_site
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_test_site
+		}
+		from = {
+			add_resource = {
+				alloys = 1000
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_megabase
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_megabase
+					value = -1
+				}
+			}
+		}
+	}
 }
 
 macro_test_site_2 = {
-	entity = "eng_megabase_station_1"
-	# entity = "giga_test_site" 
-	construction_entity = "eng_megabase_station_1"
+	entity = "eng_megabase_station_1" 
+	construction_entity = "eng_megabase_station_1" 
 	portrait = "GFX_megastructure_cybernetics"
 	place_entity_on_planet_plane = no # Yes
 	use_planet_resource = yes
@@ -277,7 +438,7 @@ macro_test_site_2 = {
 			trigger = { 
 				exists = owner
 				owner = { # Standard empire
-					country_uses_consumer_goods = yes 
+					is_gestalt = no
 				}
 			}
 			consumer_goods = 20
@@ -286,7 +447,7 @@ macro_test_site_2 = {
 			trigger = {
 				exists = owner
 				owner = { # Hivemind / default
-					country_uses_consumer_goods = no 
+					is_gestalt = yes
 					is_machine_empire = no
 				}
 			}
@@ -296,7 +457,7 @@ macro_test_site_2 = {
 			trigger = {
 				exists = owner
 				owner = { # Robot upkeep
-					country_uses_consumer_goods = no 
+					is_gestalt = yes
 					is_machine_empire = yes
 				}
 			}
@@ -310,6 +471,14 @@ macro_test_site_2 = {
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
 	on_build_complete = {
 		save_event_target_as = giga_system
+		fromfrom = {
+			if = {
+				limit = {
+					NOT = { has_megastructure_flag = giga_dismantle_ready }
+				}
+				set_megastructure_flag = giga_dismantle_ready
+			}
+		}
 		from = { 
 			create_message = {
 				type = MEGASTRUCTURE_UPGRADED
@@ -332,6 +501,8 @@ macro_test_site_2 = {
 			limit = {
 				giga_is_science_candidate = yes
 			}
+			remove_planet_flag = giga_test_site_stage_2
+			set_planet_flag = giga_test_site_stage_3
 			save_event_target_as = target_planet
 			add_deposit = d_engineering_2
 			science_kilo_update_orbital_effect = yes
@@ -341,12 +512,82 @@ macro_test_site_2 = {
 			}
 		}
 	}
+	
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 1500
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_engineering_test_site
+		}
+		# custom_tooltip = {
+		# 	fail_text = "requires_not_old_update"
+		# 	has_megastructure_flag = giga_dismantle_ready
+		# }
+	}
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_test_site_stage_3 }
+			}
+			set_planet_flag = giga_test_site_stage_3
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_test_site
+		}
+	}
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = test_site
+				TYPE = engineering
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_test_site
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_test_site
+		}
+		from = {
+			add_resource = {
+				alloys = 1500
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_megabase
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_megabase
+					value = -1
+				}
+			}
+		}
+	}
 }
 
 macro_test_site_3 = {
-	entity = "eng_megabase_station_1"
-	# entity = "giga_test_site" 
-	construction_entity = "eng_megabase_station_1"
+	entity = "eng_megabase_station_1" 
+	construction_entity = "eng_megabase_station_1" 
 	portrait = "GFX_megastructure_cybernetics"
 	place_entity_on_planet_plane = no # Yes
 	use_planet_resource = yes
@@ -374,7 +615,7 @@ macro_test_site_3 = {
 			trigger = { 
 				exists = owner
 				owner = { # Standard empire
-					country_uses_consumer_goods = yes 
+					is_gestalt = no
 				}
 			}
 			consumer_goods = 25
@@ -383,7 +624,7 @@ macro_test_site_3 = {
 			trigger = {
 				exists = owner
 				owner = { # Hivemind / default
-					country_uses_consumer_goods = no 
+					is_gestalt = yes
 					is_machine_empire = no
 				}
 			}
@@ -393,7 +634,7 @@ macro_test_site_3 = {
 			trigger = {
 				exists = owner
 				owner = { # Robot upkeep
-					country_uses_consumer_goods = no 
+					is_gestalt = yes
 					is_machine_empire = yes
 				}
 			}
@@ -426,11 +667,19 @@ macro_test_site_3 = {
 		}
 		fromfrom = {
 			set_name = "name_eng_test_site" 
+			if = {
+				limit = {
+					NOT = { has_megastructure_flag = giga_dismantle_ready }
+				}
+				set_megastructure_flag = giga_dismantle_ready
+			}
 		}
 		every_system_planet = {
 			limit = {
 				giga_is_science_candidate = yes
 			}
+			remove_planet_flag = giga_test_site_stage_3
+			set_planet_flag = giga_test_site_stage_4
 			save_event_target_as = target_planet
 			add_deposit = d_engineering_2
 			science_kilo_update_orbital_effect = yes
@@ -443,6 +692,77 @@ macro_test_site_3 = {
 					has_modifier = orbital_test_site_3_mod
 				}
 				remove_modifier = orbital_test_site_3_mod
+			}
+		}
+	}
+	
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 2000
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_engineering_test_site
+		}
+		# custom_tooltip = {
+		# 	fail_text = "requires_not_old_update"
+		# 	has_megastructure_flag = giga_dismantle_ready
+		# }
+	}
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_test_site_stage_4 }
+			}
+			set_planet_flag = giga_test_site_stage_4
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_test_site
+		}
+	}
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = test_site
+				TYPE = engineering
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_test_site
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_test_site
+		}
+		from = {
+			add_resource = {
+				alloys = 2000
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_megabase
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_megabase
+					value = -1
+				}
 			}
 		}
 	}
@@ -488,7 +808,7 @@ macro_test_site_restored = {
 			trigger = { 
 				exists = owner
 				owner = { # Standard empire
-					country_uses_consumer_goods = yes 
+					is_gestalt = no
 				}
 			}
 			consumer_goods = 25
@@ -497,7 +817,7 @@ macro_test_site_restored = {
 			trigger = {
 				exists = owner
 				owner = { # Hivemind / default
-					country_uses_consumer_goods = no 
+					is_gestalt = yes
 					is_machine_empire = no
 				}
 			}
@@ -507,7 +827,7 @@ macro_test_site_restored = {
 			trigger = {
 				exists = owner
 				owner = { # Robot upkeep
-					country_uses_consumer_goods = no 
+					is_gestalt = yes
 					is_machine_empire = yes
 				}
 			}
@@ -520,6 +840,9 @@ macro_test_site_restored = {
 
 	ai_weight = { factor = value:giga_ai_base_repairs } # If we can build it, we will build it
 	on_build_complete = {
+		fromfrom = {
+			set_megastructure_flag = giga_dismantle_ready
+		}
 		save_event_target_as = giga_system
 		from = {
 			create_message = {
@@ -540,10 +863,15 @@ macro_test_site_restored = {
 			}
 			change_variable = { which = giga_current_megabase value = 1 }
 		}
+		fromfrom.planet = {
+			set_planet_flag = has_test_site
+		}
 		every_system_planet = {
 			limit = {
 				giga_is_science_candidate = yes
 			}
+			remove_trade_deposits = yes
+			set_planet_flag = giga_test_site_stage_4
 			save_event_target_as = target_planet
 			add_deposit = d_engineering_2
 			add_deposit = d_engineering_2
@@ -559,6 +887,77 @@ macro_test_site_restored = {
 					has_modifier = orbital_test_site_3_mod
 				}
 				remove_modifier = orbital_test_site_3_mod
+			}
+		}
+	}
+		
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 2000
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_test_site_stage_4 }
+			}
+			set_planet_flag = giga_test_site_stage_4
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_test_site
+		}
+	}
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_engineering_test_site
+		}
+		# custom_tooltip = {
+		# 	fail_text = "requires_not_old_update"
+		# 	has_megastructure_flag = giga_dismantle_ready
+		# }
+	}
+
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = test_site
+				TYPE = engineering
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_test_site
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_test_site
+		}
+		from = {
+			add_resource = {
+				alloys = 2000
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_megabase
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_megabase
+					value = -1
+				}
 			}
 		}
 	}
