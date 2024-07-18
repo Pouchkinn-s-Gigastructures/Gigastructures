@@ -199,31 +199,16 @@ orbital_arc_furnace_1 = {
 	# root = system
 	# from = country
 	ai_weight = {
-		#factor = 5
-
-		#modifier = {
-		#	factor = 0.1
-		#	starbase = { NOT = { has_starbase_size >= starbase_starfortress } }
-		#}
-
-		#modifier = {
-		#	factor = 0.1
-		#	any_neighbor_system = {
-		#		exists = owner
-		#		NOT = {
-		#			owner = { is_same_value = from }
-		#		}
-		#	}
-		#}
-
 		weight = value:giga_ai_base_kilo
 
+		mult = value:giga_ai_deposit_mult
 		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|20|
 		mult = value:giga_ai_core_territory
-		mult = value:giga_ai_unlock_low_priority
 		mult = value:giga_ai_build_low_priority
 		mult = value:giga_ai_large_system
-		mult = value:giga_ai_prevent_spam|MEGA|arc_furnace|
+		mult = value:giga_ai_prevent_spam|MEGA|orbital_arc_furnace|
+		mult = value:giga_ai_militarist_plus
+		mult = value:giga_ai_xenophobe_plus
 	}
 
 	on_build_start = {
@@ -233,7 +218,6 @@ orbital_arc_furnace_1 = {
 		remove_star_flag = arc_furnace_construction
 	}
 	on_build_complete = {
-		from = { set_timed_country_flag = { flag = has_recently_built_arc_furnace years = 10 } }
 		remove_star_flag = arc_furnace_construction
 		fromfrom.planet = {
 			set_planet_flag = has_megastructure
@@ -247,6 +231,7 @@ orbital_arc_furnace_1 = {
 			set_planet_entity = { entity = invisible_turret_entity }
 		}
 		from = {
+			set_timed_country_flag = { flag = has_recently_built_orbital_arc_furnace years = 3 }
 			country_event = {
 				id = cybernetics.1000
 			}
@@ -258,6 +243,7 @@ orbital_arc_furnace_1 = {
 				value = 1
 			}
 		}
+
 	}
 }
 
@@ -661,6 +647,60 @@ orbital_arc_furnace_restored = {
 	}
 
 	construction_blocks_and_blocked_by = none
+	
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 2000
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = tech_orbital_arc_furnace
+		}
+	}
+
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				has_modifier = orbital_arc_furnace_4_mod
+			}
+			dismantle_arc_furnace_effect = yes
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_arc_furnace
+			}
+			set_planet_entity = { entity = pc_molten }
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_arc_furnace
+		}
+		from = {
+			add_resource = {
+				alloys = 2000
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = arc_furnace_counter
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = arc_furnace_counter
+					value = -1
+				}
+			}
+		}
+	}
 
 	upgrade_from = {
 		orbital_arc_furnace_destroyed
@@ -704,5 +744,5 @@ orbital_arc_furnace_restored = {
 			}
 		}
 	}
-	ai_weight = { factor = value:giga_ai_base_repairs }
+	ai_weight = { factor = value:giga_ai_base_continue }
 }
