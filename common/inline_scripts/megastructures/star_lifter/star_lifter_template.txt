@@ -1,0 +1,73 @@
+entity = $entity$
+construction_entity = $construction_entity$
+portrait = $portrait$
+upgrade_from = {
+    star_lifter_$prev_stage$_$class$_star
+    $upgrade_from$
+}
+
+ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+
+outliner_trigger = {
+    exists = owner
+    NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+}
+
+prerequisites = { "giga_tech_star_lifter"}
+build_time = $build_time$
+resources = {
+    category = giga_megastructures
+    cost = {
+        alloys = $cost_alloys$
+        unity = $cost_unity$
+    }
+    cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|$cost_alloys$| }
+    cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|$cost_unity$| }
+    produces = {
+        $produces$
+    }
+    upkeep = {
+        $upkeep$
+    }
+}
+
+potential = {
+    NOT = { has_global_flag = lifters_disabled }
+
+    $potential$
+}
+
+possible = {
+    custom_tooltip = { fail_text = "requires_inside_border"			is_inside_border = from }
+    custom_tooltip = { fail_text = "requires_surveyed_system"		giga_system_is_surveyed = yes }
+    custom_tooltip = {
+        fail_text = "requires_not_capped"
+        from = {
+            OR = {
+                check_variable = { which = giga_lifters_cap value = 0 }						# No Cap
+                check_variable = { which = giga_current_lifters value < giga_lifters_cap }
+            }
+        }
+    }
+}
+
+on_build_start = {
+    giga_ai_savings_withdraw = {
+        CATEGORY = important
+        RESOURCE = alloys
+        AMOUNT = $cost_alloys$ }
+    giga_ai_savings_withdraw = {
+        CATEGORY = important
+        RESOURCE = unity
+        AMOUNT = $cost_unity$ }
+}
+on_build_cancel = {
+    giga_ai_savings_refund = { CATEGORY = important RESOURCE = alloys }
+    giga_ai_savings_refund = { CATEGORY = important RESOURCE = unity }
+}
+
+on_build_complete = {
+    save_event_target_as = giga_system
+    if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+    $on_complete$
+}
