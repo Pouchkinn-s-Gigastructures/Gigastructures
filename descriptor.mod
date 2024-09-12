@@ -3,4 +3,4 @@ tags={
 	"Gameplay"
 }
 name="Gigastructures Dev"
-supported_version="3.12.4"
+supported_version="v3.13.*"
