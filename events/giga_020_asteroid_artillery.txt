@@ -732,60 +732,67 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		any_owned_megastructure = {
-			OR = {
-				is_megastructure_type = asteroid_artillery_0
-				is_megastructure_type = asteroid_artillery_1
-				is_megastructure_type = asteroid_artillery_ruined
-				is_megastructure_type = asteroid_artillery_config
+		# Only trigger if artillery count changed or variable not set
+		OR = {
+			NOT = {
+				is_variable_set = giga_current_asteroid_artillery
 			}
-		}
-	}
-
-	immediate = {
-		set_variable = {
-			which = giga_current_asteroid_artillery
-			value = 0
-		}
-		every_owned_megastructure = {
-			limit = {
-				OR = {
-					is_megastructure_type = asteroid_artillery_0
-					is_megastructure_type = asteroid_artillery_1
-					is_megastructure_type = asteroid_artillery_ruined
-					is_megastructure_type = asteroid_artillery_config
-				}
-			}
-			ROOT = {
-				change_variable = {
-					which = giga_current_asteroid_artillery
-					value = 1
-				}
-				if = {
+			NOT = {
+				count_owned_megastructure = {
+					count = giga_current_asteroid_artillery
 					limit = {
-						is_ai = yes
-					}
-					if = {
-						limit = { has_modifier = giga_asteroid_artillery_ai_upkeep_negates }
-						remove_modifier = giga_asteroid_artillery_ai_upkeep_negates
-					}
-					if = {
-						limit = {
-							check_variable = {
-								which = giga_current_asteroid_artillery
-								value > 0
-							}
-						}
-						add_modifier = {
-							modifier = giga_asteroid_artillery_ai_upkeep_negates
-							days = -1
-							multiplier = giga_current_asteroid_artillery
+						OR = {
+							is_megastructure_type = asteroid_artillery_0
+							is_megastructure_type = asteroid_artillery_1
+							is_megastructure_type = asteroid_artillery_ruined
+							is_megastructure_type = asteroid_artillery_config
 						}
 					}
 				}
 			}
 		}
-	}
+    }
+	
+    immediate = {
+		# Get artillery count
+		export_trigger_value_to_variable = {
+			trigger = count_owned_megastructure
+			parameters = {
+				limit = {
+					OR = {
+						is_megastructure_type = asteroid_artillery_0
+						is_megastructure_type = asteroid_artillery_1
+						is_megastructure_type = asteroid_artillery_ruined
+						is_megastructure_type = asteroid_artillery_config
+					}
+				}
+			}
+			variable = giga_current_asteroid_artillery
+		}
+		# Reapply modifier
+		if = {
+			limit = {
+				is_ai = yes
+			}
+			if = {
+				limit = { has_modifier = giga_asteroid_artillery_ai_upkeep_negates }
+				remove_modifier = giga_asteroid_artillery_ai_upkeep_negates
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_asteroid_artillery
+						value > 0
+					}
+				}
+				add_modifier = {
+					modifier = giga_asteroid_artillery_ai_upkeep_negates
+					days = -1
+					multiplier = giga_current_asteroid_artillery
+				}
+			}
+		}
+    }
 }
 
 #Yearly event to give ownership of asteroid artilleries
