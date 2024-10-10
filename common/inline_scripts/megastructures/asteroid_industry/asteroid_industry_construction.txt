@@ -14,6 +14,11 @@ resources = {
     upkeep = { energy = 5 }
 }
 
+outliner_trigger = {
+    exists = owner
+    NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+}
+
 potential = {
     has_technology = giga_tech_asteroid_manufactory
     NOT = { has_global_flag = asteroid_manufactory_disabled }
@@ -21,6 +26,8 @@ potential = {
         check_variable = { which = giga_asteroid_manufactory_cap value = 0 }						# No Cap
         check_variable = { which = giga_current_asteroid_manufactory value < giga_asteroid_manufactory_cap }
     }
+
+    giga_asteroid_industry_potential_$type$ = yes
 
     $potential$
 }
@@ -40,12 +47,12 @@ possible = {
 
 placement_rules = {
     planet_possible = {
-        custom_tooltip = { fail_text = "must_build_around_asteroid"			is_asteroid = yes }
+        custom_tooltip = { fail_text = "must_build_around_asteroid"			is_asteroid = yes is_moon = no }
         custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
         custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
         custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
 
-        inline_script = $placement_script$
+        giga_asteroid_industry_placement_$type$ = yes
     }
 }
 
@@ -88,9 +95,15 @@ on_build_complete = {
         if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
         set_planet_flag = megastructure
         giga_set_has_mega_flag = yes
+        if = {
+            limit = {
+                has_modifier = giga_asteroid_industry_candidate_marked
+            }
+            remove_modifier = giga_asteroid_industry_candidate_marked
+        }
     }
     from = {
-        #country_event = { id = giga_dialog.10901 }	# Notification
+        #country_event = { id = giga_asteroid_industry.001 }	# Notification
         change_variable = { which = giga_current_asteroid_manufactory value = 1 }
     }
 

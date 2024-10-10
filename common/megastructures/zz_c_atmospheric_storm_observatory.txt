@@ -1,0 +1,982 @@
+atmosphere_shredder_0 = {
+	entity = "giga_storm_observatory_1"
+	construction_entity = "giga_storm_observatory_1_con"
+	portrait = "GFX_megastructure_cybernetics"
+	place_entity_on_planet_plane = yes
+	use_planet_resource = yes
+	entity_offset = { x = 0 y = 0 } 
+	scales_with_planet = yes
+
+	prerequisites = { giga_tech_macro_scale_weather_manipulation }
+
+	build_time = 360
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			alloys = @science_kilo_cost_1
+			unity = @science_kilo_cost_1
+		}
+		upkeep = {
+			energy = 10
+		}
+		upkeep = {
+			trigger = { 
+				exists = owner
+				owner = { # Standard empire
+					is_gestalt = no
+				}
+			}
+			consumer_goods = 5
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Hivemind / default
+					is_gestalt = yes
+					is_machine_empire = no
+				}
+			}
+			minerals = 15
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Robot upkeep
+					is_gestalt = yes
+					is_machine_empire = yes
+				}
+			}
+			energy = 10
+		}
+	}
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	potential = {
+		has_technology = giga_tech_macro_scale_weather_manipulation
+		NOT = { has_global_flag = storm_observatory_disabled }
+		OR = {
+			check_variable = { which = giga_storm_observatory_cap value = 0 }						# No Cap
+			check_variable = { which = giga_current_storm_observatory value < giga_storm_observatory_cap }
+		}
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border" 			is_inside_border = from }
+		custom_tooltip = { fail_text = "requires_no_anomaly" 				NOT = { any_system_planet = { has_anomaly = yes } } }
+		custom_tooltip = { fail_text = "requires_no_arc_furnace" 			system_has_arc_furnace = no }
+		custom_tooltip = { fail_text = "requires_no_atmosphere_shredder"	giga_system_has_atmosphere_shredder = no } 
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					check_variable = { which = giga_storm_observatory_cap value = 0 }						# No Cap
+					check_variable = { which = giga_current_storm_observatory value < giga_storm_observatory_cap }
+				}
+			}
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+			custom_tooltip = { fail_text = "must_build_around_gas" 				giga_is_gas_giant = yes }
+			custom_tooltip = {
+				fail_text = "requires_not_astral_scar"
+				is_astral_scar = no
+			}
+			OR = {
+				from = { is_ai = no }
+				solar_system = {
+					count_system_planet = {
+						count >= 8
+						limit = {
+							giga_is_science_candidate = yes
+						}
+					}
+				}
+			}
+		}
+	}
+
+	ai_weight = {
+		weight = value:giga_ai_base_kilo
+
+		mult = value:giga_ai_science_mult
+		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|25|
+		mult = value:giga_ai_core_territory
+		mult = value:giga_ai_unlock_low_priority
+		mult = value:giga_ai_build_low_priority
+		mult = value:giga_ai_large_system
+		mult = value:giga_ai_deposit_stack
+		mult = value:giga_ai_prevent_spam|MEGA|atmosphere_shredder|
+		mult = value:giga_ai_materialist_plus
+
+		modifier = { factor = 2.00	from = { has_federation = yes federation = { has_federation_type = research_federation } } }
+	}
+	on_build_start = {
+		set_star_flag = atmosphere_shredder_construction
+	}
+	on_build_cancel = {
+		remove_star_flag = atmosphere_shredder_construction
+	}
+	on_build_complete = {
+		save_event_target_as = giga_system
+		remove_star_flag = atmosphere_shredder_construction
+		fromfrom.planet = {
+			set_planet_flag = has_atmosphere_shredder
+			save_event_target_as = giga_planet
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			giga_set_has_mega_flag = yes
+			set_planet_entity = {
+				entity = storm_gas_giant_01_entity
+			}
+		}
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_atmosphere_shredder years = 20 }
+			create_message = {
+				type = MEGASTRUCTURE_BUILT
+				localization = MESSAGE_MEGASTRUCTURE_BUILT
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
+				}
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
+			}
+			change_variable = { which = giga_current_storm_observatory value = 1 }
+		}
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			remove_trade_deposits = yes
+			set_planet_flag = giga_atmosphere_shredder_stage_1
+			save_event_target_as = target_planet
+			add_deposit = d_physics_2
+			science_kilo_update_orbital_effect = yes
+			# add_modifier = {
+			# 	modifier = orbital_atmosphere_shredder_1_mod
+			# 	days = -1
+			# }
+		}
+	}
+					
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 500
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_macro_scale_weather_manipulation
+		}
+		# custom_tooltip = {
+		# 	fail_text = "requires_not_old_update"
+		# 	has_megastructure_flag = giga_dismantle_ready
+		# }
+	}
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_atmosphere_shredder_stage_1 }
+			}
+			set_planet_flag = giga_atmosphere_shredder_stage_1
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_atmosphere_shredder
+		}
+	}
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = atmosphere_shredder
+				TYPE = physics
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_atmosphere_shredder
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_atmosphere_shredder
+			set_planet_entity = {
+				entity = pc_gas_giant
+			}
+		}
+		from = {
+			add_resource = {
+				alloys = 500
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_storm_observatory
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_storm_observatory
+					value = -1
+				}
+			}
+		}
+	}
+}
+
+atmosphere_shredder_1 = {
+	entity = "giga_storm_observatory_2"
+	construction_entity = "giga_storm_observatory_2_con"
+	portrait = "GFX_megastructure_cybernetics"
+	place_entity_on_planet_plane = yes
+	use_planet_resource = yes
+	entity_offset = { x = 0 y = 0 } 
+	scales_with_planet = yes
+	upgrade_from = { atmosphere_shredder_0 }
+
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	build_time = 1080
+	resources = {
+		category = giga_kilostructures
+		cost = { 
+			alloys = @science_kilo_cost_2
+			unity = @science_kilo_cost_2 
+		}
+		upkeep = {
+			energy = 20
+		}
+		upkeep = {
+			trigger = { 
+				exists = owner
+				owner = { # Standard empire
+					is_gestalt = no
+				}
+			}
+			consumer_goods = 10
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Hivemind / default
+					is_gestalt = yes
+					is_machine_empire = no
+				}
+			}
+			minerals = 30
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Robot upkeep
+					is_gestalt = yes
+					is_machine_empire = yes
+				}
+			}
+			energy = 20
+		}
+	}
+
+	potential = { NOT = { has_global_flag = storm_observatory_disabled } }
+	possible = { from = { has_technology = giga_tech_macro_scale_weather_manipulation } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			set_planet_entity = {
+				entity = storm_gas_giant_01_entity
+			}
+		}
+		from = {
+			create_message = {
+				type = MEGASTRUCTURE_UPGRADED
+				localization = MESSAGE_MEGASTRUCTURE_UPGRADED
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
+				}
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
+			}
+		}
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			remove_planet_flag = giga_atmosphere_shredder_stage_1
+			set_planet_flag = giga_atmosphere_shredder_stage_2
+			save_event_target_as = target_planet
+			add_deposit = d_physics_2
+			science_kilo_update_orbital_effect = yes
+		}
+	}
+			
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 1000
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_macro_scale_weather_manipulation
+		}
+		# custom_tooltip = {
+		# 	fail_text = "requires_not_old_update"
+		# 	has_megastructure_flag = giga_dismantle_ready
+		# }
+	}
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_atmosphere_shredder_stage_2 }
+			}
+			set_planet_flag = giga_atmosphere_shredder_stage_2
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_atmosphere_shredder
+		}
+	}
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = atmosphere_shredder
+				TYPE = physics
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_atmosphere_shredder
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_atmosphere_shredder
+			set_planet_entity = {
+				entity = pc_gas_giant
+			}
+		}
+		from = {
+			add_resource = {
+				alloys = 1000
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_storm_observatory
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_storm_observatory
+					value = -1
+				}
+			}
+		}
+	}
+}
+
+atmosphere_shredder_2 = {
+	entity = "giga_storm_observatory_3"
+	construction_entity = "giga_storm_observatory_3_con"
+	portrait = "GFX_megastructure_cybernetics"
+	place_entity_on_planet_plane = yes
+	use_planet_resource = yes
+	entity_offset = { x = 0 y = 0 } 
+	scales_with_planet = yes
+	upgrade_from = { atmosphere_shredder_1 }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	build_time = 1080
+	resources = {
+		category = giga_kilostructures
+		cost = { 
+			alloys = @science_kilo_alloys_3
+			unity = @science_kilo_unity_3
+		}
+		upkeep = {
+			energy = 40
+		}
+		upkeep = {
+			trigger = { 
+				exists = owner
+				owner = { # Standard empire
+					is_gestalt = no
+				}
+			}
+			consumer_goods = 20
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Hivemind / default
+					is_gestalt = yes
+					is_machine_empire = no
+				}
+			}
+			minerals = 60
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Robot upkeep
+					is_gestalt = yes
+					is_machine_empire = yes
+				}
+			}
+			energy = 40
+		}
+	}
+
+	potential = { NOT = { has_global_flag = storm_observatory_disabled } }
+	possible = { from = { has_technology = giga_tech_macro_scale_weather_manipulation } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			set_planet_entity = {
+				entity = storm_gas_giant_01_entity
+			}
+		}
+		from = {
+			create_message = {
+				type = MEGASTRUCTURE_UPGRADED
+				localization = MESSAGE_MEGASTRUCTURE_UPGRADED
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
+				}
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
+			}
+		}
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			remove_planet_flag = giga_atmosphere_shredder_stage_2
+			set_planet_flag = giga_atmosphere_shredder_stage_3
+			save_event_target_as = target_planet
+			add_deposit = d_physics_2
+			science_kilo_update_orbital_effect = yes
+			add_modifier = {
+				modifier = orbital_atmosphere_shredder_3_mod
+				days = -1
+			}
+		}
+	}
+					
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 1500
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_macro_scale_weather_manipulation
+		}
+		# custom_tooltip = {
+		# 	fail_text = "requires_not_old_update"
+		# 	has_megastructure_flag = giga_dismantle_ready
+		# }
+	}
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_atmosphere_shredder_stage_3 }
+			}
+			set_planet_flag = giga_atmosphere_shredder_stage_3
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_atmosphere_shredder
+		}
+	}
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = atmosphere_shredder
+				TYPE = physics
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_atmosphere_shredder
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_atmosphere_shredder
+			set_planet_entity = {
+				entity = pc_gas_giant
+			}
+		}
+		from = {
+			add_resource = {
+				alloys = 1500
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_storm_observatory
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_storm_observatory
+					value = -1
+				}
+			}
+		}
+	}
+}
+
+atmosphere_shredder_3 = {
+	entity = "giga_storm_observatory_4"
+	construction_entity = "giga_storm_observatory_4_con"
+	portrait = "GFX_megastructure_cybernetics"
+	place_entity_on_planet_plane = yes
+	use_planet_resource = yes
+	entity_offset = { x = 0 y = 0 } 
+	scales_with_planet = yes
+	upgrade_from = { atmosphere_shredder_2 }
+	
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	build_time = 1080 # 3 years
+	resources = {
+		category = giga_kilostructures
+		cost = { 
+			alloys = @science_kilo_alloys_4
+			unity = @science_kilo_unity_4
+		}
+		upkeep = {
+			energy = 50
+		}
+		upkeep = {
+			trigger = { 
+				exists = owner
+				owner = { # Standard empire
+					is_gestalt = no
+				}
+			}
+			consumer_goods = 25
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Hivemind / default
+					is_gestalt = yes
+					is_machine_empire = no
+				}
+			}
+			minerals = 75
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Robot upkeep
+					is_gestalt = yes
+					is_machine_empire = yes
+				}
+			}
+			energy = 50
+		}
+	}
+
+	potential = { NOT = { has_global_flag = storm_observatory_disabled } }
+	possible = { from = { has_technology = giga_tech_macro_scale_weather_manipulation } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			set_planet_entity = {
+				entity = storm_gas_giant_02_entity
+			}
+		}
+		from = {
+			create_message = {
+				type = MEGASTRUCTURE_UPGRADED
+				localization = MESSAGE_MEGASTRUCTURE_UPGRADED
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
+				}
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
+			}
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_53
+					}
+				}
+				set_country_flag = giga_achievement_53
+				set_timed_country_flag = { flag = giga_achievement_53_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+		fromfrom = {
+			set_name = "atmosphere_shredder_complete_name" 
+		}
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			remove_planet_flag = giga_atmosphere_shredder_stage_3
+			set_planet_flag = giga_atmosphere_shredder_stage_4
+			save_event_target_as = target_planet
+			add_deposit = d_physics_2
+			science_kilo_update_orbital_effect = yes
+			add_modifier = {
+				modifier = orbital_atmosphere_shredder_4_mod
+				days = -1
+			}
+			if = {
+				limit = {
+					has_modifier = orbital_atmosphere_shredder_3_mod
+				}
+				remove_modifier = orbital_atmosphere_shredder_3_mod
+			}
+		}
+	}
+					
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 2000
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_macro_scale_weather_manipulation
+		}
+		# custom_tooltip = {
+		# 	fail_text = "requires_not_old_update"
+		# 	has_megastructure_flag = giga_dismantle_ready
+		# }
+	}
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_atmosphere_shredder_stage_4 }
+			}
+			set_planet_flag = giga_atmosphere_shredder_stage_4
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_atmosphere_shredder
+		}
+	}
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = atmosphere_shredder
+				TYPE = physics
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_atmosphere_shredder
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_atmosphere_shredder
+			set_planet_entity = {
+				entity = pc_gas_giant
+			}
+		}
+		from = {
+			add_resource = {
+				alloys = 2000
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_storm_observatory
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_storm_observatory
+					value = -1
+				}
+			}
+		}
+	}
+}
+
+
+
+atmosphere_shredder_ruined = {
+	entity = "giga_storm_observatory_ruined"
+	place_entity_on_planet_plane = no
+	portrait = "GFX_megastructure_construction_background"
+	potential = { always = no }
+	resources = { category = giga_kilostructures }
+	
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+}
+
+atmosphere_shredder_restored = {
+	entity = "giga_storm_observatory_4"
+	construction_entity = "giga_storm_observatory_4_con"
+	portrait = "GFX_megastructure_cybernetics"
+	place_entity_on_planet_plane = yes
+	use_planet_resource = yes
+	entity_offset = { x = 0 y = 0 } 
+	scales_with_planet = yes
+	upgrade_from = { atmosphere_shredder_ruined }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	build_time = 720 # 2 years
+	resources = {
+		category = giga_kilostructures
+		cost = { alloys = 5000 unity = @giga_kilo_repair_unity_cost }
+		upkeep = {
+			energy = 50
+		}
+		upkeep = {
+			trigger = { 
+				exists = owner
+				owner = { # Standard empire
+					is_gestalt = no
+				}
+			}
+			consumer_goods = 25
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Hivemind / default
+					is_gestalt = yes
+					is_machine_empire = no
+				}
+			}
+			minerals = 75
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Robot upkeep
+					is_gestalt = yes
+					is_machine_empire = yes
+				}
+			}
+			energy = 50
+		}
+	}
+
+	potential = { NOT = { has_global_flag = storm_observatory_disabled } }
+	possible = {
+		exists = from
+		from = { has_technology = giga_tech_macro_scale_weather_manipulation }
+	}
+
+	ai_weight = { factor = value:giga_ai_base_repairs } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			set_planet_entity = {
+				entity = storm_gas_giant_02_entity
+			}
+		}
+		from = {
+			# country_event = { id = giga_dialog.13804 }	# Notification
+			change_variable = { which = giga_current_storm_observatory value = 1 }
+		}
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			remove_trade_deposits = yes
+			set_planet_flag = giga_atmosphere_shredder_stage_4
+			save_event_target_as = target_planet
+			add_deposit = d_physics_2
+			add_deposit = d_physics_2
+			add_deposit = d_physics_2
+			add_deposit = d_physics_2
+			science_kilo_update_orbital_effect = yes
+			add_modifier = {
+				modifier = orbital_atmosphere_shredder_4_mod
+				days = -1
+			}
+			if = {
+				limit = {
+					has_modifier = orbital_atmosphere_shredder_3_mod
+				}
+				remove_modifier = orbital_atmosphere_shredder_3_mod
+			}
+		}
+	}
+				
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 2000
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_macro_scale_weather_manipulation
+		}
+		# custom_tooltip = {
+		# 	fail_text = "requires_not_old_update"
+		# 	has_megastructure_flag = giga_dismantle_ready
+		# }
+	}
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_atmosphere_shredder_stage_4 }
+			}
+			set_planet_flag = giga_atmosphere_shredder_stage_4
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_atmosphere_shredder
+		}
+	}
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = atmosphere_shredder
+				TYPE = physics
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_atmosphere_shredder
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_atmosphere_shredder
+			set_planet_entity = {
+				entity = pc_gas_giant
+			}
+		}
+		from = {
+			add_resource = {
+				alloys = 2000
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_storm_observatory
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_storm_observatory
+					value = -1
+				}
+			}
+		}
+	}
+}

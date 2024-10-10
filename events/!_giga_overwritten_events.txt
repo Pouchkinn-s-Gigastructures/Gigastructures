@@ -240,6 +240,7 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
+		NOT = { has_country_flag = mute_dialog }
 		from = {
 			OR = {
 				is_megastructure_type = dyson_sphere_2
@@ -254,7 +255,7 @@ country_event = {
 			}
 		}
 	}
-
+	immediate = { set_timed_country_flag = { flag = mute_dialog days = 1 } }
 	option = { name = "utopia.4004.a" }
 }
 
@@ -350,6 +351,10 @@ country_event = {
     }
 }
 
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
 # Change blacklist in embracing the worm event
 namespace = akx
 planet_event = {
@@ -372,6 +377,7 @@ planet_event = {
 				limit = {
 					NOR = {
 						giga_is_gas_giant = yes
+						is_planet_class = pc_shattered_ring_habitable
 						is_planet_class = pc_ringworld_habitable
 						is_planet_class = pc_ringworld_habitable_damaged
 						is_planet_class = pc_ringworld_tech
@@ -390,11 +396,49 @@ planet_event = {
 				}
 				every_owned_pop = {
 					limit = {
-						is_robot_pop = no
 						is_sapient = yes
 					}
+					# add planet class to organics
 					if = {
-						limit = { NOT = { has_trait = trait_natural_physicists } }
+						limit = { is_robot_pop = no }
+						modify_species = {
+							species = this
+							ideal_planet_class = pc_nuked
+						}
+					}
+					# add planet classes to basic machines
+					if = {
+						limit = { has_trait = trait_wet_planet_preference }
+						modify_species = {
+							species = this
+							remove_trait = trait_wet_planet_preference
+							add_trait = trait_machine_pc_nuked_preference
+						}
+					}
+					if = {
+						limit = { has_trait = trait_dry_planet_preference }
+						modify_species = {
+							species = this
+							remove_trait = trait_dry_planet_preference
+							add_trait = trait_machine_pc_nuked_preference
+						}
+					}
+					if = {
+						limit = { has_trait = trait_frozen_planet_preference }
+						modify_species = {
+							species = this
+							remove_trait = trait_frozen_planet_preference
+							add_trait = trait_machine_pc_nuked_preference
+						}
+					}
+					# add traits to organics
+					if = {
+						limit = { 
+							is_robot_pop = no
+							NOT = { 
+								has_trait = trait_natural_physicists 
+							} 
+						}
 						# remove opposite traits
 						if = {
 							limit = { has_trait = trait_natural_engineers }
@@ -424,7 +468,12 @@ planet_event = {
 						}
 					}
 					if = {
-						limit = { NOT = { has_trait = trait_repugnant } }
+						limit = {
+							is_robot_pop = no
+							NOT = { 
+								has_trait = trait_repugnant
+							}
+						}
 						# remove opposite traits
 						if = {
 							limit = { has_trait = trait_charismatic }
@@ -438,9 +487,55 @@ planet_event = {
 							add_trait = trait_repugnant
 						}
 					}
-					modify_species = {
-						species = this
-						ideal_planet_class = pc_nuked
+					#Add traits to machines
+					if = {
+						limit = { 
+							is_robot_pop = yes
+							NOT = { 
+								has_trait = trait_robot_artificial_physicists 
+							} 
+						}
+						# remove opposite traits
+						if = {
+							limit = { has_trait = trait_robot_artificial_engineers }
+							modify_species = {
+								species = this
+								remove_trait = trait_robot_artificial_engineers
+							}
+						}
+						if = {
+							limit = { has_trait = trait_robot_artificial_sociologists }
+							modify_species = {
+								species = this
+								remove_trait = trait_robot_artificial_sociologists
+							}
+						}
+						# add trait
+						modify_species = {
+							species = this
+							add_trait = trait_robot_artificial_engineers
+						}
+					}
+					if = { #IM trait
+						limit = { 
+							is_robot_pop = yes
+							NOT = { 
+								has_trait = trait_robot_uncanny
+							} 
+						}
+						# remove opposite traits
+						if = {
+							limit = { has_trait = trait_robot_emotion_emulators }
+							modify_species = {
+								species = this
+								remove_trait = trait_robot_emotion_emulators
+							}
+						}
+						# add trait
+						modify_species = {
+							species = this
+							add_trait = trait_robot_uncanny
+						}
 					}
 				}
 				change_pc = pc_nuked
@@ -451,6 +546,7 @@ planet_event = {
 				limit = { is_star = yes }
 				change_pc = pc_black_hole
 			}
+			set_star_flag = worm_black_hole
 			set_star_class = sc_black_hole
 		}
 		owner = { observer_event = { id = observer.71 } }
@@ -472,6 +568,10 @@ planet_event = {
 	}
 }
 
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
 # Change blacklist in nanite swarm event
 namespace = anomaly
 ship_event = {
@@ -481,6 +581,7 @@ ship_event = {
 	picture = GFX_evt_gray_gooed_planet
 	show_sound = event_laboratory_sound
 	is_triggered_only = yes
+	event_chain = parvus_III_chain
 
 	option = {
 		name = anomaly.6715.a
@@ -518,8 +619,15 @@ ship_event = {
 				}
 			}
 		}
+		owner = {
+			end_event_chain = parvus_III_chain
+		}
 	}
 }
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
 
 # Change blacklist in relentless industrialists event
 namespace = toxoids
@@ -650,6 +758,9 @@ planet_event = {
 	}
 }
 
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
 
 namespace = megastructures
 # This = Ship
@@ -893,6 +1004,10 @@ country_event = {
 	}
 }
 
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
 namespace = astral_rift
 system_event = {
 	id = astral_rift.1095
@@ -916,8 +1031,11 @@ system_event = {
 			bypass_type = strange_wormhole
 			in_place_of = from
 			graphics_entity_name = strange_wormhole_entity
+			init_effect = {
+				link_wormholes = event_target:strange_wormhole_bypass
+				clear_global_event_target = strange_wormhole_bypass
+			}
 		}
-		link_wormholes = event_target:formless_system
 		set_global_flag = strange_wormholes_locked
 		destroy_astral_rift = from
 		# Strange Wormhole encounter
@@ -926,6 +1044,627 @@ system_event = {
 				id = astral_planes.45
 				days = 1
 				scopes = { from = prev }
+			}
+		}
+	}
+}
+
+#COSMOGENESIS
+namespace = crisis
+country_event = { # Ready to dive - Country Event
+	id = crisis.7510
+	title = "crisis.7510.name"
+	desc = crisis.7510.desc
+	picture = GFX_evt_horizon_needle
+	show_sound = event_airlock
+	event_chain = cosmogenesis_planet_pickup_chain
+
+	is_triggered_only = yes
+
+	immediate = {
+		capital_scope.solar_system.star = {
+			save_event_target_as = supermassive_project_location
+		}
+	}
+
+	option = { # Any regular black hole will do
+		name = crisis.7510.a
+		hidden_effect = {
+			set_country_flag = cosmogenesis_any_black_hole
+		}
+	}
+
+	option = { # ONLY THE SUPERMASSIVE BH AT THE CENTER OF THE GALAXY WILL DO
+		name = crisis.7510.b
+		enable_special_project = {
+			name = COSMOGENESIS_VICTORY
+			location = event_target:supermassive_project_location
+		}
+		hidden_effect = {
+			set_country_flag = cosmogenesis_supermassive
+		}
+		allow = {
+			custom_tooltip = {
+				fail_text = "giga_core_black_hole_exists"
+				hidden_trigger = {
+					has_global_flag = giga_core_disabled
+				}
+			}
+		}
+	}
+
+	option = { # Guys HEAR ME OUT we jump into the Vester
+		name = crisis.7510.vester
+		custom_tooltip = "crisis.7510.vester.tooltip"
+		trigger = {
+			any_country = { is_country_type = blokkat_stripminers }
+			NOT = { has_global_flag = blokkat_mothership_shield_down }
+		}
+		hidden_effect = { set_country_flag = cosmogenesis_vester }
+	}
+}
+
+country_event = { # To infinity and beyond the event horizon
+	id = crisis.7516
+	title = "crisis.7516.name"
+	desc = {
+		trigger = {
+			can_create_paperclip_universe = yes
+			NOT = {
+				event_target:cosmo_ending_system = {
+					is_capital_system = yes
+					has_star_flag = cosmogenesis_project
+				}
+			}
+		}
+		text = crisis.7516.desc.paperclips
+	}
+	desc = {
+		trigger = {
+			can_create_paperclip_universe = no
+			event_target:cosmo_ending_system = {
+				NOR = {
+					is_star_class = sc_birch
+					is_star_class = sc_quasar
+					has_star_flag = great_wound
+					has_star_flag = guardians_technosphere_system
+					has_star_flag = terminal_egress
+					has_star_flag = guardians_horror_system
+					any_system_planet = {
+						has_planet_flag = black_hole_horror
+					}
+					is_capital_system = yes
+					has_star_flag = cosmogenesis_project
+				}
+			}
+		}
+		text = crisis.7516.desc
+	}
+	desc = {
+		trigger = {
+			can_create_paperclip_universe = no
+			event_target:cosmo_ending_system = {
+				has_star_flag = great_wound
+			}
+		}
+		text = crisis.7516.desc.greatwound
+	}
+	desc = {
+		trigger = {
+			can_create_paperclip_universe = no
+			event_target:cosmo_ending_system = {
+				has_star_flag = guardians_technosphere_system
+			}
+		}
+		text = crisis.7516.desc.technosphere
+	}
+	desc = {
+		trigger = {
+			can_create_paperclip_universe = no
+			event_target:cosmo_ending_system = {
+				has_star_flag = pantagruel
+			}
+		}
+		text = crisis.7516.desc.technosphere.pantagruel
+	}
+	desc = {
+		trigger = {
+			can_create_paperclip_universe = no
+			event_target:cosmo_ending_system = {
+				has_star_flag = terminal_egress
+			}
+		}
+		text = crisis.7516.desc.egress
+	}
+	desc = {
+		trigger = {
+			can_create_paperclip_universe = no
+			event_target:cosmo_ending_system = {
+				OR = {
+					has_star_flag = guardians_horror_system
+					any_system_planet = {
+						has_planet_flag = black_hole_horror
+					}
+				}
+			}
+		}
+		text = crisis.7516.desc.horror
+	}
+	desc = {
+		trigger = {
+			NOT = { has_origin = origin_toxic_knights }
+			NOT = { has_country_flag = has_shroud_patron }
+			event_target:cosmo_ending_system = {
+				is_capital_system = yes
+				has_star_flag = cosmogenesis_project
+			}
+		}
+		text = crisis.7516.desc.center
+	}
+	desc = {
+		trigger = {
+			NOT = { has_origin = origin_toxic_knights }
+			has_country_flag = has_shroud_patron
+			event_target:cosmo_ending_system = {
+				is_capital_system = yes
+				has_star_flag = cosmogenesis_project
+			}
+		}
+		text = crisis.7516.desc.center.patron
+	}
+	desc = {
+		trigger = {
+			has_origin = origin_toxic_knights
+			event_target:cosmo_ending_system = {
+				is_capital_system = yes
+				has_star_flag = cosmogenesis_project
+			}
+		}
+		text = crisis.7516.desc.centerknights
+	}
+	desc = {
+		trigger = {
+			NOT = { has_origin = origin_toxic_knights }
+			NOT = { has_country_flag = has_shroud_patron }
+			event_target:cosmo_ending_system = {
+				is_capital_system = yes
+				has_star_flag = cosmogenesis_project
+			}
+		}
+		text = crisis.7516.desc.center
+	}
+
+	#Jumped into the Gigas galactic core
+	desc = {
+		trigger = {
+			NOT = { has_origin = origin_toxic_knights }
+			NOT = { has_country_flag = has_shroud_patron }
+			event_target:cosmo_ending_system = { OR = { is_star_class = sc_birch is_star_class = sc_quasar } }
+		}
+		text = crisis.7516.desc.center
+	}
+	
+	desc = {
+		trigger = {
+			NOT = { has_origin = origin_toxic_knights }
+			has_country_flag = has_shroud_patron
+			event_target:cosmo_ending_system = { OR = { is_star_class = sc_birch is_star_class = sc_quasar } }
+		}
+		text = crisis.7516.desc.center.patron
+	}
+	desc = {
+		trigger = {
+			has_origin = origin_toxic_knights
+			event_target:cosmo_ending_system = { OR = { is_star_class = sc_birch is_star_class = sc_quasar } }
+		}
+		text = crisis.7516.desc.centerknights
+	}
+
+	desc = {
+		trigger = {
+			can_create_paperclip_universe = no
+			event_target:cosmo_ending_system = { OR = { is_star_class = sc_birch is_star_class = sc_quasar } }
+		}
+		text = crisis.7516.desc.worm
+	}
+
+	picture = GFX_evt_horizon_needle
+	show_sound = event_airlock
+	event_chain = cosmogenesis_planet_pickup_chain
+
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				can_create_paperclip_universe = yes
+			}
+			set_country_flag = a_universe_of_paperclips_achievement
+		}
+	}
+
+	option = {
+		name = crisis.7516.a
+		custom_tooltip = crisis.7516.tt
+	}
+
+	after = {
+		hidden_effect = {
+			if = {
+				limit = {
+					has_origin = origin_toxic_knights
+					OR = {
+						event_target:cosmo_ending_system = { OR = { is_star_class = sc_birch is_star_class = sc_quasar } }
+						event_target:cosmo_ending_system = {
+							is_capital_system = yes
+							has_star_flag = cosmogenesis_project
+						}
+					}
+				}
+				set_global_flag = no_end_of_cycle
+			}
+			save_event_target_as = cosmogenesis_empire
+			set_country_flag = cosmogenesis_empire_has_won
+			make_fallen_empire = yes
+			every_playable_country = {
+				limit = {
+					}
+				country_event = { id = crisis.7518 days = 5 }
+			}
+			if = {
+				limit = {
+					galaxy_size = tiny
+				}
+				while = { # Destroy ~10% random stars, for good measure
+					count = 18
+					random_system = {
+						limit = {
+							NOR = {
+								is_star_class = sc_black_hole
+								is_star_class = sc_acot_void_star
+								is_star_class = sc_birch
+								is_star_class = sc_quasar
+								is_sbtg_outer_gate = yes
+								AND = {
+									exists = owner
+									owner = {
+										has_technology = tech_acot_dm_psg
+									}
+								}
+								any_system_planet = {
+									num_pops > 0
+								}
+							}
+						}
+						destroy_star_system = yes
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					galaxy_size = small
+				}
+				while = { # Destroy ~10% random stars, for good measure
+					count = 36
+					random_system = {
+						limit = {
+							NOR = {
+								is_star_class = sc_black_hole
+								is_star_class = sc_acot_void_star
+								is_star_class = sc_birch
+								is_star_class = sc_quasar
+								is_sbtg_outer_gate = yes
+								AND = {
+									exists = owner
+									owner = {
+										has_technology = tech_acot_dm_psg
+									}
+								}
+								any_system_planet = {
+									num_pops > 0
+								}
+							}
+						}
+						random_list = {
+							1 = {
+								destroy_star_system = yes
+							}
+							1 = {
+								resonant_system_effect = yes
+							}
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					galaxy_size = medium
+				}
+				while = { # Destroy ~10% random stars, for good measure
+					count = 52
+					random_system = {
+						limit = {
+							NOR = {
+								is_star_class = sc_black_hole
+								is_star_class = sc_acot_void_star
+								is_star_class = sc_birch
+								is_star_class = sc_quasar
+								is_sbtg_outer_gate = yes
+								AND = {
+									exists = owner
+									owner = {
+										has_technology = tech_acot_dm_psg
+									}
+								}
+								any_system_planet = {
+									num_pops > 0
+								}
+							}
+						}
+						random_list = {
+							1 = {
+								destroy_star_system = yes
+							}
+							1 = {
+								resonant_system_effect = yes
+							}
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					galaxy_size = large
+				}
+				while = { # Destroy ~10% random stars, for good measure
+					count = 70
+					random_system = {
+						limit = {
+							NOR = {
+								is_star_class = sc_black_hole
+								is_star_class = sc_acot_void_star
+								is_star_class = sc_birch
+								is_star_class = sc_quasar
+								any_system_planet = {
+									num_pops > 0
+								}
+							}
+						}
+						random_list = {
+							1 = {
+								destroy_star_system = yes
+							}
+							1 = {
+								resonant_system_effect = yes
+							}
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					galaxy_size = huge
+				}
+				while = { # Destroy ~10% random stars, for good measure
+					count = 88
+					random_system = {
+						limit = {
+							NOR = {
+								is_star_class = sc_black_hole
+								is_star_class = sc_acot_void_star
+								is_star_class = sc_birch
+								is_star_class = sc_quasar
+								any_system_planet = {
+									num_pops > 0
+								}
+							}
+						}
+						random_list = {
+							1 = {
+								destroy_star_system = yes
+							}
+							1 = {
+								resonant_system_effect = yes
+							}
+						}
+					}
+				}
+			}
+			### HANDLES FRACTURED STUFFS
+			# FRACTURED GETS DISTORTED AND MAGICALLY CHANGES CLASS
+			every_galaxy_planet = {
+				limit = {
+					is_planet_class = pc_dark_fractured
+					NOT = {
+						exists = owner
+					}
+				}
+				random_list = {
+					1 = { }
+					1 = { change_pc = pc_black_hole }
+					1 = { change_pc = pc_barren_cold }
+					1 = { change_pc = pc_nuked }
+					1 = { remove_planet = yes }
+				}
+			}
+			every_galaxy_planet = {
+				limit = {
+					is_planet_class = pc_dark_fractured_unstable
+					NOT = {
+						exists = owner
+					}
+				}
+				random_list = {
+					3 = { change_pc = pc_dark_fractured }
+					1 = { }
+					1 = { change_pc = pc_black_hole }
+					1 = { remove_planet = yes }
+				}
+			}
+			every_galaxy_planet = {
+				limit = {
+					is_planet_class = pc_dark_fractured_ae
+					NOT = {
+						exists = owner
+					}
+				}
+				random_list = {
+					1 = { change_pc = pc_dark_fractured_unstable }
+					1 = { }
+					1 = { change_pc = pc_dark_fractured }
+					1 = { remove_planet = yes }
+				}
+			}
+			every_galaxy_planet = {
+				limit = {
+					is_planet_class = pc_dark_fractured_ae_unstable
+					NOT = {
+						exists = owner
+					}
+				}
+				random = { chance = 50 remove_planet = yes }
+			}
+			date_distortion = yes
+			event_target:global_event_country = {
+				country_event = { id = crisis.7519 days = 30 }
+			}
+		}
+		win = yes # WIN? WIN? IF ONLY YOU KNEW THE TRUTH...
+	}
+}
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
+namespace = cybernetics
+
+# changing the planet condition for not spawning virtual pops
+
+### Create the Unemployed
+### Country scope gatekeeper
+### on_monthly_pulse_country
+country_event = {
+	id = cybernetics.5025
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		is_fallen_empire = no
+		has_active_tradition = tr_virtuality_finish
+		any_owned_planet = {
+			is_under_colonization = no
+			giga_exclude_planet_from_virtual_growth = no # EDITED HERE
+			free_jobs > 0
+			NOR = {
+				free_jobs_of_type = {
+					job = mortal_initiate
+					value >= 1
+				}
+				free_jobs_of_type = {
+					category = bio_trophy
+					value >= 1
+				}
+			}
+		}
+	}
+
+	immediate = {
+		random_owned_planet = {
+			limit = {
+				is_under_colonization = no
+				giga_exclude_planet_from_virtual_growth = no # EDITED HERE
+				free_jobs > 0
+				NOR = {
+					free_jobs_of_type = {
+						job = mortal_initiate
+						value >= 1
+					}
+					free_jobs_of_type = {
+						category = bio_trophy
+						value >= 1
+					}
+				}
+			}
+			planet_event = { id = cybernetics.2027 days = 1 }
+		}
+	}
+}
+
+### Create the Unemployed
+### Planet scope gatekeeper
+### on_building_complete, on_building_upgraded, on_building_demolished,
+### on_building_downgraded, on_building_replaced
+### on_district_complete, on_district_demolished
+planet_event = {
+	id = cybernetics.2026
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		is_under_colonization = no
+		giga_exclude_planet_from_virtual_growth = no # EDITED HERE
+		exists = owner
+		owner = {
+			is_fallen_empire = no
+			has_active_tradition = tr_virtuality_finish
+		}
+		free_jobs > 0
+	}
+
+	immediate = {
+		planet_event = { id = cybernetics.2027 days = 1 }
+	}
+}
+
+### Create the Unemployed
+### Fired by cybernetics.2025 and cybernetics.2026
+planet_event = {
+	id = cybernetics.2027
+	hide_window = yes
+
+	is_triggered_only = yes
+	trigger = {
+		is_under_colonization = no
+		giga_exclude_planet_from_virtual_growth = no # EDITED HERE
+		exists = owner
+		owner = {
+			is_fallen_empire = no
+			has_tradition = tr_virtuality_finish
+		}
+		free_jobs > 0
+	}
+
+	immediate = {
+		set_variable = {
+			which = num_pops
+			value = value:num_free_virtual_jobs
+		}
+		# Create pops for every free job
+		while = {
+			count = num_pops
+			create_pop = {
+				species = owner_main_species
+			}
+		}
+		# Kill pops generated in excess (e.g. from forbidden jobs)
+		if = {
+			limit = {
+				any_owned_pop = {
+					is_unemployed = yes
+					is_robotic_species = yes
+					has_virtual_species_trait = yes
+				}
+			}
+			every_owned_pop = {
+				limit = {
+					is_unemployed = yes
+					is_robotic_species = yes
+					has_virtual_species_trait = yes
+				}
+				kill_pop = yes
 			}
 		}
 	}

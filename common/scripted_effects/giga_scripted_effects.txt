@@ -198,7 +198,7 @@ giga_planet_craft = {
 		settings = {
 			spawn_debris = no
 			can_change_composition = no #yes
-			is_boss = yes
+			#is_boss = yes
 		}
 		effect = {
 			set_owner = prev
@@ -1429,7 +1429,7 @@ giga_shroud_planet = {
 		}
 		else_if = {
 			limit = {
-				is_giga_standard_ringworld = yes
+				giga_is_standard_ringworld = yes
 			}
 			every_owned_pop = { kill_pop = yes }
 			change_pc = pc_ringworld_habitable_shrouded
@@ -2739,6 +2739,8 @@ giga_set_ringworld_graphical_culture = {
 				toxoid_01		= { event_target:targetringworld = { set_planet_entity = { entity = toxoid_01_$SIZE$_$TYPE$_entity		} } }
 				aquatic_01		= { event_target:targetringworld = { set_planet_entity = { entity = aquatic_01_$SIZE$_$TYPE$_entity		} } }
 				nemesis_01		= { event_target:targetringworld = { set_planet_entity = { entity = nemesis_01_$SIZE$_$TYPE$_entity		} } } 
+				synthetics_01	= { event_target:targetringworld = { set_planet_entity = { entity = synthetics_01_$SIZE$_$TYPE$_entity	} } } 
+				cybernetics_01	= { event_target:targetringworld = { set_planet_entity = { entity = cybernetics_01_$SIZE$_$TYPE$_entity	} } } 
 
 				default 		= { event_target:targetringworld = { set_planet_entity = { entity = $VANILLA_TYPE$_entity_01_entity graphical_culture = $SOURCE$ } } } 
 			]
@@ -2758,6 +2760,8 @@ giga_set_ringworld_graphical_culture = {
 				toxoid_01		= { event_target:targetringworld = { set_planet_entity = { entity = toxoid_01_$SIZE$_$TYPE$_sector_entity		} } }
 				aquatic_01		= { event_target:targetringworld = { set_planet_entity = { entity = aquatic_01_$SIZE$_$TYPE$_sector_entity		} } }
 				nemesis_01		= { event_target:targetringworld = { set_planet_entity = { entity = nemesis_01_$SIZE$_$TYPE$_sector_entity		} } }
+				cybernetics_01	= { event_target:targetringworld = { set_planet_entity = { entity = cybernetics_01_$SIZE$_$TYPE$_sector_entity	} } }
+				synthetics_01	= { event_target:targetringworld = { set_planet_entity = { entity = synthetics_01_$SIZE$_$TYPE$_sector_entity	} } }
 				default 		= { event_target:targetringworld = { set_planet_entity = { entity = mammalian_01_$SIZE$_$TYPE$_sector_entity	} } } 
 
 				#Modded shipset compat, If you author a modded shipset or a patch for one please let me know on discord and I can add it to this switch (Bread™#7255)
@@ -2840,6 +2844,9 @@ giga_set_elysium_buildings = {
 		add_building = building_giga_elysium_host_machine_capital
 		add_building = building_giga_elysium_host_machine_jobs
 	}
+
+	add_building = building_giga_elysium_trash_heap
+
 	# don't know why, but having this here removes all the districts...
 	#validate_planet_buildings_and_districts = yes
 }
@@ -3566,7 +3573,14 @@ giga_stripmine_colony_destruction = {
 		limit = {
 			has_communications = event_target:giga_stripmine_builder
 			NOT = { is_country = event_target:giga_stripmine_builder }
-			NOT = { is_xenophobe = yes }
+			prev = {
+				has_megastructure_flag = planet_had_colony
+			}
+			NOR = {
+				is_country_type = fallen_empire
+				is_xenophobe = yes
+				is_xenophage = yes # i.e. consumes one or more of its constituent Species
+			}
 		}
 		add_opinion_modifier = {
 			who = event_target:giga_stripmine_builder
@@ -3687,4 +3701,176 @@ giga_stripmine_size_drop = {
 giga_clear_stripmine_speed_flags = {
 	remove_megastructure_flag = stripmine_quick
 	remove_megastructure_flag = stripmine_slow
+}
+
+# remove dyson etc modifiers for when we blow up a system
+giga_clear_mega_planet_modifiers = {
+	remove_modifier = dyson_swarm_1_mod
+	remove_modifier = dyson_swarm_2_mod
+	remove_modifier = dyson_swarm_3_mod
+	remove_modifier = orbital_arc_furnace_1_mod
+	remove_modifier = orbital_arc_furnace_2_mod
+	remove_modifier = orbital_arc_furnace_3_mod
+	remove_modifier = orbital_arc_furnace_4_mod
+}
+
+# used in fallen empire spawning
+# but... is commented out? awww come on
+giga_spawn_max_orbital_arcology = {
+	# if = {
+	# 	limit = {
+	# 		has_overlord_dlc = yes
+	# 	}
+	#
+	#
+	# }
+	# else = {
+		set_variable = {
+			which = orbital_arcology_size
+			value = trigger:planet_size
+		}
+		set_variable = {
+			which = orbital_arcology_modifier
+			value = orbital_arcology_size
+		}
+		divide_variable = {
+			which = orbital_arcology_modifier
+			value = 5
+		}
+		ceiling_variable = orbital_arcology_modifier
+		set_variable = {
+			which = orbital_arcology_modifier_districts
+			value = orbital_arcology_modifier
+		}
+		multiply_variable = {
+			which = orbital_arcology_modifier_districts
+			value = 2
+		}
+		set_planet_flag = has_fe_orbital_arcology
+		solar_system = {
+			spawn_megastructure = {
+				type = orbital_arcology_0
+				owner = ROOT
+				planet = PREV
+			}
+			every_system_megastructure = {
+				limit = { is_megastructure_type = orbital_arcology_0 }
+				upgrade_megastructure_to = orbital_arcology_1
+				finish_upgrade = yes
+				upgrade_megastructure_to = orbital_arcology_2
+				finish_upgrade = yes
+			}
+		}
+	#}
+}
+
+giga_cosmogenesis_effect = {
+	save_event_target_as = cosmogenesis_empire
+	set_country_flag = cosmogenesis_empire_has_won
+	make_fallen_empire = yes
+	every_country = {
+		limit = {
+			is_country_type = default
+		}
+		country_event = { id = crisis.7518 days = 5 }
+	}
+	if = {
+		limit = {
+			galaxy_size = tiny
+		}
+		while = { #Destroy ~10% random stars, for good measure
+			count = 18
+			random_system = {
+				limit = {
+					NOT = {
+						is_star_class = sc_black_hole
+						any_system_planet = {
+							num_pops > 0
+						}
+					}
+				}
+				destroy_star_system = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			galaxy_size = small
+		}
+		while = { #Destroy ~10% random stars, for good measure
+			count = 36
+			random_system = {
+				limit = {
+					NOT = {
+						is_star_class = sc_black_hole
+						any_system_planet = {
+							num_pops > 0
+						}
+					}
+				}
+				destroy_star_system = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			galaxy_size = medium
+		}
+		while = { #Destroy ~10% random stars, for good measure
+			count = 52
+			random_system = {
+				limit = {
+					NOT = {
+						is_star_class = sc_black_hole
+						any_system_planet = {
+							num_pops > 0
+						}
+					}
+				}
+				destroy_star_system = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			galaxy_size = large
+		}
+		while = { #Destroy ~10% random stars, for good measure
+			count = 70
+			random_system = {
+				limit = {
+					NOT = {
+						is_star_class = sc_black_hole
+						any_system_planet = {
+							num_pops > 0
+						}
+					}
+				}
+				destroy_star_system = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			galaxy_size = huge
+		}
+		while = { #Destroy ~10% random stars, for good measure
+			count = 88
+			random_system = {
+				limit = {
+					NOT = {
+						is_star_class = sc_black_hole
+						any_system_planet = {
+							num_pops > 0
+						}
+					}
+				}
+				destroy_star_system = yes
+			}
+		}
+	}
+	date_distortion = yes
+	event_target:global_event_country = {
+		country_event = { id = crisis.7519 days = 30 }
+	}
 }

@@ -1,0 +1,992 @@
+orbital_artificial_eco_0 = {
+	entity = "giga_zoo_new_1"
+	construction_entity = "giga_zoo_new_1_part"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = yes
+	scales_with_planet = yes
+	use_planet_resource = yes
+	prerequisites = { giga_tech_orbital_artificial_eco }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	build_time = 360
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			alloys = @science_kilo_cost_1
+			unity = @science_kilo_cost_1
+		}
+		upkeep = {
+			energy = 10
+		}
+		upkeep = {
+			trigger = { 
+				exists = owner
+				owner = { # Standard empire
+					is_gestalt = no
+				}
+			}
+			consumer_goods = 5
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Hivemind / default
+					is_gestalt = yes
+					is_machine_empire = no
+				}
+			}
+			minerals = 15
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Robot upkeep
+					is_gestalt = yes
+					is_machine_empire = yes
+				}
+			}
+			energy = 10
+		}
+	}
+
+	potential = {
+		has_technology = giga_tech_orbital_artificial_eco
+		NOT = { has_global_flag = orbital_artificial_eco_disabled }
+		OR = {
+			check_variable = { which = giga_orbital_artificial_eco_cap value = 0 }						# No Cap
+			check_variable = { which = giga_current_orbital_artificial_eco value < giga_orbital_artificial_eco_cap }
+			has_global_flag = orbital_artificial_eco_capped_u
+		}
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border"				is_inside_border = from }
+		custom_tooltip = { fail_text = "requires_no_anomaly" 				NOT = { any_system_planet = { has_anomaly = yes } } }
+		custom_tooltip = { fail_text = "requires_no_arc_furnace" 			system_has_arc_furnace = no }
+		custom_tooltip = { fail_text = "requires_no_orb_eco_arc"			NOT = { any_system_megastructure = { ehof_giga_new_is_artificial_eco = yes } } }
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+			custom_tooltip = { fail_text = "must_build_around_toxic" 			giga_is_toxic = yes}
+			custom_tooltip = {
+				fail_text = "requires_not_astral_scar"
+				is_astral_scar = no
+			}
+			OR = {
+				from = { is_ai = no }
+				solar_system = {
+					count_system_planet = {
+						count >= 8
+						limit = {
+							giga_is_science_candidate = yes
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	ai_weight = {
+		weight = value:giga_ai_base_kilo
+
+		mult = value:giga_ai_science_mult
+		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|25|
+		mult = value:giga_ai_core_territory
+		mult = value:giga_ai_unlock_low_priority
+		mult = value:giga_ai_build_low_priority
+		mult = value:giga_ai_large_system
+		mult = value:giga_ai_deposit_stack
+		mult = value:giga_ai_prevent_spam|MEGA|orbital_artificial_eco|
+		mult = value:giga_ai_materialist_plus
+
+		modifier = { factor = 2.00	from = { has_federation = yes federation = { has_federation_type = research_federation } } }
+	}
+
+
+	on_build_start = {
+		set_star_flag = eco_arc_construction
+	}
+	on_build_cancel = {
+		remove_star_flag = eco_arc_construction
+	}
+	on_build_complete = {
+		save_event_target_as = giga_system
+		remove_star_flag = eco_arc_construction
+		fromfrom.planet = {
+			set_planet_flag = has_eco_arc
+			save_event_target_as = giga_planet
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			giga_set_has_mega_flag = yes
+		}
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_orbital_artificial_eco years = 10 }
+			create_message = {
+				type = MEGASTRUCTURE_BUILT
+				localization = MESSAGE_MEGASTRUCTURE_BUILT
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
+				}
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
+			}
+			change_variable = { which = giga_current_orbital_artificial_eco value = 1 }
+		}
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			remove_trade_deposits = yes
+			set_planet_flag = giga_eco_arcology_stage_1
+			save_event_target_as = target_planet
+			add_deposit = d_society_2
+			science_kilo_update_orbital_effect = yes
+		}
+		fromfrom = {
+			set_megastructure_flag = giga_dismantle_ready
+		}
+	}
+	
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 500
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_orbital_artificial_eco
+		}
+		# custom_tooltip = {
+		# 	fail_text = "requires_not_old_update"
+		# 	has_megastructure_flag = giga_dismantle_ready
+		# }
+	}
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_eco_arcology_stage_1 }
+			}
+			set_planet_flag = giga_eco_arcology_stage_1
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_eco_arc
+		}
+	}
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = eco_arcology
+				TYPE = society
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_eco_arc
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_eco_arc
+		}
+		from = {
+			add_resource = {
+				alloys = 500
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_orbital_artificial_eco
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_orbital_artificial_eco
+					value = -1
+				}
+			}
+		}
+	}
+}
+
+orbital_artificial_eco_1 = {
+	entity = "giga_zoo_new_2"
+	construction_entity = "giga_zoo_new_2_part"
+	portrait = "GFX_megastructure_continental_planet"
+	place_entity_on_planet_plane = yes
+	scales_with_planet = yes
+	use_planet_resource = yes
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	upgrade_from = { orbital_artificial_eco_0 }
+
+	build_time = 1080
+	resources = {
+		category = giga_kilostructures
+		cost = { 
+			alloys = @science_kilo_cost_2
+			unity = @science_kilo_cost_2
+		}
+		upkeep = {
+			energy = 20
+		}
+		upkeep = {
+			trigger = { 
+				exists = owner
+				owner = { # Standard empire
+					is_gestalt = no
+				}
+			}
+			consumer_goods = 10
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Hivemind / default
+					is_gestalt = yes
+					is_machine_empire = no
+				}
+			}
+			minerals = 30
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Robot upkeep
+					is_gestalt = yes
+					is_machine_empire = yes
+				}
+			}
+			energy = 20
+		}
+	}
+
+	potential = { NOT = { has_global_flag = orbital_artificial_eco_disabled } }
+	possible = { from = { has_technology = giga_tech_orbital_artificial_eco } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			set_planet_flag = has_orbital_artificial_eco
+			save_event_target_as = giga_planet
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			giga_set_has_mega_flag = yes
+		}
+		from = { # Notification
+			create_message = {
+				type = MEGASTRUCTURE_UPGRADED
+				localization = MESSAGE_MEGASTRUCTURE_UPGRADED
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
+				}
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
+			}
+		}
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			remove_planet_flag = giga_eco_arcology_stage_1
+			set_planet_flag = giga_eco_arcology_stage_2
+			save_event_target_as = target_planet
+			add_deposit = d_society_2
+			science_kilo_update_orbital_effect = yes
+		}
+		fromfrom = {
+			if = {
+				limit = {
+					NOT = { has_megastructure_flag = giga_dismantle_ready }
+				}
+				set_megastructure_flag = giga_dismantle_ready
+			}
+		}
+	}
+
+					
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 1000
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_orbital_artificial_eco
+		}
+		# custom_tooltip = {
+		# 	fail_text = "requires_not_old_update"
+		# 	has_megastructure_flag = giga_dismantle_ready
+		# }
+	}
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_eco_arcology_stage_2 }
+			}
+			set_planet_flag = giga_eco_arcology_stage_2
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_eco_arc
+		}
+	}
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = eco_arcology
+				TYPE = society
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_eco_arc
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_eco_arc
+		}
+		from = {
+			add_resource = {
+				alloys = 1000
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_orbital_artificial_eco
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_orbital_artificial_eco
+					value = -1
+				}
+			}
+		}
+	}
+}
+
+orbital_artificial_eco_2 = {
+	entity = "giga_zoo_new_3"
+	construction_entity = "giga_zoo_new_3_part"
+	portrait = "GFX_megastructure_continental_planet"
+	place_entity_on_planet_plane = yes
+	scales_with_planet = yes
+	use_planet_resource = yes
+	upgrade_from = { orbital_artificial_eco_1 }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	build_time = 1080
+	resources = {
+		category = giga_kilostructures
+		cost = { 
+			alloys = @science_kilo_alloys_3
+			unity = @science_kilo_unity_3
+		}
+		upkeep = {
+			energy = 40
+		}
+		upkeep = {
+			trigger = { 
+				exists = owner
+				owner = { # Standard empire
+					is_gestalt = no
+				}
+			}
+			consumer_goods = 20
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Hivemind / default
+					is_gestalt = yes
+					is_machine_empire = no
+				}
+			}
+			minerals = 60
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Robot upkeep
+					is_gestalt = yes
+					is_machine_empire = yes
+				}
+			}
+			energy = 40
+		}
+	}
+
+	potential = { NOT = { has_global_flag = orbital_artificial_eco_disabled } }
+	possible = { from = { has_technology = giga_tech_orbital_artificial_eco } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		from = {
+			create_message = {
+				type = MEGASTRUCTURE_UPGRADED
+				localization = MESSAGE_MEGASTRUCTURE_UPGRADED
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
+				}
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
+			}
+		}
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			remove_planet_flag = giga_eco_arcology_stage_2
+			set_planet_flag = giga_eco_arcology_stage_3
+			save_event_target_as = target_planet
+			add_deposit = d_society_2
+			science_kilo_update_orbital_effect = yes
+			add_modifier = {
+				modifier = orbital_eco_arcology_3_mod
+				days = -1
+			}
+		}
+		fromfrom = {
+			if = {
+				limit = {
+					NOT = { has_megastructure_flag = giga_dismantle_ready }
+				}
+				set_megastructure_flag = giga_dismantle_ready
+			}
+		}
+	}
+				
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 1500
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_orbital_artificial_eco
+		}
+		# custom_tooltip = {
+		# 	fail_text = "requires_not_old_update"
+		# 	has_megastructure_flag = giga_dismantle_ready
+		# }
+	}
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_eco_arcology_stage_3 }
+			}
+			set_planet_flag = giga_eco_arcology_stage_3
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_eco_arc
+		}
+	}
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = eco_arcology
+				TYPE = society
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_eco_arc
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_eco_arc
+		}
+		from = {
+			add_resource = {
+				alloys = 1500
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_orbital_artificial_eco
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_orbital_artificial_eco
+					value = -1
+				}
+			}
+		}
+	}
+}
+
+orbital_artificial_eco_3 = {
+	entity = "giga_zoo_new_4"
+	construction_entity = "giga_zoo_new_4_part"
+	portrait = "GFX_megastructure_continental_planet"
+	place_entity_on_planet_plane = yes
+	scales_with_planet = yes
+	use_planet_resource = yes
+	upgrade_from = { orbital_artificial_eco_2 }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	build_time = 1080 # 3 years
+	resources = {
+		category = giga_kilostructures
+		cost = { 
+			alloys = @science_kilo_alloys_4
+			unity = @science_kilo_unity_4
+		}
+		upkeep = {
+			energy = 50
+		}
+		upkeep = {
+			trigger = { 
+				exists = owner
+				owner = { # Standard empire
+					is_gestalt = no
+				}
+			}
+			consumer_goods = 25
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Hivemind / default
+					is_gestalt = yes
+					is_machine_empire = no
+				}
+			}
+			minerals = 75
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Robot upkeep
+					is_gestalt = yes
+					is_machine_empire = yes
+				}
+			}
+			energy = 50
+		}
+	}
+
+	potential = { NOT = { has_global_flag = orbital_artificial_eco_disabled } }
+	possible = { from = { has_technology = giga_tech_orbital_artificial_eco } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		from = {
+			create_message = {
+				type = MEGASTRUCTURE_UPGRADED
+				localization = MESSAGE_MEGASTRUCTURE_UPGRADED
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
+				}
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
+			}
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_56
+					}
+				}
+				set_country_flag = giga_achievement_56
+				set_timed_country_flag = { flag = giga_achievement_56_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+		fromfrom.planet = {
+			set_planet_entity = {
+				entity = "zoo_toxic_planet_01_entity"
+			}
+		}
+		fromfrom = {
+			set_name = "name_orbital_artificial_eco"
+			if = {
+				limit = {
+					NOT = { has_megastructure_flag = giga_dismantle_ready }
+				}
+				set_megastructure_flag = giga_dismantle_ready
+			}
+		}
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			remove_planet_flag = giga_eco_arcology_stage_3
+			set_planet_flag = giga_eco_arcology_stage_4
+			save_event_target_as = target_planet
+			add_deposit = d_society_2
+			science_kilo_update_orbital_effect = yes
+			add_modifier = {
+				modifier = orbital_eco_arcology_4_mod
+				days = -1
+			}
+			if = {
+				limit = {
+					has_modifier = orbital_eco_arcology_3_mod
+				}
+				remove_modifier = orbital_eco_arcology_3_mod
+			}
+		}
+	}
+				
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 2000
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_orbital_artificial_eco
+		}
+		# custom_tooltip = {
+		# 	fail_text = "requires_not_old_update"
+		# 	has_megastructure_flag = giga_dismantle_ready
+		# }
+	}
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_eco_arcology_stage_4 }
+			}
+			set_planet_flag = giga_eco_arcology_stage_4
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_eco_arc
+		}
+	}
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = eco_arcology
+				TYPE = society
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_eco_arc
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_eco_arc
+			set_planet_entity = {
+				entity = pc_toxic
+			}
+		}
+		from = {
+			add_resource = {
+				alloys = 2000
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_orbital_artificial_eco
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_orbital_artificial_eco
+					value = -1
+				}
+			}
+		}
+	}
+}
+
+#Ruined
+orbital_artificial_eco_ruined = {
+	entity = "giga_zoo_new_destroyed"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	potential = { always = no }
+	resources = { category = giga_kilostructures }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+}
+
+#Restored
+orbital_artificial_eco_restored = {
+	entity = "giga_zoo_new_4"
+	construction_entity = "giga_zoo_new_4"
+	portrait = "GFX_megastructure_continental_planet"
+	place_entity_on_planet_plane = no
+	use_planet_resource = yes
+	upgrade_from = { orbital_artificial_eco_ruined }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	build_time = 720 # 2 years
+	resources = {
+		category = giga_kilostructures
+		cost = { alloys = 5000 unity = @giga_kilo_repair_unity_cost }
+		upkeep = {
+			energy = 50
+		}
+		upkeep = {
+			trigger = { 
+				exists = owner
+				owner = { # Standard empire
+					is_gestalt = no
+				}
+			}
+			consumer_goods = 25
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Hivemind / default
+					is_gestalt = yes
+					is_machine_empire = no
+				}
+			}
+			minerals = 75
+		}
+		upkeep = {
+			trigger = {
+				exists = owner
+				owner = { # Robot upkeep
+					is_gestalt = yes
+					is_machine_empire = yes
+				}
+			}
+			energy = 50
+		}
+	}
+
+	potential = { NOT = { has_global_flag = orbital_artificial_eco_disabled } }
+	possible = {
+		exists = from
+		from = { has_technology = giga_tech_orbital_artificial_eco }
+	}
+
+	ai_weight = { factor = value:giga_ai_base_repairs } # If we can build it, we will build it
+	on_build_complete = {
+		fromfrom.planet = {
+			set_planet_flag = has_eco_arc
+			set_planet_entity = {
+				entity = "zoo_toxic_planet_01_entity"
+			}
+		}
+		fromfrom = {
+			set_megastructure_flag = giga_dismantle_ready
+		}
+		save_event_target_as = giga_system
+		from = {
+			create_message = {
+				type = MEGASTRUCTURE_UPGRADED
+				localization = MESSAGE_MEGASTRUCTURE_UPGRADED
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
+				}
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
+			}
+			change_variable = { which = giga_current_orbital_artificial_eco value = 1 }
+		}
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			remove_trade_deposits = yes
+			set_planet_flag = giga_eco_arcology_stage_4
+			save_event_target_as = target_planet
+			add_deposit = d_society_2
+			add_deposit = d_society_2
+			add_deposit = d_society_2
+			add_deposit = d_society_2
+			science_kilo_update_orbital_effect = yes
+			add_modifier = {
+				modifier = orbital_eco_arcology_4_mod
+				days = -1
+			}
+			if = {
+				limit = {
+					has_modifier = orbital_eco_arcology_3_mod
+				}
+				remove_modifier = orbital_eco_arcology_3_mod
+			}
+		}
+	}
+			
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 2000
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_orbital_artificial_eco
+		}
+		# custom_tooltip = {
+		# 	fail_text = "requires_not_old_update"
+		# 	has_megastructure_flag = giga_dismantle_ready
+		# }
+	}
+	on_dismantle_start = { # Catch for old variants of the mega where it hadn't set the proper flags
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+				NOT = { has_planet_flag = giga_eco_arcology_stage_4 }
+			}
+			set_planet_flag = giga_eco_arcology_stage_4
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_eco_arc
+		}
+	}
+	on_dismantle_complete = {
+		every_system_planet = {
+			limit = {
+				giga_is_science_candidate = yes
+			}
+			giga_dismantle_science_kilo_effect = {
+				FLAG = eco_arcology
+				TYPE = society
+			}
+		}
+		random_system_planet = {
+			limit = {
+				has_planet_flag = has_eco_arc
+			}
+			remove_planet_flag = has_megastructure
+			remove_planet_flag = has_eco_arc
+			set_planet_entity = {
+				entity = pc_toxic
+			}
+		}
+		from = {
+			add_resource = {
+				alloys = 2000
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_orbital_artificial_eco
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_orbital_artificial_eco
+					value = -1
+				}
+			}
+		}
+	}
+}

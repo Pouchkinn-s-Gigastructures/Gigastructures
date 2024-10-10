@@ -17,10 +17,10 @@ country_event = {
 	}
 	
 	immediate = {
-		# colony ship cost modifier
-		add_modifier = {
-			modifier = frameworld_origin_colony_cost
-		}
+		# colony ship cost modifier OBSOLETE
+		#add_modifier = {
+		#	modifier = frameworld_origin_colony_cost
+		#}
 		
 		set_variable = {
 			which = giga_frameworld_megastructure_cost
@@ -224,7 +224,13 @@ country_event = {
 				if = {
 					# alternate factory-foundry for normal empires
 					limit = {
-						owner = { is_gestalt = no }
+						owner = {
+							or = {
+								is_gestalt = no
+								has_civic = civic_machine_obsessional_directive
+								has_civic = civic_machine_servitor
+							}
+						}
 					}
 					if = {
 						limit = { not = { has_planet_flag = foundry_next }}
@@ -524,6 +530,18 @@ country_event = {
 	option = { name = giga_frameworld_origin.014.a }
 }
 
+# nanite
+country_event = {
+	id = giga_frameworld_origin.015
+	title = giga_frameworld_origin.015.name
+	desc = giga_frameworld_origin.015.desc
+	picture = GFX_evt_rare_tech_cache
+	show_sound = event_construction
+	location = event_target:giga_planet
+	is_triggered_only = yes
+	option = { name = giga_frameworld_origin.015.a }
+}
+
 ###############################################################################################################################################
 # Resettlement and outpost construction/destruction
 ###############################################################################################################################################
@@ -553,7 +571,10 @@ country_event = {
 		set_update_modifiers_batch = begin
 		every_owned_planet = {
 			limit = {
-				NOT = { is_same_value = event_target:target_frameworld }
+				nor = {
+					is_same_value = event_target:target_frameworld
+					is_planet_class = pc_cosmogenesis_world
+				}
 				has_orbital_bombardment = no
 				is_occupied_flag = no
 				is_under_colonization = no
@@ -586,15 +607,48 @@ country_event = {
 			if = {
 				limit = {
 					not = { has_modifier = frameworld_conquered_no_resettle }
+					any_owned_pop = {
+						nand = {
+							is_robotic_species = yes
+							has_virtual_species_trait = yes
+						}
+					}
 				}
 				while = {
 					# 5% or 4, whichever is more
 					count = value:giga_frameworld_resettlement_count
 					random_owned_pop = {
+						limit = {
+							nand = {
+								is_robotic_species = yes
+								has_virtual_species_trait = yes
+							}
+						}
 						resettle_pop = {
 							pop = this
 							planet = event_target:target_frameworld
 						}
+					}
+				}
+			}
+
+			# shut down some virtual pops anyway
+			if = {
+				limit = {
+					any_owned_pop = {
+						is_robotic_species = yes
+						has_virtual_species_trait = yes
+					}
+				}
+				while = {
+					# 5% or 4, whichever is more
+					count = value:giga_frameworld_resettlement_count
+					random_owned_pop = {
+						limit = {
+							is_robotic_species = yes
+							has_virtual_species_trait = yes
+						}
+						kill_pop = yes
 					}
 				}
 			}
@@ -962,8 +1016,9 @@ planet_event = {
 		from = {
 			giga_has_frameworld_origin = yes
 		}
-		not = {
+		nor = {
 			has_planet_flag = giga_frameworld@from
+			is_planet_class = pc_cosmogenesis_world
 		}
 	}
 
@@ -1200,7 +1255,7 @@ country_event = {
 				# but we do have the prerequisities
 				has_technology = tech_adaptive_bureaucracy
 				# and some other techs of the tier below
-				has_technology = tech_society_1
+				num_researched_techs_of_tier = { tier = 1 value >= 5 }
 			}
 			add_research_option = tech_colonial_bureaucracy
 		}
@@ -1216,10 +1271,7 @@ country_event = {
 				# but we do have the prerequisities
 				has_technology = tech_colonial_bureaucracy
 				# and some other techs of the tier below
-				has_technology = tech_society_2
-				has_technology = tech_autonomous_agents
-				has_technology = tech_unity_of_purpose
-				has_technology = tech_capital_productivity_1
+				num_researched_techs_of_tier = { tier = 2 value >= 5 }
 			}
 			add_research_option = tech_galactic_bureaucracy
 		}
@@ -1708,6 +1760,37 @@ planet_event = {
 
 	after = {
 		hidden_effect = { owner = { set_country_flag = has_used_baol_lifseeding } }
+	}
+}
+
+# add or remove environmentalist preserve when reforming government
+country_event = {
+	id = giga_frameworld_origin.501
+	hide_window = yes
+	is_triggered_only = yes
+	trigger = {
+		giga_has_frameworld_origin = yes
+	}
+
+	immediate = {
+		random_owned_planet = {
+			limit = { has_planet_flag = giga_frameworld@root }
+
+			if = {
+				limit = {
+					root = { giga_is_environmentalist = yes }
+					not = { has_deposit = d_frameworld_nature_preserve }
+				}
+				add_deposit = d_frameworld_nature_preserve
+			}
+			else_if = {
+				limit = {
+					root = { giga_is_environmentalist = no }
+					has_deposit = d_frameworld_nature_preserve
+				}
+				remove_deposit = d_frameworld_nature_preserve
+			}
+		}
 	}
 }
 

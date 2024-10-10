@@ -364,36 +364,42 @@ country_event = {
 				set_sector_capital = yes
 				sector.sector_capital = { assign_leader = event_target:birch_gov }
 
-			while = {
-				limit = {
-					has_building = building_research_lab_1
+				while = {
+					limit = {
+						has_building = building_research_lab_1
+					}
+					remove_building = building_research_lab_1
+					add_district = district_giga_origin_birch_lab
 				}
-				remove_building = building_research_lab_1
-				add_district = district_giga_origin_birch_lab
-			}
 
 				generate_home_planet_final_pass = yes
+				if = {
+					limit = { owner = { is_guided_sapience_empire = yes } }
+					add_deposit_if_missing = { 
+						DEPOSIT = d_genesis_preserve 
+					}
+				}
 
 				# clear the anti-building-wreck modifier
 				remove_modifier = frameworld_building_wreck_fix
 			}
 
-		# Move player ships
-		every_owned_fleet = {
-			limit = {
-				is_mobile = yes
-			}
-			set_location = event_target:birch_starbase
-			if = {
-				limit = { 
-					is_civilian = no
+			# Move player ships
+			every_owned_fleet = {
+				limit = {
+					is_mobile = yes
 				}
-				set_home_base = event_target:birch_starbase
+				set_location = event_target:birch_starbase
+				if = {
+					limit = {
+						is_civilian = no
+					}
+					set_home_base = event_target:birch_starbase
+				}
+				# queue_actions = {
+				# 	orbit_planet = event_target:giga_core_system.star
+				# }
 			}
-			# queue_actions = {
-			# 	orbit_planet = event_target:giga_core_system.star
-			# }
-		}
 
 			# Remove the old home planet
 			event_target:previous_home_planet = {
@@ -444,8 +450,7 @@ country_event = {
 			}
 
 			# Set species homeworld
-			#owner_species = { set_species_homeworld = event_target:birch_world }
-			every_owned_pop_species = { 
+			every_owned_pop_species = {
 				set_species_homeworld = event_target:birch_world
 				if = {
 					limit = {
@@ -457,6 +462,22 @@ country_event = {
 						add_trait = trait_pc_birch_preference
 					}
 				}
+			}
+			every_galaxy_species = { # Catch all for any who SHOULD have the proper trait and don't
+				if = {
+					limit = { 
+						has_trait = trait_pc_origin_dummy_birch_preference
+					}
+					change_species_characteristics = {
+						remove_trait = trait_pc_origin_dummy_birch_preference
+						add_traits_at_start_of_list = yes
+						add_trait = trait_pc_birch_preference
+					}
+				}
+			}
+			# and the leaders
+			giga_set_all_leaders_homeworld = {
+				planet = event_target:birch_world
 			}
 
 			# link the core to outside
@@ -1546,8 +1567,16 @@ country_event = {
 	desc = {
 		trigger = {
 			is_gestalt = no
+			is_individual_machine = no
 		}
 		text = giga_birch.2006.desc
+	}
+	desc = {
+		trigger = {
+			is_gestalt = no
+			is_individual_machine = yes
+		}
+		text = giga_birch.2006.desc.im
 	}
 	desc = {
 		trigger = {

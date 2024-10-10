@@ -461,3 +461,137 @@ ring_giga_supertensiles_mine_hub = {
 		weight = 100
 	}
 }
+
+ring_giga_orbital_arcology = {
+	icon = GFX_orbitalring_embassy_complex #TODO temp
+	construction_days = 720
+	starbase_type = orbital_ring
+
+	potential = {
+		NOT = { has_global_flag = orbital_arcologies_disabled }
+		exists = owner
+		owner = {
+			has_technology = giga_tech_orbital_arcologies #_overlord
+		}
+		#always = no
+	}
+
+	possible = {
+		custom_tooltip = {
+			fail_text = ring_giga_orbital_arcology_requires_module
+			or = {
+				has_starbase_module = orbital_ring_habitation
+				has_starbase_module = orbital_ring_giga_generator_district
+				has_starbase_module = orbital_ring_giga_farming_district
+				has_starbase_module = orbital_ring_giga_mining_district
+			}
+		}
+
+		custom_tooltip = {
+			fail_text = ring_giga_orbital_arcology_no_existing
+			not = {
+				planet = {
+					has_planet_flag = orbital_arcology
+				}
+			}
+		}
+
+		custom_tooltip = {
+			fail_text = "ring_giga_orbital_arcology_capped"
+			owner = {
+				OR = {
+					check_variable = { which = giga_orbital_arcologies_cap value = 0 }						# No Cap
+					count_starbase_buildings = {
+						type = ring_giga_orbital_arcology
+						count < giga_orbital_arcologies_cap
+						include_being_constructed = yes
+					}
+				}
+			}
+		}
+	}
+
+	abort_construction_trigger = {
+		or = {
+			planet = {
+				has_planet_flag = orbital_arcology
+			}
+
+			nor = {
+				has_starbase_module = orbital_ring_habitation
+				has_starbase_module = orbital_ring_giga_generator_district
+				has_starbase_module = orbital_ring_giga_farming_district
+				has_starbase_module = orbital_ring_giga_mining_district
+			}
+
+			owner = {
+				check_variable = { which = giga_orbital_arcologies_cap value > 0 }
+				count_starbase_buildings = {
+					type = ring_giga_orbital_arcology
+					count > giga_orbital_arcologies_cap
+					include_being_constructed = yes
+				}
+			}
+		}
+	}
+
+	on_finished = {
+		owner = {
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_67
+					}
+				}
+				set_country_flag = giga_achievement_67
+				set_timed_country_flag = { flag = giga_achievement_67_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+	}
+
+	#show_in_tech = giga_tech_orbital_arcologies #_overlord
+
+	resources = {
+		category = starbase_buildings
+		cost = {
+			alloys = 300
+		}
+		cost = {
+			trigger = { exists = orbit }
+			alloys = 20
+			multiplier = orbit.trigger:planet_size
+		}
+		upkeep = {
+			energy = 20
+			alloys = 20
+		}
+	}
+
+	# baseline
+	planet_modifier = {
+		planet_max_districts_add = 2
+	}
+
+	# per habitation module
+	triggered_planet_modifier = {
+		planet_max_districts_mult = 0.05
+
+		multiplier = value:giga_orbital_arcology_ring_habitation
+	}
+
+	# per rural booster
+	triggered_planet_modifier = {
+		planet_max_districts_add = 1
+
+		multiplier = value:giga_orbital_arcology_ring_rural
+	}
+
+	# clerks or maintenance drones
+	inline_script = {
+		script = planet/maintenance/giga_city_job_swap
+		jobs = 4
+		description = @no
+	}
+}

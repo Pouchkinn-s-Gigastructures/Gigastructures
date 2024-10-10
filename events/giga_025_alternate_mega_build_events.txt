@@ -1,6 +1,7 @@
 namespace = giga_amb
 
 # monthly modifier update
+# This is a bit of a wild change but trust me on it right, sending it to 15 days in the middle spreads out and smooths changes, since it is already calculating on day 1 AND 2 of month it was unnecessary
 country_event = {
 	id = giga_amb.001
 	is_triggered_only = yes
@@ -12,11 +13,34 @@ country_event = {
 	}
 
 	immediate = {
-		giga_amb_apply_initial_country_modifiers_if_needed = yes
-		giga_amb_recalculate_country_modifiers_and_consume = yes
+		# giga_amb_apply_initial_country_modifiers_if_needed = yes
+		# giga_amb_recalculate_country_modifiers_and_consume = yes
+		country_event = {
+			id = giga_amb.0015
+			days = 15
+		}
 	}
 }
 
+country_event = {
+	id = giga_amb.0015
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_global_flag = @giga_amb_flag
+		giga_country_uses_supertensiles = yes
+	}
+
+	immediate = {
+		giga_amb_apply_initial_country_modifiers_if_needed = yes
+		giga_amb_recalculate_country_modifiers_and_consume = yes
+		set_timed_country_flag = { # delay recalc
+			flag = giga_amb_delay_recalculate
+			days = 1
+		}
+	}
+}
 # yearly AI cap update
 country_event = {
 	id = giga_amb.002
@@ -49,6 +73,31 @@ country_event = {
 # mega built/upgraded/upgrade started
 country_event = {
 	id = giga_amb.101
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_global_flag = @giga_amb_flag
+		has_country_flag = @giga_amb_init_flag
+		giga_country_uses_supertensiles = yes
+		NOT = { has_country_flag = giga_amb_delay_recalculate }
+	}
+
+	immediate = {
+		# giga_amb_recalculate_split = yes # just recalculate the count
+		set_timed_country_flag = { # don't double recalc
+			flag = giga_amb_delay_recalculate
+			days = 1
+		}
+		country_event = {
+			id = giga_amb.1015
+			days = 1
+		}
+	}
+}
+# Delayed recalulation to stop mass completions from causing lag
+country_event = { 
+	id = giga_amb.1015
 	is_triggered_only = yes
 	hide_window = yes
 
@@ -118,6 +167,32 @@ country_event = {
 		has_global_flag = @giga_amb_flag
 		has_country_flag = @giga_amb_init_flag
 		giga_country_uses_supertensiles = yes
+		NOT = { has_country_flag = giga_amb_delay_recalculate }
+	}
+
+	immediate = {
+		# giga_amb_apply_initial_country_modifiers_if_needed = yes
+		# giga_amb_recalculate_country_modifiers = yes
+		set_timed_country_flag = { # don't double recalc
+			flag = giga_amb_delay_recalculate
+			days = 1
+		}
+		country_event = {
+			id = giga_amb.2015
+			days = 1
+		}
+	}
+}
+
+country_event = {
+	id = giga_amb.2015
+	is_triggered_only = yes
+	hide_window = yes
+
+	trigger = {
+		has_global_flag = @giga_amb_flag
+		has_country_flag = @giga_amb_init_flag
+		giga_country_uses_supertensiles = yes
 	}
 
 	immediate = {
@@ -125,7 +200,6 @@ country_event = {
 		giga_amb_recalculate_country_modifiers = yes
 	}
 }
-
 # mega rendered ownerless
 # clear constant time modifier
 system_event = {

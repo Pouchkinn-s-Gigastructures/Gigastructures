@@ -416,7 +416,7 @@ rename_planet_katzen = {
 				event_target:flusion_primitives_country = { set_country_flag = steam_commenter_salt_planet }
 				modifier = {
 					add = 999
-					is_planet_class = pc_salt
+					has_modifier = pd_salt
 					NOT = { event_target:flusion_primitives_country = { has_country_flag = steam_commenter_salt_planet } }
 				}
 			}
@@ -1501,25 +1501,19 @@ count_katzen_planets_and_systems = {
 			which = "katzen_total_system_count"
 			value = 0
 		}
-		every_system_within_border = { #count katzen systems
-			event_target:flusion_primitives_country = {
-				change_variable = {
-					which = "katzen_total_system_count"
-					value = 1
-				}
-			}
+		set_variable = {
+			which = "katzen_total_system_count"
+			value = trigger:count_system_within_border
 		}
 		set_variable = { #count katzen planets, used to determine how the empire will collapse
 			which = "katzen_total_planet_count"
 			value = 0
 		}
-		every_system_within_border = { #count katzen planets
+		every_owned_planet = { #count katzen planets
 			limit = {
-				any_system_planet = {
-					is_colony = yes
-					owner = { is_country_type = katzenartig_imperium }
-				}
-			}
+				is_colony = yes
+				owner = { is_country_type = katzenartig_imperium }
+			}			
 			event_target:flusion_primitives_country = {
 				change_variable = {
 					which = "katzen_total_planet_count"
@@ -2068,6 +2062,7 @@ create_katzen_splinter_state = {
 				set_policy = { 
 					policy = artificial_intelligence_policy
 					option = ai_full_rights
+					cooldown = no
 				}
 				give_engineering_tech_tier_1_effect = yes
 				give_engineering_tech_tier_2_effect = yes
@@ -2170,7 +2165,10 @@ create_katzen_splinter_state = {
 					owner = { is_country_type = katzenartig_imperium }
 					NOT = { 
 						any_owned_ship = {
-							is_ship_size = giga_massive_planet
+							OR = {
+								is_ship_size = giga_massive_planet
+								is_ship_size = giga_kaiser_moon_flusion
+							}
 							has_ship_flag = kaiser_moon_ship
 						} 
 					}
@@ -2310,25 +2308,18 @@ spawn_katzen_warforge_fleet = {
 			uses_naval_capacity = yes
 		}
 		effect = {
-			set_variable = { #How many ships we can build
-				which = kaiser_warforge_build_capacity
-				value = event_target:flusion_primitives_country.kaiser_warforge_build_capacity
-			}
 			set_owner = event_target:flusion_primitives_country
 			while = {
+				count = @kaiser_warforge_build_capacity
 				limit = {
-					check_variable = { #Built all ships it can
-						which = kaiser_warforge_build_capacity
-						value > 0
-					}
 					event_target:flusion_primitives_country = { #Can't even afford 1 Panzer in upkeep or cost
 						check_variable = {
 							which = kaiser_resource_stockpile
-							value > min_kaiser_ship_cost
+							value > value:katzen_cost|COST|@min_kaiser_ship_cost|
 						}
 						check_variable = {
 							which = kaiser_resource_balance
-							value > min_kaiser_ship_upkeep
+							value > value:katzen_upkeep|UPKEEP|@min_kaiser_ship_upkeep|
 						}
 					}
 				}
@@ -2339,14 +2330,10 @@ spawn_katzen_warforge_fleet = {
 							design = "Katzchen"
 							prefix = no
 						}
-						subtract_variable = {
-							which = kaiser_warforge_build_capacity
-							value = 1
-						}
 						event_target:flusion_primitives_country = {
 							subtract_variable = {
 								which = kaiser_resource_stockpile
-								value = kaiser_panzer_cost
+								value = value:katzen_cost|COST|@kaiser_panzer_cost|
 							}
 						}
 					}
@@ -2356,33 +2343,23 @@ spawn_katzen_warforge_fleet = {
 							design = "Douclaw"
 							prefix = no
 						}
-						subtract_variable = {
-							which = kaiser_warforge_build_capacity
-							value = 2
-						}
 						event_target:flusion_primitives_country = {
 							subtract_variable = {
 								which = kaiser_resource_stockpile
-								value = kaiser_bomber_cost
+								value = value:katzen_cost|COST|@kaiser_bomber_cost|
 							}
 						}
 						modifier = {
 							factor = 0
-							OR = {
-								check_variable = {
-									which = kaiser_warforge_build_capacity
-									value < 2
-								}
-								event_target:flusion_primitives_country = {
-									OR = {
-										check_variable = {
-											which = kaiser_resource_stockpile
-											value < kaiser_bomber_cost
-										}
-										check_variable = {
-											which = kaiser_resource_balance
-											value < kaiser_bomber_upkeep
-										}
+							event_target:flusion_primitives_country = {
+								OR = {
+									check_variable = {
+										which = kaiser_resource_stockpile
+										value < value:katzen_cost|COST|@kaiser_bomber_cost|
+									}
+									check_variable = {
+										which = kaiser_resource_balance
+										value < value:katzen_upkeep|UPKEEP|@kaiser_bomber_upkeep|
 									}
 								}
 							}
@@ -2394,33 +2371,23 @@ spawn_katzen_warforge_fleet = {
 							design = "Neu-Clermeowth"
 							prefix = no
 						}
-						subtract_variable = {
-							which = kaiser_warforge_build_capacity
-							value = 4
-						}
 						event_target:flusion_primitives_country = {
 							subtract_variable = {
 								which = kaiser_resource_stockpile
-								value = kaiser_cruiser_cost
+								value = value:katzen_cost|COST|@kaiser_cruiser_cost|
 							}
 						}
 						modifier = {
 							factor = 0
-							OR = {
-								check_variable = {
-									which = kaiser_warforge_build_capacity
-									value < 4
-								}
-								event_target:flusion_primitives_country = {
-									OR = {
-										check_variable = {
-											which = kaiser_resource_stockpile
-											value < kaiser_cruiser_cost
-										}
-										check_variable = {
-											which = kaiser_resource_balance
-											value < kaiser_cruiser_upkeep
-										}
+							event_target:flusion_primitives_country = {
+								OR = {
+									check_variable = {
+										which = kaiser_resource_stockpile
+										value < value:katzen_cost|COST|@kaiser_cruiser_cost|
+									}
+									check_variable = {
+										which = kaiser_resource_balance
+										value < value:katzen_upkeep|UPKEEP|@kaiser_cruiser_upkeep|
 									}
 								}
 							}
@@ -2513,6 +2480,52 @@ giga_assign_admiral = {
 			position = 0
 			order_by = trigger:has_skill
 			save_event_target_as = admiral_assignee
+		}
+	}
+}
+
+giga_apply_difficulty_setting = {
+	switch = {
+		trigger = is_difficulty
+		3 = {
+			add_modifier = {
+				modifier = difficulty_captain
+				multiplier = 0.5
+			}
+			add_modifier = {
+				modifier = difficulty_grand_admiral_npc
+				multiplier = 0.2
+			}
+		}
+		4 = {
+			add_modifier = {
+				modifier = difficulty_commodore
+				multiplier = 0.5
+			}
+			add_modifier = {
+				modifier = difficulty_grand_admiral_npc
+				multiplier = 0.3
+			}
+		}
+		5 = {
+			add_modifier = {
+				modifier = difficulty_admiral
+				multiplier = 0.5
+			}
+			add_modifier = {
+				modifier = difficulty_grand_admiral_npc
+				multiplier = 0.4
+			}
+		}
+		6 = {
+			add_modifier = {
+				modifier = difficulty_grand_admiral
+				multiplier = 0.5
+			}
+			add_modifier = {
+				modifier = difficulty_grand_admiral_npc
+				multiplier = 0.5
+			}
 		}
 	}
 }

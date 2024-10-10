@@ -1,0 +1,120 @@
+entity = $entity$
+construction_entity = $construction_entity$
+portrait = $portrait$
+upgrade_from = { 
+	dyson_$type$_$prev_stage$_$class$_star
+	$upgrade_from$
+} 
+ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+
+upgrade_desc = hide
+
+use_planet_resource = yes
+
+outliner_trigger = {
+    exists = owner
+    NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+}
+prerequisites = { "tech_dyson_sphere" }
+build_time = $build_time$
+resources = {
+    category = giga_megastructures
+    cost = {
+        alloys = $cost_alloys$
+        unity = $cost_unity$
+    }
+    cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|$cost_alloys$| }
+    cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|$cost_unity$| }
+    produces = {
+        $produces$
+    }
+    upkeep = { 
+        $upkeep$
+    }
+}
+
+potential = { 
+	NOT = { has_global_flag = vanilla_dyson_disabled }
+	
+	$potential$
+}
+possible = {
+    from = {
+        has_technology = tech_dyson_sphere
+    }
+	custom_tooltip = {
+		fail_text = "requires_no_arc_furnace"
+		system_has_arc_furnace = no
+	}
+	custom_tooltip = {
+		fail_text = "requires_no_arc_furnace_construction"
+		if = {
+			limit = {
+				system_has_arc_furnace = no
+			}
+			NOT = {
+				solar_system = {
+					has_star_flag = arc_furnace_construction
+				}
+			}
+		}
+	}
+	custom_tooltip = {
+		fail_text = "requires_no_colonies"
+		NOT = {
+			any_system_planet = {
+				is_colony = yes
+				is_artificial = no
+				exists = owner
+				owner = {
+					is_primitive = no
+				}
+			}
+		}
+	}
+	custom_tooltip = {
+		fail_text = "blocked_by_pre_ftl_policy"
+		if = {
+			limit = {
+				any_system_planet = {
+					exists = owner
+					owner = {
+						is_primitive = yes
+					}
+				}
+			}
+			from = {
+				has_policy_flag = interference_aggressive
+			}
+		}
+	}
+	$possible$
+}
+
+on_build_start = {
+	giga_ai_savings_withdraw = {
+		CATEGORY = important
+		RESOURCE = alloys
+		AMOUNT = $cost_alloys$
+	}
+	giga_ai_savings_withdraw = {
+		CATEGORY = important
+		RESOURCE = unity
+		AMOUNT = $cost_unity$
+	}
+
+	set_star_flag = dyson_sphere_construction
+}
+
+on_build_cancel = {
+	remove_star_flag = dyson_sphere_construction
+}
+
+on_build_complete = {
+	remove_star_flag = dyson_sphere_construction
+    save_event_target_as = giga_system
+    if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+	remove_system_terraforming_candidates = yes
+    $on_complete$
+}
+

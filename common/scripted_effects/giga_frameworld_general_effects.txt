@@ -285,6 +285,34 @@ giga_frameworld_expand_deposit = {
 	}
 }
 
+giga_frameworld_contract_deposit = {
+	hidden_effect = {
+		if = {
+			limit = {
+				has_deposit = $DEPOSIT$
+			}
+
+			subtract_variable = {
+				which = $VAR$
+				value = $COUNT|1$
+			}
+
+			if = {
+				limit = {
+					check_variable = {
+						which = $VAR$
+						value <= 0
+					}
+				}
+				remove_deposit = $DEPOSIT$
+			}
+		}
+	}
+	tooltip = {
+		remove_deposit = $DEPOSIT$_tooltip
+	}
+}
+
 ###############################################################################################################
 
 # country scope
@@ -426,6 +454,13 @@ giga_frameworld_set_outpost_flags = {
 			}
 		}
 		set_planet_flag = giga_frameworld_outpost_stripmine_mode_deny
+
+	}
+	if = {
+		limit = {
+			has_modifier = holy_planet
+		}
+		set_planet_flag = giga_frameworld_outpost_nanite_mode_deny
 	}
 }
 
@@ -438,6 +473,12 @@ giga_frameworld_clear_outpost_flags = {
 			has_planet_flag = giga_frameworld_outpost_stripmine_mode_deny
 		}
 		remove_planet_flag = giga_frameworld_outpost_stripmine_mode_deny
+	}
+	if = {
+		limit = {
+			has_planet_flag = giga_frameworld_outpost_nanite_mode_deny
+		}
+		remove_planet_flag = giga_frameworld_outpostnanite_mode_deny
 	}
 	clear_variable = giga_frameworld_outpost_pops
 }
@@ -1263,18 +1304,18 @@ giga_frameworld_apply_ai_artisan_modifier = {
 
 ###############################################################################################################
 
-giga_frameworld_outpost_message = {
-	fromfrom.planet = {
+giga_frameworld_outpost_pops_and_message = {
+	from.planet = {
 		set_variable = {
 			which = giga_frameworld_outpost_pops
-			value = value:giga_frameworld_outpost_pops|WHO|event_target:outpost_owner|WHERE|this|
+			value = value:giga_frameworld_outpost_pops|WHO|prev|WHERE|this|
 		}
 	}
 
 	if = {
 		limit = {
-			exists = event_target:giga_frameworld
-			fromfrom.planet = {
+			giga_has_frameworld_origin = yes
+			from.planet = {
 				check_variable = {
 					which = giga_frameworld_outpost_pops
 					value > 0
@@ -1282,9 +1323,21 @@ giga_frameworld_outpost_message = {
 			}
 		}
 
+		random_owned_planet = {
+			limit = { has_planet_flag = giga_frameworld@prev }
+			save_event_target_as = giga_frameworld
+		}
+
+		event_target:giga_frameworld = {
+			create_pop = {
+				count = from.planet.giga_frameworld_outpost_pops
+				species = event_target:outpost_owner.species
+			}
+		}
+
 		if = {
 			limit = {
-				fromfrom.planet = {
+				from.planet = {
 					check_variable = {
 						which = giga_frameworld_outpost_pops
 						value = 1
@@ -1298,12 +1351,12 @@ giga_frameworld_outpost_message = {
 				type = GIGA_FRAMEWORLD_MESSAGE_TYPE_OUTPOST_POPS
 				localization = GIGA_FRAMEWORLD_MESSAGE_OUTPOST_POPS
 				days = 30
-				target = fromfrom.planet
+				target = from.planet
 	
 				variable = {
 					type = name
 					localization = PLANET
-					scope = fromfrom.planet
+					scope = from.planet
 				}
 				variable = {
 					type = name
@@ -1324,12 +1377,12 @@ giga_frameworld_outpost_message = {
 				type = GIGA_FRAMEWORLD_MESSAGE_TYPE_OUTPOST_POPS
 				localization = GIGA_FRAMEWORLD_MESSAGE_OUTPOST_POPS_PLURAL
 				days = 30
-				target = fromfrom.planet
+				target = from.planet
 	
 				variable = {
 					type = name
 					localization = PLANET
-					scope = fromfrom.planet
+					scope = from.planet
 				}
 				variable = {
 					type = name
@@ -1345,7 +1398,7 @@ giga_frameworld_outpost_message = {
 					type = variable
 					varname = giga_frameworld_outpost_pops
 					localization = COUNT
-					scope = fromfrom.planet
+					scope = from.planet
 				}
 			}
 		}
@@ -1430,6 +1483,9 @@ giga_frameworld_update_entity_with_fallback = {
 					graphical_culture = lithoid_01
 					graphical_culture = necroid_01
 					graphical_culture = toxoid_01
+					graphical_culture = cybernetics_01
+					graphical_culture = synthetics_01
+
 				}
 			}
 		}
