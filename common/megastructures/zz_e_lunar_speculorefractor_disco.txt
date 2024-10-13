@@ -403,53 +403,74 @@ lunar_disco_ball_2 = {
 			}
 		}
 	}
-}
 
-lunar_disco_ball_2_manage = {
-	entity = ""
-	portrait = "GFX_megastructure_disco_moon"
-	upgrade_from = { lunar_disco_ball_2 }
-
-	outliner_trigger = {
-		exists = owner
-		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	dismantle_potential = {
+		always = yes
 	}
-	
-	build_time = 0
 
-	
-	# construction_blocks_and_blocked_by = none # BLOCKING TEST
-
-	resources = { category = giga_megastructures }
-
-	potential = {
-		NOR = {
-			has_global_flag = disco_moon_disabled
-			has_global_flag = managing_giga_megastructure
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_disco_moon
 		}
-		is_ai = no
 	}
-	possible = { from = { has_technology = giga_tech_disco_moon } }
 
-	on_build_complete = {
-		from = { set_country_flag = giga_repaired_mega_no_dialog }
-		set_global_flag = managing_giga_megastructure
-		fromfrom.planet = {
-			save_global_event_target_as = giga_mega_manage_planet
-			solar_system = {
-				spawn_megastructure = {
-					type = lunar_disco_ball_2
-					planet = event_target:giga_mega_manage_planet
-					owner = space_owner
+	dismantle_cost = {
+		category = megastructures
+		cost = {
+			energy = 1000
+		}
+	}
+
+	dismantle_time = 360
+	
+	on_dismantle_complete = {
+		random_system_planet = {
+			limit = { 
+				is_planet_class = pc_disco_moon 
+				NOT = { 
+					solar_system = { 
+						any_system_megastructure = { 
+							is_megastructure_type = lunar_disco_ball_2 
+							exists = planet 
+							planet = { is_same_value = prevprevprev } 
+						} 
+					} 
+				}
+			}
+			if = { limit = { has_planet_flag = giga_mega_event_occured_recently } 	remove_planet_flag = giga_mega_event_occured_recently }
+			if = { limit = { has_planet_flag = giga_disco_under_repair } 			remove_planet_flag = giga_under_repair }
+			change_pc = pc_barren_cold
+			clear_disco_moon_modifiers = yes
+			remove_planet_flag = megastructure
+			remove_planet_flag = giga_planet_mega
+			every_moon = {
+				limit = { NOT = { is_planet_class = pc_disco_moon } }
+				clear_disco_moon_modifiers = yes
+			}
+			orbit = {
+				clear_disco_moon_modifiers = yes
+			}
+			giga_clear_has_mega_flag = yes
+		}
+		from = {
+			add_resource = {
+				alloys = 2000
+				rare_crystals = 500
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_disco_moon
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_disco_moon
+					value = -1
 				}
 			}
 		}
-		remove_global_flag = managing_giga_megastructure
-		from = {
-			country_event = { id = giga_disco.1000 }
-			remove_country_flag = giga_repaired_mega_no_dialog
-		}
-		set_global_flag = managing_giga_megastructure
-		remove_megastructure = fromfrom
 	}
+
 }
