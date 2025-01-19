@@ -1,4 +1,4 @@
-package gigatools
+//package gigatools // if this is uncommented the whole thing explodes apparently
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
@@ -78,16 +78,28 @@ fun buildMegaCategoryList(project: Project, triggerName: String, categoryName: S
     val ecoCategoryMap = HashMap<ParadoxScriptDefinitionElement, Boolean>()
     for (mega in megas) {
         val resources = mega.findProperty("resources", inline = true)
-        if (resources == null) { builder.appendLine("# ${mega.name}: no resource block"); continue }
+        if (resources == null) {
+            builder.appendLine("# ${mega.name}: no resource block")
+            continue
+        }
 
         val megaCategoryName = resources.findProperty("category", inline = true)?.value
-        if (megaCategoryName == null) { builder.appendLine("# ${mega.name}: no category given"); continue }
+        if (megaCategoryName == null) {
+            builder.appendLine("# ${mega.name}: no category given")
+            continue
+        }
         val category = ParadoxDefinitionSearch.search(megaCategoryName, "economic_category", selector(project, project.projectFile).definition().distinctByName()).find()
-        if (category == null) { builder.appendLine("# ${mega.name}: category has no value"); continue }
+        if (category == null) {
+            builder.appendLine("# ${mega.name}: category has no value")
+            continue
+        }
 
         val matches = checkEcoCategoryWithLineage(category, wantedCategory, ecoCategoryMap)
 
-        if (!matches) { builder.appendLine("# ${mega.name}: wrong category -> ${category.name}"); continue }
+        if (!matches) {
+            builder.appendLine("# ${mega.name}: wrong category -> ${category.name}")
+            continue
+        }
 
         val locName = getElementName(mega)
 
