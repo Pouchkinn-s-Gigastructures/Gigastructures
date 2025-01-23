@@ -1,6 +1,10 @@
 //package gigatools // if this is uncommented the whole thing explodes apparently
 
+import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.LanguageAnnotators
+import com.intellij.lang.LanguageExtension
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
@@ -10,9 +14,15 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.patterns.PlatformPatterns
+import com.intellij.psi.LanguageInjector
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.util.ProcessingContext
+import icu.windea.pls.lang.codeInsight.completion.contextElement
+import icu.windea.pls.lang.codeInsight.completion.scopeContext
+import icu.windea.pls.lang.definitionInfo
 import icu.windea.pls.lang.search.*
 import icu.windea.pls.lang.search.selector.*
 import icu.windea.pls.lang.util.ParadoxLocaleManager
@@ -25,6 +35,7 @@ import icu.windea.pls.script.psi.findProperty
 
 import liveplugin.ActionGroupIds
 import liveplugin.PluginUtil.*
+import liveplugin.getStaticField
 import liveplugin.whenDisposed
 
 // depends-on-plugin icu.windea.pls
@@ -97,6 +108,23 @@ inline fun prevNonWhiteSpaceSibling(element: PsiElement) : PsiElement? {
         }
     }
     return null
+}
+
+// #####################################################################################################################
+// #### TAG DATA
+// #####################################################################################################################
+
+class DefinitionTags {
+    companion object {
+        val tags = mapOf(
+            "megastructure" to mapOf(
+                "ruined" to "Some description"
+            ),
+            "scripted_trigger" to mapOf(
+                "test" to "A test tag"
+            )
+        )
+    }
 }
 
 // #####################################################################################################################
@@ -215,6 +243,10 @@ class DefinitionPropertyAnnotator : Annotator {
         val nextElement: PsiElement = nextNonWhiteSpaceSibling(element) ?: return
         // only definition lines
         if (nextElement !is ParadoxScriptDefinitionElement) { return }
+        // work out what type of thing we're looking at for getting valid tags
+        val elementType = nextElement.definitionInfo?.typeConfig?.name ?: "unknown"
+        // get the valid tags or abort if there aren't any
+        val validTags = DefinitionTags.tags[elementType] ?: return
 
         // mark the prefix
         val prefixRange = TextRange.from(element.textRange.startOffset, prefix.length)
@@ -230,16 +262,48 @@ class DefinitionPropertyAnnotator : Annotator {
             // won't be empty or null otherwise it wouldn't match the pattern
             val property = match.groups[1]!!
             val propertyRange = TextRange.from(element.textRange.startOffset + property.range.first, property.range.last - property.range.first + 1)
-            holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(propertyRange).textAttributes(GigaToolsAttributesKeys.PROPERTY_NAME_KEY).create()
+            val propertyName = property.value
+
+            if (validTags.containsKey(propertyName)) {
+                holder.newAnnotation(HighlightSeverity.INFORMATION, validTags[propertyName] ?: "No description").range(propertyRange).textAttributes(GigaToolsAttributesKeys.PROPERTY_NAME_KEY).create()
+            } else {
+                holder.newAnnotation(HighlightSeverity.ERROR, "Unknown tag \"$propertyName\" for type $elementType").range(propertyRange).highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create()
+            }
         }
 
         //println("ANNOTATED: $text")
     }
 }
 val definitionPropertyAnnotator = DefinitionPropertyAnnotator()
-
 LanguageAnnotators.INSTANCE.addExplicitExtension(ParadoxScriptLanguage, definitionPropertyAnnotator)
 
+class DefinitionPropertyCompletionContributor : CompletionContributor() {
+    init {
+        extend(CompletionType.BASIC, PlatformPatterns.psiElement(PsiComment::class.java),
+            object: CompletionProvider<CompletionParameters>() {
+                override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, resultSet: CompletionResultSet) {
+                    // get the comment element
+                    val comment = parameters.position
+
+                    // find the next element and check that it's a definition
+                    val nextElement = nextNonWhiteSpaceSibling(comment)
+                    if (nextElement !is ParadoxScriptDefinitionElement) { return }
+                    // get the valid tags for the definition's type
+                    val elementType = nextElement.definitionInfo?.typeConfig?.name ?: "unknown"
+                    val validTags = DefinitionTags.tags[elementType] ?: return
+
+                    // add all valid tags to the list, along with their descriptions
+                    resultSet.addAllElements(validTags.keys.map { s -> LookupElementBuilder.create(s).withTypeText( validTags[s] ) })
+                }
+            })
+    }
+}
+// register the completion thingy
+val contributor = DefinitionPropertyCompletionContributor()
+val languageExtension = CompletionContributor::class.java.getStaticField<LanguageExtension<CompletionContributor>>("INSTANCE")
+languageExtension.addExplicitExtension(ParadoxScriptLanguage, contributor, pluginDisposable)
+
+// make sure stuff is unloaded
 pluginDisposable.whenDisposed {
     LanguageAnnotators.INSTANCE.removeExplicitExtension(ParadoxScriptLanguage, definitionPropertyAnnotator)
 }
