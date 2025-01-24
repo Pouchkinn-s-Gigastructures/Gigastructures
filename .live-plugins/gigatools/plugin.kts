@@ -15,13 +15,10 @@ import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PlatformPatterns
-import com.intellij.psi.LanguageInjector
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.util.ProcessingContext
-import icu.windea.pls.lang.codeInsight.completion.contextElement
-import icu.windea.pls.lang.codeInsight.completion.scopeContext
 import icu.windea.pls.lang.definitionInfo
 import icu.windea.pls.lang.search.*
 import icu.windea.pls.lang.search.selector.*
@@ -32,11 +29,10 @@ import icu.windea.pls.script.psi.ParadoxScriptDefinitionElement
 import icu.windea.pls.script.psi.ParadoxScriptElementFactory
 import icu.windea.pls.script.psi.ParadoxScriptRootBlock
 import icu.windea.pls.script.psi.findProperty
-
 import liveplugin.ActionGroupIds
+
 import liveplugin.PluginUtil.*
-import liveplugin.getStaticField
-import liveplugin.whenDisposed
+import liveplugin.*
 
 // depends-on-plugin icu.windea.pls
 
@@ -114,16 +110,59 @@ inline fun prevNonWhiteSpaceSibling(element: PsiElement) : PsiElement? {
 // #### TAG DATA
 // #####################################################################################################################
 
-class DefinitionTags {
+class DefinitionTag(val name: String, val shortDesc: String, val fullDesc: String) {
+
+    fun entry() : Pair<String,DefinitionTag> { return Pair(name, this) }
+
     companion object {
+        const val PREFIX = "## Tags:"
+        val pattern by lazy { Regex("(?<=\\s)\\@([^\\s]+)") }
+
         val tags = mapOf(
             "megastructure" to mapOf(
-                "ruined" to "Some description"
+                DefinitionTag("technical", "Technical Use Mega", "This megastructure has special internal uses and is not normally buildable. It will not be considered when mapping upgrade chains.").entry(),
+                DefinitionTag("ruined", "Ruined Megastructure", "This is a ruined megastructure and should be included in the trigger for checking whether a mega is ruined or not.").entry(),
+                DefinitionTag("restored", "Restored Megastructure", "This is a repaired megastructure and should be included in the trigger for checking whether a mega has been restored.").entry(),
+                DefinitionTag("megaproject", "Non-megastructure Project", "This mega is a construction project which doesn't result in an actual megastructure, so shouldn't count against supertensiles.").entry(),
+                DefinitionTag("force_kilo", "Kilostructure Override", "This mega should be classed as a kilostructure for trigger purposes even if it doesn't have the right economic category.").entry(),
+                DefinitionTag("force_giga", "Gigastructure Override", "This mega should be classed as a gigastructure for trigger purposes even if it doesn't have the right economic category.").entry(),
+                DefinitionTag("force_final", "Final Stage Override", "This mega should count as the final mega in its series even if other non-technical megas upgrade from it.").entry(),
             ),
             "scripted_trigger" to mapOf(
-                "test" to "A test tag"
+                DefinitionTag("test", "Some desc", "Full desc").entry()
             )
         )
+
+        fun getTags(definition: ParadoxScriptDefinitionElement) : Set<DefinitionTag>? {
+            // get the previous comment
+            val prevElement = prevNonWhiteSpaceSibling(definition)
+            if (prevElement !is PsiComment) { return null }
+
+            // check that it starts with the prefix
+            val text = prevElement.text
+            if (!text.startsWith(PREFIX)) { return null }
+
+            // find valid tags
+            val elementType = definition.definitionInfo?.typeConfig?.name ?: "unknown"
+            val validTags = tags[elementType] ?: return null
+
+            // array for found tags
+            val tags : MutableSet<DefinitionTag> = mutableSetOf()
+
+            // check each match against the tags
+            val propertyMatches = pattern.findAll(text, PREFIX.length)
+            for(match in propertyMatches) {
+                // won't be null, or it wouldn't match the pattern
+                val tag = match.groups[1]!!.value
+
+                // insert valid tags
+                if (validTags.containsKey(tag)) {
+                    tags.add(validTags[tag]!!)
+                }
+            }
+            return tags
+        }
+        fun getTagNames(definition: ParadoxScriptDefinitionElement) : Set<String>? { return getTags(definition)?.map { tag -> tag.name }?.toSet() }
     }
 }
 
@@ -226,9 +265,6 @@ gigaRegenMegaCategoryLists.addTextOverride("MainMenu", gigaRegenMegaCategoryList
 registerAction("gigas.regenlists", "",pluginActionGroupId, gigaRegenMegaCategoryLists)
 
 class DefinitionPropertyAnnotator : Annotator {
-    private val prefix = "## "
-    private val pattern by lazy { Regex("(?<=\\s)\\@([^\\s]+)") }
-
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         // only comments
         if (element !is PsiComment) { return }
@@ -237,7 +273,7 @@ class DefinitionPropertyAnnotator : Annotator {
 
         val text = element.text
         // only specially annotated lines
-        if (!text.startsWith(prefix)) { return }
+        if (!text.startsWith(DefinitionTag.PREFIX)) { return }
 
         // get next non-whitespace element or bail
         val nextElement: PsiElement = nextNonWhiteSpaceSibling(element) ?: return
@@ -246,14 +282,14 @@ class DefinitionPropertyAnnotator : Annotator {
         // work out what type of thing we're looking at for getting valid tags
         val elementType = nextElement.definitionInfo?.typeConfig?.name ?: "unknown"
         // get the valid tags or abort if there aren't any
-        val validTags = DefinitionTags.tags[elementType] ?: return
+        val validTags = DefinitionTag.tags[elementType] ?: return
 
         // mark the prefix
-        val prefixRange = TextRange.from(element.textRange.startOffset, prefix.length)
+        val prefixRange = TextRange.from(element.textRange.startOffset, DefinitionTag.PREFIX.length)
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(prefixRange).textAttributes(GigaToolsAttributesKeys.PROPERTY_LINE_KEY).create()
 
         // find all properties via pattern
-        val propertyMatches = pattern.findAll(text, prefix.length)
+        val propertyMatches = DefinitionTag.pattern.findAll(text, DefinitionTag.PREFIX.length)
         for(match in propertyMatches) {
             // the @ at the start
             val markerRange = TextRange.from(element.textRange.startOffset + match.range.first, 1)
@@ -265,9 +301,17 @@ class DefinitionPropertyAnnotator : Annotator {
             val propertyName = property.value
 
             if (validTags.containsKey(propertyName)) {
-                holder.newAnnotation(HighlightSeverity.INFORMATION, validTags[propertyName] ?: "No description").range(propertyRange).textAttributes(GigaToolsAttributesKeys.PROPERTY_NAME_KEY).create()
+                holder
+                    .newAnnotation(HighlightSeverity.INFORMATION, validTags[propertyName]?.fullDesc ?: "")
+                    .range(propertyRange)
+                    .textAttributes(GigaToolsAttributesKeys.PROPERTY_NAME_KEY)
+                    .create()
             } else {
-                holder.newAnnotation(HighlightSeverity.ERROR, "Unknown tag \"$propertyName\" for type $elementType").range(propertyRange).highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create()
+                holder
+                    .newAnnotation(HighlightSeverity.WARNING, "Unknown tag \"$propertyName\" for type $elementType")
+                    .range(propertyRange)
+                    .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL)
+                    .create()
             }
         }
 
@@ -290,10 +334,10 @@ class DefinitionPropertyCompletionContributor : CompletionContributor() {
                     if (nextElement !is ParadoxScriptDefinitionElement) { return }
                     // get the valid tags for the definition's type
                     val elementType = nextElement.definitionInfo?.typeConfig?.name ?: "unknown"
-                    val validTags = DefinitionTags.tags[elementType] ?: return
+                    val validTags = DefinitionTag.tags[elementType] ?: return
 
                     // add all valid tags to the list, along with their descriptions
-                    resultSet.addAllElements(validTags.keys.map { s -> LookupElementBuilder.create(s).withTypeText( validTags[s] ) })
+                    resultSet.addAllElements(validTags.keys.map { s -> LookupElementBuilder.create(s).withTypeText( validTags[s]?.shortDesc ) })
                 }
             })
     }
