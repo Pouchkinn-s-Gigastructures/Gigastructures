@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiComment
@@ -25,10 +24,7 @@ import icu.windea.pls.lang.search.selector.*
 import icu.windea.pls.lang.util.ParadoxLocaleManager
 import icu.windea.pls.lang.util.renderer.ParadoxLocalisationTextRenderer
 import icu.windea.pls.script.ParadoxScriptLanguage
-import icu.windea.pls.script.psi.ParadoxScriptDefinitionElement
-import icu.windea.pls.script.psi.ParadoxScriptElementFactory
-import icu.windea.pls.script.psi.ParadoxScriptRootBlock
-import icu.windea.pls.script.psi.findProperty
+import icu.windea.pls.script.psi.*
 import liveplugin.ActionGroupIds
 
 import liveplugin.PluginUtil.*
@@ -55,55 +51,124 @@ fun getElementName(element: ParadoxScriptDefinitionElement) : String {
     return rendered.ifEmpty { loc.value ?: element.name }
 }
 
-// checks if a given economic category is the same as, or a descendant of, another
-fun checkEcoCategoryWithLineage(categoryToCheck: ParadoxScriptDefinitionElement, categoryToMatch: ParadoxScriptDefinitionElement, map: MutableMap<ParadoxScriptDefinitionElement, Boolean>) : Boolean {
-    if (map.containsKey(categoryToCheck)) {
-        return map[categoryToCheck]!!
-    }
+abstract class GigaListConditions {
+    companion object {
 
-    if (categoryToCheck == categoryToMatch) {
-        map[categoryToCheck] = true
-        return true
-    }
+        // does this definition have EVERY listed tag
+        fun hasDefinitionTags(element : ParadoxScriptDefinitionElement, vararg tagsToCheck : String) : Boolean {
+            val tags = DefinitionTag.getTagNames(element)
+            return tags?.containsAll(tagsToCheck.toList()) ?: false
+        }
 
-    val parent = categoryToCheck.findProperty("parent")
-    if (parent == null || parent.value == null) {
-        map[categoryToCheck] = false
-        return false
-    }
+        // does this definition have ANY listed tag
+        fun hasAnyDefinitionTags(element : ParadoxScriptDefinitionElement, vararg tagsToCheck : String) : Boolean {
+            val tags = DefinitionTag.getTagNames(element) ?: return false
+            for(tag in tags) {
+                if (tagsToCheck.contains(tag)) {
+                    return true
+                }
+            }
+            return false
+        }
 
-    val selector = selector(categoryToCheck.project, categoryToCheck.context).definition().distinctByName()
-    val parentCategory = ParadoxDefinitionSearch.search(parent.value!!,"economic_category", selector).find()
+        // cache variables for hasEcoCategory
+        var cachedEcoCategory : ParadoxScriptDefinitionElement? = null
+        var ecoCategoryCheckCache : MutableMap<ParadoxScriptDefinitionElement, Boolean>? = null
+        // check if a definition has an eco category or one of its children
+        fun hasEcoCategory(element : ParadoxScriptDefinitionElement, categoryToCheck : ParadoxScriptDefinitionElement) : Boolean {
+            val resources = element.findProperty("resources", inline = true)
+            if (resources == null) {
+                //builder.appendLine("# ${mega.name}: no resource block")
+                return false
+            }
 
-    if (parentCategory != null) { return checkEcoCategoryWithLineage(parentCategory, categoryToMatch, map) }
+            val elementCategoryName = resources.findProperty("category", inline = true)?.value
+            if (elementCategoryName == null) {
+                //builder.appendLine("# ${mega.name}: no category given")
+                return false
+            }
+            val category = ParadoxDefinitionSearch.search(elementCategoryName, "economic_category", selector(element.project, element.project.projectFile).definition().distinctByName()).find()
+            if (category == null) {
+                //builder.appendLine("# ${mega.name}: category has no value")
+                return false
+            }
 
-    return false
-}
+            if (cachedEcoCategory != categoryToCheck) {
+                cachedEcoCategory = categoryToCheck
+                ecoCategoryCheckCache = HashMap()
+            }
 
-// don't un-inline these or the whole thing explodes for ??? reasons
-inline fun nextNonWhiteSpaceSibling(element: PsiElement) : PsiElement? {
-    var nextElement : PsiElement? = element.nextSibling
+            val matches = checkEcoCategoryWithLineage(category, categoryToCheck, ecoCategoryCheckCache!!)
 
-    while (nextElement != null) {
-        if (nextElement !is PsiWhiteSpace) {
-            return nextElement
-        } else {
-            nextElement = nextElement.nextSibling
+            return matches
+        }
+        fun hasEcoCategoryByName(element : ParadoxScriptDefinitionElement, categoryToCheck: String) : Boolean {
+            val wantedCategory = ParadoxDefinitionSearch.search(categoryToCheck,"economic_category", selector(element.project, element.project.projectFile).definition().distinctByName()).find()
+            if (wantedCategory == null) {
+                //show("Failed to find economic category: $categoryName")
+                return false
+            }
+            return hasEcoCategory(element, wantedCategory)
+        }
+
+        // checks if a given economic category is the same as, or a descendant of, another
+        fun checkEcoCategoryWithLineage(categoryToCheck: ParadoxScriptDefinitionElement, categoryToMatch: ParadoxScriptDefinitionElement, map: MutableMap<ParadoxScriptDefinitionElement, Boolean>) : Boolean {
+            if (map.containsKey(categoryToCheck)) {
+                return map[categoryToCheck]!!
+            }
+
+            if (categoryToCheck == categoryToMatch) {
+                map[categoryToCheck] = true
+                return true
+            }
+
+            val parent = categoryToCheck.findProperty("parent")
+            if (parent == null || parent.value == null) {
+                map[categoryToCheck] = false
+                return false
+            }
+
+            val selector = selector(categoryToCheck.project, categoryToCheck.context).definition().distinctByName()
+            val parentCategory = ParadoxDefinitionSearch.search(parent.value!!,"economic_category", selector).find()
+
+            if (parentCategory != null) { return checkEcoCategoryWithLineage(parentCategory, categoryToMatch, map) }
+
+            return false
         }
     }
-    return null
 }
-inline fun prevNonWhiteSpaceSibling(element: PsiElement) : PsiElement? {
-    var prevElement : PsiElement? = element.prevSibling
 
-    while (prevElement != null) {
-        if (prevElement !is PsiWhiteSpace) {
-            return prevElement
-        } else {
-            prevElement = prevElement.prevSibling
+
+
+object GigaPsiUtils {
+
+    fun nextNonWhiteSpaceSibling(element: PsiElement): PsiElement? {
+        var nextElement: PsiElement? = element.nextSibling ?: element.parent.nextSibling
+
+        while (nextElement != null) {
+            if (nextElement is ParadoxScriptRootBlock) {
+                nextElement = nextElement.firstChild
+            } else if (nextElement !is PsiWhiteSpace) {
+                return nextElement
+            } else {
+                nextElement = nextElement.nextSibling
+            }
         }
+        return null
     }
-    return null
+
+    fun prevNonWhiteSpaceSibling(element: PsiElement): PsiElement? {
+        var prevElement: PsiElement? = element.prevSibling ?: element.parent.prevSibling
+
+        while (prevElement != null) {
+            if (prevElement !is PsiWhiteSpace) {
+                return prevElement
+            } else {
+                prevElement = prevElement.prevSibling
+            }
+        }
+        return null
+    }
 }
 
 // #####################################################################################################################
@@ -112,7 +177,9 @@ inline fun prevNonWhiteSpaceSibling(element: PsiElement) : PsiElement? {
 
 class DefinitionTag(val name: String, val shortDesc: String, val fullDesc: String) {
 
-    fun entry() : Pair<String,DefinitionTag> { return Pair(name, this) }
+    fun entry(): Pair<String, DefinitionTag> {
+        return Pair(name, this)
+    }
 
     companion object {
         const val PREFIX = "## Tags:"
@@ -120,7 +187,7 @@ class DefinitionTag(val name: String, val shortDesc: String, val fullDesc: Strin
 
         val tags = mapOf(
             "megastructure" to mapOf(
-                DefinitionTag("technical", "Technical Use Mega", "This megastructure has special internal uses and is not normally buildable. It will not be considered when mapping upgrade chains.").entry(),
+                DefinitionTag("technical", "Technical Mega", "This megastructure isn't really a mega, it just uses the system for it. e.g. frameworld asteroid harvest, wrecked ship scrapping").entry(),
                 DefinitionTag("ruined", "Ruined Megastructure", "This is a ruined megastructure and should be included in the trigger for checking whether a mega is ruined or not.").entry(),
                 DefinitionTag("restored", "Restored Megastructure", "This is a repaired megastructure and should be included in the trigger for checking whether a mega has been restored.").entry(),
                 DefinitionTag("megaproject", "Non-megastructure Project", "This mega is a construction project which doesn't result in an actual megastructure, so shouldn't count against supertensiles.").entry(),
@@ -135,7 +202,7 @@ class DefinitionTag(val name: String, val shortDesc: String, val fullDesc: Strin
 
         fun getTags(definition: ParadoxScriptDefinitionElement) : Set<DefinitionTag>? {
             // get the previous comment
-            val prevElement = prevNonWhiteSpaceSibling(definition)
+            val prevElement = GigaPsiUtils.prevNonWhiteSpaceSibling(definition)
             if (prevElement !is PsiComment) { return null }
 
             // check that it starts with the prefix
@@ -171,57 +238,33 @@ class DefinitionTag(val name: String, val shortDesc: String, val fullDesc: Strin
 // #####################################################################################################################
 
 // rewrite the body of a specified scripted trigger with a list of megas which have the matching economic category or a child thereof
-fun buildMegaCategoryList(project: Project, triggerName: String, categoryName: String) {
+fun buildMegaCategoryList(triggerName: String, desc : String? = null, predicate: (ParadoxScriptDefinitionElement) -> Boolean) {
+    if (project == null) { return }
+    val thisProject = project!!
+
     // find the trigger that we're going to rewrite
-    val trigger = ParadoxDefinitionSearch.search(triggerName,"scripted_trigger", selector(project, project.projectFile).definition().distinctByName()).find()
+    val trigger = ParadoxDefinitionSearch.search(triggerName,"scripted_trigger", selector(thisProject, thisProject.projectFile).definition().distinctByName()).find()
     if (trigger == null) {
         show("Failed to find scripted trigger: $triggerName")
         return
     }
 
-    // find the economic category we're checking against
-    val wantedCategory = ParadoxDefinitionSearch.search(categoryName,"economic_category", selector(project, project.projectFile).definition().distinctByName()).find()
-    if (wantedCategory == null) {
-        show("Failed to find economic category: $categoryName")
-        return
-    }
-
     // start the block's text with a warning and description
     val builder = StringBuilder().append("{").appendLine("\t# $textGeneratedBlock")
-    builder.appendLine("\t# Lists megas with an economic category equal to $categoryName, or one of its descendant categories").appendLine()
-    builder.appendLine("\tor = {")
+    if (desc != null) {
+        builder.appendLine("\t# $desc")
+            .appendLine()
+    }
+    builder.appendLine("\t[[CONDITION]]").appendLine("\tor = {")
 
     // get a list of matching megas
-    val megas: Set<ParadoxScriptDefinitionElement> = ParadoxDefinitionSearch.search("megastructure", selector(project, project.projectFile).definition().distinctByName()).findAll()
-    val ecoCategoryMap = HashMap<ParadoxScriptDefinitionElement, Boolean>()
+    val megas: Iterable<ParadoxScriptDefinitionElement> = ParadoxDefinitionSearch.search("megastructure", selector(thisProject, thisProject.projectFile).definition().distinctByName()).findAll().sortedBy { mega -> mega.name }
     for (mega in megas) {
-        val resources = mega.findProperty("resources", inline = true)
-        if (resources == null) {
-            builder.appendLine("# ${mega.name}: no resource block")
-            continue
-        }
-
-        val megaCategoryName = resources.findProperty("category", inline = true)?.value
-        if (megaCategoryName == null) {
-            builder.appendLine("# ${mega.name}: no category given")
-            continue
-        }
-        val category = ParadoxDefinitionSearch.search(megaCategoryName, "economic_category", selector(project, project.projectFile).definition().distinctByName()).find()
-        if (category == null) {
-            builder.appendLine("# ${mega.name}: category has no value")
-            continue
-        }
-
-        val matches = checkEcoCategoryWithLineage(category, wantedCategory, ecoCategoryMap)
-
-        if (!matches) {
-            builder.appendLine("# ${mega.name}: wrong category -> ${category.name}")
-            continue
-        }
+        if (!predicate(mega)) { continue }
 
         val locName = getElementName(mega)
 
-        builder.append("\t\t\$TRIGGER\$ = ${mega.name}")
+        builder.append("\t\t\$CONDITION\$ = ${mega.name}")
         if (locName != mega.name) {
             builder.append(" # $locName")
         }
@@ -230,7 +273,7 @@ fun buildMegaCategoryList(project: Project, triggerName: String, categoryName: S
 
     // create a new block with info and content
     builder.appendLine("\t}").appendLine("}")
-    val newBlock = ParadoxScriptElementFactory.createBlock(project, builder.toString())
+    val newBlock = ParadoxScriptElementFactory.createBlock(thisProject, builder.toString())
 
     // finally, swap the trigger's block for the new one
     trigger.block?.replace(newBlock)
@@ -253,8 +296,19 @@ class GigaRegenMegaCategoryLists : AnAction() {
 
         WriteCommandAction.writeCommandAction(project).withName(gigaRegenMegaCategoryListsName).run<Throwable> {
             // test triggers for now
-            buildMegaCategoryList(project, "plugin_test_kilos_trigger", "giga_kilostructures")
-            buildMegaCategoryList(project, "plugin_test_gigas_trigger", "giga_gigastructures")
+            buildMegaCategoryList("plugin_test_kilos_trigger", "Megas considered to be kilostructures, for supertensiles calculations etc") { def ->
+                GigaListConditions.hasEcoCategoryByName(def, "giga_kilostructures")
+                        || GigaListConditions.hasDefinitionTags(def, "force_kilo")
+            }
+            buildMegaCategoryList("plugin_test_gigas_trigger", "Megas considered to be gigastructures, for supertensiles calculations etc") { def ->
+                GigaListConditions.hasEcoCategoryByName(def, "giga_gigastructures")
+                        || GigaListConditions.hasDefinitionTags(def, "force_giga")
+            }
+
+            buildMegaCategoryList("plugin_test_ruined_trigger", "Ruined megastructures") { def -> GigaListConditions.hasDefinitionTags(def,"ruined") }
+            buildMegaCategoryList("plugin_test_restored_trigger", "Repaired megastructures") { def -> GigaListConditions.hasDefinitionTags(def,"restored") }
+            buildMegaCategoryList("plugin_test_technical_trigger", "Megas which are only megas by technicality - things which use the system but aren't strictly megastructures.") { def -> GigaListConditions.hasDefinitionTags(def,"technical") }
+            buildMegaCategoryList("plugin_test_megaproject_trigger", "Megas which should be considered non-mega projects for supertensiles calculations etc") { def -> GigaListConditions.hasDefinitionTags(def,"megaproject") }
         }
 
         show("Trigger Rebuild Complete")
@@ -266,17 +320,19 @@ registerAction("gigas.regenlists", "",pluginActionGroupId, gigaRegenMegaCategory
 
 class DefinitionPropertyAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+        //println(element.text)
         // only comments
         if (element !is PsiComment) { return }
         // only top level elements
-        if (element.parent !is ParadoxScriptRootBlock) { return }
+        if (element.parent !is ParadoxScriptRootBlock && element.parent !is ParadoxScriptFile) { return }
 
         val text = element.text
         // only specially annotated lines
         if (!text.startsWith(DefinitionTag.PREFIX)) { return }
+        println("STARTED")
 
         // get next non-whitespace element or bail
-        val nextElement: PsiElement = nextNonWhiteSpaceSibling(element) ?: return
+        val nextElement: PsiElement = GigaPsiUtils.nextNonWhiteSpaceSibling(element) ?: return
         // only definition lines
         if (nextElement !is ParadoxScriptDefinitionElement) { return }
         // work out what type of thing we're looking at for getting valid tags
@@ -330,7 +386,7 @@ class DefinitionPropertyCompletionContributor : CompletionContributor() {
                     val comment = parameters.position
 
                     // find the next element and check that it's a definition
-                    val nextElement = nextNonWhiteSpaceSibling(comment)
+                    val nextElement = GigaPsiUtils.nextNonWhiteSpaceSibling(comment)
                     if (nextElement !is ParadoxScriptDefinitionElement) { return }
                     // get the valid tags for the definition's type
                     val elementType = nextElement.definitionInfo?.typeConfig?.name ?: "unknown"
