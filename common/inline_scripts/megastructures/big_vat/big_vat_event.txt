@@ -7,11 +7,13 @@ planet_event = { #Start event and Sanity check
         solar_system = {
             random_system_megastructure = {
                 limit = { vat_$vat$_chk = yes }
-                set_variable = { which = the_vat_$vat$_time_passed value = 1}
-                set_variable = { which = the_vat_$vat$_percent value = 1 }
-                set_variable = { which = giga_the_vat_$vat$_timer value = giga_vat_$vat$_grow_time}
-                divide_variable = { which = giga_the_vat_$vat$_timer value = value:giga_vat_timer_math }
-                round_variable = giga_the_vat_$vat$_timer
+                set_variable = { which = the_vat_$vat$_time_passed value = 0 }
+                set_variable = { which = the_vat_$vat$_percent value = 0 }
+                set_variable = { which = giga_the_vat_$vat$_time value = giga_vat_$vat$_grow_time }
+                divide_variable = { which = giga_the_vat_$vat$_time value = value:giga_vat_timer_math }
+                set_variable = { which = giga_vat_$vat$_time_left value = giga_the_vat_$vat$_time }
+                round_variable = giga_vat_$vat$_time_left
+                round_variable = giga_the_vat_$vat$_time
                 #life is ~~pain~~ wonderful!
             }
         }
@@ -34,30 +36,37 @@ planet_event = { #Recursive daily check until it reaches a value = build time
     immediate = {
         solar_system = {
             random_system_megastructure = {
-                limit = {vat_$vat$_chk = yes}
+                limit = { vat_$vat$_chk = yes NOT = { root = { has_planet_flag = giga_vat_pause_protection_$vat$ } } }
                 if = {
-                    limit = { check_variable = { which = giga_the_vat_$vat$_timer value > 0 } }
-                    change_variable = { which = the_vat_$vat$_time_passed value = 1}
+                    root = { set_timed_planet_flag = { flag = giga_vat_pause_protection_$vat$ days = 1 } }
+                    limit = { check_variable = { which = the_vat_$vat$_time_passed value <= giga_the_vat_$vat$_time } }
 
+                    change_variable = { which = the_vat_$vat$_time_passed value = 1 }
+
+                    set_variable = { which = the_vat_$vat$_pixel value = the_vat_$vat$_time_passed }
+
+                    divide_variable	= { which = the_vat_$vat$_pixel value = giga_the_vat_$vat$_time }
+
+                    set_variable = { which = the_vat_$vat$_percent value = the_vat_$vat$_pixel }
+
+                    multiply_variable = { which = the_vat_$vat$_percent value = 100 }
+
+                    multiply_variable = { which = the_vat_$vat$_pixel value = 229 }
+
+                    set_variable = { which = giga_vat_$vat$_time_left value = giga_the_vat_$vat$_time }
+
+                    subtract_variable = { which = giga_vat_$vat$_time_left value = the_vat_$vat$_time_passed }
+
+                    ceiling_variable = the_vat_$vat$_pixel
+                    floor_variable = the_vat_$vat$_percent
                     root = {
                         planet_event = {
                             id = giga_vat_events.$vat$4002
                             days = 1
                         }
                     }
-                    set_variable = { which = giga_the_vat_$vat$_timer value = giga_vat_$vat$_grow_time }
-                    divide_variable = { which = giga_the_vat_$vat$_timer value = value:giga_vat_timer_math }
-                    round_variable = giga_the_vat_$vat$_timer
-                    set_variable = { which = the_vat_$vat$_pixel value = the_vat_$vat$_time_passed }
-                    divide_variable	= { which = the_vat_$vat$_pixel value = giga_the_vat_$vat$_timer }
-                    set_variable = { which = the_vat_$vat$_percent value = the_vat_$vat$_pixel }
-                    multiply_variable = { which = the_vat_$vat$_percent value = 100}
-                    multiply_variable = { which = the_vat_$vat$_pixel value = 192}
-                    subtract_variable = { which = giga_the_vat_$vat$_timer value = the_vat_$vat$_time_passed}
-                    ceiling_variable = the_vat_$vat$_pixel
-                    floor_variable = the_vat_$vat$_percent
                 } else_if = {
-                    limit = { check_variable = { which = giga_the_vat_$vat$_timer value <= 0 } }
+                    limit = { check_variable = { which = the_vat_$vat$_time_passed value > giga_the_vat_$vat$_time } }
                     clear_variable = the_vat_$vat$_pixel
                     clear_variable = the_vat_$vat$_time_passed
                     set_variable = { which = the_vat_$vat$_pixel value = 0 }
@@ -620,9 +629,9 @@ planet_event = {
                         add_resource = { energy = 1 multiplier = value:giga_vat_cancel_refund|VAT|$vat$|RESOURCE|energy| }
                         add_resource = { exotic_gases = 1 multiplier = value:giga_vat_cancel_refund|VAT|$vat$|RESOURCE|gas| }
                     }
-                    giga_the_vat_$vat$_clear = yes
+                    giga_the_vat_clear = { vat = $vat$ }
                 } else = {
-                    giga_the_vat_$vat$_clear = yes
+                    giga_the_vat_clear = { vat = $vat$ }
                 }
             }
         }
