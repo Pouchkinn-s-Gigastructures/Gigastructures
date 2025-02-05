@@ -1,5 +1,6 @@
 //package gigatools // if this is uncommented the whole thing explodes apparently
 
+import Plugin.GigaPsiUtils.findPropertyAndInline
 import Plugin.GigaYAMLUtil.asText
 import Plugin.GigaYAMLUtil.getValueAndCast
 import com.intellij.codeInsight.completion.*
@@ -35,6 +36,7 @@ import icu.windea.pls.lang.definitionInfo
 import icu.windea.pls.lang.search.*
 import icu.windea.pls.lang.search.selector.*
 import icu.windea.pls.lang.util.ParadoxLocaleManager
+import icu.windea.pls.lang.util.ParadoxParameterManager
 import icu.windea.pls.lang.util.renderer.ParadoxLocalisationTextRenderer
 import icu.windea.pls.script.ParadoxScriptLanguage
 import icu.windea.pls.script.psi.*
@@ -201,6 +203,41 @@ object GigaPsiUtils {
         // check that they actually start with it, and cast
         return rawResults.map { e -> if(e !is PsiComment) { error("Not a comment?!") }; e }.filter { e -> e.text.startsWith(prefix) }
     }
+
+    fun PsiElement.findPropertyAndInline(
+        propertyName: String? = null,
+        ignoreCase: Boolean = true,
+        conditional: Boolean = false,
+        inline: Boolean = false
+    ): ParadoxScriptProperty? {
+        if (language != ParadoxScriptLanguage) return null
+        if (propertyName != null && propertyName.isEmpty()) return this as? ParadoxScriptProperty
+        val block = when {
+            this is ParadoxScriptDefinitionElement -> this.block
+            this is ParadoxScriptBlock -> this
+            else -> null
+        }
+        var result: ParadoxScriptProperty? = null
+        block?.processProperty(conditional, inline) {
+            println("visited: ${it.name}, ${it.javaClass}")
+            if (it.name == "inline_script") {
+                val paramData = ParadoxParameterManager.getContextInfo(it)
+                //println(paramData?.parameters)
+                println(paramData?.parameters?.map { e -> e.key to e.value.map { f -> f.parentElement } })
+                if (it.propertyValue is ParadoxScriptBlockElement) {
+                    val inlineBlock : ParadoxScriptBlockElement = it.propertyValue as ParadoxScriptBlockElement
+                    println(inlineBlock.propertyList)
+                }
+            }
+            if (propertyName == null || propertyName.equals(it.name, ignoreCase)) {
+                result = it
+                false
+            } else {
+                true
+            }
+        }
+        return result
+    }
 }
 
 object ToolData {
@@ -351,8 +388,8 @@ open class TaggedDefinition(val def: ParadoxScriptDefinitionElement) {
 
     // does this definition have ANY listed tag
     fun hasAnyTags(vararg tagsToCheck : String) : Boolean {
-        for(tag in tags.keys) {
-            if (tagsToCheck.contains(tag)) {
+        for(tag in tagsToCheck) {
+            if (tags.containsKey(tag)) {
                 return true
             }
         }
@@ -484,22 +521,25 @@ class GigaRegenMegaCategoryLists : AnAction() {
         //val results = GigaPsiUtils.findCommentsWithPrefix(project, PREFIX)
         //println(results)
 
-        println("dyson_sphere_1")
-        val test = Megastructure.resolve(project, "dyson_sphere_1")!!
-        println("upgrades from: ${test.upgradeFrom}")
-        println("upgrades to: ${test.upgradeTo}")
+        val test = Megastructure.resolve(project, "matrioshka_brain_2_g_star")!!
+        test.def.findPropertyAndInline("upgrade_from", inline = true)
 
-        println("dyson_sphere_2")
-        val test2 = Megastructure.resolve(project, "dyson_sphere_2")!!
-        println("upgrades from: ${test2.upgradeFrom}")
-        println("upgrades to: ${test2.upgradeTo}")
+//        println("dyson_sphere_1")
+//        val test = Megastructure.resolve(project, "dyson_sphere_1")!!
+//        println("upgrades from: ${test.upgradeFrom}")
+//        println("upgrades to: ${test.upgradeTo}")
+//
+//        println("dyson_sphere_2")
+//        val test2 = Megastructure.resolve(project, "dyson_sphere_2")!!
+//        println("upgrades from: ${test2.upgradeFrom}")
+//        println("upgrades to: ${test2.upgradeTo}")
 
         //println(Megastructure.cache.values)
-        println("MEGA CACHE:")
-        for (mega in Megastructure.cache.values) {
-            println(mega)
-        }
-        println("END MEGA CACHE")
+//        println("MEGA CACHE:")
+//        for (mega in Megastructure.cache.values) {
+//            println(mega)
+//        }
+//        println("END MEGA CACHE")
 
         WriteCommandAction.writeCommandAction(project).withName(name).run<Throwable> {
 
@@ -511,44 +551,62 @@ class GigaRegenMegaCategoryLists : AnAction() {
 //                ListBuilders.replaceBlockContents(project, nextElement.block!!, "\n# hello this is a test")
 //            }
 
-            val trigger = TaggedDefinition.resolve(project, "scripted_trigger", "another_test_trigger")
-
-            val builder = StringBuilder()
-            Megastructure.resolveAll(project)
-            val firstStages = Megastructure.cache.values.filterNotNull().filter { e ->
-                //e.upgradeFrom.isEmpty() &&
-                //e.upgradeTo.isNotEmpty() &&
-                //!e.hasAnyTags("technical", "ruined")
-                true
-            }
-
-            for(mega in firstStages) {
-                builder.appendLine("# ${GigaPsiUtils.getElementName(mega.def)}")
-                builder.appendLine("or = {")
-                builder.appendLine("is_megastructure_type = ${mega.def.name} # ${GigaPsiUtils.getElementName(mega.def)}")
-                builder.appendLine("# Tags: ${mega.tags.keys}")
-                builder.appendLine("# Upgrades from: ${mega.upgradeFrom.size}")
-                builder.appendLine("# Upgrades to: ${mega.upgradeTo.size}")
-                builder.appendLine("}")
-                builder.appendLine()
-            }
-
-            ListBuilders.replaceBlockContents(project, trigger!!.def.block!!, builder.toString())
-
-            // test triggers for now
-            ListBuilders.buildMegaCategoryList(project, "plugin_test_kilos_trigger") { def ->
-                GigaListConditions.hasEcoCategoryByName(def, "giga_kilostructures")
-                        || GigaListConditions.hasDefinitionTags(def, "force_kilo")
-            }
-            ListBuilders.buildMegaCategoryList(project, "plugin_test_gigas_trigger") { def ->
-                GigaListConditions.hasEcoCategoryByName(def, "giga_gigastructures")
-                        || GigaListConditions.hasDefinitionTags(def, "force_giga")
-            }
-
-            ListBuilders.buildMegaCategoryList(project, "plugin_test_ruined_trigger") { def -> GigaListConditions.hasDefinitionTags(def,"ruined") }
-            ListBuilders.buildMegaCategoryList(project, "plugin_test_restored_trigger") { def -> GigaListConditions.hasDefinitionTags(def,"restored") }
-            ListBuilders.buildMegaCategoryList(project, "plugin_test_technical_trigger") { def -> GigaListConditions.hasDefinitionTags(def,"technical") }
-            ListBuilders.buildMegaCategoryList(project, "plugin_test_megaproject_trigger") { def -> GigaListConditions.hasDefinitionTags(def,"megaproject") }
+//            val trigger = TaggedDefinition.resolve(project, "scripted_trigger", "another_test_trigger")
+//
+//            val builder = StringBuilder()
+//            Megastructure.resolveAll(project)
+//            val firstStages = Megastructure.cache.values.filterNotNull().filter { e ->
+//                e.upgradeFrom.isEmpty() && // must be a first stage
+//                e.upgradeTo.isNotEmpty() && // which upgrades to something else (misses the inlined megas, pending potential fix?)
+//                !e.hasAnyTags("technical", "ruined") // ruins don't count, technical aren't proper megas
+//                //true
+//            }
+//
+//            for(mega in firstStages) {
+//                builder.appendLine("# ${GigaPsiUtils.getElementName(mega.def)}")
+//                builder.appendLine("or = {")
+//                //builder.appendLine("is_megastructure_type = ${mega.def.name} # ${GigaPsiUtils.getElementName(mega.def)}")
+//                //builder.appendLine("# Tags: ${mega.tags.keys}")
+//                //builder.appendLine("# Upgrades from: ${mega.upgradeFrom.size}")
+//                //builder.appendLine("# Upgrades to: ${mega.upgradeTo.size}")
+//
+//                val toWriteSet = mutableSetOf(mega)
+//                val written : MutableSet<Megastructure> = mutableSetOf()
+//                while (toWriteSet.isNotEmpty()) {
+//                    val toWrite = toWriteSet.first()
+//                    toWriteSet.remove(toWrite)
+//
+//                    // catch loops
+//                    if (written.contains(toWrite)) { continue }
+//                    written.add(toWrite)
+//
+//                    builder.appendLine("is_megastructure_type = ${toWrite.def.name} # ${GigaPsiUtils.getElementName(toWrite.def)}")
+//
+//                    if (!toWrite.hasTags("force_final")) {
+//                        toWriteSet.addAll(toWrite.upgradeTo.filter { e -> !e.hasAnyTags("technical") })
+//                    }
+//                }
+//
+//                builder.appendLine("}")
+//                builder.appendLine()
+//            }
+//
+//            ListBuilders.replaceBlockContents(project, trigger!!.def.block!!, builder.toString())
+//
+//            // test triggers for now
+//            ListBuilders.buildMegaCategoryList(project, "plugin_test_kilos_trigger") { def ->
+//                GigaListConditions.hasEcoCategoryByName(def, "giga_kilostructures")
+//                        || GigaListConditions.hasDefinitionTags(def, "force_kilo")
+//            }
+//            ListBuilders.buildMegaCategoryList(project, "plugin_test_gigas_trigger") { def ->
+//                GigaListConditions.hasEcoCategoryByName(def, "giga_gigastructures")
+//                        || GigaListConditions.hasDefinitionTags(def, "force_giga")
+//            }
+//
+//            ListBuilders.buildMegaCategoryList(project, "plugin_test_ruined_trigger") { def -> GigaListConditions.hasDefinitionTags(def,"ruined") }
+//            ListBuilders.buildMegaCategoryList(project, "plugin_test_restored_trigger") { def -> GigaListConditions.hasDefinitionTags(def,"restored") }
+//            ListBuilders.buildMegaCategoryList(project, "plugin_test_technical_trigger") { def -> GigaListConditions.hasDefinitionTags(def,"technical") }
+//            ListBuilders.buildMegaCategoryList(project, "plugin_test_megaproject_trigger") { def -> GigaListConditions.hasDefinitionTags(def,"megaproject") }
         }
 
         show("Trigger Rebuild Complete")
