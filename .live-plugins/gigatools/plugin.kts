@@ -32,12 +32,16 @@ import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.util.ProcessingContext
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.await
+import icu.windea.pls.ep.inline.ParadoxInlineSupport
+import icu.windea.pls.ep.parameter.ParadoxParameterSupport
 import icu.windea.pls.lang.definitionInfo
+import icu.windea.pls.lang.fileInfo
 import icu.windea.pls.lang.search.*
 import icu.windea.pls.lang.search.selector.*
+import icu.windea.pls.lang.util.ParadoxExpressionManager
 import icu.windea.pls.lang.util.ParadoxLocaleManager
-import icu.windea.pls.lang.util.ParadoxParameterManager
 import icu.windea.pls.lang.util.renderer.ParadoxLocalisationTextRenderer
+import icu.windea.pls.model.ParadoxParameterContextReferenceInfo
 import icu.windea.pls.script.ParadoxScriptLanguage
 import icu.windea.pls.script.psi.*
 import io.ktor.http.*
@@ -204,29 +208,81 @@ object GigaPsiUtils {
         return rawResults.map { e -> if(e !is PsiComment) { error("Not a comment?!") }; e }.filter { e -> e.text.startsWith(prefix) }
     }
 
+    //val parameterSupport by lazy { ParadoxDefinitionParameterSupport() }
+
     fun PsiElement.findPropertyAndInline(
         propertyName: String? = null,
         ignoreCase: Boolean = true,
         conditional: Boolean = false,
-        inline: Boolean = false
-    ): ParadoxScriptProperty? {
+    ): Pair<ParadoxScriptProperty?,((String) ->String)?>? {
         if (language != ParadoxScriptLanguage) return null
-        if (propertyName != null && propertyName.isEmpty()) return this as? ParadoxScriptProperty
+        if (propertyName != null && propertyName.isEmpty()) return this as? ParadoxScriptProperty to null
         val block = when {
             this is ParadoxScriptDefinitionElement -> this.block
             this is ParadoxScriptBlock -> this
             else -> null
         }
+        val parameterStack = mutableListOf<MutableMap<String,MutableList<String>>>()
+        var parameterFile = this.containingFile.fileInfo?.relPath
         var result: ParadoxScriptProperty? = null
-        block?.processProperty(conditional, inline) {
+
+        val doReplacement = e@{ input: String ->
+            if (parameterStack.isEmpty()) {
+                return@e input
+            }
+            val parameters = parameterStack.last()
+
+            var replaced = input
+            for (key in parameters.keys) {
+                for (value in parameters[key]!!) {
+                    replaced = replaced.replace("$$key$", value)
+                }
+            }
+            return@e replaced
+        }
+
+        block?.processProperty(conditional, true) {
             println("visited: ${it.name}, ${it.javaClass}")
-            if (it.name == "inline_script") {
-                val paramData = ParadoxParameterManager.getContextInfo(it)
-                //println(paramData?.parameters)
-                println(paramData?.parameters?.map { e -> e.key to e.value.map { f -> f.parentElement } })
-                if (it.propertyValue is ParadoxScriptBlockElement) {
-                    val inlineBlock : ParadoxScriptBlockElement = it.propertyValue as ParadoxScriptBlockElement
-                    println(inlineBlock.propertyList)
+            // if the current file isn't the parameter file, pop the stack
+            if (it.fileInfo != null && it.fileInfo!!.relPath != parameterFile) {
+                println(it.fileInfo!!.relPath)
+                println(parameterFile)
+                parameterFile = it.fileInfo!!.relPath
+                parameterStack.removeLast()
+                println("POP!")
+            }
+            // if the element appears to be an inline script
+            if (it.name.equals("inline_script", true) && it.fileInfo != null) {
+                // get the element for it to get the file name
+                val inlineElement = ParadoxInlineSupport.inlineElement(it)
+
+                if (inlineElement != null && inlineElement.containingFile.fileInfo != null) {
+                    val inlineFilePath = inlineElement.containingFile.fileInfo!!.relPath
+                    // holder for the data
+                    val data = mutableMapOf<String,MutableList<String>>()
+
+                    // if it's a block, fill out the data
+                    if (it.propertyValue is ParadoxScriptBlockElement) {
+                        // get the block
+                        val inlineBlock: ParadoxScriptBlockElement = it.propertyValue as ParadoxScriptBlockElement
+                        //println(inlineBlock.propertyList)
+
+                        //val replaceParameters = parameterStack.last()
+                        for (property in inlineBlock.propertyList) {
+                            // read in parameters
+                            if (property.name != "script") {
+                                val name = doReplacement(property.name)
+                                val value = doReplacement(property.propertyValue?.text ?: "")
+
+                                data.putIfAbsent(name, mutableListOf())
+                                data[name]!!.add(value)
+                            }
+                        }
+                    }
+                    // new inline, push onto the stack
+                    parameterStack.add(data)
+                    parameterFile = inlineFilePath
+                    println("PUSH $parameterFile!")
                 }
             }
             if (propertyName == null || propertyName.equals(it.name, ignoreCase)) {
@@ -236,8 +292,47 @@ object GigaPsiUtils {
                 true
             }
         }
-        return result
+        if (parameterStack.isEmpty()) { return result to null }
+        return result to doReplacement
     }
+
+//    fun PsiElement.findPropertyTest(
+//        propertyName: String? = null,
+//        ignoreCase: Boolean = true,
+//        conditional: Boolean = false,
+//        inline: Boolean = false
+//    ): ParadoxScriptProperty? {
+//        if (language != ParadoxScriptLanguage) return null
+//        if (propertyName != null && propertyName.isEmpty()) return this as? ParadoxScriptProperty
+//        val block = when {
+//            this is ParadoxScriptDefinitionElement -> this.block
+//            this is ParadoxScriptBlock -> this
+//            else -> null
+//        }
+//        var result: ParadoxScriptProperty? = null
+//        block?.processProperty(conditional, inline) {
+//            if (it.name.equals("inline_script", true)) {
+//                val from = ParadoxParameterContextReferenceInfo.From.ContextReference
+//                val contextConfig = ParadoxExpressionManager.getConfigs(it).firstOrNull()
+//                if (contextConfig != null) {
+//                    val contextReferenceInfo = ParadoxParameterSupport.getContextReferenceInfo(it, from, contextConfig)
+//                    println(contextReferenceInfo)
+//
+//                    println(contextReferenceInfo?.arguments?.map { e -> "${e.argumentName} = ${e.argumentValueElement?.text}" })
+//
+//                    //print(contextReferenceInfo.)
+//                }
+//            }
+//
+//            if (propertyName == null || propertyName.equals(it.name, ignoreCase)) {
+//                result = it
+//                false
+//            } else {
+//                true
+//            }
+//        }
+//        return result
+//    }
 }
 
 object ToolData {
@@ -410,11 +505,14 @@ open class TaggedDefinition(val def: ParadoxScriptDefinitionElement) {
 
 class Megastructure(def: ParadoxScriptDefinitionElement) : TaggedDefinition(def) {
     val upgradeFrom : Set<Megastructure> by lazy {
-        val upgradeElement = def.findProperty("upgrade_from", inline = true) ?: return@lazy setOf()
+        val upgradeData = def.findPropertyAndInline("upgrade_from") ?: return@lazy setOf()
+        //val upgradeElement = def.findProperty("upgrade_from", inline = true) ?: return@lazy setOf()
+        val resolver = upgradeData.second ?: { e: String -> e }
+        val upgradeElement = upgradeData.first ?: return@lazy setOf()
         val upgradeBlock = upgradeElement.propertyValue
         if (upgradeBlock !is ParadoxScriptBlockElement) { return@lazy setOf() }
 
-        upgradeBlock.valueList.mapNotNull { v -> println("in ${def.name}: $v, ${v.javaClass}"); resolve(def.project, v.value) }.toSet()
+        upgradeBlock.valueList.mapNotNull { v -> println("in ${def.name}: $v, ${v.javaClass}"); resolve(def.project, resolver(v.value)) }.toSet()
     }
 
     val upgradeTo : Set<Megastructure> by lazy {
@@ -425,6 +523,10 @@ class Megastructure(def: ParadoxScriptDefinitionElement) : TaggedDefinition(def)
     companion object {
         private var resolvedAll = false
         val cache : MutableMap<String,Megastructure?> = mutableMapOf()
+        fun clearCache() {
+            cache.clear()
+            resolvedAll = false
+        }
 
         fun resolve(project: Project, id: String) : Megastructure? {
             if (cache.containsKey(id)) { return cache[id] }
@@ -521,78 +623,61 @@ class GigaRegenMegaCategoryLists : AnAction() {
         //val results = GigaPsiUtils.findCommentsWithPrefix(project, PREFIX)
         //println(results)
 
-        val test = Megastructure.resolve(project, "matrioshka_brain_2_g_star")!!
-        test.def.findPropertyAndInline("upgrade_from", inline = true)
+        //val test = Megastructure.resolve(project, "matrioshka_brain_2_g_star")!!
+        //val results = test.def.findPropertyAndInline("upgrade_from", inline = true)
+        //println("RESULT:")
+        //println(results)
+        //println(test.upgradeFrom)
 
-//        println("dyson_sphere_1")
-//        val test = Megastructure.resolve(project, "dyson_sphere_1")!!
-//        println("upgrades from: ${test.upgradeFrom}")
-//        println("upgrades to: ${test.upgradeTo}")
-//
-//        println("dyson_sphere_2")
-//        val test2 = Megastructure.resolve(project, "dyson_sphere_2")!!
-//        println("upgrades from: ${test2.upgradeFrom}")
-//        println("upgrades to: ${test2.upgradeTo}")
-
-        //println(Megastructure.cache.values)
-//        println("MEGA CACHE:")
-//        for (mega in Megastructure.cache.values) {
-//            println(mega)
-//        }
-//        println("END MEGA CACHE")
+        //val results = test.def.findPropertyTest("upgrade_from", inline = true)
 
         WriteCommandAction.writeCommandAction(project).withName(name).run<Throwable> {
 
-//            for (result in results) {
-//                val nextElement: PsiElement = GigaPsiUtils.nextNonWhiteSpaceSibling(result) ?: continue
-//                if (nextElement !is ParadoxScriptDefinitionElement) { continue }
-//                if (nextElement.block == null) { continue }
-//
-//                ListBuilders.replaceBlockContents(project, nextElement.block!!, "\n# hello this is a test")
-//            }
+            // reset cache
+            Megastructure.clearCache()
 
-//            val trigger = TaggedDefinition.resolve(project, "scripted_trigger", "another_test_trigger")
-//
-//            val builder = StringBuilder()
-//            Megastructure.resolveAll(project)
-//            val firstStages = Megastructure.cache.values.filterNotNull().filter { e ->
-//                e.upgradeFrom.isEmpty() && // must be a first stage
-//                e.upgradeTo.isNotEmpty() && // which upgrades to something else (misses the inlined megas, pending potential fix?)
-//                !e.hasAnyTags("technical", "ruined") // ruins don't count, technical aren't proper megas
-//                //true
-//            }
-//
-//            for(mega in firstStages) {
-//                builder.appendLine("# ${GigaPsiUtils.getElementName(mega.def)}")
-//                builder.appendLine("or = {")
-//                //builder.appendLine("is_megastructure_type = ${mega.def.name} # ${GigaPsiUtils.getElementName(mega.def)}")
-//                //builder.appendLine("# Tags: ${mega.tags.keys}")
-//                //builder.appendLine("# Upgrades from: ${mega.upgradeFrom.size}")
-//                //builder.appendLine("# Upgrades to: ${mega.upgradeTo.size}")
-//
-//                val toWriteSet = mutableSetOf(mega)
-//                val written : MutableSet<Megastructure> = mutableSetOf()
-//                while (toWriteSet.isNotEmpty()) {
-//                    val toWrite = toWriteSet.first()
-//                    toWriteSet.remove(toWrite)
-//
-//                    // catch loops
-//                    if (written.contains(toWrite)) { continue }
-//                    written.add(toWrite)
-//
-//                    builder.appendLine("is_megastructure_type = ${toWrite.def.name} # ${GigaPsiUtils.getElementName(toWrite.def)}")
-//
-//                    if (!toWrite.hasTags("force_final")) {
-//                        toWriteSet.addAll(toWrite.upgradeTo.filter { e -> !e.hasAnyTags("technical") })
-//                    }
-//                }
-//
-//                builder.appendLine("}")
-//                builder.appendLine()
-//            }
-//
-//            ListBuilders.replaceBlockContents(project, trigger!!.def.block!!, builder.toString())
-//
+            val trigger = TaggedDefinition.resolve(project, "scripted_trigger", "another_test_trigger")
+
+            val builder = StringBuilder()
+            Megastructure.resolveAll(project)
+            val firstStages = Megastructure.cache.values.filterNotNull().filter { e ->
+                e.upgradeFrom.isEmpty() && // must be a first stage
+                e.upgradeTo.isNotEmpty() && // which upgrades to something else (misses the inlined megas, pending potential fix?)
+                !e.hasAnyTags("technical", "ruined") // ruins don't count, technical aren't proper megas
+                //true
+            }
+
+            for(mega in firstStages) {
+                builder.appendLine("# ${GigaPsiUtils.getElementName(mega.def)}")
+                builder.appendLine("or = {")
+                //builder.appendLine("is_megastructure_type = ${mega.def.name} # ${GigaPsiUtils.getElementName(mega.def)}")
+                //builder.appendLine("# Tags: ${mega.tags.keys}")
+                //builder.appendLine("# Upgrades from: ${mega.upgradeFrom.size}")
+                //builder.appendLine("# Upgrades to: ${mega.upgradeTo.size}")
+
+                val toWriteSet = mutableSetOf(mega)
+                val written : MutableSet<Megastructure> = mutableSetOf()
+                while (toWriteSet.isNotEmpty()) {
+                    val toWrite = toWriteSet.first()
+                    toWriteSet.remove(toWrite)
+
+                    // catch loops
+                    if (written.contains(toWrite)) { continue }
+                    written.add(toWrite)
+
+                    builder.appendLine("is_megastructure_type = ${toWrite.def.name} # ${GigaPsiUtils.getElementName(toWrite.def)}")
+
+                    if (!toWrite.hasTags("force_final")) {
+                        toWriteSet.addAll(toWrite.upgradeTo.filter { e -> !e.hasAnyTags("technical") })
+                    }
+                }
+
+                builder.appendLine("}")
+                builder.appendLine()
+            }
+
+            ListBuilders.replaceBlockContents(project, trigger!!.def.block!!, builder.toString())
+
 //            // test triggers for now
 //            ListBuilders.buildMegaCategoryList(project, "plugin_test_kilos_trigger") { def ->
 //                GigaListConditions.hasEcoCategoryByName(def, "giga_kilostructures")
