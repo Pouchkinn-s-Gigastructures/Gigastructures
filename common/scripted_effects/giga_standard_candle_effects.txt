@@ -41,3 +41,194 @@ giga_spawn_standard_candles = {
     clear_variable = giga_candle_min_distance
     clear_variable = giga_candle_max_distance
 }
+
+# Convert a rotation and distance to cartesian coordinates
+# rotation = variable name, angle in degrees, 0-360
+# distance = variable name, space distance units
+# x_variable = variable name, x coordinate output
+# y_variable = variable name, y coordinate output
+giga_dist_rot_to_xy = {
+    giga_bcosine_approx = {
+        input = $rotation$
+        output = $x_variable$
+        mult = $distance$
+    }
+    giga_bsine_approx = {
+        input = $rotation$
+        output = $y_variable$
+        mult = $distance$
+    }
+
+    # invert them lol, need to get the configuration right
+    multiply_variable = {
+        which = $x_variable$
+        value = -1
+    }
+    multiply_variable = {
+        which = $y_variable$
+        value = -1
+    }
+}
+
+# Get an approximate value for sine of an angle, based on Bhāskara I's sine approximation formula
+# accepts an angle in degrees in the range 0-360
+# input = value or variable name for input value
+# output = variable name to save the result to
+giga_bsine_approx = {
+    # copy input value for manipulation
+    set_variable = { which = giga_bsine_initial value = $input$ }
+    set_variable = { which = giga_bsine value = $input$ }
+
+    # if > 180, subtract 180 as the formula is only for 0-180
+    if = {
+        limit = {
+            check_variable = { which = giga_bsine value > 180 }
+        }
+        subtract_variable = { which = giga_bsine value = 180 }
+    }
+
+    set_variable = { which = $output$ value = value:giga_bsine_approx|input|giga_bsine|mult|$mult|1$| }
+
+    # negate result if input was >180
+    if = {
+        limit = {
+            check_variable = { which = giga_bsine_initial value > 180 }
+        }
+        multiply_variable = { which = $output$ value = -1 }
+    }
+
+    # clean up
+    clear_variable = giga_bsine
+    clear_variable = giga_bsine_initial
+}
+
+# Get an approximate value for cosine of an angle, based on Bhāskara I's sine approximation formula
+# accepts an angle in degrees in the range 0-360
+# input = value or variable name for input value
+# output = variable name to save the result to
+giga_bcosine_approx = {
+    # copy input value for manipulation
+    set_variable = { which = giga_bcosine value = $input$ }
+
+    # rotate and adjust for range
+    subtract_variable = { which = giga_bcosine value = 90 }
+    if = {
+        limit = {
+            check_variable = { which = giga_bcosine value < 0 }
+        }
+        change_variable = { which = giga_bcosine value = 360 }
+    }
+
+    # sine of the adjusted value
+    giga_bsine_approx = {
+        input = giga_bcosine
+        output = $output$
+        mult = $mult|1$
+    }
+
+    # clean up
+    clear_variable = giga_bcosine
+}
+
+# set up variables on the candle systems
+giga_standard_candle_set_shared_variables = {
+    # distance between the two for use in other calculations
+    set_variable = { which = giga_candle_distance_between value = value:giga_candle_distance_between|x1|event_target:giga_candle_1.giga_candle_x|y1|event_target:giga_candle_1.giga_candle_y|x2|giga_candle_x|y2|giga_candle_y| }
+
+    # double to simplify other calcs too
+    set_variable = { which = giga_candle_distance_between_x2 value = giga_candle_distance_between }
+    multiply_variable = { which = giga_candle_distance_between_x2 value = 2 }
+
+    # x coord difference
+    set_variable = { which = giga_candle_dx value = giga_candle_x }
+    subtract_variable = { which = giga_candle_dx value = event_target:giga_candle_1.giga_candle_x }
+
+    # y coord difference
+    set_variable = { which = giga_candle_dy value = giga_candle_y }
+    subtract_variable = { which = giga_candle_dy value = event_target:giga_candle_1.giga_candle_y }
+
+    # and make sure candle 1 has the same numbers accessible
+    event_target:giga_candle_1 = {
+        set_variable = { which = giga_candle_distance_between value = prev.giga_candle_distance_between }
+        set_variable = { which = giga_candle_distance_between_x2 value = giga_candle_distance_between }
+        multiply_variable = { which = giga_candle_distance_between_x2 value = 2 }
+
+        set_variable = { which = giga_candle_dx value = prev.giga_candle_dx }
+        set_variable = { which = giga_candle_dy value = prev.giga_candle_dy }
+    }
+}
+
+# calculate coordinates for a system from standard candles
+giga_system_position_from_candles = {
+    # r1
+    export_trigger_value_to_variable = {
+        trigger = distance
+        parameters = {
+            source = event_target:giga_candle_1
+            type = euclidean
+        }
+        variable = giga_cpos_r1
+    }
+
+    # r2
+    export_trigger_value_to_variable = {
+        trigger = distance
+        parameters = {
+            source = event_target:giga_candle_2
+            type = euclidean
+        }
+        variable = giga_cpos_r2
+    }
+
+    # l
+    set_variable = { which = giga_cpos_l value = value:giga_system_position_from_candles_l }
+
+    # l/d
+    set_variable = { which = giga_cpos_ld value = giga_cpos_l }
+    divide_variable = { which = giga_cpos_ld value = event_target:giga_candle_1.giga_candle_distance_between }
+
+    # h
+    set_variable = { which = giga_cpos_h value = value:giga_system_position_from_candles_h }
+
+    # h/d
+    set_variable = { which = giga_cpos_hd value = giga_cpos_h }
+    divide_variable = { which = giga_cpos_hd value = event_target:giga_candle_1.giga_candle_distance_between }
+
+    # x coord part 1
+    set_variable = { which = giga_cpos_x_part1 value = giga_cpos_ld}
+    multiply_variable = { which = giga_cpos_x_part1 value = event_target:giga_candle_1.giga_candle_dx }
+
+    # y coord part 1
+    set_variable = { which = giga_cpos_y_part1 value = giga_cpos_ld}
+    multiply_variable = { which = giga_cpos_y_part1 value = event_target:giga_candle_1.giga_candle_dy }
+
+    # x coord part 2
+    set_variable = { which = giga_cpos_x_part2 value = giga_cpos_hd }
+    multiply_variable = { which = giga_cpos_x_part2 value = event_target:giga_candle_1.giga_candle_dy }
+    #change_variable = { which = giga_cpos_x_part2 value = event_target:giga_candle_1.giga_candle_x }
+
+    # y coord part 2
+    set_variable = { which = giga_cpos_y_part2 value = giga_cpos_hd }
+    multiply_variable = { which = giga_cpos_y_part2 value = event_target:giga_candle_1.giga_candle_dx }
+    #change_variable = { which = giga_cpos_y_part2 value = event_target:giga_candle_1.giga_candle_y }
+
+    # x result 1
+    set_variable = { which = giga_cpos_x_result1 value = giga_cpos_x_part1 }
+    change_variable = { which = giga_cpos_x_result1 value = giga_cpos_x_part2 }
+    change_variable = { which = giga_cpos_x_result1 value = event_target:giga_candle_1.giga_candle_x }
+
+    # y result 1
+    set_variable = { which = giga_cpos_y_result1 value = giga_cpos_y_part1 }
+    subtract_variable = { which = giga_cpos_y_result1 value = giga_cpos_y_part2 }
+    change_variable = { which = giga_cpos_y_result1 value = event_target:giga_candle_1.giga_candle_y }
+
+    # x result 2
+    set_variable = { which = giga_cpos_x_result2 value = giga_cpos_x_part1 }
+    subtract_variable = { which = giga_cpos_x_result2 value = giga_cpos_x_part2 }
+    change_variable = { which = giga_cpos_x_result2 value = event_target:giga_candle_1.giga_candle_x }
+
+    # y result 2
+    set_variable = { which = giga_cpos_y_result2 value = giga_cpos_y_part1 }
+    change_variable = { which = giga_cpos_y_result2 value = giga_cpos_y_part2 }
+    change_variable = { which = giga_cpos_y_result2 value = event_target:giga_candle_1.giga_candle_y }
+}
