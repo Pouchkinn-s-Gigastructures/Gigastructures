@@ -42,6 +42,24 @@ giga_spawn_standard_candles = {
     clear_variable = giga_candle_max_distance
 }
 
+@test_angle = 64
+@test_distance = 233
+giga_spawn_standard_candle_test_system = {
+    no_scope = {
+        spawn_system = {
+            initializer = giga_interstellar_system
+
+            min_orientation_angle = @test_angle
+            max_orientation_angle = @test_angle
+
+            min_distance = @test_distance
+            max_distance = @test_distance
+
+            hyperlane = no
+        }
+    }
+}
+
 # Convert a rotation and distance to cartesian coordinates
 # rotation = variable name, angle in degrees, 0-360
 # distance = variable name, space distance units
@@ -160,7 +178,15 @@ giga_standard_candle_set_shared_variables = {
 
 # calculate coordinates for a system from standard candles
 giga_system_position_from_candles = {
-    # r1
+
+    # first, we need to calculate the two possible positions by getting the intersection points of the two circles
+    # described by the distances from the candles to the target system. One of these intersections will be where it is
+    # but we'll need to find them both for now and then compare which one has a distance to the core which matches best
+
+    #############################################################
+    # important variables
+
+    # r1 - distance from candle 1 to the system
     export_trigger_value_to_variable = {
         trigger = distance
         parameters = {
@@ -170,7 +196,7 @@ giga_system_position_from_candles = {
         variable = giga_cpos_r1
     }
 
-    # r2
+    # r2 - distance from candle 2 to the system
     export_trigger_value_to_variable = {
         trigger = distance
         parameters = {
@@ -180,37 +206,49 @@ giga_system_position_from_candles = {
         variable = giga_cpos_r2
     }
 
-    # l
+    # l - r1 squared minus r2 squared plus the square distance between candles divided by twice the distance between candles
     set_variable = { which = giga_cpos_l value = value:giga_system_position_from_candles_l }
 
-    # l/d
+    # l/d - l divided by the distance between candles
     set_variable = { which = giga_cpos_ld value = giga_cpos_l }
+    #multiply_variable = { which = giga_cpos_ld value = 10000 }
     divide_variable = { which = giga_cpos_ld value = event_target:giga_candle_1.giga_candle_distance_between }
 
-    # h
+    # h - square root of r1 squared minus l squared
     set_variable = { which = giga_cpos_h value = value:giga_system_position_from_candles_h }
 
-    # h/d
+    # h/d - h divided by the distance between candles
     set_variable = { which = giga_cpos_hd value = giga_cpos_h }
+    #multiply_variable = { which = giga_cpos_hd value = 10000 }
     divide_variable = { which = giga_cpos_hd value = event_target:giga_candle_1.giga_candle_distance_between }
+
+    #############################################################
+    # parts of the solutions
 
     # x coord part 1
     set_variable = { which = giga_cpos_x_part1 value = giga_cpos_ld}
     multiply_variable = { which = giga_cpos_x_part1 value = event_target:giga_candle_1.giga_candle_dx }
+    #divide_variable = { which = giga_cpos_x_part1 value = 10000}
 
     # y coord part 1
     set_variable = { which = giga_cpos_y_part1 value = giga_cpos_ld}
     multiply_variable = { which = giga_cpos_y_part1 value = event_target:giga_candle_1.giga_candle_dy }
+    #divide_variable = { which = giga_cpos_y_part1 value = 10000}
 
     # x coord part 2
     set_variable = { which = giga_cpos_x_part2 value = giga_cpos_hd }
     multiply_variable = { which = giga_cpos_x_part2 value = event_target:giga_candle_1.giga_candle_dy }
+    #divide_variable = { which = giga_cpos_x_part2 value = 10000}
     #change_variable = { which = giga_cpos_x_part2 value = event_target:giga_candle_1.giga_candle_x }
 
     # y coord part 2
     set_variable = { which = giga_cpos_y_part2 value = giga_cpos_hd }
     multiply_variable = { which = giga_cpos_y_part2 value = event_target:giga_candle_1.giga_candle_dx }
+    #divide_variable = { which = giga_cpos_y_part2 value = 10000}
     #change_variable = { which = giga_cpos_y_part2 value = event_target:giga_candle_1.giga_candle_y }
+
+    #############################################################
+    # assemble the solutions
 
     # x result 1
     set_variable = { which = giga_cpos_x_result1 value = giga_cpos_x_part1 }
@@ -231,4 +269,45 @@ giga_system_position_from_candles = {
     set_variable = { which = giga_cpos_y_result2 value = giga_cpos_y_part1 }
     change_variable = { which = giga_cpos_y_result2 value = giga_cpos_y_part2 }
     change_variable = { which = giga_cpos_y_result2 value = event_target:giga_candle_1.giga_candle_y }
+
+    #############################################################
+    # determine which is real
+
+    # now that we have the two candidate coordinate pairs, we need to find which one is correct by comparing
+    # the distance from those points to the core to the real system's distance to core. The one with the smallest
+    # difference should be the right one. As long as we made sure the two candles aren't co-linear through the core
+    # the distances should always be sufficiently different to each other to determine which solution is real.
+
+    # distances from results to the core
+    set_variable = { which = giga_cpos_result1_dist value = value:giga_candle_result_distance|x|giga_cpos_x_result1|y|giga_cpos_y_result1| }
+    set_variable = { which = giga_cpos_result2_dist value = value:giga_candle_result_distance|x|giga_cpos_x_result2|y|giga_cpos_y_result2| }
+
+    # distance from the system to the core
+    # this is done by finding what the core distance percentage is for one candle and using the core distance percentage
+    # of the system to work out what the real distance is. This avoids needing a third candle.
+    set_variable = { which = giga_cpos_distance value = event_target:giga_candle_1.giga_candle_distance }
+    divide_variable = { which = giga_cpos_distance value = event_target:giga_candle_1.trigger:distance_to_core_percent }
+    multiply_variable = { which = giga_cpos_distance value = trigger:distance_to_core_percent }
+
+    # get the differences and square them so they're positive
+    subtract_variable = { which = giga_cpos_result1_dist value = giga_cpos_distance }
+    multiply_variable = { which = giga_cpos_result1_dist value = giga_cpos_result1_dist }
+
+    subtract_variable = { which = giga_cpos_result2_dist value = giga_cpos_distance }
+    multiply_variable = { which = giga_cpos_result2_dist value = giga_cpos_result2_dist }
+
+    # the lower difference should be the correct result
+    if = {
+        limit = {
+            check_variable = { which = giga_cpos_result1_dist value < giga_cpos_result2_dist }
+        }
+        # solution 1 is correct
+        set_variable = { which = giga_cpos_x value = giga_cpos_x_result1 }
+        set_variable = { which = giga_cpos_y value = giga_cpos_y_result1 }
+    }
+    else = {
+        # solution 2 is correct
+        set_variable = { which = giga_cpos_x value = giga_cpos_x_result2 }
+        set_variable = { which = giga_cpos_y value = giga_cpos_y_result2 }
+    }
 }
