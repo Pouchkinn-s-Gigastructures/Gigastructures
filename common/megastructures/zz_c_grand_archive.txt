@@ -1,0 +1,109 @@
+# Grand Archive
+
+@entity_x				= -8
+@entity_y				= -8
+
+grand_archive_0 = {
+	entity = "grand_archive_entity"
+	construction_entity = "grand_archive_entity"
+	portrait = "GFX_megastructure_grand_archive_background"
+	place_entity_on_planet_plane = no
+	entity_offset = { x = @entity_x y = @entity_y }
+	is_grand_archive = yes
+	build_time = 1800
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 1000
+			mult = value:grand_archive_cost_mult
+		}
+
+		upkeep = {
+			energy = 10
+		}
+	}
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	construction_blocks_and_blocked_by = self_type
+	prerequisites = { "tech_galactic_archivism" }
+	show_prereqs = yes
+
+	potential = {
+		is_country_type = default
+		NOT = {
+			any_owned_megastructure = {
+				is_megastructure_type = grand_archive_0
+			}
+		}
+	}
+
+	possible = {
+		exists = starbase
+		custom_tooltip = {
+			fail_text = "requires_inside_border"
+			is_inside_border = from
+		}
+		custom_tooltip = {
+			fail_text = "requires_surveyed_system"
+			NOT = {
+				any_system_planet = {
+					is_surveyed = {
+						who = prev.from
+						status = no
+					}
+				}
+			}
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			is_colony = yes
+			num_pops >= 25
+		}
+	}
+
+	country_modifier = {
+		country_vivarium_max_capacity_add = @grand_archive_vivarium_capacity
+	}
+
+	# Root = System
+	# From = Country
+	ai_weight = {
+		factor = 5
+		modifier = {
+			factor = 3
+			from = {
+				acquired_specimen_count > 6
+			}
+		}
+		modifier = {
+			factor = 0
+			from = {
+				is_unfriendly = yes
+			}
+		}
+	}
+
+	on_build_start = {}
+	on_build_cancel = {}
+	on_build_complete = {
+		from = {
+			if = {
+				limit = { has_country_flag = grand_archive_destroyed }
+				remove_country_flag = grand_archive_destroyed
+				country_event = {
+					id = grand_archive.4580
+					scopes = { from = fromfrom.solar_system }
+				}
+			}
+		}
+		fromfrom.planet = {
+			set_planet_flag = has_megastructure
+		}
+	}
+}
