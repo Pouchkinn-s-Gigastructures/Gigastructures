@@ -1,0 +1,573 @@
+#Difficulty:
+#Barren --> 1x
+#Frozen --> 1.5x
+#Toxic --> 1.5x
+#Molten --> 2x
+#Shattered --> 3x
+
+terraform_site_0 = {
+	entity = "giga_consite_5_5_entity"
+	construction_entity = "giga_consite_5_5_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	#prerequisites = { giga_tech_terraform_molten }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	build_time = 1260
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			alloys = 2000
+			influence = 50
+			unity = @giga_kilo_unity_cost
+		}
+		upkeep = { energy = 5 }
+	}
+
+	potential = {
+		OR = {
+			has_technology = giga_tech_terraform_molten
+			has_technology = giga_tech_terraform_barren
+			has_technology = giga_tech_terraform_toxic
+		}
+		NOT = {
+			has_global_flag = geothermal_disabled
+			has_global_flag = terraform_barren_disabled
+			has_global_flag = terraform_toxic_disabled
+		}
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = {
+				fail_text = "requires_not_capped"
+				OR = {
+					AND = {
+						is_planet_class = pc_molten
+						from = {
+							OR = {
+								check_variable = { which = giga_geothermal_cap value = 0 }						# No Cap
+								check_variable = { which = giga_current_geothermal value < giga_geothermal_cap }
+							}
+						}
+					}
+					AND = {
+						is_planet_class = pc_toxic
+						from = {
+							OR = {
+								check_variable = { which = giga_terraform_toxic_cap value = 0 }						# No Cap
+								check_variable = { which = giga_current_terraform_toxic value < giga_terraform_toxic_cap }
+							}
+						}
+					}
+					AND = {
+						OR = {
+							is_planet_class = pc_barren
+							is_planet_class = pc_barren_cold
+							is_planet_class = pc_frozen
+						}
+						from = {
+							OR = {
+								check_variable = { which = giga_terraform_barren_cap value = 0 }						# No Cap
+								check_variable = { which = giga_current_terraform_barren value < giga_terraform_barren_cap }
+							}
+						}
+					}
+				}
+			}
+			custom_tooltip = {
+				fail_text = "planet_is_already_terraformable"
+				NOR = {
+					has_modifier = terraforming_candidate
+					has_modifier = toxic_terraforming_candidate
+					has_modifier = frozen_terraforming_candidate
+				}
+			}
+			custom_tooltip = { 
+				fail_text = "must_build_around_world_we_can_terraform"
+				OR = {
+					AND = {
+						is_planet_class = pc_molten
+						from = { has_technology = giga_tech_terraform_molten }
+					}
+					AND = {
+						is_planet_class = pc_barren_cold
+						from = { has_technology = giga_tech_terraform_barren }
+					}
+					AND = {
+						is_planet_class = pc_barren
+						from = { has_technology = giga_tech_terraform_barren }
+					}
+					AND = {
+						is_planet_class = pc_frozen
+						from = { has_technology = giga_tech_terraform_barren }
+					}
+					AND = {
+						is_planet_class = pc_toxic
+						from = { has_technology = giga_tech_terraform_toxic }
+					}
+				}
+			}
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+			custom_tooltip = { fail_text = "requires_not_asteroid"				is_asteroid = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+			custom_tooltip = {
+				fail_text = "requires_not_astral_scar"
+				is_astral_scar = no
+			}
+			custom_tooltip = {
+				fail_text = "requires_no_existing_megastructure"
+				NOT = { has_planet_flag = giga_terraforming_megastructure }
+			}
+		}
+	}
+
+	ai_weight = {
+		# weight = 300	# Default = 100
+
+		# # Can we afford the upkeep
+
+		# # Do we want the production
+
+		# # Is this system a good location?
+		# modifier = { factor = 0.50	any_neighbor_system = { exists = owner NOT = { owner = { is_same_value = from } } } }
+		# modifier = { factor = 3.00	fromfrom.planet = { planet_size >= 25 } }
+		# modifier = { factor = 2.00	fromfrom.planet = { planet_size < 25 planet_size >= 20 } }
+		# modifier = { factor = 1.50	fromfrom.planet = { planet_size < 20 planet_size >= 15 } }
+		# modifier = { factor = 0.00	fromfrom.planet = { planet_size < 15 } }
+
+		# # Do we lean towards this from federation/ethic/civic?
+		# modifier = {
+		# 	factor = 0
+		# 	from = {
+		# 		any_planet_within_border = {
+		# 			is_colonizable = yes
+		# 			planet_size > 15
+		# 		}
+		# 	}
+		# }
+
+		# # How many of this megastructure can the AI build?
+		# modifier = { factor = 0.00	from = { has_country_flag = has_recently_built_terraform_molten } }
+		# modifier = {
+		# 	factor = 0
+		# 	from = {
+		# 		OR = {
+		# 			has_megastructure = terraform_molten_0
+		# 			has_megastructure = terraform_molten_1
+		# 			has_megastructure = terraform_molten_2
+		# 			has_megastructure = terraform_molten_3
+		# 		}
+		# 	}
+		# }
+
+		weight = value:giga_ai_base_kilo
+
+		mult = value:giga_ai_planet_size
+		mult = value:giga_ai_prevent_spam|MEGA|terraform_molten|
+		mult = value:giga_ai_prevent_spam|MEGA|terraform_barren|
+		mult = value:giga_ai_prevent_spam|MEGA|terraform_toxic|
+		mult = value:giga_ai_build_low_priority
+		mult = value:giga_ai_unlock_low_priority
+		mult = value:giga_ai_overpopulation_boost
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = {
+			limit = { fromfrom.planet = { is_planet_class = pc_barren } }
+			fromfrom = { upgrade_megastructure_to = terraform_barren_0 finish_upgrade = yes }
+		}
+		if = {
+			limit = { fromfrom.planet = { is_planet_class = pc_barren_cold } }
+			fromfrom = { upgrade_megastructure_to = terraform_barren_0 finish_upgrade = yes }
+		}
+		if = {
+			limit = { fromfrom.planet = { is_planet_class = pc_frozen } }
+			fromfrom = { upgrade_megastructure_to = terraform_barren_0 finish_upgrade = yes }
+		}
+		else_if = {
+			limit = { fromfrom.planet = { is_planet_class = pc_toxic } }
+			fromfrom = { upgrade_megastructure_to = terraform_toxic_0 finish_upgrade = yes }
+		}
+		else_if = {
+			limit = { fromfrom.planet = { is_planet_class = pc_molten } }
+			fromfrom = { upgrade_megastructure_to = terraform_molten_0 finish_upgrade = yes }
+		}
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			giga_set_has_mega_flag = yes
+			set_planet_flag = giga_terraforming_megastructure
+			giga_save_lifeless_resources = yes
+		}
+	}
+}
+
+
+#Geothermal Stabilizer (Molten)
+terraform_molten_0 = {
+	entity = "giga_consite_5_5_entity"
+	construction_entity = "giga_consite_5_5_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	upgrade_from = { terraform_site_0 }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	potential = { always = no }
+	possible = { always = no }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		from = {
+			country_event = { id = giga_dialog.4001 }
+			change_variable = { which = giga_current_geothermal value = 1 }
+		}
+	}
+}
+
+terraform_molten_1 = {
+	entity = "geothermal_stabilizer_2_entity"
+	construction_entity = "geothermal_stabilizer_2_construction_entity"
+	portrait = "GFX_megastructure_molten_world"
+	upgrade_from = { terraform_molten_0 }
+	scales_with_planet = yes
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	build_time = @terraform_molten_time
+	resources = {
+		category = giga_kilostructures
+		cost = { alloys = @terraform_molten_cost unity = @giga_kilo_unity_cost }
+		upkeep = {
+			alloys = 20
+			energy = @terraform_molten_ec_upkeep_idle
+		}
+		upkeep = {
+			trigger = { planet = { is_terraforming = yes } }
+			energy = @terraform_molten_ec_upkeep
+		}
+	}
+
+	potential = { NOT = { has_global_flag = geothermal_disabled } }
+	possible = { from = { has_technology = giga_tech_terraform_molten } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = {
+			limit = { exists = fromfrom.planet }
+			fromfrom.planet = {
+				add_modifier = { modifier = megastructure_terraforming_candidate days = -1 }
+				save_event_target_as = giga_planet
+				if = {
+					limit = { root.from = { is_ai = yes } }
+					start_terraform_process = pc_ll_torrid
+				}
+			}
+		}
+		from = { country_event = { id = giga_dialog.4002 } }	# Notification
+	}
+}
+
+#Atmospheric Purifier (Toxic)
+terraform_toxic_0 = {
+	entity = "giga_consite_5_5_entity"
+	construction_entity = "giga_consite_5_5_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	upgrade_from = { terraform_site_0 }
+	
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	potential = { always = no }
+	possible = { always = no }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		from = {
+			change_variable = { which = giga_current_terraform_toxic value = 1 }
+			country_event = { id = giga_dialog.3901 }
+		}	# Notification
+	}
+}
+
+terraform_toxic_1 = {
+	entity = "atmo_purifier_rings_entity"
+	construction_entity = "atmo_purifier_just_poles_entity"
+	portrait = "GFX_megastructure_toxic_world"
+	upgrade_from = { terraform_toxic_0 }
+	scales_with_planet = yes
+	
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	build_time = @terraform_toxic_time
+	resources = {
+		category = megastructures
+		cost = { alloys = @terraform_toxic_cost unity = @giga_kilo_unity_cost }
+		upkeep = {
+			alloys = 20
+			energy = @terraform_toxic_ec_upkeep_idle
+		}
+		upkeep = {
+			trigger = { planet = { is_terraforming = yes } }
+			energy = @terraform_toxic_ec_upkeep
+		}
+	}
+
+	potential = { NOT = { has_global_flag = terraform_toxic_disabled } }
+	possible = { from = { has_technology = giga_tech_terraform_toxic } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = {
+			limit = { exists = fromfrom.planet }
+			fromfrom.planet = {
+				add_modifier = { modifier = megastructure_terraforming_candidate days = -1 }
+				save_event_target_as = giga_planet
+				if = {
+					limit = { root.from = { is_ai = yes } }
+					start_terraform_process = pc_ll_foggy
+				}
+			}
+		}
+		from = { country_event = { id = giga_dialog.3902 } }	# Notification
+	}
+}
+
+# #Glacial Dissolution Array (Frozen)
+# terraform_frozen_0 = {
+# 	entity = "giga_consite_5_5_entity"
+# 	construction_entity = "giga_consite_5_5_entity"
+# 	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+# 	portrait = "GFX_megastructure_construction_background"
+# 	place_entity_on_planet_plane = no
+# 	upgrade_from = { terraform_site_0 }
+
+# 	outliner_trigger = {
+# 		exists = owner
+# 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+# 	}
+
+# 	potential = { always = no }
+# 	possible = { always = no }
+
+# 	on_build_complete = {
+# 		save_event_target_as = giga_system
+# 		from = { country_event = { id = giga_dialog.3901 } }	# Notification
+# 	}
+# }
+
+# terraform_frozen_1 = {
+# 	entity = "atmo_purifier_rings_entity"
+# 	construction_entity = "atmo_purifier_just_poles_entity"
+# 	portrait = "GFX_megastructure_toxic_world"
+# 	upgrade_from = { terraform_frozen_0 }
+
+# 	outliner_trigger = {
+# 		exists = owner
+# 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+# 	}
+	
+# 	build_time = @terraform_frozen_time
+# 	resources = {
+# 		category = megastructures
+# 		cost = { alloys = @terraform_frozen_cost unity = @giga_kilo_unity_cost }
+# 		upkeep = {
+# 			alloys = 20
+# 			energy = @terraform_frozen_ec_upkeep_idle
+# 		}
+# 		upkeep = {
+# 			trigger = { fromfrom.planet = { is_terraforming = yes } }
+# 			energy = @terraform_frozen_ec_upkeep
+# 		}
+# 	}
+
+# 	potential = { NOT = { has_global_flag = terraform_frozen_disabled } }
+# 	possible = { from = { has_technology = giga_tech_terraform_frozen } }
+
+# 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+# 	on_build_complete = {
+# 		save_event_target_as = giga_system
+# 		if = {
+# 			limit = { exists = fromfrom.planet }
+# 			fromfrom.planet = {
+# 				add_modifier = { modifier = megastructure_terraforming_candidate days = -1 }
+# 				save_event_target_as = giga_planet
+# 				if = {
+# 					limit = { root.from = { is_ai = yes } }
+# 					start_terraform_process = pc_melted_frozen
+# 				}
+# 			}
+# 		}
+# 		from = { country_event = { id = giga_dialog.3902 } }	# Notification
+# 	}
+# }
+
+#Dynamic Core Ignitor (Barren)
+terraform_barren_0 = {
+	entity = "giga_consite_5_5_entity"
+	construction_entity = "giga_consite_5_5_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	upgrade_from = { terraform_site_0 }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	potential = { always = no }
+	possible = { always = no }
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		from = {
+			change_variable = { which = giga_current_terraform_barren value = 1 }
+			country_event = { id = giga_dialog.3801 }
+		}	# Notification
+	}
+}
+
+terraform_barren_1 = {
+	entity = "terraform_barren_2_entity"
+	construction_entity = "terraform_barren_2_construction_entity"
+	portrait = "GFX_megastructure_barren"
+	upgrade_from = { terraform_barren_0 }
+	scales_with_planet = yes
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	build_time = @terraform_barren_time
+	resources = {
+		category = giga_kilostructures
+		cost = { alloys = @terraform_barren_cost unity = @giga_kilo_unity_cost }
+		upkeep = {
+			trigger = { planet = { NOT = { has_planet_flag = potradus } } }
+			alloys = 20
+			energy = @terraform_barren_ec_upkeep_idle
+		}
+		upkeep = {
+			trigger = { planet = { is_terraforming = yes } }
+			energy = @terraform_barren_ec_upkeep
+		}
+	}
+
+	potential = { NOT = { has_global_flag = terraform_barren_disabled } }
+	possible = { from = { has_technology = giga_tech_terraform_barren } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = {
+			limit = { exists = fromfrom.planet }
+			fromfrom.planet = {
+				add_modifier = { modifier = megastructure_terraforming_candidate days = -1 }
+				save_event_target_as = giga_planet
+				if = {
+					limit = { root.from = { is_ai = yes } }
+					start_terraform_process = pc_ll_temperate
+				}
+			}
+		}
+		from = { country_event = { id = giga_dialog.3802 } }	# Notification
+	}
+}
+
+# # Ruined
+# terraform_barren_2_disabled = {
+# 	entity = "terraform_barren_2_entity"
+# 	construction_entity = "terraform_barren_2_construction_entity"
+# 	portrait = "GFX_megastructure_barren"
+# 	potential = { always = no }
+# 	resources = { category = giga_kilostructures }
+# 	outliner_trigger = {
+# 		exists = owner
+# 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+# 	}
+	
+# }
+
+# terraform_barren_3_restored = {
+# 	entity = ""
+# 	portrait = "GFX_megastructure_barren"
+# 	upgrade_from = { terraform_barren_2_disabled }
+
+# 	build_time = 3600
+# 	resources = {
+# 		category = giga_terraforming_by_megas
+# 		cost = { energy = 7500 }
+# 	}
+
+# 	potential = { NOT = { has_global_flag = terraform_barren_disabled } }
+# 	possible = {
+# 		exists = from
+# 		from = { has_technology = giga_tech_terraform_barren }
+# 	}
+
+# 	ai_weight = { factor = value:giga_ai_base_repairs } # If we can build it, we will build it
+# 	on_build_complete = {
+# 		save_event_target_as = giga_system
+# 		from = {
+# 			country_event = { id = giga_dialog.3804 }	# Notification
+# 			if = {
+# 				limit = {
+# 					NOR = {
+# 						has_global_flag = giga_achievements_disabled
+# 						has_country_flag = giga_achievement_59
+# 					}
+# 				}
+# 				set_country_flag = giga_achievement_59
+# 				set_timed_country_flag = { flag = giga_achievement_59_notification days = 30 }
+# 				giga_achievement_sound = yes
+# 			}
+# 		}
+# 		event_target:potradus = {
+# 			save_event_target_as = giga_planet
+# 			remove_planet_flag = giga_terraforming_megastructure
+# 			giga_clear_has_mega_flag = yes
+# 			change_pc = pc_ll_temperate
+# 			add_modifier = { modifier = lifeless_temperate }
+# 			giga_reroll_lifeless = yes
+# 			set_planet_flag = used_to_be_barren
+# 			fire_on_action = {
+# 				on_action = on_terraforming_complete
+# 				scopes = { from = from }
+# 			}
+
+# 			planet_event = { id = giga_mega.1000 } # apply locale modifiers
+# 		}
+# 		remove_megastructure = fromfrom
+# 	}
+# }

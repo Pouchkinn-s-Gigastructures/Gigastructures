@@ -117,12 +117,20 @@ country_event = {
 						# 	type = orbital_arcology_1
 						# 	planet = PREV
 						# }
-						spawn_megastructure = {
-							type = giga_titan_ruined
-							planet = PREV
-							orbit_distance = 40
-							orbit_angle = 180
-							graphical_culture = reptilian_01
+						if = {
+							limit = {
+								NOR = {
+									has_global_flag = giga_wrecked_ships_titan_disabled
+									has_global_flag = giga_wrecked_ships_disabled
+								}
+							}
+							spawn_megastructure = {
+								type = giga_titan_ruined
+								planet = PREV
+								orbit_distance = 40
+								orbit_angle = 180
+								graphical_culture = reptilian_01
+							}
 						}
 					}
 				}
@@ -432,7 +440,15 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		NOT = { has_global_flag = giga_wrecked_ships_disabled }
+		NOT = { 
+			has_global_flag = giga_wrecked_ships_disabled 
+		}
+		NAND = {
+			has_global_flag = giga_wrecked_ships_battle_disabled
+			has_global_flag = giga_wrecked_ships_titan_disabled
+			has_global_flag = giga_wrecked_ships_juggs_disabled
+			has_global_flag = giga_wrecked_ships_colossi_disabled
+		}
 	}
 
 	immediate = {
@@ -441,29 +457,86 @@ country_event = {
 				which = giga_ruined_warships_frequency
 				value = giga_ruined_warships_perc
 			}
+			set_variable = {
+				which = giga_ruined_warships_frequency_juggs
+				value = giga_ruined_warships_perc_juggs
+			}
+			set_variable = {
+				which = giga_ruined_warships_frequency_colossi
+				value = giga_ruined_warships_perc_colossi
+			}
+			set_variable = {
+				which = giga_ruined_warships_frequency_titan
+				value = giga_ruined_warships_perc_titan
+			}
+			set_variable = {
+				which = giga_ruined_warships_frequency_battle
+				value = giga_ruined_warships_perc_battle
+			}
 			divide_variable = {
 				which = giga_ruined_warships_frequency
 				value = 100
 			}
+			divide_variable = {
+				which = giga_ruined_warships_frequency_juggs
+				value = 100
+			}
+			divide_variable = {
+				which = giga_ruined_warships_frequency_colossi
+				value = 100
+			}
+			divide_variable = {
+				which = giga_ruined_warships_frequency_titan
+				value = 100
+			}
+			divide_variable = {
+				which = giga_ruined_warships_frequency_battle
+				value = 100
+			}
 			round_variable = giga_ruined_warships_frequency
+			round_variable = giga_ruined_warships_frequency_juggs
+			round_variable = giga_ruined_warships_frequency_colossi
+			round_variable = giga_ruined_warships_frequency_titan
+			round_variable = giga_ruined_warships_frequency_battle
 		}
 
 		#Battleships
-		event_target:global_event_country = {
-			multiply_variable = { #Add multiplier
-				which = giga_wrecked_battleship_count
-				value = giga_ruined_warships_frequency
+		if = {
+			limit = {
+				NOT = {
+					has_global_flag = giga_wrecked_ships_battle_disabled
+				}
 			}
-			country_event = { id = giga_wrecked_ships.1001 }
+			event_target:global_event_country = {
+				multiply_variable = { #Add multiplier
+					which = giga_wrecked_battleship_count
+					value = giga_ruined_warships_frequency
+				}
+				multiply_variable = { # multiply again by type multiplier
+					which = giga_wrecked_battleship_count
+					value = giga_ruined_warships_frequency_battle
+				}
+				country_event = { id = giga_wrecked_ships.1001 }
+			}
 		}
+
 
 		#Titans
 		if = {
-			limit = { host_has_dlc = "Apocalypse" }
+			limit = { 
+				host_has_dlc = "Apocalypse" 
+				NOT = {
+					has_global_flag = giga_wrecked_ships_titan_disabled
+				}
+			}
 			event_target:global_event_country = {
 				multiply_variable = { #Add multiplier
 					which = giga_wrecked_titan_count
 					value = giga_ruined_warships_frequency
+				}
+				multiply_variable = { # multiply again by type multiplier
+					which = giga_wrecked_titan_count
+					value = giga_ruined_warships_frequency_titan
 				}
 				country_event = { id = giga_wrecked_ships.1002 }
 			}
@@ -471,11 +544,20 @@ country_event = {
 
 		#Juggernaut
 		if = {
-			limit = { host_has_dlc = "Federations" }
+			limit = { 
+				host_has_dlc = "Federations" 
+				NOT = {
+					has_global_flag = giga_wrecked_ships_juggs_disabled
+				}
+			}
 			event_target:global_event_country = {
 				multiply_variable = { #Add multiplier
 					which = giga_wrecked_juggernaut_count
 					value = giga_ruined_warships_frequency
+				}
+				multiply_variable = { # multiply again by type multiplier
+					which = giga_wrecked_juggernaut_count
+					value = giga_ruined_warships_frequency_juggs
 				}
 				country_event = { id = giga_wrecked_ships.1003 }
 			}
@@ -483,11 +565,20 @@ country_event = {
 
 		#Colossus
 		if = {
-			limit = { host_has_dlc = "Apocalypse" }
+			limit = { 
+				host_has_dlc = "Apocalypse" 
+				NOT = {
+					has_global_flag = giga_wrecked_ships_colossi_disabled
+				}
+			}
 			event_target:global_event_country = {
 				multiply_variable = { #Add multiplier
 					which = giga_wrecked_colossus_count
 					value = giga_ruined_warships_frequency
+				}
+				multiply_variable = { # multiply again by type multiplier
+					which = giga_wrecked_colossus_count
+					value = giga_ruined_warships_frequency_colossi
 				}
 				country_event = { id = giga_wrecked_ships.1004 }
 			}
@@ -541,70 +632,81 @@ country_event = {
 	hide_window = yes
 	is_triggered_only = yes
 
-	immediate = {
-		if = {
-			limit = {
-				check_variable = {
-					which = giga_wrecked_battleship_count
-					value > 0
-				}
-			}
-			subtract_variable = {
-				which = giga_wrecked_battleship_count
-				value = 1
-			}
-			random = {
-				chance = 20
-				subtract_variable = {
-					which = giga_wrecked_battleship_count
-					value = 1
-				}
-			}
-			country_event = { id = giga_wrecked_ships.1001 }
+	trigger = {
+		any_galaxy_planet = {
+			giga_valid_planet_wrecked_ship_small = yes
+		}
+		check_variable = {
+			which = giga_wrecked_battleship_count
+			value > 0
+		}
+		days_passed < 90
+	}
 
-			random_galaxy_planet = {
-				limit = {
-					giga_valid_planet_wrecked_ship = yes
+	immediate = { # It has to be done in an effect to have optimized memory so it doesn't delete a players game with a high enough count lol
+		every_system = {
+			limit = {
+				any_system_planet = {
+					giga_valid_planet_wrecked_ship_small = yes
 				}
-				set_planet_flag = has_giga_wrecked_ship
-				solar_system = {
+			}
+			random_system_planet = {
+				limit = {
+					giga_valid_planet_wrecked_ship_small = yes
+				}
+				if = {
+					limit = {
+						event_target:global_event_country = {
+							check_variable = {
+								which = giga_wrecked_battleship_count
+								value > 0
+							}
+						}
+					}
 					random_list = {
-						1 = {
-							spawn_megastructure = {
-								type = giga_battleship_ruined
-								planet = PREV
-								orbit_distance = 25
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = mammalian_01
-								#owner = space_owner
+						1 = {	
+							while = {
+								count = 5
+								giga_spawn_new_wrecked_battleship = yes
+							}
+							event_target:global_event_country = {
+								subtract_variable = {
+									which = giga_wrecked_battleship_count
+									value = 5
+								}
 							}
 						}
-						1 = {
-							spawn_megastructure = {
-								type = giga_battleship_ruined
-								planet = PREV
-								orbit_distance = 25
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = reptilian_01
-								#owner = space_owner
+						2 = {	
+							while = {
+								count = 3
+								giga_spawn_new_wrecked_battleship = yes
+							}
+							event_target:global_event_country = {
+								subtract_variable = {
+									which = giga_wrecked_battleship_count
+									value = 3
+								}
 							}
 						}
-						1 = {
-							spawn_megastructure = {
-								type = giga_battleship_ruined
-								planet = PREV
-								orbit_distance = 25
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = avian_01
-								#owner = space_owner
+						12 = {	
+							while = {
+								count = 1
+								giga_spawn_new_wrecked_battleship = yes
+							}
+							event_target:global_event_country = {
+								subtract_variable = {
+									which = giga_wrecked_battleship_count
+									value = 1
+								}
 							}
 						}
 					}
 				}
 			}
+		}
+		country_event = {
+			id = giga_wrecked_ships.1001
+			days = 1
 		}
 	}
 }
@@ -615,69 +717,53 @@ country_event = {
 	hide_window = yes
 	is_triggered_only = yes
 
+	trigger = {
+		any_galaxy_planet = {
+			giga_valid_planet_wrecked_ship_small = yes
+		}
+		check_variable = {
+			which = giga_wrecked_titan_count
+			value > 0
+		}
+		days_passed < 90
+	}
+
 	immediate = {
-		if = {
+		every_system = {
 			limit = {
-				check_variable = {
-					which = giga_wrecked_titan_count
-					value > 0
+				any_system_planet = {
+					giga_valid_planet_wrecked_ship_small = yes
 				}
 			}
-			subtract_variable = {
-				which = giga_wrecked_titan_count
-				value = 1
-			}
-			random = {
-				chance = 20
-				subtract_variable = {
-					which = giga_wrecked_titan_count
-					value = 1
-				}
-			}
-			country_event = { id = giga_wrecked_ships.1002 }
-			random_galaxy_planet = {
+			random_system_planet = {
 				limit = {
-					giga_valid_planet_wrecked_ship = yes
+					giga_valid_planet_wrecked_ship_small = yes
 				}
-				set_planet_flag = has_giga_wrecked_ship
-				solar_system = {
-					random_list = {
-						1 = {
-							spawn_megastructure = {
-								type = giga_titan_ruined
-								planet = PREV
-								orbit_distance = 25
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = mammalian_01
-								#owner = space_owner
+				if = {
+					limit = {
+						event_target:global_event_country = {
+							check_variable = {
+								which = giga_wrecked_titan_count
+								value > 0
 							}
 						}
-						1 = {
-							spawn_megastructure = {
-								type = giga_titan_ruined
-								planet = PREV
-								orbit_distance = 25
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = reptilian_01
-								#owner = space_owner
-							}
-						}
-						1 = {
-							spawn_megastructure = {
-								type = giga_titan_ruined
-								planet = PREV
-								orbit_distance = 25
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = molluscoid_01
-								#owner = space_owner
-							}
+					}
+					while = {
+						count = 3
+						giga_spawn_new_wrecked_titan = yes
+					}
+					event_target:global_event_country = {
+						subtract_variable = {
+							which = giga_wrecked_titan_count
+							value = 3
 						}
 					}
 				}
 			}
+		}
+		country_event = {
+			id = giga_wrecked_ships.1002
+			days = 1
 		}
 	}
 }
@@ -688,102 +774,50 @@ country_event = {
 	hide_window = yes
 	is_triggered_only = yes
 
+	trigger = {
+		any_galaxy_planet = {
+			giga_valid_planet_wrecked_ship = yes
+		}
+		check_variable = {
+			which = giga_wrecked_juggernaut_count
+			value > 0
+		}
+		days_passed < 30
+	}
+
 	immediate = {
-		if = {
+		every_system = {
 			limit = {
-				check_variable = {
-					which = giga_wrecked_juggernaut_count
-					value > 0
+				any_system_planet = {
+					giga_valid_planet_wrecked_ship = yes
 				}
 			}
-			subtract_variable = {
-				which = giga_wrecked_juggernaut_count
-				value = 1
-			}
-			random = {
-				chance = 20
-				subtract_variable = {
-					which = giga_wrecked_juggernaut_count
-					value = 1
-				}
-			}
-			country_event = { id = giga_wrecked_ships.1003 }
-			random_galaxy_planet = {
+			random_system_planet = {
 				limit = {
 					giga_valid_planet_wrecked_ship = yes
 				}
-				set_planet_flag = has_giga_wrecked_ship
-				solar_system = {
-					random_list = {
-						1 = {
-							spawn_megastructure = {
-								type = giga_juggernaut_ruined
-								planet = PREV
-								orbit_distance = 25
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = molluscoid_01
-								#owner = space_owner
+				if = {
+					limit = {
+						event_target:global_event_country = {
+							check_variable = {
+								which = giga_wrecked_juggernaut_count
+								value > 0
 							}
 						}
-						1 = {
-							spawn_megastructure = {
-								type = giga_juggernaut_ruined
-								planet = PREV
-								orbit_distance = 25
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = reptilian_01
-								#owner = space_owner
-							}
-						}
-						1 = {
-							spawn_megastructure = {
-								type = giga_juggernaut_ruined
-								planet = PREV
-								orbit_distance = 25
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = fungoid_01
-								#owner = space_owner
-							}
-						}
-						1 = {
-							spawn_megastructure = {
-								type = giga_juggernaut_ruined
-								planet = PREV
-								orbit_distance = 25
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = avian_01
-								#owner = space_owner
-							}
-						}
-						1 = {
-							spawn_megastructure = {
-								type = giga_juggernaut_ruined
-								planet = PREV
-								orbit_distance = 25
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = arthropoid_01
-								#owner = space_owner
-							}
-						}
-						1 = {
-							spawn_megastructure = {
-								type = giga_juggernaut_ruined
-								planet = PREV
-								orbit_distance = 25
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = mammalian_01
-								#owner = space_owner
-							}
+					}
+					giga_spawn_new_wrecked_juggernaut = yes
+					event_target:global_event_country = {
+						subtract_variable = {
+							which = giga_wrecked_juggernaut_count
+							value = 1
 						}
 					}
 				}
 			}
+		}
+		country_event = { # Juggernauts and colossi fight for space so they need to alternate
+			id = giga_wrecked_ships.1003
+			days = 1 
 		}
 	}
 }
@@ -794,27 +828,39 @@ country_event = {
 	hide_window = yes
 	is_triggered_only = yes
 
+	trigger = {
+		any_galaxy_planet = {
+			is_colony = no
+			is_artificial = no
+			OR = {
+				giga_is_barren_cn = yes
+				giga_is_toxic = yes
+				giga_is_frozen = yes 
+				giga_is_molten = yes
+			}
+			giga_valid_planet_wrecked_ship = yes
+		}
+		check_variable = {
+			which = giga_wrecked_colossus_count
+			value > 0
+		}
+	}
 	immediate = {
-		if = {
+		every_system = {
 			limit = {
-				check_variable = {
-					which = giga_wrecked_colossus_count
-					value > 0
+				any_system_planet = {
+					is_colony = no
+					is_artificial = no
+					OR = {
+						giga_is_barren_cn = yes
+						giga_is_toxic = yes
+						giga_is_frozen = yes 
+						giga_is_molten = yes
+					}
+					giga_valid_planet_wrecked_ship = yes
 				}
 			}
-			subtract_variable = {
-				which = giga_wrecked_colossus_count
-				value = 1
-			}
-			random = {
-				chance = 20
-				subtract_variable = {
-					which = giga_wrecked_colossus_count
-					value = 1
-				}
-			}
-			country_event = { id = giga_wrecked_ships.1004 }
-			random_galaxy_planet = {
+			random_system_planet = {
 				limit = {
 					is_colony = no
 					is_artificial = no
@@ -826,47 +872,28 @@ country_event = {
 					}
 					giga_valid_planet_wrecked_ship = yes
 				}
-				set_planet_flag = has_giga_wrecked_ship
-				change_pc = pc_shattered
-				solar_system = {
-					#set_name = "Colossus"
-					random_list = {
-						1 = {
-							spawn_megastructure = {
-								type = giga_colossus_ruined
-								planet = PREV
-								orbit_distance = 1
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = fungoid_01
-								#owner = space_owner
+				if = {
+					limit = {
+						event_target:global_event_country = {
+							check_variable = {
+								which = giga_wrecked_colossus_count
+								value > 0
 							}
 						}
-						1 = {
-							spawn_megastructure = {
-								type = giga_colossus_ruined
-								planet = PREV
-								orbit_distance = 1
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = arthropoid_01
-								#owner = space_owner
-							}
-						}
-						1 = {
-							spawn_megastructure = {
-								type = giga_colossus_ruined
-								planet = PREV
-								orbit_distance = 1
-								random_pos = yes
-								orbit_angle = 360
-								graphical_culture = molluscoid_01
-								#owner = space_owner
-							}
+					}
+					giga_spawn_new_wrecked_colosus = yes
+					event_target:global_event_country = {
+						subtract_variable = {
+							which = giga_wrecked_colossus_count
+							value = 1
 						}
 					}
 				}
 			}
+		}
+		country_event = { # Juggernauts and colossi fight for space so they need to alternate
+			id = giga_wrecked_ships.1004
+			days = 1
 		}
 	}
 }
