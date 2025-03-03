@@ -1,0 +1,261 @@
+crystal_megabore_0 = {
+	entity = "giga_consite_5_5_entity"
+	construction_entity = "giga_consite_5_5_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_crystal_megabore }
+	construction_blocks_and_blocked_by = none
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	build_time = 2000
+	resources = {
+		category = giga_crystal_megabore
+		cost = {
+			alloys = 5000
+			unity = @giga_small_mega_unity_cost
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|alloys|AMOUNT|5000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|unity|AMOUNT|@giga_small_mega_unity_cost| }
+		upkeep = { energy = 5 }
+	}
+
+	on_build_start = {
+		from = {
+			set_country_flag = is_currently_building_crystal_megabore
+		}
+		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = alloys AMOUNT = 5000 }
+		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = unity  AMOUNT = @giga_small_mega_unity_cost }
+	}
+	on_build_cancel = {
+		from = {
+			remove_country_flag = is_currently_building_crystal_megabore
+		}
+		giga_ai_savings_refund = { CATEGORY = resource RESOURCE = alloys }
+		giga_ai_savings_refund = { CATEGORY = resource RESOURCE = unity }
+	}
+
+	potential = {
+		has_technology = giga_tech_crystal_megabore
+		NOT = { has_global_flag = crystal_disabled }
+		OR = {
+			has_global_flag = crystal_capped_u
+			check_variable = {
+				which = giga_current_crystal
+				value <= value:giga_crystal_limit
+			}
+		}
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					has_global_flag = crystal_capped_u
+					check_variable = {
+						which = giga_current_crystal
+						value <= value:giga_crystal_limit
+					}
+				}
+			}
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_larger_planet"				planet_size >= 6 }
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = {
+				fail_text = "must_build_around_frozen"
+				giga_is_frozen = yes
+			}
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+			custom_tooltip = { fail_text = "requires_not_asteroid"				is_asteroid = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+			custom_tooltip = {
+				fail_text = "requires_not_astral_scar"
+				is_astral_scar = no
+			}
+		}
+	}
+
+	ai_weight = {
+		weight = value:giga_ai_base_mega
+
+		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|40|MIN|0.25|
+		mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|7.5|MIN|0.5|
+		mult = value:giga_ai_output|RESOURCE|minerals|AMOUNT|100|MIN|0.75|
+		mult = value:giga_ai_output|RESOURCE|rare_crystals|AMOUNT|100|MIN|0.2|
+		mult = value:giga_ai_prevent_spam|MEGA|crystal_megabore|
+		mult = value:giga_ai_weight_savings|CATEGORY|resource|RESOURCE|alloys|AMOUNT|10000|
+		mult = value:giga_ai_core_territory
+		mult = value:giga_ai_unlock_low_priority
+		mult = value:giga_ai_build_low_priority
+		mult = value:giga_ai_cap_availability_boost
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_crystal_megabore years = 20 }
+			remove_country_flag = is_currently_building_crystal_megabore
+			country_event = { id = giga_dialog.3501 }	# Notification
+			change_variable = { which = giga_current_crystal value = 1 }
+		}
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			giga_set_has_mega_flag = yes
+		}
+	}
+}
+
+# crystal_megabore_1 = {
+# 	entity = "crystal_megabore_1_entity"
+# 	construction_entity = "crystal_megabore_1_entity"
+# 	portrait = "GFX_megastructure_molten_world"
+# 	place_entity_on_planet_plane = no
+# 	upgrade_from = { crystal_megabore_0 }
+
+# 	outliner_trigger = {
+# 		exists = owner
+# 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+# 	}
+	
+# 	build_time = 1800
+# 	resources = {
+# 		category = giga_megastructures
+# 		cost = { alloys = 2000 unity = @giga_small_mega_unity_cost }
+# 		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|alloys|AMOUNT|2000| }
+# 		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|unity|AMOUNT|@giga_small_mega_unity_cost| }
+# 		upkeep = {
+# 			energy = 25 
+# 			alloys = 5
+# 		}
+# 	}
+
+# 	on_build_start = {
+# 		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = alloys AMOUNT = 2000 }
+# 		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = unity  AMOUNT = @giga_small_mega_unity_cost }
+# 	}
+
+# 	potential = { NOT = { has_global_flag = crystal_disabled } }
+# 	possible = { from = { has_technology = giga_tech_crystal_megabore } }
+
+# 	ai_weight = { factor = 10 } # If we can build it, we will build it
+# 	on_build_complete = {
+# 		save_event_target_as = giga_system
+# 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+# 		from = { country_event = { id = giga_dialog.3502 } }	# Notification
+# 	}
+# }
+
+# crystal_megabore_2 = {
+# 	entity = "crystal_megabore_2_entity"
+# 	construction_entity = "crystal_megabore_2_construction_entity"
+# 	portrait = "GFX_megastructure_molten_world"
+# 	place_entity_on_planet_plane = no
+# 	upgrade_from = { crystal_megabore_1 }
+
+# 	outliner_trigger = {
+# 		exists = owner
+# 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+# 	}
+	
+# 	build_time = 1800
+# 	resources = {
+# 		category = giga_megastructures
+# 		cost = { alloys = 2000 unity = @giga_small_mega_unity_cost }
+# 		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|alloys|AMOUNT|2000| }
+# 		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|unity|AMOUNT|@giga_small_mega_unity_cost| }
+# 		upkeep = {
+# 			energy = 30
+# 			alloys = 6
+# 		}
+# 	}
+
+# 	on_build_start = {
+# 		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = alloys AMOUNT = 2000 }
+# 		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = unity  AMOUNT = @giga_small_mega_unity_cost }
+# 	}
+
+# 	potential = { NOT = { has_global_flag = crystal_disabled } }
+# 	possible = { from = { has_technology = giga_tech_crystal_megabore } }
+
+# 	ai_weight = { factor = 10 } # If we can build it, we will build it
+# 	on_build_complete = {
+# 		save_event_target_as = giga_system
+# 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+# 		from = { country_event = { id = giga_dialog.3503 } }	# Notification
+# 	}
+# }
+
+crystal_megabore_1 = {
+	entity = "crystal_megabore_3_entity"
+	construction_entity = "crystal_megabore_3_construction_entity"
+	portrait = "GFX_megastructure_frozen_world"
+	place_entity_on_planet_plane = no
+	upgrade_from = { crystal_megabore_0 }
+	construction_blocks_and_blocked_by = none
+	show_in_outliner = no
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	build_time = 3600
+	resources = {
+		category = giga_kilostructures
+		cost = { alloys = 7500 unity = @giga_small_mega_unity_cost }
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|alloys|AMOUNT|1500| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|unity|AMOUNT|@giga_small_mega_unity_cost| }
+		upkeep = { energy = 75 alloys = 25 }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = alloys AMOUNT = 1500 }
+		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = unity  AMOUNT = @giga_small_mega_unity_cost }
+	}
+
+	use_planet_resource = yes
+
+	potential = { NOT = { has_global_flag = crystal_disabled } }
+	possible = { from = { has_technology = giga_tech_crystal_megabore } }
+
+	ai_weight = { factor = 10 } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom.planet = {
+			save_event_target_as = giga_planet
+			change_pc = pc_melted_frozen
+			add_deposit = d_rare_crystals_3
+			add_modifier = {
+				modifier = megabore_mod
+				days = -1
+			}
+			set_planet_flag = has_crystal_megabore
+		}
+		from = {
+			country_event = { id = giga_dialog.3504 }	# Notification
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_62
+					}
+				}
+				set_country_flag = giga_achievement_62
+				set_timed_country_flag = { flag = giga_achievement_62_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+	}
+}
