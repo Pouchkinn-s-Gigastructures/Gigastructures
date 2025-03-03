@@ -99,34 +99,6 @@ dyson_swarm_1 = {
 			}
 		}
 		custom_tooltip = {
-			fail_text = "requires_no_binary_trinary"
-			NOR = {
-				is_star_class = sc_binary_1
-				is_star_class = sc_binary_2
-				is_star_class = sc_binary_3
-				is_star_class = sc_binary_4
-				is_star_class = sc_binary_5
-				is_star_class = sc_binary_6
-				is_star_class = sc_binary_7
-				is_star_class = sc_binary_8
-				is_star_class = sc_binary_9
-				is_star_class = sc_binary_10
-				is_star_class = sc_trinary_1
-				is_star_class = sc_trinary_2
-				is_star_class = sc_trinary_3
-				is_star_class = sc_trinary_4
-			}
-		}
-
-		custom_tooltip = {
-			fail_text = "requires_no_black_hole_neutron_star_pulsar"
-			NOT = {
-				is_star_class = sc_black_hole
-				is_star_class = sc_neutron_star
-				is_star_class = sc_pulsar
-			}
-		}
-		custom_tooltip = {
 			fail_text = "requires_less_than_x_dyson_swarms"
 			from = {
 				OR = {
@@ -142,20 +114,14 @@ dyson_swarm_1 = {
 
 	placement_rules = {
 		planet_possible = {
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	NOR = { has_planet_flag = megastructure has_planet_flag = has_megastructure } }
+			custom_tooltip = { fail_text = "must_build_around_star"					is_star = yes }
+			custom_tooltip = { fail_text = "requires_no_anomaly"					has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_further_stars" 				NOR = { AND = { giga_is_close_pair_star = yes is_primary_star = no } giga_is_close_pair_primary = yes } }
 			custom_tooltip = {
-				fail_text = "must_build_around_star"
-				is_star = yes
-			}
-			custom_tooltip = {
-				fail_text = "requires_no_anomaly"
-				NOT = { has_anomaly = yes }
-			}
-			custom_tooltip = {
-				fail_text = "requires_no_existing_megastructure"
-				NOR = {
-					has_planet_flag = megastructure
-					has_planet_flag = has_megastructure
-				}
+				fail_text = "requires_standard_star_class"
+				giga_is_standard_star_system = yes
+				NOT = { is_planet_class = pc_giga_o_star }
 			}
 			if = {
 				limit = {
@@ -166,11 +132,6 @@ dyson_swarm_1 = {
 					has_deposit = d_energy_2
 				}
 			}
-			custom_tooltip = {
-				fail_text = "requires_standard_star_class"
-				giga_is_standard_star_system = yes
-			}
-
 		}
 	}
 
@@ -206,8 +167,16 @@ dyson_swarm_1 = {
 		mult = value:giga_ai_prevent_spam|MEGA|dyson_swarm|
 	}
 
-	on_build_start = {}
-	on_build_cancel = {}
+	on_build_start = {
+		from = {
+			set_country_flag = is_currently_building_dyson_swarm
+		}
+	}
+	on_build_cancel = {
+		from = {
+			remove_country_flag = is_currently_building_dyson_swarm
+		}
+	}
 	on_build_complete = {
 		from = { country_event = { id = cybernetics.1020 } }
 		fromfrom.planet = {
@@ -220,6 +189,7 @@ dyson_swarm_1 = {
 			}
 		}
 		from = {
+			remove_country_flag = is_currently_building_dyson_swarm
 			set_timed_country_flag = { years = 5 flag = has_recently_built_dyson_swarm }
 			change_variable = {
 				which = dyson_swarm_counter
@@ -363,20 +333,15 @@ dyson_swarm_3 = {
 					}
 				}
 			}
-			from = {
+			owner = {
 				has_policy_flag = interference_aggressive
 			}
 		}
 		owner = {
 			has_technology = tech_dyson_sphere
 			OR = {
-				OR = {
-					has_global_flag = vanilla_dyson_capped_u
-					check_variable = {
-						which = giga_current_vanilla_dyson
-						value <= value:giga_vanilla_dyson_limit
-					}
-				}
+				has_global_flag = vanilla_dyson_capped_u						# No Cap
+				check_variable = { which = giga_current_vanilla_dyson value < giga_vanilla_dyson_cap }
 				root = { is_upgrading = yes }
 			}
 		}
@@ -496,6 +461,9 @@ dyson_swarm_3 = {
 				else_if = { limit = { planet = { giga_is_m_star_for_megas = yes } } upgrade_megastructure_to = dyson_swarm_3_m_star }
 				if = { limit = { is_upgrading = yes } finish_upgrade = yes }
 			}
+		}
+		fromfrom = {
+			set_megastructure_flag = giga_dyson_swarm
 		}
 	}
 }

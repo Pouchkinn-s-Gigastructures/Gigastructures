@@ -5,6 +5,7 @@ asteroid_artillery_0 = {
 	portrait = "GFX_megastructure_construction_background"
 	place_entity_on_planet_plane = yes
 	prerequisites = { giga_tech_asteroid_artillery }
+	construction_blocks_and_blocked_by = none
 
 	build_time = 1800
 	resources = {
@@ -67,7 +68,17 @@ asteroid_artillery_0 = {
 		mult = value:giga_ai_cap_availability_boost
 	}
 
-	on_build_start = { apply_giga_bulwark_trad_build_speed = yes }
+	on_build_start = {
+		from = {
+			set_country_flag = is_currently_building_asteroid_artillery
+		}
+		apply_giga_bulwark_trad_build_speed = yes
+	}
+	on_build_cancel = {
+		from = {
+			remove_country_flag = is_currently_building_asteroid_artillery
+		}
+	}
 
 	on_build_complete = {
 		save_event_target_as = giga_system
@@ -79,6 +90,7 @@ asteroid_artillery_0 = {
 		}
 		from = {
 			set_timed_country_flag = { flag = has_recently_built_asteroid_artillery years = 10 }
+			remove_country_flag = is_currently_building_asteroid_artillery
 			country_event = { id = giga_artillery.1004 }	# Notification
 		}
 		spawn_megastructure = {
@@ -96,6 +108,7 @@ asteroid_artillery_1_fake = {
 	portrait = "GFX_megastructure_asteroid_artillery"
 	upgrade_from = { asteroid_artillery_0 }
 	place_entity_on_planet_plane = no
+	construction_blocks_and_blocked_by = none
 
 	build_time = 1800
 	resources = {
@@ -125,6 +138,7 @@ asteroid_artillery_1 = {
 	portrait = "GFX_megastructure_asteroid_artillery"
 	upgrade_from = { asteroid_artillery_config asteroid_artillery_repaired }
 	place_entity_on_planet_plane = no
+	construction_blocks_and_blocked_by = none
 
 	build_time = 1800
 	resources = {
@@ -315,6 +329,7 @@ asteroid_artillery_config = {
 	portrait = "GFX_megastructure_asteroid_artillery"
 	upgrade_from = { asteroid_artillery_1 }
 	place_entity_on_planet_plane = no
+	construction_blocks_and_blocked_by = none
 
 	# construction_blocks_and_blocked_by = none # BLOCKING TEST
 	
@@ -366,10 +381,56 @@ asteroid_artillery_ruined = {
 	construction_entity = "giga_asteroid_artillery_core_ruined_entity"
 	portrait = "GFX_megastructure_asteroid_artillery"
 	place_entity_on_planet_plane = no
+	construction_blocks_and_blocked_by = none
 	resources = { category = giga_kilostructures }
 
 	potential = { always = no }
 	possible = { always = no }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	dismantle_cost = {
+		category = giga_kilostructures
+		cost = {
+			energy = 5000
+		}
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		always = yes
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_asteroid_artillery
+		}
+	}
+
+	on_dismantle_complete = {
+		from = {
+			add_resource = {
+				alloys = 5000
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = giga_current_asteroid_artillery
+						value >= 1
+					}
+				}
+				change_variable = {
+					which = giga_current_asteroid_artillery
+					value = -1
+				}
+			}
+		}
+	}
 
 	ai_weight = { factor = 10 } # If we can build it, we will build it
 }
@@ -380,6 +441,7 @@ asteroid_artillery_repaired = {
 	portrait = "GFX_megastructure_asteroid_artillery"
 	upgrade_from = { asteroid_artillery_ruined }
 	place_entity_on_planet_plane = no
+	construction_blocks_and_blocked_by = none
 
 	build_time = 1350
 	resources = {

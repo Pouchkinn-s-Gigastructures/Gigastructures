@@ -47,12 +47,13 @@ dyson_sphere_0 = {
 			fail_text = "requires_no_machine_age"
 			OR = {
 				has_machine_age_dlc = no
-				OR = {
-					has_global_flag = vanilla_dyson_swarm_replace_disabled
-					AND = {
+				has_global_flag = vanilla_dyson_swarm_replace_disabled
+				AND = {
+					OR = {
+						has_global_flag = has_real_space_mod
 						NOT = { has_global_flag = giga_o_stars_disabled }
-						has_technology = giga_tech_dyson_o_star 
 					}
+					has_technology = giga_tech_dyson_o_star
 				}
 			}
 		}
@@ -64,11 +65,17 @@ dyson_sphere_0 = {
 		}
 		custom_tooltip = { fail_text = "requires_inside_border"			is_inside_border = from }
 		custom_tooltip = { fail_text = "requires_surveyed_system"		giga_system_is_surveyed = yes }
-		custom_tooltip = { 
-			fail_text = "requires_no_habitable_planets"	
-			OR = {
-				giga_any_hab_planets = no 
-				from = { is_ai = no } # Players are allowed to be stupid, AI isn't. 
+		custom_tooltip = {
+			fail_text = "requires_no_colonies"
+			NOT = {
+				any_system_planet = {
+					is_colony = yes
+					is_artificial = no
+					exists = owner
+					owner = {
+						is_primitive = no
+					}
+				}
 			}
 		}
 
@@ -164,6 +171,58 @@ dyson_sphere_1 = {
 	outliner_trigger = {
 		exists = owner
 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	possible = {
+		custom_tooltip = {
+			fail_text = "requires_no_arc_furnace"
+			system_has_arc_furnace = no
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_arc_furnace_construction"
+			if = {
+				limit = {
+					system_has_arc_furnace = no
+				}
+				NOT = {
+					solar_system = {
+						has_star_flag = arc_furnace_construction
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_colonies"
+			NOT = {
+				any_system_planet = {
+					OR = {
+						has_colony_progress > 0
+						is_colony = yes
+					}
+					is_artificial = no
+					exists = owner
+					owner = {
+						is_primitive = no
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "blocked_by_pre_ftl_policy"
+			if = {
+				limit = {
+					any_system_planet = {
+						exists = owner
+						owner = {
+							is_primitive = yes
+						}
+					}
+				}
+				from = {
+					has_policy_flag = interference_aggressive
+				}
+			}
+		}
 	}
 	
 	build_time = @dyson_p1_buildtime_g_star
@@ -280,12 +339,28 @@ dyson_sphere_2 = {
 	}
 
 	on_build_start = {
+		if = {
+			limit = {
+				fromfrom = {
+					has_megastructure_flag = giga_dyson_swarm
+				}
+			}
+			from = { change_variable = { which = giga_current_vanilla_dyson value = 1 } }
+		}
 		set_star_flag = dyson_sphere_construction
 		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = @dyson_p2_cost_alloys_g_star }
 		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @dyson_cost_unity_g_star }
 	}
 	
 	on_build_cancel = {
+		if = {
+			limit = {
+				fromfrom = {
+					has_megastructure_flag = giga_dyson_swarm
+				}
+			}
+			from = { change_variable = { which = giga_current_vanilla_dyson value = -1 } }
+		}
 		remove_star_flag = dyson_sphere_construction
 	}
 	
