@@ -440,3 +440,67 @@ can_resettle_planet_no_owner_check = {
 
 	giga_can_resettle_planet = yes
 }
+
+# overwrite for machine ringworld
+species_can_live_on_planet = {
+	hidden_trigger = {
+		exists = root #somehow this appeared in the error log. No idea how!
+		NAND = {
+			root = { 
+				OR = {
+					is_planet_class = pc_machine 
+					is_planet_class = pc_ringworld_machine 
+				}
+			}
+			NOR = {
+				has_trait = trait_machine_unit
+				has_trait = trait_mechanical
+				AND = {
+					has_trait = trait_cybernetic
+					exists = root.owner
+					root.owner = {
+						is_machine_empire = yes
+						OR = {
+							has_civic = civic_machine_assimilator # Assimilator empire
+							has_ascension_perk = ap_mechromancy
+						}
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				root = { is_planet_class = pc_hive }
+			}
+			OR = {
+				has_trait = trait_hive_mind
+				AND = { #Necrophage Hive Mind can have Necrophytes
+					exists = root.owner
+					root.owner = {
+						is_hive_empire = yes
+						has_origin = origin_necrophage
+						prev = { species_can_be_necrophaged = yes }
+					}
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			exists = root.owner
+			root.owner = {
+				has_origin = origin_clone_army
+			}
+			OR = {
+				has_trait = trait_clone_soldier_infertile
+				has_trait = trait_clone_soldier_infertile_full_potential
+			}
+		}
+		custom_tooltip = {
+			fail_text = CLONE_ARMY_FORCE_DECLINE
+			root = {
+				check_variable = { which = clone_pops_missing value >= 0 }
+			}
+		}
+	}
+}
