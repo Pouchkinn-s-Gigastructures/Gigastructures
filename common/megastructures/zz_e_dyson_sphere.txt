@@ -504,10 +504,6 @@ dyson_sphere_5 = {
                 }
             }
             set_star_class = sc_dyson_star
-            every_system_planet = {
-                limit = { is_star = yes }
-                change_pc = pc_$class$_star
-            }
             every_system_ambient_object = {
                 limit = { has_ambient_object_flag = o_star_solar_wind }
                 destroy_ambient_object = THIS
@@ -541,7 +537,7 @@ dyson_sphere_5 = {
 		}
 		every_system_planet = {
 			limit = {
-				giga_is_barren
+				giga_is_barren = yes
 			}
 			change_pc = pc_barren_cold
 		}
@@ -595,17 +591,60 @@ dyson_sphere_restored = {
 
 	ai_weight = { factor = value:giga_ai_base_repairs } # If we can build it, we will build it
 	on_build_complete = {
-		every_system_planet = {
-			if = {		limit = { has_modifier = terraforming_candidate }				remove_modifier = terraforming_candidate }
-			if = {		limit = { giga_is_barren = yes }								change_pc = pc_barren_cold }
-			else_if = {	limit = { OR = { giga_is_molten = yes giga_is_toxic = yes } }	change_pc = pc_frozen }
+		remove_star_flag = dyson_sphere_construction
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		remove_system_terraforming_candidates = yes
+
+		if = {
+			limit = {
+				count_system_planet = {
+					limit = { is_star = yes }
+					count = 1
+				}
+			}
+			set_star_class = sc_dyson_star
+			every_system_ambient_object = {
+				limit = { has_ambient_object_flag = o_star_solar_wind }
+				destroy_ambient_object = THIS
+			}
 		}
-		giga_remove_system_debris = yes
 		from = {
 			set_country_flag = has_built_or_repaired_megastructure
 			set_country_flag = has_built_or_repaired_gigastructure	# Triggers Gigastructural Constructs
 			country_event = { id = utopia.2011 }
 		}
+		every_system_planet = {
+			limit = {
+				OR = {
+					giga_is_molten = yes
+					giga_is_toxic = yes
+					habitable_planet = yes
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						has_colony_progress > 0
+						is_colony = yes
+					}
+				}
+				every_owned_pop = {
+					kill_pop = yes
+				}
+				destroy_colony = yes
+			}
+			change_pc = pc_frozen
+		}
+		every_system_planet = {
+			limit = {
+				giga_is_barren = yes
+			}
+			change_pc = pc_barren_cold
+		}
+
+		giga_remove_system_debris = yes
+
 		fromfrom.planet = {
 			giga_set_has_mega_flag = yes
 		}
