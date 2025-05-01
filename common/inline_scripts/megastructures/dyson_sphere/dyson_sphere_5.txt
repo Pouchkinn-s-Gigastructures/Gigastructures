@@ -24,54 +24,140 @@ inline_script = {
     on_build_cancel = ""
 
     on_complete = "
-        if = {
+        remove_star_flag = dyson_sphere_construction
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		remove_system_terraforming_candidates = yes
+
+		fromfrom.planet = { set_planet_size = 25 }
+
+		set_variable = { which = giga_dyson_sphere_count value = 0 }
+
+		solar_system = {
+			every_system_megastructure = {
+				limit = {
+					OR = {
+						is_megastructure_type = dyson_sphere_5
+						is_megastructure_type = dyson_sphere_5_a_star
+						is_megastructure_type = dyson_sphere_5_b_star
+						is_megastructure_type = dyson_sphere_5_f_star
+						is_megastructure_type = dyson_sphere_5_g_star
+						is_megastructure_type = dyson_sphere_5_k_star
+						is_megastructure_type = dyson_sphere_5_m_star
+						is_megastructure_type = dyson_sphere_5_m_giant_star
+						is_megastructure_type = dyson_sphere_5_o_star
+					}
+				}
+				solar_system = {
+					change_variable = { which = giga_dyson_sphere_count value = 1 }
+				}
+			}
+		}
+
+		# if last star to freeze out of binary/trinary or single star system
+		if = {
             limit = {
-                count_system_planet = {
-                    limit = { is_star = yes }
-                    count = 1
-                }
+                OR = {
+					count_system_planet = {
+						limit = { is_star = yes }
+						count = 1
+					}
+					count_system_planet = {
+						limit = { is_star = yes }
+						count = giga_dyson_sphere_count
+					}
+				}
             }
-            set_star_class = sc_dyson_star
+
             every_system_planet = {
-                limit = { is_star = yes }
-                change_pc = pc_$class$_star
-            }
+				limit = {
+					is_star = yes
+				}
+				inline_script = {
+					script = megastructures/dyson_sphere/dyson_sphere_star_class
+					type = pre
+				}
+			}
+
+            if = {
+				limit = {
+					is_binary = yes
+				}
+				set_star_class = sc_binary_dyson_star
+			}
+			else_if = {
+				limit = {
+					is_trinary = yes
+				}
+				set_star_class = sc_trinary_dyson_star
+			}
+			else = {
+				set_star_class = sc_dyson_star
+			}
+
+			every_system_planet = {
+				limit = {
+					is_star = yes
+				}
+				inline_script = {
+					script = megastructures/dyson_sphere/dyson_sphere_star_class
+					type = post
+				}
+			}
             every_system_ambient_object = {
                 limit = { has_ambient_object_flag = o_star_solar_wind }
                 destroy_ambient_object = THIS
             }
+			every_system_planet = {
+				giga_dyson_freeze = yes
+			}
         }
+		else = {
+			fromfrom.planet = {
+				# has moons means it is a separate planetary system
+				if = {
+					limit = {
+						has_moon = yes
+					}
+					every_moon = {
+						giga_dyson_freeze = yes
+						# normal moons, not moon's moons
+						every_moon = {
+							giga_dyson_freeze = yes
+						}
+					}
+				}
+				# if it doesnt have moons then it is the main star
+				else = {
+					solar_system = {
+						every_system_planet = {
+							limit = {
+								is_star = yes
+								is_primary_star = no
+							}
+
+							every_moon = {
+								set_planet_flag = giga_no_freeze
+								every_moon = {
+									set_planet_flag = giga_no_freeze
+								}
+							}
+						}
+						# should only be main star planets
+						every_system_planet = {
+							limit = {
+								NOT = { has_planet_flag = giga_no_freeze }
+							}
+							giga_dyson_freeze = yes
+							remove_planet_flag = giga_no_freeze
+						}
+					}
+				}
+			}
+		}
         from = {
             set_country_flag = has_built_or_repaired_megastructure
             set_country_flag = has_built_or_repaired_gigastructure	# Triggers Gigastructural Constructs
         }
-        every_system_planet = {
-			limit = {
-				OR = {
-                    giga_is_molten = yes
-					giga_is_toxic = yes
-					habitable_planet = yes
-				}
-			}
-			if = {
-				limit = {
-					OR = {
-						has_colony_progress > 0
-						is_colony = yes
-					}
-				}
-				every_owned_pop = {
-					kill_pop = yes
-				}
-				destroy_colony = yes
-			}
-			change_pc = pc_frozen
-		}
-		every_system_planet = {
-			limit = {
-				giga_is_barren = yes
-			}
-			change_pc = pc_barren_cold
-		}
     "
 }
