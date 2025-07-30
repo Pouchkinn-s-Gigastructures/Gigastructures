@@ -26,12 +26,19 @@ event = {
 		}
 
 		#For crystal megabore, really
-		every_galaxy_planet = {
-			limit = { is_planet_class = pc_frozen }
-			random = {
-				chance = 10
-				add_modifier = { modifier = giga_subsurface_ocean days = -1 }
-				add_deposit = d_subsurface_ocean_deposit_1
+		every_system = {
+			limit = {
+				any_system_planet = {
+					giga_is_frozen = yes
+				}
+			}
+			random_system_planet = {
+				limit = { giga_is_frozen = yes }
+				random = {
+					chance = 5
+					add_modifier = { modifier = giga_subsurface_ocean days = -1 }
+					add_deposit = d_subsurface_ocean_deposit_1
+				}
 			}
 		}
 
@@ -308,6 +315,9 @@ planet_event = {
 			save_event_target_as = giga_upgrade_owner
 			country_event = { id = giga_dialog.1501 }	# Notification
 		}
+		set_planet_entity = {
+			picture = pc_ringworld_section
+		}
 		if = {
 			limit = { has_planet_flag = giga_ringworld_gar }
 			set_planet_size = 40
@@ -325,7 +335,7 @@ planet_event = {
 				entity_face_object = solar_system.star
 			}
 			add_modifier = { modifier = "giga_gargantuan_housing" days = -1 }
-			event_target:giga_upgrade_owner = { set_variable = { which = giga_upgrade_time value = 3600 } }
+			event_target:giga_upgrade_owner = { set_variable = { which = giga_upgrade_time value = 10 } }
 			planet_event = { id = giga_mega.102 days = 3600 }
 		}
 		else_if = {
@@ -345,7 +355,7 @@ planet_event = {
 				entity_face_object = solar_system.star
 			}
 			add_modifier = { modifier = "giga_behemoth_housing" days = -1 }
-			event_target:giga_upgrade_owner = { set_variable = { which = giga_upgrade_time value = 2700 } }
+			event_target:giga_upgrade_owner = { set_variable = { which = giga_upgrade_time value = 7.5 } }
 			planet_event = { id = giga_mega.102 days = 2700 }
 		}
 		else_if = {
@@ -365,7 +375,7 @@ planet_event = {
 				entity_face_object = solar_system.star
 			}
 			add_modifier = { modifier = "giga_titanic_housing" days = -1 }
-			event_target:giga_upgrade_owner = { set_variable = { which = giga_upgrade_time value = 1800 } }
+			event_target:giga_upgrade_owner = { set_variable = { which = giga_upgrade_time value = 5 } }
 			planet_event = { id = giga_mega.102 days = 1800 }
 		}
 		else = {
@@ -383,7 +393,7 @@ planet_event = {
 				base_angle_towards = solar_system.star
 				entity_face_object = solar_system.star
 			}
-			event_target:giga_upgrade_owner = { set_variable = { which = giga_upgrade_time value = 900 } }
+			event_target:giga_upgrade_owner = { set_variable = { which = giga_upgrade_time value = 2.5 } }
 			planet_event = { id = giga_mega.102 days = 900 }
 		}
 		last_created_ambient_object = { set_ambient_object_flag = giga_upgrading_@root }
@@ -397,6 +407,9 @@ planet_event = {
 
 	immediate = {
 		change_pc = pc_ringworld_habitable
+		set_planet_entity = {
+			picture = pc_ringworld
+		}
 		save_event_target_as = ring_section
 		solar_system = { save_event_target_as = giga_system }
 		save_event_target_as = giga_planet
@@ -1007,15 +1020,70 @@ country_event = {
 	immediate = {
 		set_global_flag = giga_galactic_core_spawned
 		set_spawn_system_batch = begin
-		if = {
+		if = { # Aeternum
 			limit = { has_global_flag = giga_core_aeternum }
 			no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_aeternum_initializer"	hyperlane = no  authorize_spawn_on_galactic_core = yes } }
 		}
-		else_if = {
+		else_if = { # Inactive Empty
 			limit = { NOT = { has_global_flag = giga_core_aeternum } has_global_flag = giga_core_birch }
 			no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_core_initializer"	hyperlane = no  authorize_spawn_on_galactic_core = yes } }
 		}
-		else = {
+		else_if = { # Shuffle
+			limit = { has_global_flag = giga_core_shuffle }
+			random_list = {
+				# Inactive Empty
+				1 = { no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_core_initializer"	hyperlane = no  authorize_spawn_on_galactic_core = yes } } }
+				# Quasar
+				1 = { no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_quasar_initializer"	hyperlane = no  authorize_spawn_on_galactic_core = yes } } }
+				# Aeternum
+				1 = { no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_aeternum_initializer"	hyperlane = no  authorize_spawn_on_galactic_core = yes } }
+					set_global_flag = giga_core_shuffle_spawned_aeternum
+					event_target:giga_core_system = {
+						every_country = {
+							limit = { is_ai = no }
+							country_event = { id = giga_aeternum.2010 days = 30 }
+						}
+						spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 90	max_orientation_angle = 90	initializer = "giga_inner_1_aeternum_initializer"	hyperlane = no }
+						spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 150	max_orientation_angle = 150	initializer = "giga_inner_2_aeternum_initializer"	hyperlane = no }
+						spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 210	max_orientation_angle = 210	initializer = "giga_inner_3_aeternum_initializer"	hyperlane = no }
+						spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 270	max_orientation_angle = 270	initializer = "giga_inner_4_aeternum_initializer"	hyperlane = no }
+						spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 330	max_orientation_angle = 330	initializer = "giga_inner_5_aeternum_initializer"	hyperlane = no }
+						spawn_system = { min_distance >= 15	max_distance <= 15	min_orientation_angle = 30	max_orientation_angle = 30	initializer = "giga_inner_6_aeternum_initializer"	hyperlane = no }
+
+						spawn_system = { min_distance >= 55	max_distance <= 55	min_orientation_angle = 90	max_orientation_angle = 90	initializer = "giga_outer_1_initializer"	hyperlane = no }
+						spawn_system = { min_distance >= 55	max_distance <= 55	min_orientation_angle = 210	max_orientation_angle = 210	initializer = "giga_outer_2_initializer"	hyperlane = no }
+						spawn_system = { min_distance >= 55	max_distance <= 55	min_orientation_angle = 330	max_orientation_angle = 330	initializer = "giga_outer_3_initializer"	hyperlane = no }
+						#Inner hexagon lanes
+						add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_1 }
+						add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_2 }
+						add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_3 }
+						add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_4 }
+						add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_5 }
+						add_hyperlane_safe = { from = event_target:giga_core_system	to = event_target:giga_inner_6 }
+
+						add_hyperlane_safe = { from = event_target:giga_inner_1		to = event_target:giga_inner_2 }
+						add_hyperlane_safe = { from = event_target:giga_inner_2		to = event_target:giga_inner_3 }
+						add_hyperlane_safe = { from = event_target:giga_inner_3		to = event_target:giga_inner_4 }
+						add_hyperlane_safe = { from = event_target:giga_inner_4		to = event_target:giga_inner_5 }
+						add_hyperlane_safe = { from = event_target:giga_inner_5		to = event_target:giga_inner_6 }
+						add_hyperlane_safe = { from = event_target:giga_inner_6		to = event_target:giga_inner_1 }
+
+						add_hyperlane_safe = { from = event_target:giga_inner_1		to = event_target:giga_outer_1 }
+						add_hyperlane_safe = { from = event_target:giga_inner_3		to = event_target:giga_outer_2 }
+						add_hyperlane_safe = { from = event_target:giga_inner_5		to = event_target:giga_outer_3 }
+						#Outer systems connect to allow going around the hexagon
+						add_hyperlane_safe = { from = event_target:giga_outer_1		to = event_target:giga_outer_2 }
+						add_hyperlane_safe = { from = event_target:giga_outer_2		to = event_target:giga_outer_3 }
+						add_hyperlane_safe = { from = event_target:giga_outer_3		to = event_target:giga_outer_1 }
+						event_target:birch_aeternum = { #Initialize stuff
+							country_event = { id = giga_aeternum.1000 days = 2 }
+						}
+
+					}
+				}
+			}
+		}
+		else = { # Quasar
 			no_scope = { spawn_system = { min_distance >= 0 max_distance <= 0 min_orientation_angle = 44 max_orientation_angle = 46 initializer = "giga_black_hole_quasar_initializer"	hyperlane = no  authorize_spawn_on_galactic_core = yes } }
 		}
 		event_target:giga_core_system = {
@@ -1062,7 +1130,7 @@ country_event = {
 				}
 			}
 			else_if = {
-				limit = { NOT = { has_global_flag = giga_core_aeternum } }
+				limit = { NOR = { has_global_flag = giga_core_aeternum has_global_flag = giga_core_shuffle_spawned_aeternum } }
 			if = {
 				limit = { galaxy_size = tiny } #Reduced to 1/3
 				spawn_system = { min_distance >= 10	max_distance <= 10	min_orientation_angle = 25	max_orientation_angle = 25	initializer = "giga_inner_1_initializer"	hyperlane = no }
@@ -1182,8 +1250,23 @@ country_event = {
 ####################################
 ### Penrose Sphere #################
 ####################################
-planet_event = { id = giga_mega.501 hide_window = yes is_triggered_only = yes immediate = { solar_system = { spawn_megastructure = { type = penrose_sphere_a41 } } } }
-planet_event = { id = giga_mega.502 hide_window = yes is_triggered_only = yes immediate = { solar_system = { spawn_megastructure = { type = penrose_sphere_a42 } } } }
+planet_event = {
+	id = giga_mega.501
+	hide_window = yes
+	is_triggered_only = yes
+	immediate = {
+		solar_system = {
+			create_ambient_object = {
+				type = penrose_sphere_bomb_object
+				location = prev
+				use_3d_location = yes
+				entity_offset = 0
+				entity_offset_angle = 0
+				entity_offset_height = 0
+			}
+		}
+	}
+}
 
 planet_event = {
 	id = giga_mega.503
@@ -1213,8 +1296,8 @@ planet_event = {
 
 			# Wipe out system
 			every_fleet_in_system = {
-				limit = { owner = { NOT = { is_immune_to_giga_hyperweapon = yes } } } 
-				destroy_fleet = this 
+				limit = { owner = { NOT = { is_immune_to_giga_hyperweapon = yes } } }
+				destroy_fleet = this
 			}
 			every_system_planet = { limit = { is_star = no is_astral_scar = no } remove_planet = yes }
 			giga_remove_system_debris = yes
@@ -1234,6 +1317,13 @@ planet_event = {
 					}
 				}
 				remove_megastructure = this
+			}
+
+			every_ambient_object = {
+				limit = {
+					is_ambient_object_type = penrose_sphere_bomb_object
+				}
+				destroy_ambient_object = this
 			}
 
 			# Explosion
@@ -2398,11 +2488,11 @@ planet_event = {
 			}
 			set_variable = {
 				which = giga_nexus_army_count
-				value = trigger:num_pops
+				value = trigger:pop_amount
 			}
 			divide_variable = {
 				which = giga_nexus_army_count
-				value = 10
+				value = 1000
 			}
 			ceiling_variable = giga_nexus_army_count
 			while = {
@@ -3142,7 +3232,7 @@ planet_event = {
 
 	immediate = {
 		while = {
-			count = trigger:num_pops
+			count = trigger:pop_amount
 			check_planet_employment = yes
 		}
 	}

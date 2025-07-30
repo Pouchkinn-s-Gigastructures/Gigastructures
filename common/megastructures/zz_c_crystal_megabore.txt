@@ -5,6 +5,7 @@ crystal_megabore_0 = {
 	portrait = "GFX_megastructure_construction_background"
 	place_entity_on_planet_plane = no
 	prerequisites = { giga_tech_crystal_megabore }
+	construction_blocks_and_blocked_by = none
 
 	outliner_trigger = {
 		exists = owner
@@ -15,8 +16,11 @@ crystal_megabore_0 = {
 	resources = {
 		category = giga_crystal_megabore
 		cost = {
-			alloys = 5000
 			unity = @giga_small_mega_unity_cost
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 5000
 		}
 		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|alloys|AMOUNT|5000| }
 		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|unity|AMOUNT|@giga_small_mega_unity_cost| }
@@ -24,10 +28,16 @@ crystal_megabore_0 = {
 	}
 
 	on_build_start = {
+		from = {
+			set_country_flag = is_currently_building_crystal_megabore
+		}
 		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = alloys AMOUNT = 5000 }
 		giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = unity  AMOUNT = @giga_small_mega_unity_cost }
 	}
 	on_build_cancel = {
+		from = {
+			remove_country_flag = is_currently_building_crystal_megabore
+		}
 		giga_ai_savings_refund = { CATEGORY = resource RESOURCE = alloys }
 		giga_ai_savings_refund = { CATEGORY = resource RESOURCE = unity }
 	}
@@ -36,8 +46,11 @@ crystal_megabore_0 = {
 		has_technology = giga_tech_crystal_megabore
 		NOT = { has_global_flag = crystal_disabled }
 		OR = {
-			check_variable = { which = giga_crystal_cap value = 0 }						# No Cap
-			check_variable = { which = giga_current_crystal value < giga_crystal_cap }
+			has_global_flag = crystal_capped_u
+			check_variable = {
+				which = giga_current_crystal
+				value < value:giga_crystal_limit
+			}
 		}
 	}
 
@@ -47,8 +60,11 @@ crystal_megabore_0 = {
 			fail_text = "requires_not_capped"
 			from = {
 				OR = {
-					check_variable = { which = giga_crystal_cap value = 0 }						# No Cap
-					check_variable = { which = giga_current_crystal value < giga_crystal_cap }
+					has_global_flag = crystal_capped_u
+					check_variable = {
+						which = giga_current_crystal
+						value < value:giga_crystal_limit
+					}
 				}
 			}
 		}
@@ -93,6 +109,7 @@ crystal_megabore_0 = {
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		from = {
 			set_timed_country_flag = { flag = has_recently_built_crystal_megabore years = 20 }
+			remove_country_flag = is_currently_building_crystal_megabore
 			country_event = { id = giga_dialog.3501 }	# Notification
 			change_variable = { which = giga_current_crystal value = 1 }
 		}
@@ -189,6 +206,8 @@ crystal_megabore_1 = {
 	portrait = "GFX_megastructure_frozen_world"
 	place_entity_on_planet_plane = no
 	upgrade_from = { crystal_megabore_0 }
+	construction_blocks_and_blocked_by = none
+	show_in_outliner = no
 
 	outliner_trigger = {
 		exists = owner
@@ -198,7 +217,13 @@ crystal_megabore_1 = {
 	build_time = 3600
 	resources = {
 		category = giga_kilostructures
-		cost = { alloys = 7500 unity = @giga_small_mega_unity_cost }
+		cost = {
+			unity = @giga_small_mega_unity_cost
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 7500
+		}
 		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|alloys|AMOUNT|1500| }
 		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|resource|RESOURCE|unity|AMOUNT|@giga_small_mega_unity_cost| }
 		upkeep = { energy = 75 alloys = 25 }

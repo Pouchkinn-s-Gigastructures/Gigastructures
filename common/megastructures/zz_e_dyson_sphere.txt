@@ -17,8 +17,11 @@ dyson_sphere_0 = {
 	resources = {
 		category = giga_dyson_sphere
 		cost = {
-			alloys = 5000
 			unity = @giga_big_mega_start_unity_cost
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 5000
 		}
 		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|5000| }
 		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@giga_big_mega_start_unity_cost| }
@@ -37,19 +40,23 @@ dyson_sphere_0 = {
 	potential = {
 		NOT = { has_global_flag = vanilla_dyson_disabled }
 		OR = {
-			has_global_flag = vanilla_dyson_capped_u						# No Cap
-			check_variable = { which = giga_current_vanilla_dyson value < giga_vanilla_dyson_cap }
+			has_global_flag = vanilla_dyson_capped_u
+			check_variable = {
+				which = giga_current_vanilla_dyson
+				value < value:giga_vanilla_dyson_limit
+			}
 		}
 		custom_tooltip = {
 			fail_text = "requires_no_machine_age"
 			OR = {
 				has_machine_age_dlc = no
-				OR = {
-					has_global_flag = vanilla_dyson_swarm_replace_disabled
-					AND = {
+				has_global_flag = vanilla_dyson_swarm_replace_disabled
+				AND = {
+					OR = {
+						has_global_flag = has_real_space_mod
 						NOT = { has_global_flag = giga_o_stars_disabled }
-						has_technology = giga_tech_dyson_o_star 
 					}
+					has_technology = giga_tech_dyson_o_star
 				}
 			}
 		}
@@ -61,11 +68,17 @@ dyson_sphere_0 = {
 		}
 		custom_tooltip = { fail_text = "requires_inside_border"			is_inside_border = from }
 		custom_tooltip = { fail_text = "requires_surveyed_system"		giga_system_is_surveyed = yes }
-		custom_tooltip = { 
-			fail_text = "requires_no_habitable_planets"	
-			OR = {
-				giga_any_hab_planets = no 
-				from = { is_ai = no } # Players are allowed to be stupid, AI isn't. 
+		custom_tooltip = {
+			fail_text = "requires_no_colonies"
+			NOT = {
+				any_system_planet = {
+					is_colony = yes
+					is_artificial = no
+					exists = owner
+					owner = {
+						is_primitive = no
+					}
+				}
 			}
 		}
 
@@ -73,8 +86,44 @@ dyson_sphere_0 = {
 			fail_text = "requires_not_capped"
 			from = {
 				OR = {
-					has_global_flag = vanilla_dyson_capped_u									# No Cap
-					check_variable = { which = giga_current_vanilla_dyson value < giga_vanilla_dyson_cap }
+					has_global_flag = vanilla_dyson_capped_u
+					check_variable = {
+						which = giga_current_vanilla_dyson
+						value < value:giga_vanilla_dyson_limit
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "blocked_by_pre_ftl_policy"
+			if = {
+				limit = {
+					any_system_planet = {
+						exists = owner
+						owner = {
+							is_primitive = yes
+						}
+					}
+				}
+				from = {
+					has_policy_flag = interference_aggressive
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_arc_furnace"
+			system_has_arc_furnace = no
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_arc_furnace_construction"
+			if = {
+				limit = {
+					system_has_arc_furnace = no
+				}
+				NOT = {
+					solar_system = {
+						has_star_flag = arc_furnace_construction
+					}
 				}
 			}
 		}
@@ -159,11 +208,69 @@ dyson_sphere_1 = {
 		exists = owner
 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
 	}
+
+	possible = {
+		custom_tooltip = {
+			fail_text = "requires_no_arc_furnace"
+			system_has_arc_furnace = no
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_arc_furnace_construction"
+			if = {
+				limit = {
+					system_has_arc_furnace = no
+				}
+				NOT = {
+					solar_system = {
+						has_star_flag = arc_furnace_construction
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_colonies"
+			NOT = {
+				any_system_planet = {
+					OR = {
+						is_under_colonization = yes
+						is_colony = yes
+					}
+					is_artificial = no
+					exists = owner
+					owner = {
+						is_primitive = no
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "blocked_by_pre_ftl_policy"
+			if = {
+				limit = {
+					any_system_planet = {
+						exists = owner
+						owner = {
+							is_primitive = yes
+						}
+					}
+				}
+				from = {
+					has_policy_flag = interference_aggressive
+				}
+			}
+		}
+	}
 	
 	build_time = @dyson_p1_buildtime_g_star
 	resources = {
 		category = giga_megastructures
-		cost = { alloys = @dyson_p1_cost_alloys_g_star unity = @dyson_cost_unity_g_star }
+		cost = {
+			unity = @dyson_cost_unity_g_star
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = @dyson_p1_cost_alloys_g_star
+		}
 		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|@dyson_p1_cost_alloys_g_star| }
 		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@dyson_cost_unity_g_star| }
 	}
@@ -183,7 +290,6 @@ dyson_sphere_1 = {
 		save_event_target_as = giga_system
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		remove_system_terraforming_candidates = yes
-
 	}
 }
 
@@ -206,8 +312,11 @@ dyson_sphere_2 = {
 	potential = {
 		NOT = { has_global_flag = vanilla_dyson_disabled }
 		OR = {
-			has_global_flag = vanilla_dyson_capped_u						# No Cap
-			check_variable = { which = giga_current_vanilla_dyson value < giga_vanilla_dyson_cap }
+			has_global_flag = vanilla_dyson_capped_u
+			check_variable = {
+				which = giga_current_vanilla_dyson
+				value < value:giga_vanilla_dyson_limit
+			}
 		}
 	}
 	possible = {
@@ -233,7 +342,7 @@ dyson_sphere_2 = {
 			NOT = {
 				any_system_planet = {
 					OR = {
-						has_colony_progress > 0
+						is_under_colonization = yes
 						is_colony = yes
 					}
 					is_artificial = no
@@ -264,19 +373,41 @@ dyson_sphere_2 = {
 	build_time = @dyson_p2_buildtime_g_star
 	resources = {
 		category = giga_megastructures
-		cost = { alloys = @dyson_p2_cost_alloys_g_star unity = @dyson_cost_unity_g_star }
+		cost = {
+			unity = @dyson_cost_unity_g_star
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = @dyson_p2_cost_alloys_g_star
+		}
 		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|@dyson_p2_cost_alloys_g_star| }
 		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@dyson_cost_unity_g_star| }
 		produces = { energy = @dyson_p2_produces_energy_g_star }
 	}
 
 	on_build_start = {
+		if = {
+			limit = {
+				fromfrom = {
+					has_megastructure_flag = giga_dyson_swarm
+				}
+			}
+			from = { change_variable = { which = giga_current_vanilla_dyson value = 1 } }
+		}
 		set_star_flag = dyson_sphere_construction
 		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = @dyson_p2_cost_alloys_g_star }
 		giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @dyson_cost_unity_g_star }
 	}
 	
 	on_build_cancel = {
+		if = {
+			limit = {
+				fromfrom = {
+					has_megastructure_flag = giga_dyson_swarm
+				}
+			}
+			from = { change_variable = { which = giga_current_vanilla_dyson value = -1 } }
+		}
 		remove_star_flag = dyson_sphere_construction
 	}
 	
@@ -305,7 +436,13 @@ dyson_sphere_3 = {
 	build_time = @dyson_p3_buildtime_g_star
 	resources = {
 		category = giga_megastructures
-		cost = { alloys = @dyson_p3_cost_alloys_g_star unity = @dyson_cost_unity_g_star }
+		cost = {
+			unity = @dyson_cost_unity_g_star
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = @dyson_p3_cost_alloys_g_star
+		}
 		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|@dyson_p3_cost_alloys_g_star| }
 		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@dyson_cost_unity_g_star| }
 		produces = { energy = @dyson_p3_produces_energy_g_star }
@@ -326,7 +463,6 @@ dyson_sphere_3 = {
 		save_event_target_as = giga_system
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		remove_system_terraforming_candidates = yes
-
 	}
 }
 
@@ -347,7 +483,13 @@ dyson_sphere_4 = {
 	build_time = @dyson_p4_buildtime_g_star
 	resources = {
 		category = giga_megastructures
-		cost = { alloys = @dyson_p4_cost_alloys_g_star unity = @dyson_cost_unity_g_star }
+		cost = {
+			unity = @dyson_cost_unity_g_star
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = @dyson_p4_cost_alloys_g_star
+		}
 		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|@dyson_p4_cost_alloys_g_star| }
 		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@dyson_cost_unity_g_star| }
 		produces = { energy = @dyson_p4_produces_energy_g_star }
@@ -368,7 +510,6 @@ dyson_sphere_4 = {
 		save_event_target_as = giga_system
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		remove_system_terraforming_candidates = yes
-
 	}
 }
 
@@ -390,7 +531,13 @@ dyson_sphere_5 = {
 	build_time = @dyson_p5_buildtime_g_star
 	resources = {
 		category = giga_megastructures
-		cost = { alloys = @dyson_p5_cost_alloys_g_star unity = @dyson_cost_unity_g_star }
+		cost = {
+			unity = @dyson_cost_unity_g_star
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = @dyson_p5_cost_alloys_g_star
+		}
 		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|@dyson_p5_cost_alloys_g_star| }
 		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@dyson_cost_unity_g_star| }
 		produces = { energy = @dyson_p5_produces_energy_g_star }
@@ -412,55 +559,137 @@ dyson_sphere_5 = {
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		remove_system_terraforming_candidates = yes
 
+		fromfrom.planet = { set_planet_size = 25 }
+
+		set_variable = { which = giga_dyson_sphere_count value = 0 }
+
+		solar_system = {
+			every_system_megastructure = {
+				limit = {
+					OR = {
+						is_megastructure_type = dyson_sphere_5
+						is_megastructure_type = dyson_sphere_5_a_star
+						is_megastructure_type = dyson_sphere_5_b_star
+						is_megastructure_type = dyson_sphere_5_f_star
+						is_megastructure_type = dyson_sphere_5_g_star
+						is_megastructure_type = dyson_sphere_5_k_star
+						is_megastructure_type = dyson_sphere_5_m_star
+						is_megastructure_type = dyson_sphere_5_m_giant_star
+						is_megastructure_type = dyson_sphere_5_o_star
+					}
+				}
+				solar_system = {
+					change_variable = { which = giga_dyson_sphere_count value = 1 }
+				}
+			}
+		}
+
+		# if last star to freeze out of binary/trinary or single star system
 		if = {
             limit = {
-                count_system_planet = {
-                    limit = { is_star = yes }
-                    count = 1
-                }
+                OR = {
+					count_system_planet = {
+						limit = { is_star = yes }
+						count = 1
+					}
+					count_system_planet = {
+						limit = { is_star = yes }
+						count = giga_dyson_sphere_count
+					}
+				}
             }
-            set_star_class = sc_dyson_star
-            every_system_planet = {
-                limit = { is_star = yes }
-                change_pc = pc_$class$_star
-            }
+
+			every_system_planet = {
+				limit = {
+					is_star = yes
+				}
+				inline_script = {
+					script = megastructures/dyson_sphere/dyson_sphere_star_class
+					type = pre
+				}
+			}
+
+            if = {
+				limit = {
+					is_binary = yes
+				}
+				set_star_class = sc_binary_dyson_star
+			}
+			else_if = {
+				limit = {
+					is_trinary = yes
+				}
+				set_star_class = sc_trinary_dyson_star
+			}
+			else = {
+				set_star_class = sc_dyson_star
+			}
+
+			every_system_planet = {
+				limit = {
+					is_star = yes
+				}
+				inline_script = {
+					script = megastructures/dyson_sphere/dyson_sphere_star_class
+					type = post
+				}
+			}
+
             every_system_ambient_object = {
                 limit = { has_ambient_object_flag = o_star_solar_wind }
                 destroy_ambient_object = THIS
             }
+			every_system_planet = {
+				giga_dyson_freeze = yes
+			}
         }
+		else = {
+			fromfrom.planet = {
+				# has moons means it is a separate planetary system
+				if = {
+					limit = {
+						has_moon = yes
+					}
+					every_moon = {
+						giga_dyson_freeze = yes
+						# normal moons, not moon's moons
+						every_moon = {
+							giga_dyson_freeze = yes
+						}
+					}
+				}
+				# if it doesnt have moons then it is the main star
+				else = {
+					solar_system = {
+						every_system_planet = {
+							limit = {
+								is_star = yes
+								is_primary_star = no
+							}
+
+							every_moon = {
+								set_planet_flag = giga_no_freeze
+								every_moon = {
+									set_planet_flag = giga_no_freeze
+								}
+							}
+						}
+						# should only be main star planets
+						every_system_planet = {
+							limit = {
+								NOT = { has_planet_flag = giga_no_freeze }
+							}
+							giga_dyson_freeze = yes
+							remove_planet_flag = giga_no_freeze
+						}
+					}
+				}
+			}
+		}
         from = {
             set_country_flag = has_built_or_repaired_megastructure
             set_country_flag = has_built_or_repaired_gigastructure	# Triggers Gigastructural Constructs
         }
-        every_system_planet = {
-			limit = {
-				OR = {
-                    giga_is_molten = yes
-					giga_is_toxic = yes
-					habitable_planet = yes
-				}
-			}
-			if = {
-				limit = {
-					OR = {
-						has_colony_progress > 0
-						is_colony = yes
-					}
-				}
-				every_owned_pop = {
-					kill_pop = yes
-				}
-				destroy_colony = yes
-			}
-			change_pc = pc_frozen
-		}
-		every_system_planet = {
-			limit = {
-				giga_is_barren
-			}
-			change_pc = pc_barren_cold
-		}
 	}
 }
 
@@ -494,7 +723,13 @@ dyson_sphere_restored = {
 	build_time = @dyson_r_buildtime_g_star
 	resources = {
 		category = giga_megastructures
-		cost = { alloys = @dyson_r_cost_alloys_g_star unity = @dyson_cost_unity_g_star }
+		cost = {
+			unity = @dyson_cost_unity_g_star
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = @dyson_r_cost_alloys_g_star
+		}
 		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|@dyson_r_cost_alloys_g_star| }
 		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@dyson_cost_unity_g_star| }
 		produces = { energy = @dyson_r_produces_energy_g_star }
@@ -513,16 +748,60 @@ dyson_sphere_restored = {
 
 	ai_weight = { factor = value:giga_ai_base_repairs } # If we can build it, we will build it
 	on_build_complete = {
-		every_system_planet = {
-			if = {		limit = { has_modifier = terraforming_candidate }				remove_modifier = terraforming_candidate }
-			if = {		limit = { giga_is_barren = yes }								change_pc = pc_barren_cold }
-			else_if = {	limit = { OR = { giga_is_molten = yes giga_is_toxic = yes } }	change_pc = pc_frozen }
+		remove_star_flag = dyson_sphere_construction
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		remove_system_terraforming_candidates = yes
+
+		if = {
+			limit = {
+				count_system_planet = {
+					limit = { is_star = yes }
+					count = 1
+				}
+			}
+			set_star_class = sc_dyson_star
+			every_system_ambient_object = {
+				limit = { has_ambient_object_flag = o_star_solar_wind }
+				destroy_ambient_object = THIS
+			}
 		}
-		giga_remove_system_debris = yes
 		from = {
+			set_country_flag = has_built_or_repaired_megastructure
 			set_country_flag = has_built_or_repaired_gigastructure	# Triggers Gigastructural Constructs
 			country_event = { id = utopia.2011 }
 		}
+		every_system_planet = {
+			limit = {
+				OR = {
+					giga_is_molten = yes
+					giga_is_toxic = yes
+					habitable_planet = yes
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						is_under_colonization = yes
+						is_colony = yes
+					}
+				}
+				every_owned_pop_group = {
+					kill_single_pop = yes
+				}
+				destroy_colony = yes
+			}
+			change_pc = pc_frozen
+		}
+		every_system_planet = {
+			limit = {
+				giga_is_barren = yes
+			}
+			change_pc = pc_barren_cold
+		}
+
+		giga_remove_system_debris = yes
+
 		fromfrom.planet = {
 			giga_set_has_mega_flag = yes
 		}

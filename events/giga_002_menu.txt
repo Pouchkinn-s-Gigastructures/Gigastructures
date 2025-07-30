@@ -61,13 +61,14 @@ country_event = {
 	}
 }
 
-# On press begin
+# On press begin (Presets)
 country_event = {
-	id = giga_menu.1
-	title = "giga_menu.1.name"
-	desc = "giga_menu.1.desc"
+	id = giga_menu.10
+	title = t # unused
+	desc = t
+	diplomatic_title = giga_menu.10.title
 	diplomatic = yes
-	custom_gui = "giga_main_menu_window"
+	custom_gui = "giga_main_preset_menu_window"
 	is_triggered_only = yes
 
 	trigger = { has_country_flag = giga_host }
@@ -173,6 +174,8 @@ country_event = {
 			remove_country_flag = giga_menu_page_03
 			set_country_flag = giga_menu_page_00
 
+			set_global_flag = giga_maginot_disabled #4.0 fallback
+
 			#Various submods that disable things
 			if = {
 				limit = { has_global_flag = giga_no_crisises_enabled }
@@ -188,6 +191,120 @@ country_event = {
 			}
 		}
 	}
+
+	option = {
+		custom_gui = "giga_main_preset_menu_preset_1"
+		name = giga_vanilla_plus_preset_title
+		is_dialog_only = yes
+		response_text = t
+		allow = {
+			hidden_trigger = {
+				not = {
+					has_global_flag = giga_vanilla_plus_preset_selected
+				}
+			}
+		}
+
+		hidden_effect = {
+			giga_preset_vanilla_plus = yes
+		}
+		custom_tooltip = giga_vanilla_plus_preset_tooltip
+		set_global_flag = giga_vanilla_plus_preset_selected
+		remove_global_flag = giga_gigas_experience_preset_selected
+		remove_global_flag = giga_arcade_preset_selected
+	}
+
+	option = {
+		custom_gui = "giga_main_preset_menu_preset_2"
+		name = giga_gigas_experience_preset_title
+		is_dialog_only = yes
+		response_text = t
+		allow = {
+			hidden_trigger = {
+				not = {
+					has_global_flag = giga_gigas_experience_preset_selected
+				}
+			}
+		}
+
+		hidden_effect = {
+			giga_preset_gigas_experience = yes
+		}
+		custom_tooltip = giga_gigas_experience_preset_tooltip
+		remove_global_flag = giga_vanilla_plus_preset_selected
+		set_global_flag = giga_gigas_experience_preset_selected
+		remove_global_flag = giga_arcade_preset_selected
+	}
+
+	option = {
+		custom_gui = "giga_main_preset_menu_preset_3"
+		name = giga_arcade_preset_title
+		response_text = t
+		is_dialog_only = yes
+		allow = {
+			hidden_trigger = {
+				not = {
+					has_global_flag = giga_arcade_preset_selected
+				}
+			}
+		}
+
+		hidden_effect = {
+			giga_preset_arcade = yes
+		}
+		custom_tooltip = giga_arcade_preset_tooltip
+		remove_global_flag = giga_vanilla_plus_preset_selected
+		remove_global_flag = giga_gigas_experience_preset_selected
+		set_global_flag = giga_arcade_preset_selected
+	}
+
+	option = {
+		custom_gui = "giga_main_preset_menu_confirm"
+		default_hide_option = yes
+		name = "giga_menu.10.confirm"
+		custom_tooltip = "giga_menu.10.confirm.tooltip"
+		allow = {
+			custom_tooltip = {
+				fail_text = giga_must_have_selected_preset
+				OR = {
+					has_global_flag = giga_vanilla_plus_preset_selected
+					has_global_flag = giga_arcade_preset_selected
+					has_global_flag = giga_gigas_experience_preset_selected
+				}
+			}
+		}
+		hidden_effect = { country_event = { id = giga_menu.1111 } }
+	}
+
+	option = {
+		custom_gui = "giga_main_preset_menu_customize"
+		default_hide_option = yes
+		name = "giga_menu.10.customize"
+		custom_tooltip = "giga_menu.10.customize.tooltip"
+		allow = {
+			custom_tooltip = {
+				fail_text = giga_must_have_selected_preset
+				OR = {
+					has_global_flag = giga_vanilla_plus_preset_selected
+					has_global_flag = giga_arcade_preset_selected
+					has_global_flag = giga_gigas_experience_preset_selected
+				}
+			}
+		}
+		hidden_effect = { country_event = { id = giga_menu.1 } }
+	}
+}
+
+# Menu config
+country_event = {
+	id = giga_menu.1
+	title = "giga_menu.1.name"
+	desc = "giga_menu.1.desc"
+	diplomatic = yes
+	custom_gui = "giga_main_menu_window"
+	is_triggered_only = yes
+
+	trigger = { has_country_flag = giga_host }
 
 	# Confirm
 	option = {
@@ -232,7 +349,15 @@ country_event = {
 			set_country_flag = giga_menu_checking_settings3
 		}
 	}
-	after = {
+}
+
+#do everything
+country_event = {
+	id = giga_menu.1111
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
 		every_megastructure = {
 			# Remove unwanted ruined megastructures
 			if = {
@@ -285,16 +410,6 @@ country_event = {
 				}
 			}
 		}
-	}
-}
-
-#do everything
-country_event = {
-	id = giga_menu.1111
-	hide_window = yes
-	is_triggered_only = yes
-
-	immediate = {
 		if = {
 			limit = { NOT = { has_global_flag = set_ast_art_max_points } }
 			every_country = {
@@ -660,47 +775,47 @@ country_event = {
 						}
 					}
 				}
-				#Faust
-				if = {
-					limit = {
-						NOT = { any_system = { has_star_flag = eaw_system } }
-						NOT = { has_global_flag = giga_eaw_disabled } 
-					}
-					random_list = {
-						50 = {
-							random_system = { 
-								limit = { 
-									is_allowed_for_kaiser_spawn = yes
-									hyperlane_eligible = yes #Don't target the core or AoaI or anyother forbidden systems
-								}
-								spawn_system = { initializer = "giga_eawaf_initializer" hyperlane = no } 
-							}
-							last_created_system = {
-								# Add extra hyperlane
-								random_list = {
-									1 = { while = { count = 1 giga_generate_hyperlane = yes } }
-									1 = { while = { count = 2 giga_generate_hyperlane = yes } }
-								}
-							}
-							if = {
-								limit = { 
-									OR = {
-										has_global_flag = giga_eaw_guaranteed
-										NOT = { has_global_flag = giga_eawaf_sirens_disabled }
-									}
-								}
-								every_country = { #Points the player towards Faust at game start if it is guaranteed
-									limit = { is_ai = no }
-									country_event = { id = giga_eawaf.1001 days = 30 }
-								}
-							}
-						}
-						50 = {
-							modifier = { factor = 0 has_global_flag = giga_eaw_guaranteed }
-							modifier = { factor = 0 NOT = { has_global_flag = giga_eawaf_sirens_disabled } }
-						}
-					}
-				}
+				#Faust DISABLED FOR 4.0
+				# if = {
+				# 	limit = {
+				# 		NOT = { any_system = { has_star_flag = eaw_system } }
+				# 		NOT = { has_global_flag = giga_eaw_disabled } 
+				# 	}
+				# 	random_list = {
+				# 		50 = {
+				# 			random_system = { 
+				# 				limit = { 
+				# 					is_allowed_for_kaiser_spawn = yes
+				# 					hyperlane_eligible = yes #Don't target the core or AoaI or anyother forbidden systems
+				# 				}
+				# 				spawn_system = { initializer = "giga_eawaf_initializer" hyperlane = no } 
+				# 			}
+				# 			last_created_system = {
+				# 				# Add extra hyperlane
+				# 				random_list = {
+				# 					1 = { while = { count = 1 giga_generate_hyperlane = yes } }
+				# 					1 = { while = { count = 2 giga_generate_hyperlane = yes } }
+				# 				}
+				# 			}
+				# 			if = {
+				# 				limit = { 
+				# 					OR = {
+				# 						has_global_flag = giga_eaw_guaranteed
+				# 						NOT = { has_global_flag = giga_eawaf_sirens_disabled }
+				# 					}
+				# 				}
+				# 				every_country = { #Points the player towards Faust at game start if it is guaranteed
+				# 					limit = { is_ai = no }
+				# 					country_event = { id = giga_eawaf.1001 days = 30 }
+				# 				}
+				# 			}
+				# 		}
+				# 		50 = {
+				# 			modifier = { factor = 0 has_global_flag = giga_eaw_guaranteed }
+				# 			modifier = { factor = 0 NOT = { has_global_flag = giga_eawaf_sirens_disabled } }
+				# 		}
+				# 	}
+				# }
 
 				#Pouchkinn
 				if = {
@@ -737,41 +852,41 @@ country_event = {
 					}
 				}
 
-				#Squareworld
-				if = {
-					limit = {
-						NOT = { any_system = { has_star_flag = ruined_square_ring_system } }
-						NOT = { has_global_flag = giga_square_disabled } 
-						NOT = { any_country = { has_origin = origin_squareworld } }
-					}
-					random_list = {
-						30 = {
-							random_system = {
-								limit = {
-									NOR = {
-										is_fe_cluster = yes 
-										any_neighbor_system = {
-											is_fe_cluster = yes
-										}
-									}
-									hyperlane_eligible = yes #Changed to the blanket hyperlane eligible for easier maintenance, slightly more restricive than before.
-								}
-								spawn_system = { initializer = "square_world_init_01" hyperlane = no }
-							}
-							last_created_system = {
-								# Add extra hyperlane
-								random_list = {
-									1 = { while = { count = 1 giga_generate_hyperlane = yes } }
-									1 = { while = { count = 2 giga_generate_hyperlane = yes } }
-								}
-							}
-							modifier = { add = 70 has_global_flag = giga_square_guaranteed }
-						}
-						70 = {
-							modifier = { add = -70 has_global_flag = giga_square_guaranteed }
-						}
-					}
-				}
+				#Squareworld TEMP DISABLED FOR 4.0
+				# if = {
+				# 	limit = {
+				# 		NOT = { any_system = { has_star_flag = ruined_square_ring_system } }
+				# 		NOT = { has_global_flag = giga_square_disabled } 
+				# 		NOT = { any_country = { has_origin = origin_squareworld } }
+				# 	}
+				# 	random_list = {
+				# 		30 = {
+				# 			random_system = {
+				# 				limit = {
+				# 					NOR = {
+				# 						is_fe_cluster = yes 
+				# 						any_neighbor_system = {
+				# 							is_fe_cluster = yes
+				# 						}
+				# 					}
+				# 					hyperlane_eligible = yes #Changed to the blanket hyperlane eligible for easier maintenance, slightly more restricive than before.
+				# 				}
+				# 				spawn_system = { initializer = "square_world_init_01" hyperlane = no }
+				# 			}
+				# 			last_created_system = {
+				# 				# Add extra hyperlane
+				# 				random_list = {
+				# 					1 = { while = { count = 1 giga_generate_hyperlane = yes } }
+				# 					1 = { while = { count = 2 giga_generate_hyperlane = yes } }
+				# 				}
+				# 			}
+				# 			modifier = { add = 70 has_global_flag = giga_square_guaranteed }
+				# 		}
+				# 		70 = {
+				# 			modifier = { add = -70 has_global_flag = giga_square_guaranteed }
+				# 		}
+				# 	}
+				# }
 
 				#Kerbol
 				if = {
@@ -850,7 +965,7 @@ country_event = {
 				# 			change_pc = pc_shrouded
 				# 			remove_planet_flag = paluushia
 				# 			remove_modifier = "paluush_shield"
-				# 			every_owned_pop = { kill_pop = yes }
+				# 			every_owned_pop_group = { kill_single_pop = yes }
 				# 			set_planet_flag = shrouded_paluushia
 				# 		}
 				# 	}
@@ -954,12 +1069,12 @@ country_event = {
 					has_global_flag = katzenartig_never
 				}
 				event_target:corrona = {
-					every_owned_pop = { kill_pop = yes }
+					every_owned_pop_group = { kill_single_pop = yes }
 					destroy_colony = yes
 					change_pc = pc_shrouded
 				}
 				event_target:gigaflusion = {
-					every_owned_pop = { kill_pop = yes }
+					every_owned_pop_group = { kill_single_pop = yes }
 					destroy_colony = yes
 					change_pc = pc_katzenland
 					clear_blockers = yes
@@ -1306,7 +1421,7 @@ country_event = {
 				# 		}
 				# 	}
 				# 	set_variable = { which = giga_owned_pops value = 0 }
-				# 	every_owned_pop = { prev = { change_variable = { which = giga_owned_pops value = 1 } } }
+				# 	every_owned_pop_group = { prev = { change_variable = { which = giga_owned_pops value = 1 } } }
 				# 	giga_calculate_allowed_habitats = yes
 				# }
 
@@ -1325,15 +1440,15 @@ country_event = {
 				# 		set_origin = origin_default
 				# 		capital_scope = {
 				# 			random_list = {
-				# 				1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_tropical } }	change_pc = pc_tropical }
-				# 				1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_arid } }		change_pc = pc_arid }
-				# 				1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_continental } }	change_pc = pc_continental }
-				# 				1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_ocean } }		change_pc = pc_ocean }
-				# 				1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_tundra } }		change_pc = pc_tundra }
-				# 				1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_arctic } }		change_pc = pc_arctic }
-				# 				1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_alpine } }		change_pc = pc_alpine }
-				# 				1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_savannah } }	change_pc = pc_savannah }
-				# 				1 = { every_owned_pop = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_desert } }		change_pc = pc_desert }
+				# 				1 = { every_owned_pop_group = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_tropical } }	change_pc = pc_tropical }
+				# 				1 = { every_owned_pop_group = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_arid } }		change_pc = pc_arid }
+				# 				1 = { every_owned_pop_group = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_continental } }	change_pc = pc_continental }
+				# 				1 = { every_owned_pop_group = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_ocean } }		change_pc = pc_ocean }
+				# 				1 = { every_owned_pop_group = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_tundra } }		change_pc = pc_tundra }
+				# 				1 = { every_owned_pop_group = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_arctic } }		change_pc = pc_arctic }
+				# 				1 = { every_owned_pop_group = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_alpine } }		change_pc = pc_alpine }
+				# 				1 = { every_owned_pop_group = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_savannah } }	change_pc = pc_savannah }
+				# 				1 = { every_owned_pop_group = { limit = { is_robot_pop = no is_sapient = yes } modify_species = { ideal_planet_class = pc_desert } }		change_pc = pc_desert }
 				# 			}
 				# 			clear_blockers = yes
 				# 			clear_deposits = yes
@@ -1475,11 +1590,27 @@ country_event = {
 				}
 				if = {
 					limit = { NOT = { has_global_flag = drill_disabled } }
-					if = {		limit = { has_global_flag = drill_capped_1 } set_variable = { which = giga_drill_cap value = 1 } }
-					else_if = {	limit = { has_global_flag = drill_capped_2 } set_variable = { which = giga_drill_cap value = 2 } }
-					else_if = {	limit = { has_global_flag = drill_capped_3 } set_variable = { which = giga_drill_cap value = 3 } }
+					if = {		limit = { has_global_flag = drill_capped_1 } set_variable = { which = giga_drill_cap value = 0 } }
+					else_if = {	limit = { has_global_flag = drill_capped_2 } set_variable = { which = giga_drill_cap value = 5 } }
+					else_if = {	limit = { has_global_flag = drill_capped_3 } set_variable = { which = giga_drill_cap value = 10} }
 					else_if = {	limit = { has_global_flag = drill_capped_u } set_variable = { which = giga_drill_cap value = 0 } }
-					else_if = {	limit = { has_global_flag = drill_capped_r } set_variable = { which = giga_drill_cap value = 1 } }
+					else_if = {	limit = { has_global_flag = drill_capped_r } set_variable = { which = giga_drill_cap value = 0 } }
+				}
+				if = {
+					limit = { NOT = { has_global_flag = crystal_disabled } }
+					if = {		limit = { has_global_flag = crystal_capped_1 } set_variable = { which = giga_crystal_cap value = 0 } }
+					else_if = {	limit = { has_global_flag = crystal_capped_2 } set_variable = { which = giga_crystal_cap value = 5 } }
+					else_if = {	limit = { has_global_flag = crystal_capped_3 } set_variable = { which = giga_crystal_cap value = 19} }
+					else_if = {	limit = { has_global_flag = crystal_capped_u } set_variable = { which = giga_crystal_cap value = 0 } }
+					else_if = {	limit = { has_global_flag = crystal_capped_r } set_variable = { which = giga_crystal_cap value = 0 } }
+				}
+				if = {
+					limit = { NOT = { has_global_flag = succ_disabled } }
+					if = {		limit = { has_global_flag = succ_capped_1 } set_variable = { which = giga_succ_cap value = 0 } }
+					else_if = {	limit = { has_global_flag = succ_capped_2 } set_variable = { which = giga_succ_cap value = 5 } }
+					else_if = {	limit = { has_global_flag = succ_capped_3 } set_variable = { which = giga_succ_cap value = 10} }
+					else_if = {	limit = { has_global_flag = succ_capped_u } set_variable = { which = giga_succ_cap value = 0 } }
+					else_if = {	limit = { has_global_flag = succ_capped_r } set_variable = { which = giga_succ_cap value = 0 } }
 				}
 				if = {
 					limit = { NOT = { has_global_flag = warplanet_disabled } }
@@ -1488,14 +1619,6 @@ country_event = {
 					else_if = {	limit = { has_global_flag = warplanet_capped_3 } set_variable = { which = giga_warplanet_cap value = 3 } }
 					else_if = {	limit = { has_global_flag = warplanet_capped_u } set_variable = { which = giga_warplanet_cap value = 0 } }
 					else_if = {	limit = { has_global_flag = warplanet_capped_r } set_variable = { which = giga_warplanet_cap value = 1 } }
-				}
-				if = {
-					limit = { NOT = { has_global_flag = crystal_disabled } }
-					if = {		limit = { has_global_flag = crystal_capped_1 } set_variable = { which = giga_crystal_cap value = 1 } }
-					else_if = {	limit = { has_global_flag = crystal_capped_2 } set_variable = { which = giga_crystal_cap value = 2 } }
-					else_if = {	limit = { has_global_flag = crystal_capped_3 } set_variable = { which = giga_crystal_cap value = 3 } }
-					else_if = {	limit = { has_global_flag = crystal_capped_u } set_variable = { which = giga_crystal_cap value = 0 } }
-					else_if = {	limit = { has_global_flag = crystal_capped_r } set_variable = { which = giga_crystal_cap value = 1 } }
 				}
 				if = {
 					limit = { NOT = { has_global_flag = terraform_barren_disabled } }
@@ -1586,22 +1709,6 @@ country_event = {
 					else_if = {	limit = { has_global_flag = terraform_gasgiant_capped_r } set_variable = { which = giga_terraform_gasgiant_cap value = 1 } }
 				}
 				if = {
-					limit = { NOT = { has_global_flag = megabase_disabled } }
-					if = {		limit = { has_global_flag = megabase_capped_1 } set_variable = { which = giga_megabase_cap value = 1 } }
-					else_if = {	limit = { has_global_flag = megabase_capped_2 } set_variable = { which = giga_megabase_cap value = 2 } }
-					else_if = {	limit = { has_global_flag = megabase_capped_3 } set_variable = { which = giga_megabase_cap value = 3 } }
-					else_if = {	limit = { has_global_flag = megabase_capped_u } set_variable = { which = giga_megabase_cap value = 0 } }
-					else_if = {	limit = { has_global_flag = megabase_capped_r } set_variable = { which = giga_megabase_cap value = 1 } }
-				}
-				if = {
-					limit = { NOT = { has_global_flag = storm_observatory_disabled } }
-					if = {		limit = { has_global_flag = storm_observatory_capped_1 } set_variable = { which = giga_storm_observatory_cap value = 1 } }
-					else_if = {	limit = { has_global_flag = storm_observatory_capped_2 } set_variable = { which = giga_storm_observatory_cap value = 2 } }
-					else_if = {	limit = { has_global_flag = storm_observatory_capped_3 } set_variable = { which = giga_storm_observatory_cap value = 3 } }
-					else_if = {	limit = { has_global_flag = storm_observatory_capped_u } set_variable = { which = giga_storm_observatory_cap value = 0 } }
-					else_if = {	limit = { has_global_flag = storm_observatory_capped_r } set_variable = { which = giga_storm_observatory_cap value = 1 } }
-				}
-				if = {
 					limit = { NOT = { has_global_flag = matrioshka_brain_disabled } }
 					if = {		limit = { has_global_flag = matrioshka_brain_capped_1 } set_variable = { which = giga_matrioshka_brain_cap value = 1 } }
 					else_if = {	limit = { has_global_flag = matrioshka_brain_capped_2 } set_variable = { which = giga_matrioshka_brain_cap value = 2 } }
@@ -1634,12 +1741,28 @@ country_event = {
 					else_if = {	limit = { has_global_flag = orbital_arcologies_capped_r } set_variable = { which = giga_orbital_arcologies_cap value = 1 } }
 				}
 				if = {
+					limit = { NOT = { has_global_flag = storm_observatory_disabled } }
+					if = {		limit = { has_global_flag = storm_observatory_capped_1 } set_variable = { which = giga_storm_observatory_cap value = 0 } }
+					else_if = {	limit = { has_global_flag = storm_observatory_capped_2 } set_variable = { which = giga_storm_observatory_cap value = 5 } }
+					else_if = {	limit = { has_global_flag = storm_observatory_capped_3 } set_variable = { which = giga_storm_observatory_cap value = 10} }
+					else_if = {	limit = { has_global_flag = storm_observatory_capped_u } set_variable = { which = giga_storm_observatory_cap value = 0 } }
+					else_if = {	limit = { has_global_flag = storm_observatory_capped_r } set_variable = { which = giga_storm_observatory_cap value = 0 } }
+				}
+				if = {
 					limit = { NOT = { has_global_flag = orbital_artificial_eco_disabled } }
-					if = {		limit = { has_global_flag = orbital_artificial_eco_capped_1 } set_variable = { which = giga_orbital_artificial_eco_cap value = 1 } }
-					else_if = {	limit = { has_global_flag = orbital_artificial_eco_capped_2 } set_variable = { which = giga_orbital_artificial_eco_cap value = 2 } }
-					else_if = {	limit = { has_global_flag = orbital_artificial_eco_capped_3 } set_variable = { which = giga_orbital_artificial_eco_cap value = 3 } }
+					if = {		limit = { has_global_flag = orbital_artificial_eco_capped_1 } set_variable = { which = giga_orbital_artificial_eco_cap value = 0 } }
+					else_if = {	limit = { has_global_flag = orbital_artificial_eco_capped_2 } set_variable = { which = giga_orbital_artificial_eco_cap value = 5 } }
+					else_if = {	limit = { has_global_flag = orbital_artificial_eco_capped_3 } set_variable = { which = giga_orbital_artificial_eco_cap value = 10} }
 					else_if = {	limit = { has_global_flag = orbital_artificial_eco_capped_u } set_variable = { which = giga_orbital_artificial_eco_cap value = 0 } }
-					else_if = {	limit = { has_global_flag = orbital_artificial_eco_capped_r } set_variable = { which = giga_orbital_artificial_eco_cap value = 1 } }
+					else_if = {	limit = { has_global_flag = orbital_artificial_eco_capped_r } set_variable = { which = giga_orbital_artificial_eco_cap value = 0 } }
+				}
+				if = {
+					limit = { NOT = { has_global_flag = megabase_disabled } }
+					if = {		limit = { has_global_flag = megabase_capped_1 } set_variable = { which = giga_megabase_cap value = 0 } }
+					else_if = {	limit = { has_global_flag = megabase_capped_2 } set_variable = { which = giga_megabase_cap value = 5 } }
+					else_if = {	limit = { has_global_flag = megabase_capped_3 } set_variable = { which = giga_megabase_cap value = 10} }
+					else_if = {	limit = { has_global_flag = megabase_capped_u } set_variable = { which = giga_megabase_cap value = 0 } }
+					else_if = {	limit = { has_global_flag = megabase_capped_r } set_variable = { which = giga_megabase_cap value = 0 } }
 				}
 				if = {
 					limit = { NOT = { has_global_flag = academy_disabled } }
@@ -1706,14 +1829,6 @@ country_event = {
 					else_if = {	limit = { has_global_flag = compressor_capped_r } set_variable = { which = giga_compressor_cap value = 1 } }
 				}
 				if = {
-					limit = { NOT = { has_global_flag = succ_disabled } }
-					if = {		limit = { has_global_flag = succ_capped_1 } set_variable = { which = giga_succ_cap value = 1 } }
-					else_if = {	limit = { has_global_flag = succ_capped_2 } set_variable = { which = giga_succ_cap value = 2 } }
-					else_if = {	limit = { has_global_flag = succ_capped_3 } set_variable = { which = giga_succ_cap value = 3 } }
-					else_if = {	limit = { has_global_flag = succ_capped_u } set_variable = { which = giga_succ_cap value = 0 } }
-					else_if = {	limit = { has_global_flag = succ_capped_r } set_variable = { which = giga_succ_cap value = 1 } }
-				}
-				if = {
 					limit = { NOT = { has_global_flag = orchid_disabled } }
 					if = {		limit = { has_global_flag = orchid_capped_1 } set_variable = { which = giga_orchid_cap value = 1 } }
 					else_if = {	limit = { has_global_flag = orchid_capped_2 } set_variable = { which = giga_orchid_cap value = 2 } }
@@ -1730,14 +1845,6 @@ country_event = {
 					else_if = {	limit = { has_global_flag = the_vat_capped_r } set_variable = { which = giga_the_vat_cap value = 1 } }
 				}
 				if = {
-					limit = { NOT = { has_global_flag = asteroid_manufactory_disabled } }
-					if = {		limit = { has_global_flag = asteroid_manufactory_capped_1 } set_variable = { which = giga_asteroid_manufactory_cap value = 1 } }
-					else_if = {	limit = { has_global_flag = asteroid_manufactory_capped_2 } set_variable = { which = giga_asteroid_manufactory_cap value = 2 } }
-					else_if = {	limit = { has_global_flag = asteroid_manufactory_capped_3 } set_variable = { which = giga_asteroid_manufactory_cap value = 3 } }
-					else_if = {	limit = { has_global_flag = asteroid_manufactory_capped_u } set_variable = { which = giga_asteroid_manufactory_cap value = 0 } }
-					else_if = {	limit = { has_global_flag = asteroid_manufactory_capped_r } set_variable = { which = giga_asteroid_manufactory_cap value = 1 } }
-				}
-				if = {
 					limit = { NOT = { has_global_flag = psychic_beacon_disabled } }
 					if = {		limit = { has_global_flag = psychic_beacon_capped_1 } set_variable = { which = giga_psychic_beacon_cap value = 1 } }
 					else_if = {	limit = { has_global_flag = psychic_beacon_capped_2 } set_variable = { which = giga_psychic_beacon_cap value = 2 } }
@@ -1747,11 +1854,19 @@ country_event = {
 				}
 				if = {
 					limit = { NOT = { has_global_flag = asteroid_artillery_disabled } }
-					if = {		limit = { has_global_flag = asteroid_artillery_capped_1 } set_variable = { which = giga_asteroid_artillery_cap value = 1 } }
-					else_if = {	limit = { has_global_flag = asteroid_artillery_capped_2 } set_variable = { which = giga_asteroid_artillery_cap value = 2 } }
-					else_if = {	limit = { has_global_flag = asteroid_artillery_capped_3 } set_variable = { which = giga_asteroid_artillery_cap value = 3 } }
+					if = {		limit = { has_global_flag = asteroid_artillery_capped_1 } set_variable = { which = giga_asteroid_artillery_cap value = 0 } }
+					else_if = {	limit = { has_global_flag = asteroid_artillery_capped_2 } set_variable = { which = giga_asteroid_artillery_cap value = 5 } }
+					else_if = {	limit = { has_global_flag = asteroid_artillery_capped_3 } set_variable = { which = giga_asteroid_artillery_cap value = 10} }
 					else_if = {	limit = { has_global_flag = asteroid_artillery_capped_u } set_variable = { which = giga_asteroid_artillery_cap value = 0 } }
-					else_if = {	limit = { has_global_flag = asteroid_artillery_capped_r } set_variable = { which = giga_asteroid_artillery_cap value = 1 } }
+					else_if = {	limit = { has_global_flag = asteroid_artillery_capped_r } set_variable = { which = giga_asteroid_artillery_cap value = 0 } }
+				}
+				if = {
+					limit = { NOT = { has_global_flag = asteroid_manufactory_disabled } }
+					if = {		limit = { has_global_flag = asteroid_manufactory_capped_1 } set_variable = { which = giga_asteroid_manufactory_cap value = 0 } }
+					else_if = {	limit = { has_global_flag = asteroid_manufactory_capped_2 } set_variable = { which = giga_asteroid_manufactory_cap value = 5 } }
+					else_if = {	limit = { has_global_flag = asteroid_manufactory_capped_3 } set_variable = { which = giga_asteroid_manufactory_cap value = 10 } }
+					else_if = {	limit = { has_global_flag = asteroid_manufactory_capped_u } set_variable = { which = giga_asteroid_manufactory_cap value = 0 } }
+					else_if = {	limit = { has_global_flag = asteroid_manufactory_capped_r } set_variable = { which = giga_asteroid_manufactory_cap value = 0 } }
 				}
 				if = {
 					limit = { NOT = { has_global_flag = planetshipyard_disabled } }

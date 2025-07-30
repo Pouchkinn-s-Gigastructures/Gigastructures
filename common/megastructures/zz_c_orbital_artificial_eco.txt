@@ -14,13 +14,17 @@ orbital_artificial_eco_0 = {
 		exists = owner
 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
 	}
+	construction_blocks_and_blocked_by = none
 
 	build_time = 360
 	resources = {
 		category = giga_kilostructures
 		cost = {
-			alloys = @science_kilo_cost_1
 			unity = @science_kilo_cost_1
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = @science_kilo_cost_1
 		}
 		upkeep = {
 			energy = 10
@@ -60,9 +64,11 @@ orbital_artificial_eco_0 = {
 		has_technology = giga_tech_orbital_artificial_eco
 		NOT = { has_global_flag = orbital_artificial_eco_disabled }
 		OR = {
-			check_variable = { which = giga_orbital_artificial_eco_cap value = 0 }						# No Cap
-			check_variable = { which = giga_current_orbital_artificial_eco value < giga_orbital_artificial_eco_cap }
 			has_global_flag = orbital_artificial_eco_capped_u
+			check_variable = {
+				which = giga_current_orbital_artificial_eco
+				value < value:giga_orbital_artificial_eco_limit
+			}
 		}
 	}
 
@@ -71,6 +77,18 @@ orbital_artificial_eco_0 = {
 		custom_tooltip = { fail_text = "requires_no_anomaly" 				NOT = { any_system_planet = { has_anomaly = yes } } }
 		custom_tooltip = { fail_text = "requires_no_arc_furnace" 			system_has_arc_furnace = no }
 		custom_tooltip = { fail_text = "requires_no_orb_eco_arc"			NOT = { any_system_megastructure = { ehof_giga_new_is_artificial_eco = yes } } }
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					has_global_flag = orbital_artificial_eco_capped_u
+					check_variable = {
+						which = giga_current_orbital_artificial_eco
+						value < value:giga_orbital_artificial_eco_limit
+					}
+				}
+			}
+		}
 	}
 
 	placement_rules = {
@@ -116,9 +134,15 @@ orbital_artificial_eco_0 = {
 
 
 	on_build_start = {
+		from = {
+			set_country_flag = is_currently_building_orbital_artificial_eco
+		}
 		set_star_flag = eco_arc_construction
 	}
 	on_build_cancel = {
+		from = {
+			remove_country_flag = is_currently_building_orbital_artificial_eco
+		}
 		remove_star_flag = eco_arc_construction
 	}
 	on_build_complete = {
@@ -132,6 +156,7 @@ orbital_artificial_eco_0 = {
 		}
 		from = {
 			set_timed_country_flag = { flag = has_recently_built_orbital_artificial_eco years = 10 }
+			remove_country_flag = is_currently_building_orbital_artificial_eco
 			create_message = {
 				type = MEGASTRUCTURE_BUILT
 				localization = MESSAGE_MEGASTRUCTURE_BUILT
@@ -244,6 +269,7 @@ orbital_artificial_eco_1 = {
 	place_entity_on_planet_plane = yes
 	scales_with_planet = yes
 	use_planet_resource = yes
+	construction_blocks_and_blocked_by = none
 	outliner_trigger = {
 		exists = owner
 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
@@ -256,8 +282,11 @@ orbital_artificial_eco_1 = {
 	resources = {
 		category = giga_kilostructures
 		cost = { 
-			alloys = @science_kilo_cost_2
 			unity = @science_kilo_cost_2
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = @science_kilo_cost_2
 		}
 		upkeep = {
 			energy = 20
@@ -424,6 +453,7 @@ orbital_artificial_eco_2 = {
 	scales_with_planet = yes
 	use_planet_resource = yes
 	upgrade_from = { orbital_artificial_eco_1 }
+	construction_blocks_and_blocked_by = none
 
 	outliner_trigger = {
 		exists = owner
@@ -436,8 +466,11 @@ orbital_artificial_eco_2 = {
 	resources = {
 		category = giga_kilostructures
 		cost = { 
-			alloys = @science_kilo_alloys_3
 			unity = @science_kilo_unity_3
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = @science_kilo_alloys_3
 		}
 		upkeep = {
 			energy = 40
@@ -601,6 +634,8 @@ orbital_artificial_eco_3 = {
 	scales_with_planet = yes
 	use_planet_resource = yes
 	upgrade_from = { orbital_artificial_eco_2 }
+	construction_blocks_and_blocked_by = none
+	show_in_outliner = no
 
 	outliner_trigger = {
 		exists = owner
@@ -613,8 +648,11 @@ orbital_artificial_eco_3 = {
 	resources = {
 		category = giga_kilostructures
 		cost = { 
-			alloys = @science_kilo_alloys_4
 			unity = @science_kilo_unity_4
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = @science_kilo_alloys_4
 		}
 		upkeep = {
 			energy = 50
@@ -804,6 +842,7 @@ orbital_artificial_eco_ruined = {
 	place_entity_on_planet_plane = no
 	potential = { always = no }
 	resources = { category = giga_kilostructures }
+	construction_blocks_and_blocked_by = none
 
 	outliner_trigger = {
 		exists = owner
@@ -821,6 +860,8 @@ orbital_artificial_eco_restored = {
 	scales_with_planet = yes
 	use_planet_resource = yes
 	upgrade_from = { orbital_artificial_eco_ruined }
+	construction_blocks_and_blocked_by = none
+	show_in_outliner = no
 
 	outliner_trigger = {
 		exists = owner
@@ -832,7 +873,13 @@ orbital_artificial_eco_restored = {
 	build_time = 720 # 2 years
 	resources = {
 		category = giga_kilostructures
-		cost = { alloys = 5000 unity = @giga_kilo_repair_unity_cost }
+		cost = {
+			unity = @giga_kilo_repair_unity_cost
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 5000
+		}
 		upkeep = {
 			energy = 50
 		}

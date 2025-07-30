@@ -2729,6 +2729,14 @@ Effect PdxMeshClouds
 	Defines = { "IS_PLANET" "IS_CLOUDS"  }
 }
 
+Effect PdxMeshRingworldClouds
+{
+	VertexShader = "VertexPdxMeshStandard"
+	PixelShader = "PixelPdxMeshStandard"
+	BlendState = "BlendStateAlphaBlend"
+	Defines = { "IS_CLOUDS" }
+}
+
 Effect PdxMeshCloudsSkinned
 {
 	VertexShader = "VertexPdxMeshStandardSkinned"
@@ -2736,22 +2744,58 @@ Effect PdxMeshCloudsSkinned
 	BlendState = "BlendStateAlphaBlend";
 	Defines = { "IS_PLANET" "IS_CLOUDS"  }
 }
+
+Effect PdxMeshRingworldCloudsSkinned
+{
+	VertexShader = "VertexPdxMeshStandardSkinned"
+	PixelShader = "PixelPdxMeshStandard"
+	BlendState = "BlendStateAlphaBlend";
+	Defines = { "IS_CLOUDS"  }
+}
+
 Effect PdxMeshCloudsConstruction
 {
 	VertexShader = "VertexPdxMeshStandard"
 	PixelShader = "PixelPdxMeshInvisible"
 }
+
+Effect PdxMeshRingworldCloudsConstruction
+{
+	VertexShader = "VertexPdxMeshStandard"
+	PixelShader = "PixelPdxMeshInvisible"
+}
+
 Effect PdxMeshCloudsConstructionSkinned
 {
 	VertexShader = "VertexPdxMeshStandardSkinned"
 	PixelShader = "PixelPdxMeshInvisible"
 }
+
+Effect PdxMeshRingworldCloudsConstructionSkinned
+{
+	VertexShader = "VertexPdxMeshStandardSkinned"
+	PixelShader = "PixelPdxMeshInvisible"
+}
+
 Effect PdxMeshCloudsConstructionAlphaBlend
 {
 	VertexShader = "VertexPdxMeshStandard"
 	PixelShader = "PixelPdxMeshInvisible"
 }
+
+Effect PdxMeshRingworldCloudsConstructionAlphaBlend
+{
+	VertexShader = "VertexPdxMeshStandard"
+	PixelShader = "PixelPdxMeshInvisible"
+}
+
 Effect PdxMeshCloudsConstructionAlphaBlendSkinned
+{
+	VertexShader = "VertexPdxMeshStandardSkinned"
+	PixelShader = "PixelPdxMeshInvisible"
+}
+
+Effect PdxMeshRingworldCloudsConstructionAlphaBlendSkinned
 {
 	VertexShader = "VertexPdxMeshStandardSkinned"
 	PixelShader = "PixelPdxMeshInvisible"
@@ -3197,11 +3241,25 @@ Effect PdxMeshCloudsShadow
 	Defines = { "IS_SHADOW" "IS_PLANET" "IS_CLOUDS" }
 }
 
+Effect PdxMeshRingworldCloudsShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" "IS_CLOUDS" }
+}
+
 Effect PdxMeshCloudsSkinnedShadow
 {
 	VertexShader = "VertexPdxMeshStandardShadow"
 	PixelShader = "PixelPdxMeshStandardShadow"
 	Defines = { "IS_SHADOW" "IS_PLANET" "IS_CLOUDS" }
+}
+
+Effect PdxMeshRingworldCloudsSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" "IS_CLOUDS" }
 }
 
 Effect PdxMeshRingsShadow

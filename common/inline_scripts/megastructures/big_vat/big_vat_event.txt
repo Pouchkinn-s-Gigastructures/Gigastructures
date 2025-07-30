@@ -1,0 +1,644 @@
+planet_event = { #Start event and Sanity check
+    id = giga_vat_events.$vat$4001
+    is_triggered_only = yes
+    hide_window = yes
+    trigger = { vat_$vat$_check = yes }
+    immediate = {
+        solar_system = {
+            random_system_megastructure = {
+                limit = { vat_$vat$_chk = yes }
+                set_variable = { which = the_vat_$vat$_time_passed value = 0 }
+                set_variable = { which = the_vat_$vat$_percent value = 0 }
+                set_variable = { which = giga_the_vat_$vat$_time value = giga_vat_$vat$_grow_time }
+                divide_variable = { which = giga_the_vat_$vat$_time value = $base_speed_reduction$ }
+                divide_variable = { which = giga_the_vat_$vat$_time value = value:giga_vat_timer_math }
+                set_variable = { which = giga_vat_$vat$_time_left value = giga_the_vat_$vat$_time }
+                round_variable = giga_vat_$vat$_time_left
+                round_variable = giga_the_vat_$vat$_time
+                #life is ~~pain~~ wonderful!
+            }
+        }
+        if = { #Quick sanity check / pause exploit prevention
+            limit = { NOT = { root = { has_planet_flag = giga_vat_pause_protection_$vat$ } } }
+            root = { set_timed_planet_flag = {flag = giga_vat_pause_protection_$vat$ days = 1 } }
+            planet_event = {
+                id = giga_vat_events.$vat$4002
+                days = 1
+            }
+        }
+    }
+}
+
+planet_event = { #Recursive daily check until it reaches a value = build time
+    id = giga_vat_events.$vat$4002
+    is_triggered_only = yes
+    hide_window = yes
+    trigger = { vat_$vat$_check = yes }
+    immediate = {
+        solar_system = {
+            random_system_megastructure = {
+                limit = { vat_$vat$_chk = yes NOT = { root = { has_planet_flag = giga_vat_pause_protection_$vat$ } } }
+                if = {
+                    root = { set_timed_planet_flag = { flag = giga_vat_pause_protection_$vat$ days = 1 } }
+                    limit = { check_variable = { which = the_vat_$vat$_time_passed value < giga_the_vat_$vat$_time } }
+
+                    change_variable = { which = the_vat_$vat$_time_passed value = 1 }
+
+                    set_variable = { which = the_vat_$vat$_pixel value = the_vat_$vat$_time_passed }
+                    set_variable = { which = the_vat_$vat$_pixel_primary value = the_vat_$vat$_time_passed }
+
+                    divide_variable	= { which = the_vat_$vat$_pixel value = giga_the_vat_$vat$_time }
+                    divide_variable	= { which = the_vat_$vat$_pixel_primary value = giga_the_vat_$vat$_time }
+
+                    set_variable = { which = the_vat_$vat$_percent value = the_vat_$vat$_pixel }
+                    set_variable = { which = the_vat_$vat$_percent_primary value = the_vat_$vat$_pixel }
+
+                    multiply_variable = { which = the_vat_$vat$_percent value = 100 }
+
+                    multiply_variable = { which = the_vat_$vat$_pixel value = 229 }
+                    multiply_variable = { which = the_vat_$vat$_pixel_primary value = 476 }
+
+                    set_variable = { which = giga_vat_$vat$_time_left value = giga_the_vat_$vat$_time }
+
+                    subtract_variable = { which = giga_vat_$vat$_time_left value = the_vat_$vat$_time_passed }
+
+                    ceiling_variable = the_vat_$vat$_pixel
+                    floor_variable = the_vat_$vat$_percent
+                    root = {
+                        planet_event = {
+                            id = giga_vat_events.$vat$4002
+                            days = 1
+                        }
+                    }
+                } else_if = {
+                    limit = { check_variable = { which = the_vat_$vat$_time_passed value >= giga_the_vat_$vat$_time } }
+                    clear_variable = the_vat_$vat$_pixel
+                    clear_variable = the_vat_$vat$_time_passed
+                    set_variable = { which = the_vat_$vat$_pixel value = 0 }
+                    root = {
+                        planet_event = {
+                            id = giga_vat_events.$vat$0000
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+#Event that spawns the ships
+planet_event = {
+    id = giga_vat_events.$vat$0000
+    is_triggered_only = yes
+    hide_window = yes
+    trigger = {
+        vat_$vat$_check = yes
+    }
+
+    immediate = {
+        # save owner
+        solar_system = {
+            random_system_megastructure = {
+                limit = { vat_$vat$_chk = yes }
+                owner = { save_event_target_as = giga_vat_owner }
+                save_event_target_as = giga_vat
+            }
+        }
+
+        solar_system = {
+            every_system_megastructure = {
+                limit = {
+                    vat_$vat$_chk = yes
+                }
+                switch = {
+                    trigger = has_megastructure_flag
+
+                    giga_vat_$vat$_grow_ether_drake = {
+                        create_fleet = {#Ether Drake
+                            name = "NAME_Giga_Dragon"
+                            settings = { spawn_debris = no can_change_composition = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+                                if = {
+                                    limit = {
+                                        event_target:giga_vat_owner = {
+                                            is_reanimator = yes
+                                        }
+                                    }
+                                    while = {
+                                        count = @grow_ether_drake_growth_count
+                                        create_ship = {
+                                            name = "NAME_Reanimated_Grand_Dragon"
+                                            design = "NAME_Reanimated_Grand_Dragon"
+                                        }
+                                    }
+                                }
+                                else = {
+                                    while = {
+                                        count = @grow_ether_drake_growth_count
+                                        create_ship = {
+                                            name = "NAME_Grand_Dragon"
+                                            design = "NAME_Grand_Dragon"
+                                        }
+                                    }
+                                }
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+
+                    giga_vat_$vat$_grow_wraith = {
+                        create_fleet = {
+                            name = "NAME_Giga_Wraith"
+                            settings = { spawn_debris = no can_change_composition = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+                                while = {
+                                    count = @grow_wraith_growth_count
+                                    create_ship = {
+                                        name = NAME_Spectral_Wraith_650THz
+                                        design = "NAME_Spectral_Wraith_650THz"
+                                    }
+                                }
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+
+                    giga_vat_$vat$_grow_tiyanki_matriarch = {
+                        create_fleet = {
+                            name = "NAME_Giga_Tiyanki"
+                            settings = { spawn_debris = no can_change_composition = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+                                if = {
+                                    limit = {
+                                        event_target:giga_vat_owner = {
+                                            is_reanimator = yes
+                                        }
+                                    }
+                                    while = {
+                                        count = @grow_tiyanki_matriarch_growth_count
+                                        create_ship = {
+                                            name = NAME_Reanimated_Progenitor
+                                            design = "NAME_Reanimated_Progenitor"
+                                        }
+                                    }
+                                }
+                                else = {
+                                    while = {
+                                        count = @grow_tiyanki_matriarch_growth_count
+                                        create_ship = {
+                                            name = NAME_Progenitor
+                                            design = "NAME_Progenitor"
+                                        }
+                                    }
+                                }
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+
+                    giga_vat_$vat$_grow_stellarite_devourer = {
+                        create_fleet = {
+                            name = "NAME_Giga_Stellarite"
+                            settings = { spawn_debris = no can_change_composition = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+                                while = {
+                                    count = @grow_stellarite_devourer_growth_count
+                                    create_ship = {
+                                        name = NAME_Stellarite
+                                        design = "NAME_Stellarite"
+                                    }
+                                }
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+                    giga_vat_$vat$_grow_voidspawn = {
+                        create_fleet = {
+                            name = "NAME_Giga_Voidspawn"
+                            settings = { spawn_debris = no can_change_composition = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+                                if = {
+                                    limit = {
+                                        event_target:giga_vat_owner = {
+                                            is_reanimator = yes
+                                        }
+                                    }
+                                    while = {
+                                        count = @grow_voidspawn_growth_count
+                                        create_ship = {
+                                            name = NAME_Reanimated_Voidspawn
+                                            design = "NAME_Reanimated_Voidspawn"
+                                        }
+                                    }
+                                }
+                                else = {
+                                    while = {
+                                        count = @grow_voidspawn_growth_count
+                                        create_ship = {
+                                            name = NAME_Voidspawn
+                                            design = "NAME_Voidspawn"
+                                        }
+                                    }
+                                }
+
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+
+                    giga_vat_$vat$_grow_toxic_god = {
+                        if = { #if you somehow escaped the flag previously then take this L
+                            limit = { exists = owner}
+                            owner = { set_country_flag = giga_vat_live_god }
+                        }
+                        create_fleet = {
+                            name = "NAME_Giga_Deity"
+                            settings = { spawn_debris = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+                                while = {
+                                    count = @grow_toxic_god_growth_count
+                                    create_ship = {
+                                        name = NAME_Acidic_Deity
+                                        design = "NAME_Acidic_Deity"
+                                    }
+                                }
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+
+                    giga_vat_$vat$_grow_swarm_queen = {
+                        create_fleet = {
+                            name = "NAME_Giga_Queen"
+                            settings = { spawn_debris = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+                                while = {
+                                    count = @grow_swarm_queen_growth_count
+                                    create_ship = {
+                                        name = NAME_Swarm_Queen
+                                        design = "NAME_Swarm_Queen"
+                                        graphical_culture = "swarm_01"
+                                    }
+                                }
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+
+                    giga_vat_$vat$_grow_brood_mother = {
+                        create_fleet = {
+                            name = "NAME_Giga_Carrier"
+                            settings = { spawn_debris = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+                                while = {
+                                    count = @grow_brood_mother_growth_count
+                                    create_ship = {
+                                        name = NAME_Swarm_Carrier
+                                        design = "NAME_Swarm_Carrier"
+                                        graphical_culture = "swarm_01"
+                                    }
+                                }
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+
+                    giga_vat_$vat$_grow_warrior = {
+                        create_fleet = {
+                            name = "NAME_Giga_Large"
+                            settings = { spawn_debris = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+                                while = {
+                                    count = @grow_warrior_growth_count
+                                    create_ship = {
+                                        name = NAME_Swarm_Large
+                                        design = "NAME_Swarm_Large"
+                                        graphical_culture = "swarm_01"
+                                    }
+                                }
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+
+                    giga_vat_$vat$_grow_tiyanki = {
+                        create_fleet = {
+                            name = "NAME_Giga_Tiyanki_Small"
+                            settings = { spawn_debris = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+                                if = {
+                                    limit = {
+                                        owner = {
+                                            has_existing_ship_design = space_whale_5
+                                        }
+                                    }
+                                    inline_script = {
+                                        script = megastructures/big_vat/create_ship_grand_archive
+                                        fauna = tiyanki
+                                        ship = space_whale_5
+                                        design = NAME_Tiyanki_Ox_Clonable
+                                        count = @grow_tiyanki_growth_count
+                                    }
+                                }
+                                else = {
+                                    while = {
+                                        count = @grow_tiyanki_growth_count
+                                        create_ship = {
+                                            name = NAME_Tiyanki_Ox_Clonable
+                                            design = "NAME_Tiyanki_Ox_Clonable"
+                                        }
+                                    }
+                                }
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+                    giga_vat_$vat$_grow_amoeba = {
+                        create_fleet = {
+                            name = "NAME_Giga_Amoeba"
+                            settings = { spawn_debris = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+
+                                if = {
+                                    limit = {
+                                        owner = {
+                                            has_existing_ship_design = space_amoeba_mother
+                                        }
+                                    }
+                                    inline_script = {
+                                        script = megastructures/big_vat/create_ship_grand_archive
+                                        fauna = space_amoeba
+                                        ship = space_amoeba_mother
+                                        design = space_amoeba
+                                        count = @grow_amoeba_growth_count
+                                    }
+                                }
+
+                                else = {
+                                    while = {
+                                        count = @grow_amoeba_growth_count
+                                        random_list = {
+                                            1 = {
+                                                create_ship = {
+                                                    name = NAME_Large_Space_Organism_Blue
+                                                    design = "NAME_Large_Space_Organism_Blue"
+                                                }
+                                            }
+                                            1 = {
+                                                create_ship = {
+                                                    name = NAME_Large_Space_Organism_Teal
+                                                    design = "NAME_Large_Space_Organism_Teal"
+                                                }
+                                            }
+                                            1 = {
+                                                create_ship = {
+                                                    name = NAME_Large_Space_Organism_Orange
+                                                    design = "NAME_Large_Space_Organism_Orange"
+                                                }
+                                            }
+                                            1 = {
+                                                create_ship = {
+                                                    name = NAME_Large_Space_Organism_Zebra
+                                                    design = "NAME_Large_Space_Organism_Zebra"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+
+                    giga_vat_$vat$_grow_swarmling = {
+                        create_fleet = {
+                            name = "NAME_Giga_Small"
+                            settings = { spawn_debris = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+                                while = {
+                                    count = @grow_swarmling_growth_count
+                                    create_ship = {
+                                        name = NAME_Swarm_Small
+                                        design = "NAME_Swarm_Small"
+                                        graphical_culture = "swarm_01"
+                                    }
+                                }
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+
+                    giga_vat_$vat$_grow_crystal = {
+                        create_fleet = {
+                            name = "NAME_Giga_Crystal"
+                            settings = { spawn_debris = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+                                if = {
+                                    limit = {
+                                        owner = {
+                                            has_existing_ship_design = crystal_ship_large_blue
+                                        }
+                                    }
+                                    inline_script = {
+                                        script = megastructures/big_vat/create_ship_grand_archive
+                                        fauna = crystalline_entity
+                                        ship = crystal_ship_large_blue
+                                        design = NAME_Large_Crystal_Entity_Blue
+                                        count = @grow_crystal_growth_count
+                                    }
+                                }
+                                else = {
+                                    while = {
+                                        count = @grow_crystal_growth_count
+                                        create_ship = {
+                                            name = NAME_Large_Crystal_Entity_Blue
+                                            design = "NAME_Large_Crystal_Entity_Blue"
+                                        }
+                                    }
+                                }
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+
+                    giga_vat_$vat$_grow_voidworm = {
+                        create_fleet = {
+                            name = "NAME_Giga_Voidworm"
+                            settings = { spawn_debris = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+                                if = {
+                                    limit = {
+                                        owner = {
+                                            has_existing_ship_design = voidworms_titan
+                                        }
+                                    }
+                                    inline_script = {
+                                        script = megastructures/big_vat/create_ship_grand_archive
+                                        fauna = voidworm
+                                        ship = voidworms_titan
+                                        design = NAME_Voidworms_Troika
+                                        count = @grow_voidworm_growth_count
+                                    }
+                                }
+                                else = {
+                                    while = {
+                                        count = @grow_voidworm_growth_count
+                                        create_ship = {
+                                            name = NAME_Voidworms_Troika
+                                            design = "NAME_Voidworms_Troika"
+                                        }
+                                    }
+                                }
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+
+                    giga_vat_$vat$_grow_cutholoid = {
+                        create_fleet = {
+                            name = "NAME_Giga_Cutholoid"
+                            settings = { spawn_debris = no }
+                            effect = {
+                                set_owner = event_target:giga_vat_owner
+                                if = {
+                                    limit = {
+                                        owner = {
+                                            has_existing_ship_design = cutholoids
+                                        }
+                                    }
+                                    inline_script = {
+                                        script = megastructures/big_vat/create_ship_grand_archive
+                                        fauna = cutholoid
+                                        ship = cutholoids
+                                        design = NAME_Cutholoids
+                                        count = @grow_cutholoid_growth_count
+                                    }
+                                }
+                                else = {
+                                    while = {
+                                        count = @grow_cutholoid_growth_count
+                                        create_ship = {
+                                            name = NAME_Cutholoids
+                                            design = "NAME_Cutholoids"
+                                        }
+                                    }
+                                }
+                                set_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                                set_location = root
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        # Merge into other vat created fleets
+        last_created_fleet = { #prevprev
+            if = {
+                limit = {
+                    solar_system = {
+                        any_fleet_in_system = {
+                            NOT = { is_same_value = prevprev }
+                            has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                            prevprev = {
+                                compare_distance = {
+                                    closer_object = prev
+                                    further_object = event_target:giga_vat
+                                }
+                            }
+                        }
+                    }
+                }
+                solar_system = {
+                    random_fleet_in_system = {
+                        limit = {
+                            NOT = { is_same_value = prevprev }
+                            has_fleet_flag = giga_created_by_vat@event_target:giga_vat_owner
+                            prevprev = {
+                                compare_distance = {
+                                    closer_object = prev
+                                    further_object = event_target:giga_vat
+                                }
+                            }
+                        }
+                        save_event_target_as = giga_merge_vat_fleets
+                    }
+                }
+                queue_actions = {
+                    find_closest_fleet = {
+                        found_fleet = {
+                            merge_fleet = {
+                                target = event_target:giga_merge_vat_fleets
+                                allow_ftl = no
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        # clear vat flags and reset
+        solar_system = {
+            random_system_megastructure = {
+                limit = { vat_$vat$_chk = yes }
+                if = {
+                    limit = {
+                        check_variable = { which = giga_vat_$vat$_grow_amount value > 1 }
+                        has_megastructure_flag = giga_vat_$vat$_in_use
+                        NOT = { has_megastructure_flag = giga_vat_$vat$_grow_toxic_god }
+                    }
+                    subtract_variable = { which = giga_vat_$vat$_grow_amount value = 1 }
+                    set_variable = { which = the_vat_$vat$_pixel value = 1}
+                    set_variable = { which = the_vat_$vat$_percent value = 1}
+                    clear_variable = the_vat_$vat$_time_passed
+                    planet = {
+                        planet_event = { id = giga_vat_events.$vat$4001 }
+                    }
+                }
+                else_if = {#Gotta triple check so no smelly boi spam
+                    limit = { check_variable = { which = giga_vat_$vat$_grow_amount value > 1 }
+                        has_megastructure_flag = giga_vat_$vat$_in_use
+                        has_megastructure_flag = giga_vat_$vat$_grow_toxic_god
+                        exists = owner
+                    }
+                    owner = {
+                        add_resource = { food = 1 multiplier = value:giga_vat_cancel_refund|VAT|$vat$|RESOURCE|food| }
+                        add_resource = { energy = 1 multiplier = value:giga_vat_cancel_refund|VAT|$vat$|RESOURCE|energy| }
+                        add_resource = { exotic_gases = 1 multiplier = value:giga_vat_cancel_refund|VAT|$vat$|RESOURCE|gas| }
+                    }
+                    giga_the_vat_clear = { vat = $vat$ }
+                } else = {
+                    giga_the_vat_clear = { vat = $vat$ }
+                }
+            }
+        }
+    }
+}

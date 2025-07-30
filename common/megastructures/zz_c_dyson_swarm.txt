@@ -13,16 +13,21 @@ dyson_swarm_1 = {
 	resources = {
 		category = giga_kilostructures
 		cost = {
-			alloys = 500
 			unity = 1000
 		}
-
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 500
+		}
 		upkeep = {
 			alloys = 5
 		}
 	}
 
+	outliner_trigger = { exists = owner NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner } }
+
 	construction_blocks_and_blocked_by = none
+	#custom_tooltip_requirements = "MEGASTRUCTURE_TOOLTIP_REQUIREMENTS_DYSON_SWARM"
 
 	prerequisites = { "tech_dyson_swarm" }
 
@@ -46,14 +51,15 @@ dyson_swarm_1 = {
 		}
 	}
 
+	on_dismantle_start = {
+		fromfrom.planet = { set_planet_flag = giga_dismantle_not_cancelled planet_event = { id = giga_dismantle.001 days = 361 } }
+	}
+
+	on_dismantle_cancel = {
+		fromfrom.planet = { remove_planet_flag = giga_dismantle_not_cancelled }
+	}
+
 	on_dismantle_complete = {
-		random_system_planet = {
-			limit = {
-				has_modifier = dyson_swarm_1_mod
-			}
-			remove_planet_flag = has_megastructure
-			remove_modifier = dyson_swarm_1_mod
-		}
 		from = {
 			add_resource = {
 				alloys = 500
@@ -77,6 +83,13 @@ dyson_swarm_1 = {
 	potential = {
 		has_machine_age_dlc = yes
 		NOT = { has_global_flag = vanilla_dyson_swarm_disabled}
+		OR = {
+			check_variable = {
+				which = dyson_swarm_counter
+				value < value:dyson_swarm_limit
+			}
+			has_global_flag = vanilla_dyson_swarm_capped_u
+		}
 	}
 
 	possible = {
@@ -99,34 +112,6 @@ dyson_swarm_1 = {
 			}
 		}
 		custom_tooltip = {
-			fail_text = "requires_no_binary_trinary"
-			NOR = {
-				is_star_class = sc_binary_1
-				is_star_class = sc_binary_2
-				is_star_class = sc_binary_3
-				is_star_class = sc_binary_4
-				is_star_class = sc_binary_5
-				is_star_class = sc_binary_6
-				is_star_class = sc_binary_7
-				is_star_class = sc_binary_8
-				is_star_class = sc_binary_9
-				is_star_class = sc_binary_10
-				is_star_class = sc_trinary_1
-				is_star_class = sc_trinary_2
-				is_star_class = sc_trinary_3
-				is_star_class = sc_trinary_4
-			}
-		}
-
-		custom_tooltip = {
-			fail_text = "requires_no_black_hole_neutron_star_pulsar"
-			NOT = {
-				is_star_class = sc_black_hole
-				is_star_class = sc_neutron_star
-				is_star_class = sc_pulsar
-			}
-		}
-		custom_tooltip = {
 			fail_text = "requires_less_than_x_dyson_swarms"
 			from = {
 				OR = {
@@ -142,20 +127,18 @@ dyson_swarm_1 = {
 
 	placement_rules = {
 		planet_possible = {
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	NOR = { has_planet_flag = megastructure has_planet_flag = has_megastructure } }
+			custom_tooltip = { fail_text = "must_build_around_star"					is_star = yes }
+			custom_tooltip = { fail_text = "requires_no_anomaly"					has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_further_stars" 				NOR = { AND = { giga_is_close_pair_star = yes is_primary_star = no } giga_is_close_pair_primary = yes } }
 			custom_tooltip = {
-				fail_text = "must_build_around_star"
-				is_star = yes
-			}
-			custom_tooltip = {
-				fail_text = "requires_no_anomaly"
-				NOT = { has_anomaly = yes }
-			}
-			custom_tooltip = {
-				fail_text = "requires_no_existing_megastructure"
-				NOR = {
-					has_planet_flag = megastructure
-					has_planet_flag = has_megastructure
+				fail_text = "requires_standard_star_class"
+				giga_brown_dwarf = no
+				OR = {
+					giga_is_standard_star = yes
+					is_planet_class = pc_toxoid_star
 				}
+				giga_is_o_star_for_megas = no
 			}
 			if = {
 				limit = {
@@ -166,11 +149,6 @@ dyson_swarm_1 = {
 					has_deposit = d_energy_2
 				}
 			}
-			custom_tooltip = {
-				fail_text = "requires_standard_star_class"
-				giga_is_standard_star_system = yes
-			}
-
 		}
 	}
 
@@ -206,12 +184,23 @@ dyson_swarm_1 = {
 		mult = value:giga_ai_prevent_spam|MEGA|dyson_swarm|
 	}
 
-	on_build_start = {}
-	on_build_cancel = {}
+	on_build_start = {
+		from = {
+			set_country_flag = is_currently_building_dyson_swarm
+		}
+	}
+	on_build_cancel = {
+		from = {
+			remove_country_flag = is_currently_building_dyson_swarm
+		}
+	}
 	on_build_complete = {
-		from = { country_event = { id = cybernetics.1020 } }
 		fromfrom.planet = {
 			set_planet_flag = has_megastructure
+			add_modifier = {
+				modifier = dyson_swarm_1_mod
+				days = -1
+			}
 			if = {
 				limit = { has_orbital_station = yes }
 				orbital_station = {
@@ -220,6 +209,7 @@ dyson_swarm_1 = {
 			}
 		}
 		from = {
+			remove_country_flag = is_currently_building_dyson_swarm
 			set_timed_country_flag = { years = 5 flag = has_recently_built_dyson_swarm }
 			change_variable = {
 				which = dyson_swarm_counter
@@ -244,14 +234,19 @@ dyson_swarm_2 = {
 	resources = {
 		category = giga_kilostructures
 		cost = {
-			alloys = 1000
 			unity = 2500
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 1000
 		}
 
 		upkeep = {
 			alloys = 10
 		}
 	}
+
+	outliner_trigger = { exists = owner NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner } }
 
 	construction_blocks_and_blocked_by = none
 
@@ -274,14 +269,15 @@ dyson_swarm_2 = {
 		}
 	}
 
+	on_dismantle_start = {
+		fromfrom.planet = { set_planet_flag = giga_dismantle_not_cancelled planet_event = { id = giga_dismantle.002 days = 361 } }
+	}
+
+	on_dismantle_cancel = {
+		fromfrom.planet = { remove_planet_flag = giga_dismantle_not_cancelled }
+	}
+
 	on_dismantle_complete = {
-		random_system_planet = {
-			limit = {
-				has_modifier = dyson_swarm_2_mod
-			}
-			remove_planet_flag = has_megastructure
-			remove_modifier = dyson_swarm_2_mod
-		}
 		from = {
 			add_resource = {
 				alloys = 1000
@@ -319,7 +315,13 @@ dyson_swarm_2 = {
 	ai_weight = { weight = value:giga_ai_base_continue }
 
 	on_build_complete = {
-		from = { country_event = { id = cybernetics.1025 } }
+		fromfrom.planet = {
+			remove_modifier = dyson_swarm_1_mod
+			add_modifier = {
+				modifier = dyson_swarm_2_mod
+				days = -1
+			}
+		}
 	}
 }
 
@@ -363,7 +365,7 @@ dyson_swarm_3 = {
 					}
 				}
 			}
-			from = {
+			owner = {
 				has_policy_flag = interference_aggressive
 			}
 		}
@@ -372,6 +374,7 @@ dyson_swarm_3 = {
 			OR = {
 				has_global_flag = vanilla_dyson_capped_u						# No Cap
 				check_variable = { which = giga_current_vanilla_dyson value < giga_vanilla_dyson_cap }
+				root = { is_upgrading = yes }
 			}
 		}
 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
@@ -399,14 +402,15 @@ dyson_swarm_3 = {
 		}
 	}
 
+	on_dismantle_start = {
+		fromfrom.planet = { set_planet_flag = giga_dismantle_not_cancelled planet_event = { id = giga_dismantle.003 days = 361 } }
+	}
+
+	on_dismantle_cancel = {
+		fromfrom.planet = { remove_planet_flag = giga_dismantle_not_cancelled }
+	}
+
 	on_dismantle_complete = {
-		random_system_planet = {
-			limit = {
-				has_modifier = dyson_swarm_3_mod
-			}
-			remove_planet_flag = has_megastructure
-			remove_modifier = dyson_swarm_3_mod
-		}
 		from = {
 			add_resource = {
 				alloys = 1500
@@ -431,8 +435,11 @@ dyson_swarm_3 = {
 	resources = {
 		category = giga_kilostructures
 		cost = {
-			alloys = 1500
 			unity = 5000
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 1500
 		}
 
 		upkeep = {
@@ -456,7 +463,13 @@ dyson_swarm_3 = {
 	ai_weight = { weight = value:giga_ai_base_continue }
 
 	on_build_complete = {
-		from = { country_event = { id = cybernetics.1030 } }
+		fromfrom.planet = {
+			remove_modifier = dyson_swarm_2_mod
+			add_modifier = {
+				modifier = dyson_swarm_3_mod
+				days = -1
+			}
+		}
 		if = {
 			limit = {
 				any_system_megastructure = {
@@ -493,6 +506,9 @@ dyson_swarm_3 = {
 		}
 		else = {
 			fromfrom = { upgrade_megastructure_to = dyson_swarm_3_basic finish_upgrade = yes }
+		}
+		fromfrom = {
+			set_megastructure_flag = giga_dyson_swarm
 		}
 	}
 }

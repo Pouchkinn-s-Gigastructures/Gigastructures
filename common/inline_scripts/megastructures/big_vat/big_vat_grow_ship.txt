@@ -1,0 +1,62 @@
+giga_vat_$vat$_grow_$ship$ = {
+    potential = {
+        is_scope_type = megastructure
+        exists = from
+        from = { is_same_value = prev.owner }
+        giga_is_vat_level_$vat$ = yes
+        NOT = { has_megastructure_flag = giga_vat_$vat$_in_use }
+        $potential$
+    }
+    allow = {
+        hidden_trigger = { exists = from }
+        from = {
+            resource_stockpile_compare = { resource = $resource_1$ value >= value:giga_vat_initial_grow_cost|SHIP|$ship$|RESOURCE|primary| }
+            resource_stockpile_compare = { resource = energy value >= value:giga_vat_initial_grow_cost|SHIP|$ship$|RESOURCE|energy| }
+            if = {
+                limit = {
+                    check_variable_arithmetic = {
+                        which = value:grow_ship_secondary_cost|ship|$ship$|
+                        value > 0
+                    }
+                }
+                resource_stockpile_compare = { resource = $resource_2$ value >= value:giga_vat_initial_grow_cost|SHIP|$ship$|RESOURCE|secondary| }
+            }
+        }
+        $trigger$
+    }
+    effect = {
+        hidden_effect = {
+            set_variable = { which = giga_grow_$vat$_cost_primary value = @grow_$ship$_primary_cost }
+            set_variable = { which = giga_grow_$vat$_cost_secondary value = @grow_$ship$_secondary_cost }
+            set_variable = { which = giga_grow_$vat$_cost_energy value = @grow_$ship$_energy_cost}
+            multiply_variable = { which = giga_grow_$vat$_cost_primary value = @grow_$ship$_growth_count }
+            multiply_variable = { which = giga_grow_$vat$_cost_secondary value = @grow_$ship$_growth_count }
+            multiply_variable = { which = giga_grow_$vat$_cost_energy value = @grow_$ship$_growth_count }
+            set_megastructure_flag = giga_vat_$vat$_grow_$ship$
+            set_megastructure_flag = giga_vat_$vat$_in_use
+            set_variable = { which = the_vat_$vat$_pixel value = 1 } # This is so the progress bar isn't broken before the events start firing
+            set_variable = { which = giga_vat_$vat$_grow_amount value = 1 }
+            set_variable = { which = giga_vat_$vat$_grow_time value = @grow_$ship$_growth_time }
+            planet = {
+                planet_event = { id = giga_vat_events.$vat$4001 }
+            }
+            custom_tooltip = giga_grow_$ship$
+        }
+        from = {
+            add_resource = { $resource_1$ = -1 multiplier = value:giga_vat_initial_grow_cost|SHIP|$ship$|RESOURCE|primary| }
+            if = {
+                limit = {
+                    check_variable_arithmetic = {
+                        which = value:grow_ship_secondary_cost|ship|$ship$|
+                        value > 0
+                    }
+                }
+                add_resource = { $resource_2$ = -1 multiplier = value:giga_vat_initial_grow_cost|SHIP|$ship$|RESOURCE|secondary| }
+            }
+            add_resource = { energy = -1 multiplier = value:giga_vat_initial_grow_cost|SHIP|$ship$|RESOURCE|energy| }
+        }
+        tooltip = {
+            add_resource = { time = 1 multiplier = value:giga_vat_grow_time_$type$|SHIP|$ship$| }
+        }
+    }
+}

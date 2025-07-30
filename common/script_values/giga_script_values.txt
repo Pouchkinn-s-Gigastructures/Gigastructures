@@ -620,7 +620,7 @@ giga_per_pop_modifier = {
 		mode = weight
 	}
 
-	multiply = trigger:num_pops
+	multiply = trigger:pop_amount
 	floor = yes
 }
 
@@ -659,7 +659,7 @@ giga_num_districts_with_multiplier_floor = {
 
 giga_grab_percent_pops = {
 	base = 0
-	add = trigger:num_pops
+	add = trigger:pop_amount
 	mult = $PERCENT$
 	ceiling  = yes
 }
@@ -680,25 +680,47 @@ giga_simple_mult = {
 giga_vat_timer_math = {
 	base = 1
 	add = modifier:starbase_shipyard_build_speed_mult
+	add = modifier:starbase_shipyard_space_fauna_build_speed_mult
+}
+
+giga_vat_grow_time_normal = {
+	add = @grow_$SHIP$_growth_time
+	divide = value:giga_vat_timer_math
+	round = yes
+}
+
+giga_vat_grow_time_primary = {
+	add = @grow_$SHIP$_growth_time
+	divide = 2
+	divide = value:giga_vat_timer_math
+	round = yes
 }
 
 giga_vat_cancel_refund = {
 	base = 1
 	add = modifier:starbase_shipyard_build_cost_mult
-	multiply = $WHO2$.giga_grow_$VAT$_cost_$RESOURCE$
-	multiply = $WHO2$.giga_vat_$VAT$_grow_amount
+	add = modifier:starbase_shipyard_space_fauna_build_cost_mult
+	multiply = prev.giga_grow_$VAT$_cost_$RESOURCE$
+	multiply = prev.giga_vat_$VAT$_grow_amount
 }
 
 giga_vat_grow_cost = {
-	base = 1 
+	base = 1
 	add = modifier:starbase_shipyard_build_cost_mult
-	multiply = $WHO2$.giga_grow_$VAT$_cost_$RESOURCE$
+	add = modifier:starbase_shipyard_space_fauna_build_cost_mult
+	multiply = prev.giga_grow_$VAT$_cost_$RESOURCE$
 }
 
 giga_vat_initial_grow_cost = {
 	base = 1 
 	add = modifier:starbase_shipyard_build_cost_mult
-	multiply = @grow_$GROW$_$RESOURCE$_cost_deduct
+	add = modifier:starbase_shipyard_space_fauna_build_cost_mult
+	multiply = @grow_$SHIP$_$RESOURCE$_cost
+	multiply = @grow_$SHIP$_growth_count
+}
+
+grow_ship_secondary_cost = {
+	base = @grow_$ship$_secondary_cost
 }
 
 
@@ -785,7 +807,7 @@ giga_psychic_hypersiphon_network_size = {
 }
 giga_psychic_hypersiphon_psionic_pops = {
 	complex_trigger_modifier = {
-		trigger = count_owned_pop
+		trigger = count_owned_pop_amount
 		parameters = {
 			limit = {
 				has_psionic_species_trait = yes
@@ -794,6 +816,34 @@ giga_psychic_hypersiphon_psionic_pops = {
 		mode = weight
 	}
 }
+
+giga_psychic_hypersiphon_job_efficency = {
+	complex_trigger_modifier = {
+		trigger = num_assigned_jobs
+		parameters = {
+			job = giga_shroud_conduit_worker
+		}
+		mode = add		# Scale with conduit jobs
+	}
+	complex_trigger_modifier = {
+		trigger = num_assigned_jobs
+		parameters = {
+			job = giga_shroud_conduit_priest
+		}
+		mode = add		# Scale with conduit jobs
+	}
+	complex_trigger_modifier = {
+		trigger = num_assigned_jobs
+		parameters = {
+			job = giga_shroud_conduit_drone
+		}
+		mode = add		# Scale with conduit jobs
+	}
+
+	divide = 100		# Renormalise to "per 100 jobs"
+}
+
+
 giga_psychic_hypersiphon_psionic_sublimate = {
 	weight = value:giga_psychic_hypersiphon_psionic_pops
 
@@ -821,6 +871,8 @@ giga_psychic_hypersiphon_summon_count = {
 	add = value:giga_count_jobs|JOB|giga_shroud_conduit_worker|
 	add = value:giga_count_jobs|JOB|giga_shroud_conduit_priest|
 	add = value:giga_count_jobs|JOB|giga_shroud_conduit_drone|
+	divide = 100
+	floor = yes
 }
 
 giga_calculate_buff_scale = {
@@ -964,6 +1016,23 @@ mining_districts_value = {
 		trigger = num_districts
 		parameters = {
 			type = district_mining_uncapped
+		}
+		mode = add
+	}
+}
+
+set_situation_progress = {
+	add = $NEW_PROGRESS$
+	subtract = trigger:situation_progress
+}
+
+mining_stations_value = {
+	complex_trigger_modifier = {
+		trigger = count_ship_in_system
+		parameters = {
+			limit = {
+				is_ship_class = shipclass_mining_station
+			}
 		}
 		mode = add
 	}

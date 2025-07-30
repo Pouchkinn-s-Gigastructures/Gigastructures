@@ -6,6 +6,7 @@ atmosphere_shredder_0 = {
 	use_planet_resource = yes
 	entity_offset = { x = 0 y = 0 } 
 	scales_with_planet = yes
+	construction_blocks_and_blocked_by = none
 
 	prerequisites = { giga_tech_macro_scale_weather_manipulation }
 
@@ -13,8 +14,11 @@ atmosphere_shredder_0 = {
 	resources = {
 		category = giga_kilostructures
 		cost = {
-			alloys = @science_kilo_cost_1
 			unity = @science_kilo_cost_1
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = @science_kilo_cost_1
 		}
 		upkeep = {
 			energy = 10
@@ -59,8 +63,11 @@ atmosphere_shredder_0 = {
 		has_technology = giga_tech_macro_scale_weather_manipulation
 		NOT = { has_global_flag = storm_observatory_disabled }
 		OR = {
-			check_variable = { which = giga_storm_observatory_cap value = 0 }						# No Cap
-			check_variable = { which = giga_current_storm_observatory value < giga_storm_observatory_cap }
+			has_global_flag = storm_observatory_capped_u
+			check_variable = {
+				which = giga_current_storm_observatory
+				value < value:giga_storm_observatory_limit
+			}
 		}
 	}
 
@@ -73,8 +80,11 @@ atmosphere_shredder_0 = {
 			fail_text = "requires_not_capped"
 			from = {
 				OR = {
-					check_variable = { which = giga_storm_observatory_cap value = 0 }						# No Cap
-					check_variable = { which = giga_current_storm_observatory value < giga_storm_observatory_cap }
+					has_global_flag = storm_observatory_capped_u
+					check_variable = {
+						which = giga_current_storm_observatory
+						value < value:giga_storm_observatory_limit
+					}
 				}
 			}
 		}
@@ -125,9 +135,15 @@ atmosphere_shredder_0 = {
 		modifier = { factor = 2.00	from = { has_federation = yes federation = { has_federation_type = research_federation } } }
 	}
 	on_build_start = {
+		from = {
+			set_country_flag = is_currently_building_atmosphere_shredder
+		}
 		set_star_flag = atmosphere_shredder_construction
 	}
 	on_build_cancel = {
+		from = {
+			remove_country_flag = is_currently_building_atmosphere_shredder
+		}
 		remove_star_flag = atmosphere_shredder_construction
 	}
 	on_build_complete = {
@@ -144,6 +160,7 @@ atmosphere_shredder_0 = {
 		}
 		from = {
 			set_timed_country_flag = { flag = has_recently_built_atmosphere_shredder years = 20 }
+			remove_country_flag = is_currently_building_atmosphere_shredder
 			create_message = {
 				type = MEGASTRUCTURE_BUILT
 				localization = MESSAGE_MEGASTRUCTURE_BUILT
@@ -262,6 +279,7 @@ atmosphere_shredder_1 = {
 	entity_offset = { x = 0 y = 0 } 
 	scales_with_planet = yes
 	upgrade_from = { atmosphere_shredder_0 }
+	construction_blocks_and_blocked_by = none
 
 
 	outliner_trigger = {
@@ -273,8 +291,11 @@ atmosphere_shredder_1 = {
 	resources = {
 		category = giga_kilostructures
 		cost = { 
+			unity = @science_kilo_cost_2
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
 			alloys = @science_kilo_cost_2
-			unity = @science_kilo_cost_2 
 		}
 		upkeep = {
 			energy = 20
@@ -437,6 +458,7 @@ atmosphere_shredder_2 = {
 	entity_offset = { x = 0 y = 0 } 
 	scales_with_planet = yes
 	upgrade_from = { atmosphere_shredder_1 }
+	construction_blocks_and_blocked_by = none
 
 	outliner_trigger = {
 		exists = owner
@@ -449,8 +471,11 @@ atmosphere_shredder_2 = {
 	resources = {
 		category = giga_kilostructures
 		cost = { 
-			alloys = @science_kilo_alloys_3
 			unity = @science_kilo_unity_3
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = @science_kilo_alloys_3
 		}
 		upkeep = {
 			energy = 40
@@ -615,6 +640,8 @@ atmosphere_shredder_3 = {
 	entity_offset = { x = 0 y = 0 } 
 	scales_with_planet = yes
 	upgrade_from = { atmosphere_shredder_2 }
+	construction_blocks_and_blocked_by = none
+	show_in_outliner = no
 	
 	outliner_trigger = {
 		exists = owner
@@ -627,9 +654,13 @@ atmosphere_shredder_3 = {
 	resources = {
 		category = giga_kilostructures
 		cost = { 
-			alloys = @science_kilo_alloys_4
 			unity = @science_kilo_unity_4
 		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = @science_kilo_alloys_4
+		}
+
 		upkeep = {
 			energy = 50
 		}
@@ -812,6 +843,7 @@ atmosphere_shredder_ruined = {
 	portrait = "GFX_megastructure_construction_background"
 	potential = { always = no }
 	resources = { category = giga_kilostructures }
+	construction_blocks_and_blocked_by = none
 	
 	outliner_trigger = {
 		exists = owner
@@ -829,6 +861,8 @@ atmosphere_shredder_restored = {
 	entity_offset = { x = 0 y = 0 } 
 	scales_with_planet = yes
 	upgrade_from = { atmosphere_shredder_ruined }
+	construction_blocks_and_blocked_by = none
+	show_in_outliner = no
 
 	outliner_trigger = {
 		exists = owner
@@ -838,7 +872,13 @@ atmosphere_shredder_restored = {
 	build_time = 720 # 2 years
 	resources = {
 		category = giga_kilostructures
-		cost = { alloys = 5000 unity = @giga_kilo_repair_unity_cost }
+		cost = {
+			unity = @giga_kilo_repair_unity_cost
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 5000
+		}
 		upkeep = {
 			energy = 50
 		}
