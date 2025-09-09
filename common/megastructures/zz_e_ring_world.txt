@@ -108,10 +108,24 @@ ring_world_1 = {
 	on_build_complete = {
 		set_variable = { which = ring_segments value = 0 }
 		calculate_system_bm = yes
-		solar_system = {
-			set_variable = { which = giga_system_bm value = 10 }
+		if = { #Not enough or exact BM to fulfill, make the discount equal to the amount of BM
+			limit = { check_variable = { which = giga_system_bm value <= @ring_world_2_intermediate_bm_cost } }
+			set_variable = { which = giga_system_bm_discount value = giga_system_bm }
 		}
-		fromfrom = { set_variable = { which = giga_system_bm value = PREV.giga_system_bm } }
+		else_if = { #More than enough BM, set the discount to the price and store the rest elsewhere
+			limit = { check_variable = { which = giga_system_bm value > @ring_world_2_intermediate_bm_cost } }
+			set_variable = { which = giga_system_bm_discount value = @ring_world_2_intermediate_bm_cost }
+			set_variable = { which = giga_system_bm_cache value = giga_system_bm }
+			subtract_variable = { which = giga_system_bm_cache value = @ring_world_2_intermediate_bm_cost }
+			set_star_flag = giga_system_bm_cache_needed
+		}
+		solar_system = {
+			set_variable = {
+				which = giga_system_bm_discount_test
+				value = 50
+			}
+		}
+		fromfrom = { set_variable = { which = giga_system_bm_discount value = PREV.giga_system_bm_discount } }
 		from = {
 			set_timed_country_flag = { flag = has_recently_built_vanilla_ring years = 20 }
 			set_country_flag = giga_started_ringworld
@@ -146,11 +160,11 @@ ring_world_2_intermediate = {
 		}
 		inline_script = {
 			script = megastructures/generic_parts/giga_mega_bulk_matter_cost
-			giga_sr_bulk_matter = 50
+			giga_sr_bulk_matter = @ring_world_2_intermediate_bm_cost
 		}
 		cost = {
 			unity = 1
-			mult = solar_system.giga_system_bm
+			mult = solar_system.giga_system_bm_discount
 		}
 	}
 
@@ -185,6 +199,22 @@ ring_world_2_intermediate = {
 		giga_remove_system_debris = yes
 		set_asteroid_belt = { radius = 0 }
 		remove_megastructure = fromfrom
+		if = {
+			limit = { has_star_flag = giga_system_bm_cache_needed }
+			remove_star_flag = giga_system_bm_cache_needed
+			spawn_planet = {
+				class = "pc_asteroid"
+				location = fromfrom
+				orbit_distance_offset = 150
+				orbit_angle_offset = 30
+				init_effect = {
+					set_planet_size = solar_system.giga_system_bm_cache
+					set_name = "Planetary Cache"
+					set_surveyed = { surveyed = yes surveyor = from }
+					set_all_comms_surveyed = yes
+				}
+			}
+		}
 
 		spawn_megastructure = { name = "Ring Section A" type = "ring_world_2" orbit_angle = 0	orbit_distance = 45 owner = from graphical_culture = fromfrom }
 		spawn_megastructure = { name = "Ring Section B" type = "ring_world_2" orbit_angle = 90	orbit_distance = 45 owner = from graphical_culture = fromfrom }
@@ -229,6 +259,10 @@ ring_world_3_intermediate = {
 		inline_script = {
 			script = megastructures/generic_parts/giga_mega_alloy_cost
 			alloys = 10000
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_bulk_matter_cost
+			giga_sr_bulk_matter = @ring_world_3_intermediate_bm_cost
 		}
 	}
 
