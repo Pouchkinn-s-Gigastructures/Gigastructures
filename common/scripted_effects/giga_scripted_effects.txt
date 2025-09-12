@@ -1,6 +1,7 @@
 #################################
 ### Planet Effects ##############
 #################################
+
 clear_alderson_entity_flags = {
 	if = {
 		limit = { has_planet_flag = giga_alderson_pc_01_entity }
@@ -21,23 +22,6 @@ clear_alderson_entity_flags = {
 	else_if = {
 		limit = { has_planet_flag = giga_alderson_ecu_01_entity }
 		remove_planet_flag = giga_alderson_ecu_01_entity
-	}
-}
-
-# Calculate BM in a system
-calculate_system_bm = {
-	set_variable = {
-		which = giga_system_bm
-		value = 1
-	}
-	every_system_planet = {
-		limit = { is_star = no is_astral_scar = no }
-		solar_system = {
-			change_variable = {
-				which = giga_system_bm
-				value = PREV.value:giga_bulk_matter_in_planet
-			}
-		}
 	}
 }
 
@@ -4517,5 +4501,53 @@ giga_dyson_freeze = {
 			giga_is_barren = yes
 		}
 		change_pc = pc_barren_cold
+	}
+}
+
+# Calculate BM in a system
+calculate_system_bm = {
+	set_variable = {
+		which = giga_system_bm
+		value = 1
+	}
+	every_system_planet = {
+		limit = { is_star = no is_astral_scar = no }
+		solar_system = {
+			change_variable = {
+				which = giga_system_bm
+				value = PREV.value:giga_bulk_matter_in_planet
+			}
+		}
+	}
+}
+
+generate_bulk_matter_cache = {
+	if = {
+		limit = { has_star_flag = giga_system_bm_cache_needed }
+		remove_star_flag = giga_system_bm_cache_needed
+		spawn_planet = {
+			class = "pc_asteroid"
+			location = fromfrom
+			orbit_distance_offset = 150
+			orbit_angle_offset = 30
+			init_effect = {
+				set_planet_size = solar_system.giga_system_bm_cache
+				set_name = "Planetary Cache"
+				set_surveyed = { surveyed = yes surveyor = from }
+				set_all_comms_surveyed = yes
+			}
+		}
+	}
+}
+
+remove_bm_cost_from_stockpile = {
+	if = {
+		limit = { NOT = { has_global_flag = giga_bulk_matter_cost_disabled } }
+		from = {
+			add_resource = {
+				giga_sr_bulk_matter = -1
+				mult = ROOT.giga_system_bm_cost
+			}
+		}
 	}
 }
