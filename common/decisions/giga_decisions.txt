@@ -837,7 +837,6 @@ decision_harvest_matter_for_planetary_printing = {
 			is_planet_class = pc_ai
 			is_planet_class = pc_shrouded
 			is_planet_class = pc_gigabrown_dwarf
-			giga_is_gas_giant = yes
 			giga_is_birch_world = yes
 		}
 		NOT = { has_planet_flag = has_megastructure } # This is gonna make people mad but you shouldn't be taking apart a planet that's anchoring a mega
@@ -889,6 +888,105 @@ decision_harvest_matter_for_planetary_printing = {
 						upgrade_megastructure_to = moon_printer_orbital_mass_harvester_1
 					}
 				}
+			}
+		}
+	}
+}
+
+decision_harvest_matter_for_planetary_printing_system = {
+	owned_planets_only = no
+	icon = decision_harvest_matter_for_planetary_printing
+	enactment_time = 0
+	ai_weight = { weight = 0 }
+
+	potential = {
+		exists = space_owner
+		space_owner = { is_ai = no }
+		is_star = yes
+		solar_system = {
+			NOT = { has_star_flag = dismantling_whole_system }
+		}
+	}
+
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			alloys = 5000
+			energy = 15000
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|5000| }
+	}
+
+	prerequisites = { giga_tech_planetary_matter_harvesting }
+
+	effect = {
+		custom_tooltip = "decision_build_planetary_matter_harvester"
+		hidden_effect = {
+			from = {
+				giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = alloys AMOUNT = 5000 }
+			}
+			solar_system = {
+				set_star_flag = dismantling_whole_system
+				every_system_planet = {
+					limit = {
+						NOR = {
+							is_star = yes
+							is_planet_class = pc_shielded
+							has_planet_flag = getting_harvested_for_printing
+							has_planet_flag = megastructure
+							has_planet_flag = has_megastructure
+							has_planet_flag = holy_world_1
+							has_planet_flag = holy_world_2
+							has_planet_flag = holy_world_3
+							has_planet_flag = holy_world_4
+							has_planet_flag = machine_world_1
+							has_planet_flag = machine_world_2
+							has_planet_flag = machine_world_3
+							has_planet_flag = machine_world_4
+							has_planet_flag = paluushia
+							has_planet_flag = corrona
+							has_planet_flag = gigaflusion
+							is_planet_class = pc_ai
+							is_planet_class = pc_shrouded
+							is_planet_class = pc_gigabrown_dwarf
+							giga_is_birch_world = yes
+						}
+						NOR = {
+							has_planet_flag = getting_harvested_for_printing
+							has_planet_flag = has_megastructure
+						}
+					}
+					# remove terraforming modifiers
+					if = {
+						limit = { 
+							OR = {
+								has_modifier = terraforming_candidate
+								has_modifier = frozen_terraforming_candidate
+								has_modifier = toxic_terraforming_candidate
+							}
+						}
+						remove_modifier = terraforming_candidate
+						remove_modifier = frozen_terraforming_candidate
+						remove_modifier = toxic_terraforming_candidate
+					}
+					set_planet_flag = getting_harvested_for_printing
+					giga_set_has_mega_flag = yes
+					solar_system = {
+						spawn_megastructure = {
+							type = moon_printer_orbital_mass_harvester_0
+							planet = PREV
+							owner = space_owner
+						}
+						space_owner = {
+							every_owned_megastructure = {
+								limit = {
+									is_megastructure_type = moon_printer_orbital_mass_harvester_0
+								}
+								upgrade_megastructure_to = moon_printer_orbital_mass_harvester_1
+							}
+						}
+					}
+				}	
 			}
 		}
 	}
