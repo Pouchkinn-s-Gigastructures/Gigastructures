@@ -57,15 +57,16 @@ country_event = {
 #HARVESTING PLANET FOR BULK MATTER!!!
 country_event = {
 	id = giga_printer.1001
-	title = "giga_printer.1001.name"
-	desc = "giga_printer.1001.desc"
-	hide_window = no
-	show_sound = event_machinery
-	picture = GFX_evt_planet_beam
+	hide_window = yes
 	is_triggered_only = yes
 	location = event_target:planet_being_harvested_for_printing
 
 	immediate = {
+		create_message = {
+			type = GIGA_PLANET_DISMANTLE
+			days = 30
+			localization = giga_planet_dismantle_start
+		}
 		event_target:planet_being_harvested_for_printing = {
 			planet_event = { id = giga_printer.1002 }
 			if = {
@@ -84,6 +85,7 @@ country_event = {
 			else_if = {
 				limit = {
 					NOR = {
+						is_planet_class = pc_bulk_matter_cache
 						is_planet_class = pc_asteroid
 						is_planet_class = pc_molten
 					}
@@ -95,11 +97,6 @@ country_event = {
 				destroy_colony = yes
 			}
 		}
-	}
-
-	option = { #Good, good.
-		name = "giga_printer.1001.a"
-		custom_tooltip = "giga_printer.1001.a.tooltip"
 	}
 }
 
@@ -119,7 +116,13 @@ planet_event = {
 		else = {
 			change_planet_size = -1
 			space_owner = { add_resource = { giga_sr_bulk_matter = 1 } }
-			planet_event = { id = giga_printer.1002 days = 180 }
+			if = {
+				limit = { is_planet_class = pc_bulk_matter_cache }
+				planet_event = { id = giga_printer.1002 days = 60 }
+			}
+			else = {
+				planet_event = { id = giga_printer.1002 days = 180 }
+			}
 		}
 	}
 }
@@ -127,32 +130,101 @@ planet_event = {
 #Planet depleted
 country_event = {
 	id = giga_printer.1003
-	title = "giga_printer.1002.name"
-	desc = "giga_printer.1002.desc"
-	show_sound = event_super_explosion
-	picture = GFX_evt_planet_beam
 	is_triggered_only = yes
-	hide_window = no
+	hide_window = yes
 	location = event_target:planet_being_harvested_depleted
 
-	option = { #Good, good.
-		name = "giga_printer.1002.a"
-		custom_tooltip = "giga_printer.1002.a.tooltip"
+	immediate = { #Good, good.
 		add_resource = {
 			alloys = 500
 		}
+		create_message = {
+			type = GIGA_PLANET_DISMANTLE
+			days = 30
+			localization = giga_planet_dismantle_end
+		}
+		every_planet_within_border = {
+			limit = { has_planet_flag = planet_being_harvested_depleted }
+			solar_system = {
+				random_system_megastructure = {
+					limit = { planet = { has_planet_flag = planet_being_harvested_depleted } }
+					remove_megastructure = THIS
+				}
+			}
+			remove_planet_flag = planet_being_harvested_depleted
+			remove_planet = yes
+		}
+	}
+}
+
+#R we gonna dismantle this system boss?
+country_event = {
+	id = giga_printer.1005
+	title = "giga_printer.1005.name"
+	desc = "giga_printer.1005.desc"
+	hide_window = no
+	show_sound = event_dyson_sphere_build_start
+	picture = GFX_evt_mining_operations
+	is_triggered_only = yes
+	location = from.solar_system
+
+	immediate = {
+		set_variable = { which = giga_system_dismantle_cost_alloys value = @planet_harvest_cost_alloys }
+		set_variable = { which = giga_system_dismantle_cost_energy value = @planet_harvest_cost_energy }
+		set_variable = { which = giga_system_dismantle_cost_mult value = 0 }
+		FROM = {
+			solar_system = {
+				every_system_planet = {
+					limit = { can_dismantle_planet_for_bm = yes }
+					ROOT = { change_variable = { which = giga_system_dismantle_cost_mult value = 1 } }
+				}
+			}
+		}
+
+		multiply_variable = { which = giga_system_dismantle_cost_alloys value = giga_system_dismantle_cost_mult }
+		multiply_variable = { which = giga_system_dismantle_cost_energy value = giga_system_dismantle_cost_mult }
+	}
+
+	option = { #Yes
+		name = "giga_printer.1005.a"
+		custom_tooltip = "giga_printer.1005.a.tooltip"
+		allow = {
+			resource_stockpile_compare = {
+				resource = alloys
+				value >= giga_system_dismantle_cost_alloys
+			}
+			resource_stockpile_compare = {
+				resource = alloys
+				value >= giga_system_dismantle_cost_energy
+			}
+		}
+		add_resource = {
+			alloys = -1
+			mult = giga_system_dismantle_cost_alloys
+		}
+		add_resource = {
+			energy = -1
+			mult = giga_system_dismantle_cost_energy
+		}
 		hidden_effect = {
-			every_planet_within_border = {
-				limit = { has_planet_flag = planet_being_harvested_depleted }
+			remove_country_flag = giga_considering_dismantling_system
+			from = {
 				solar_system = {
-					random_system_megastructure = {
-						limit = { planet = { has_planet_flag = planet_being_harvested_depleted } }
-						remove_megastructure = THIS
+					set_star_flag = dismantling_whole_system
+					every_system_planet = {
+						limit = { can_dismantle_planet_for_bm = yes }
+						save_global_event_target_as = planet_being_harvested_for_printing
+						start_dismantling_planet_for_bm = yes
 					}
 				}
-				remove_planet_flag = planet_being_harvested_depleted
-				remove_planet = yes
 			}
+		}
+	}
+
+	option = { #No
+		name = "giga_printer.1005.b"
+		hidden_effect = {
+			remove_country_flag = giga_considering_dismantling_system
 		}
 	}
 }
