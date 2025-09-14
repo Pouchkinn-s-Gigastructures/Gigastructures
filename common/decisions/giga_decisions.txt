@@ -797,6 +797,47 @@ decision_ringworld_upgrade = {
 # 	}
 # }
 
+decision_recover_bm_in_cache = {
+	owned_planets_only = no
+	icon = decision_harvest_matter_for_planetary_printing
+	enactment_time = 180
+	ai_weight = { weight = 0 }
+
+	potential = {
+		exists = space_owner
+		space_owner = { is_ai = no }
+		is_planet_class = pc_bulk_matter_cache
+	}
+
+	prerequisites = { tech_ring_world }
+
+	# allow = {
+	# 	custom_tooltip = {
+	# 		fail_text = "cant_have_moon"
+	# 		has_moon = yes
+	# 	}
+	# }
+
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			energy = 5000
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|5000| }
+	}
+
+	effect = {
+		custom_tooltip = "decision_recover_bm_in_cache_tooltip"
+		space_owner = {
+			add_resource = {
+				giga_sr_bulk_matter = 1
+				mult = PREV.solar_system.giga_system_bm_cache
+			}
+		}
+		giga_remove_planet = yes
+	}
+}
+
 decision_harvest_matter_for_planetary_printing = {
 	owned_planets_only = no
 	icon = decision_harvest_matter_for_planetary_printing
@@ -808,6 +849,8 @@ decision_harvest_matter_for_planetary_printing = {
 		space_owner = { is_ai = no }
 		can_dismantle_planet_for_bm = yes
 	}
+
+	prerequisites = { tech_ring_world }
 
 	# allow = {
 	# 	custom_tooltip = {
@@ -824,8 +867,6 @@ decision_harvest_matter_for_planetary_printing = {
 		}
 		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|5000| }
 	}
-
-	prerequisites = { giga_tech_planetary_matter_harvesting }
 
 	effect = {
 		custom_tooltip = "decision_build_planetary_matter_harvester"
@@ -861,7 +902,7 @@ decision_harvest_matter_for_planetary_printing_system = {
 		category = giga_kilostructures
 	}
 
-	prerequisites = { giga_tech_planetary_matter_harvesting }
+	prerequisites = { tech_ring_world }
 
 	effect = {
 		custom_tooltip = "decision_build_planetary_matter_harvester"
@@ -884,42 +925,138 @@ decision_harvest_matter_for_planetary_printing_system = {
 
 decision_dump_matter_on_planet = {
 	owned_planets_only = no
-	icon = decision_harvest_matter_for_planetary_printing
-	enactment_time = 0
+	enactment_time = 90
 	ai_weight = { weight = 0 }
 
 	potential = {
 		exists = space_owner
 		space_owner = { is_ai = no }
-		can_dismantle_planet_for_bm = yes
+		OR = {
+			is_planet_class = pc_barren
+			is_planet_class = pc_toxic
+			is_planet_class = pc_molten
+			is_planet_class = pc_barren_cold
+			is_planet_class = pc_frozen
+		}
 	}
 
 	allow = {
-		custom_tooltip = {
-			fail_text = "cant_have_moon"
-			has_moon = no
+		NOT = {
+			has_moon = yes
 		}
-	} 
+	}
 
 	resources = {
 		category = giga_kilostructures
 		cost = {
-			alloys = 5000
-			energy = 15000
+			giga_sr_bulk_matter = 1
+			energy = 1000
 		}
-		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|5000| }
 	}
 
-	prerequisites = { giga_tech_planetary_matter_harvesting }
+	prerequisites = { giga_tech_planetary_matter_dumping }
 
 	effect = {
-		custom_tooltip = "decision_build_planetary_matter_harvester"
+		change_planet_size = 1
 		hidden_effect = {
-			from = {
-				giga_ai_savings_withdraw = { CATEGORY = resource RESOURCE = alloys AMOUNT = 5000 }
+			if = {
+				limit = { NOT = { has_planet_flag = giga_dumping_matter_on_planet } }
+				set_planet_flag = giga_dumping_matter_on_planet
+				set_variable = { which = giga_gained_planet_size value = 0 }
 			}
-			start_dismantling_planet_for_bm = yes
+			change_variable = { which = giga_gained_planet_size value = 1 }
 		}
+		if = {
+			limit = { NOT = { is_planet_class = pc_molten } }
+			change_pc = pc_molten
+		}
+		custom_tooltip = "decision_dump_matter_on_planet_tooltip"
+	}
+}
+
+decision_dump_matter_on_planet_5 = {
+	owned_planets_only = no
+	enactment_time = 450
+	ai_weight = { weight = 0 }
+
+	potential = {
+		exists = space_owner
+		space_owner = { is_ai = no }
+		OR = {
+			is_planet_class = pc_barren
+			is_planet_class = pc_toxic
+			is_planet_class = pc_molten
+			is_planet_class = pc_barren_cold
+			is_planet_class = pc_frozen
+		}
+	}
+
+	allow = {
+		NOT = {
+			planet_size <= 45
+		}
+		NOT = {
+			has_moon = yes
+		}
+	}
+
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			giga_sr_bulk_matter = 5
+			energy = 5000
+		}
+	}
+
+	prerequisites = { giga_tech_planetary_matter_dumping }
+
+	effect = {
+		change_planet_size = 5
+		hidden_effect = {
+			if = {
+				limit = { NOT = { has_planet_flag = giga_dumping_matter_on_planet } }
+				set_planet_flag = giga_dumping_matter_on_planet
+				set_variable = { which = giga_gained_planet_size value = 0 }
+			}
+			change_variable = { which = giga_gained_planet_size value = 1 }
+		}
+		if = {
+			limit = { NOT = { is_planet_class = pc_molten } }
+			change_pc = pc_molten
+		}
+		custom_tooltip = "decision_dump_matter_on_planet_tooltip"
+	}
+}
+
+decision_dump_matter_on_gas_giant = {
+	owned_planets_only = no
+	enactment_time = 2
+	ai_weight = { weight = 0 }
+
+	potential = {
+		exists = space_owner
+		space_owner = { is_ai = no }
+		is_planet_class = pc_gas_giant
+		NOT = { has_modifier = helioforming_candidate }
+	}
+
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			giga_sr_bulk_matter = 25
+			energy = 20000
+		}
+	}
+
+	prerequisites = { giga_tech_planetary_matter_dumping }
+
+	effect = {
+		change_planet_size = 5
+		add_modifier = {
+			modifier = helioforming_candidate
+			days = -1
+		}
+		custom_tooltip = "decision_dump_matter_on_gas_giant_tooltip"
 	}
 }
 
