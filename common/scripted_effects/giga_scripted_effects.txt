@@ -1,6 +1,30 @@
 #################################
 ### Planet Effects ##############
 #################################
+
+clear_alderson_entity_flags = {
+	if = {
+		limit = { has_planet_flag = giga_alderson_pc_01_entity }
+		remove_planet_flag = giga_alderson_pc_01_entity
+	}
+	else_if = {
+		limit = { has_planet_flag = giga_alderson_hive_01_entity }
+		remove_planet_flag = giga_alderson_hive_01_entity
+	}
+	else_if = {
+		limit = { has_planet_flag = giga_alderson_gaia_01_entity }
+		remove_planet_flag = giga_alderson_gaia_01_entity
+	}
+	else_if = {
+		limit = { has_planet_flag = giga_alderson_machine_01_entity }
+		remove_planet_flag = giga_alderson_machine_01_entity
+	}
+	else_if = {
+		limit = { has_planet_flag = giga_alderson_ecu_01_entity }
+		remove_planet_flag = giga_alderson_ecu_01_entity
+	}
+}
+
 # Setup Katzenland
 setup_katzenland_planet = {
 	add_deposit = d_arid_highlands
@@ -4477,5 +4501,88 @@ giga_dyson_freeze = {
 			giga_is_barren = yes
 		}
 		change_pc = pc_barren_cold
+	}
+}
+
+# Calculate BM in a system
+calculate_system_bm = {
+	set_variable = {
+		which = giga_system_bm
+		value = 1
+	}
+	every_system_planet = {
+		limit = { is_star = no is_astral_scar = no }
+		solar_system = {
+			change_variable = {
+				which = giga_system_bm
+				value = PREV.value:giga_bulk_matter_in_planet
+			}
+		}
+	}
+}
+
+generate_bulk_matter_cache = {
+	if = {
+		limit = { has_star_flag = giga_system_bm_cache_needed }
+		remove_star_flag = giga_system_bm_cache_needed
+		spawn_planet = {
+			class = "pc_bulk_matter_cache"
+			location = fromfrom
+			orbit_distance_offset = 150
+			orbit_angle_offset = 0
+			init_effect = {
+				set_planet_size = solar_system.giga_system_bm_cache
+				set_name = "Bulk Matter Cache"
+				set_surveyed = { surveyed = yes surveyor = from }
+				set_all_comms_surveyed = yes
+				add_modifier = {
+					modifier = giga_bulk_matter_cache
+					days = -1
+				}
+			}
+		}
+	}
+}
+
+remove_bm_cost_from_stockpile = {
+	if = {
+		limit = { NOT = { has_global_flag = giga_bulk_matter_cost_disabled } }
+		from = {
+			add_resource = {
+				giga_sr_bulk_matter = -1
+				mult = ROOT.giga_system_bm_cost
+			}
+		}
+	}
+}
+
+start_dismantling_planet_for_bm = {
+	# remove terraforming modifiers
+	if = {
+		limit = {
+			OR = {
+				has_modifier = terraforming_candidate
+				has_modifier = frozen_terraforming_candidate
+				has_modifier = toxic_terraforming_candidate
+			}
+		}
+		remove_modifier = terraforming_candidate
+		remove_modifier = frozen_terraforming_candidate
+		remove_modifier = toxic_terraforming_candidate
+	}
+	set_planet_flag = getting_harvested_for_printing
+	giga_set_has_mega_flag = yes
+	solar_system = {
+		spawn_megastructure = {
+			type = moon_printer_orbital_mass_harvester_0
+			planet = event_target:planet_being_harvested_for_printing
+			owner = space_owner
+		}
+		space_owner = {
+			every_owned_megastructure = {
+				limit = { is_megastructure_type = moon_printer_orbital_mass_harvester_0 }
+				upgrade_megastructure_to = moon_printer_orbital_mass_harvester_1
+			}
+		}
 	}
 }
