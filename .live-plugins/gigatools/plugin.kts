@@ -3,6 +3,9 @@
 import Plugin.GigaPsiUtils.findPropertyAndInline
 import Plugin.GigaYAMLUtil.asText
 import Plugin.GigaYAMLUtil.getValueAndCast
+//import GigaPsiUtils.findPropertyAndInline
+//import GigaYAMLUtil.asText
+//import GigaYAMLUtil.getValueAndCast
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInspection.ProblemHighlightType
@@ -32,7 +35,8 @@ import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.util.ProcessingContext
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.await
-import icu.windea.pls.ep.inline.ParadoxInlineSupport
+import icu.windea.pls.core.collections.process
+import icu.windea.pls.ep.resolve.ParadoxInlineSupport
 import icu.windea.pls.ep.parameter.ParadoxParameterSupport
 import icu.windea.pls.lang.definitionInfo
 import icu.windea.pls.lang.fileInfo
@@ -40,7 +44,8 @@ import icu.windea.pls.lang.search.*
 import icu.windea.pls.lang.search.selector.*
 import icu.windea.pls.lang.util.ParadoxExpressionManager
 import icu.windea.pls.lang.util.ParadoxLocaleManager
-import icu.windea.pls.lang.util.renderer.ParadoxLocalisationTextRenderer
+import icu.windea.pls.lang.util.dataFlow.options
+import icu.windea.pls.lang.util.renderers.ParadoxLocalisationTextRenderer
 import icu.windea.pls.model.ParadoxParameterContextReferenceInfo
 import icu.windea.pls.script.ParadoxScriptLanguage
 import icu.windea.pls.script.psi.*
@@ -195,7 +200,7 @@ object GigaPsiUtils {
         val locale = ParadoxLocaleManager.getLocaleConfig("en") // english for standardisation
         val selector = selector(element.project, element).localisation().contextSensitive().preferLocale(locale)
         val loc = ParadoxLocalisationSearch.search(element.name, selector).find() ?: return element.name
-        val rendered = ParadoxLocalisationTextRenderer.render(loc).replace("\u200B", "")
+        val rendered = ParadoxLocalisationTextRenderer().render(loc).replace("\u200B", "")
         return rendered.ifEmpty { loc.value ?: element.name }
     }
 
@@ -223,7 +228,7 @@ object GigaPsiUtils {
             else -> null
         }
         val parameterStack = mutableListOf<MutableMap<String,MutableList<String>>>()
-        var parameterFile = this.containingFile.fileInfo?.relPath
+        var parameterFile = this.containingFile.fileInfo?.path
         var result: ParadoxScriptProperty? = null
 
         val doReplacement = e@{ input: String ->
@@ -241,23 +246,24 @@ object GigaPsiUtils {
             return@e replaced
         }
 
-        block?.processProperty(conditional, true) {
+        //block?.processProperty(conditional, true) {
+        block?.properties()?.options(conditional, true)?.process {
             println("visited: ${it.name}, ${it.javaClass}")
             // if the current file isn't the parameter file, pop the stack
-            if (it.fileInfo != null && it.fileInfo!!.relPath != parameterFile) {
-                println(it.fileInfo!!.relPath)
+            if (it.fileInfo != null && it.fileInfo!!.path != parameterFile) {
+                println(it.fileInfo!!.path)
                 println(parameterFile)
-                parameterFile = it.fileInfo!!.relPath
+                parameterFile = it.fileInfo!!.path
                 parameterStack.removeLast()
                 println("POP!")
             }
             // if the element appears to be an inline script
             if (it.name.equals("inline_script", true) && it.fileInfo != null) {
                 // get the element for it to get the file name
-                val inlineElement = ParadoxInlineSupport.inlineElement(it)
+                val inlineElement = ParadoxInlineSupport.getInlinedElement(it)
 
                 if (inlineElement != null && inlineElement.containingFile.fileInfo != null) {
-                    val inlineFilePath = inlineElement.containingFile.fileInfo!!.relPath
+                    val inlineFilePath = inlineElement.containingFile.fileInfo!!.path
                     // holder for the data
                     val data = mutableMapOf<String,MutableList<String>>()
 
@@ -539,7 +545,7 @@ class Megastructure(def: ParadoxScriptDefinitionElement) : TaggedDefinition(def)
         fun resolveAll(project: Project) {
             if (resolvedAll) { return }
             resolvedAll = true
-            val found = ParadoxDefinitionSearch.search("megastructure", selector(project, project.projectFile).definition().distinctByName()).findAll()
+            val found = ParadoxDefinitionSearch.search(null, "megastructure", selector(project, project.projectFile).definition().distinctByName()).findAll()
             cache.putAll(found.filter { e -> !cache.keys.contains(e.name) }.associate { e -> e.name to Megastructure(e) })
         }
     }
@@ -560,7 +566,7 @@ object ListBuilders {
         }
 
         // get a list of matching megas
-        val megas: Iterable<ParadoxScriptDefinitionElement> = ParadoxDefinitionSearch.search("megastructure", selector(project, project.projectFile).definition().distinctByName().filterBy(predicate)).findAll().sortedBy { mega -> mega.name }
+        val megas: Iterable<ParadoxScriptDefinitionElement> = ParadoxDefinitionSearch.search(null, "megastructure", selector(project, project.projectFile).definition().distinctByName().filterBy(predicate)).findAll().sortedBy { mega -> mega.name }
 
         val content = buildListTextWithFormat(megas, ToolData.listFormats["scripted_trigger"]!!, mapOf("trigger" to "\$CONDITION\$"))
 
