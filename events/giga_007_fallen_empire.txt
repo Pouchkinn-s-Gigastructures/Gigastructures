@@ -293,7 +293,7 @@ country_event = {
 				NOT = { any_country = { has_origin = origin_scion } }
 			}
 			random_list = {
-				25000 = { #TEMP.
+				25 = { #TEMP.
 					set_global_flag = meopa_spawned_as_fe
 					random_country = {
 						limit = {
@@ -586,7 +586,9 @@ country_event = {
 				random_list = {
 					50 = { #Give them Chosen One (Cool and good)
 						leader = {
-							add_trait = leader_trait_chosen
+							add_trait = {
+							    trait = leader_trait_chosen
+							}
 							remove_trait = leader_trait_psionic
 						}
 					}
@@ -734,8 +736,9 @@ country_event = {
 					}
 					50 = { #The Old Ringworlds (Why did Paradox remove those?? They were amazing! I'm adding them back lol)
 						create_species = {
-							name = "Synthetic"
-							class = "ROBOT"
+                            name = "NAME_Synthetic"
+                            plural = "NAME_Synthetic_plural"
+							class = ROBOT
 							portrait = random
 							namelist = "AI"
 							traits = {
@@ -1054,8 +1057,8 @@ country_event = {
 									# }
 									OR = {
 										giga_is_molten = yes
-										gigas_is_toxic = yes
-										gigas_is_barren = yes
+										giga_is_toxic = yes
+										giga_is_barren = yes
 									}
 								}
 								change_pc = pc_frozen
@@ -1416,7 +1419,7 @@ country_event = {
 						}
 						every_system_megastructure = {
 							limit = { is_megastructure_type = asteroid_artillery_0 }
-							upgrade_megastructure_to = asteroid_artillery_1
+							upgrade_megastructure_to = asteroid_artillery_1_fake
 							finish_upgrade = yes
 						}
 					}
@@ -1445,7 +1448,7 @@ country_event = {
 							}
 							every_system_megastructure = {
 								limit = { is_megastructure_type = asteroid_artillery_0 }
-								upgrade_megastructure_to = asteroid_artillery_1
+								upgrade_megastructure_to = asteroid_artillery_1_fake
 								finish_upgrade = yes
 							}
 						}
@@ -1683,7 +1686,7 @@ country_event = {
 
 							create_pop_group = {
 								species = root.species
-								count = 6
+								size = 600
 							}
 							while = {
 								count = 5
@@ -1695,7 +1698,7 @@ country_event = {
 								}
 								create_pop_group = {
 									species = last_created_species
-									count = 2
+									size = 200
 								}
 							}
 							set_planet_flag = fe_the_preserve
@@ -2075,14 +2078,17 @@ country_event = {
 				}
 			}
 		}
-		every_owned_planet = {
-			limit = {
-				is_colony = yes
-				NOT = { is_planet_class = pc_ringworld_habitable }
-			}
-			destroy_colony = yes
-			change_pc = pc_barren
-		}
+		country_event = { id = giga_fallen_empire_megas.5005 days = 2}
+		# every_owned_planet = {
+		# 	limit = {
+		# 		is_colony = yes
+		# 		NOT = { is_planet_class = pc_ringworld_habitable }
+		# 	}
+		# 	remove_all_buildings = yes
+		# 	kill_all_pop = yes
+		# 	# destroy_colony = yes
+		# 	# change_pc = pc_barren
+		# }	
 	}
 }
 
@@ -2188,16 +2194,7 @@ country_event = {
 			}
 		}
 		
-		every_owned_planet = { #kill off other colonies
-			limit = {
-				not = {
-					is_planet_class = pc_ringworld_habitable
-				}
-			}
-			change_pc = pc_barren
-			add_modifier = { modifier = terraforming_candidate days = -1 }
-			remove_planet_flag = fallen_empire_world
-		}
+		
 		set_policy = { #so that they don't kill off their robots.
 			policy = appropriation
 			option = appropriation_not_allowed
@@ -2224,6 +2221,69 @@ country_event = {
 		}
 		set_male_ruler_title = "Gamemaster"
 		set_female_ruler_title = "Gamemaster"
+		
+		add_modifier = { modifier = gamers_modifier days = -1 }
+		add_modifier = { modifier = gamers_fallen_modifier days = -1 }
+		country_event = { id = giga_fallen_empire_megas.5006 days = 2}
+	}
+}
+
+# kill but on a delay, for non ringworlds
+# need a delay or it wont kill their other planets properly and will crash
+# this is called by giga_fallen_empire_megas.5002
+country_event = {
+	id = giga_fallen_empire_megas.5005
+	hide_window = yes
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		NOT = { has_country_flag = scion_master }
+		is_country_type = fallen_empire
+		has_ethic = ethic_fanatic_materialist
+	}
+	
+	immediate = {
+		every_owned_planet = {
+			limit = {
+				is_colony = yes
+				NOT = { is_planet_class = pc_ringworld_habitable }
+			}
+			remove_all_buildings = yes
+			kill_all_pop = yes
+			destroy_colony = yes
+			change_pc = pc_barren
+		}	
+	}
+}
+
+# kill but on a delay, but for non gamers
+# need a delay or it wont kill their other planets properly and will crash
+# this is called by giga_fallen_empire_megas.5003
+country_event = {
+	id = giga_fallen_empire_megas.5006
+	hide_window = yes
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		NOT = { has_country_flag = scion_master }
+		is_country_type = fallen_empire
+		has_ethic = ethic_fanatic_materialist
+	}
+	
+	immediate = {
+		every_owned_planet = { #kill off other colonies
+			limit = {
+				not = {
+					is_planet_class = pc_ringworld_habitable
+				}
+			}
+			change_pc = pc_barren
+			add_modifier = { modifier = terraforming_candidate days = -1 }
+			remove_planet_flag = fallen_empire_world
+		}	
+
 		every_planet_within_border = {
 			limit = { has_deposit = yes has_orbital_station = no }
 			if = {
@@ -2235,8 +2295,6 @@ country_event = {
 				create_research_station = { owner = ROOT }
 			}
 		}
-		add_modifier = { modifier = gamers_modifier days = -1 }
-		add_modifier = { modifier = gamers_fallen_modifier days = -1 }
 		every_owned_planet = {
 			set_planet_flag = fallen_empire_world
 			set_planet_flag = gamer_world
@@ -3068,15 +3126,15 @@ country_event = {
 				}
 				create_pop_group = {
 					species = event_target:flusionians
-					count = 8
+					size = 800
 				}
 				create_pop_group = {
 					species = event_target:solakians
-					count = 8
+					size = 800
 				}
 				create_pop_group = {
 					species = event_target:kronks
-					count = 7
+					size = 700
 				}
 				set_owner = event_target:flusion_primitives_country
 				set_controller = event_target:flusion_primitives_country
@@ -3254,17 +3312,17 @@ country_event = {
 			create_pop_group = {
 				species = event_target:flusion_katzens
 				ethos = { ethic = ethic_xenophile }
-				count = 64
+				size = 6400
 			}
 			create_pop_group = {
 				species = event_target:darkforestezics
 				ethos = { ethic = ethic_xenophile }
-				count = 30
+				size = 3000
 			}
 			create_pop_group = {
 				species = event_target:meopa_fe_synths
 				ethos = { ethic = ethic_xenophile }
-				count = 30
+				size = 3000
 			}
 			add_building = building_giga_ancient_palace
 			add_building = building_giga_fe_stronghold
@@ -3319,7 +3377,7 @@ country_event = {
 			create_pop_group = {
 				species = event_target:nienet_sobakis
 				ethos = { ethic = ethic_xenophile }
-				count = 60
+				size = 6000
 			}
 			while = {
 				count = 10
@@ -3356,7 +3414,7 @@ country_event = {
 			set_controller = event_target:giga_meopa_fe
 			create_pop_group = {
 				species = event_target:flusion_katzens
-				count = 6
+				size = 600
 			}
 			while = {
 				count = 5
@@ -3414,7 +3472,7 @@ country_event = {
 			create_pop_group = {
 				species = event_target:forcinia_monkes
 				ethos = { ethic = ethic_xenophile }
-				count = 40
+				size = 4000
 			}
 			while = {
 				count = 10
@@ -3452,7 +3510,7 @@ country_event = {
 			create_pop_group = {
 				species = event_target:vicke_molluscs
 				ethos = { ethic = ethic_xenophile }
-				count = 40
+				size = 4000
 			}
 			while = {
 				count = 14
@@ -3654,15 +3712,15 @@ country_event = {
 				}
 				create_pop_group = {
 					species = event_target:flusionians
-					count = 8
+					size = 800
 				}
 				create_pop_group = {
 					species = event_target:solakians
-					count = 8
+					size = 800
 				}
 				create_pop_group = {
 					species = event_target:kronks
-					count = 7
+					size = 700
 				}
 				set_owner = event_target:flusion_primitives_country
 				set_controller = event_target:flusion_primitives_country
@@ -3799,12 +3857,12 @@ country_event = {
 			create_pop_group = {
 				species = event_target:flusion_katzens
 				ethos = { ethic = ethic_xenophobe }
-				count = 100
+				size = 10000
 			}
 			create_pop_group = {
 				species = event_target:meopa_fe_synths
 				ethos = { ethic = ethic_xenophile }
-				count = 30
+				size = 3000
 			}
 			add_building = building_giga_ancient_palace
 			add_building = building_giga_fe_stronghold
@@ -3855,7 +3913,7 @@ country_event = {
 			create_pop_group = {
 				species = event_target:flusion_katzens
 				ethos = { ethic = ethic_xenophobe }
-				count = 40
+				size = 4000
 			}
 			while = {
 				count = 21
@@ -3894,7 +3952,7 @@ country_event = {
 			create_pop_group = {
 				species = event_target:flusion_katzens
 				ethos = { ethic = ethic_xenophobe }
-				count = 40
+				size = 4000
 			}
 			add_building = building_giga_ancient_palace
 			add_building = building_giga_fe_stronghold
@@ -3933,7 +3991,7 @@ country_event = {
 			create_pop_group = {
 				species = event_target:flusion_katzens
 				ethos = { ethic = ethic_xenophobe }
-				count = 40
+				size = 4000
 			}
 			add_building = building_giga_ancient_palace
 			add_building = building_giga_fe_stronghold
@@ -4166,15 +4224,15 @@ country_event = {
 				}
 				create_pop_group = {
 					species = event_target:flusionians
-					count = 8 
+					size = 800
 				}
 				create_pop_group = {
 					species = event_target:solakians
-					count = 8
+					size = 800
 				}
 				create_pop_group = {
 					species = event_target:kronks
-					count = 7
+					size = 700
 				}
 				set_owner = event_target:flusion_primitives_country
 				set_controller = event_target:flusion_primitives_country
@@ -4379,27 +4437,27 @@ country_event = {
 			create_pop_group = {
 				species = event_target:flusion_katzens
 				ethos = { ethic = ethic_materialist }
-				count = 55
+				size = 5500
 			}
 			create_pop_group = {
 				species = event_target:darkforestezics
 				ethos = { ethic = ethic_materialist }
-				count = 25
+				size = 2500
 			}
 			create_pop_group = {
 				species = event_target:forcinia_monkes
 				ethos = { ethic = ethic_materialist }
-				count = 15
+				size = 1500
 			}
 			create_pop_group = {
 				species = event_target:vicke_molluscs
 				ethos = { ethic = ethic_materialist }
-				count = 15
+				size = 1500
 			}
 			create_pop_group = {
 				species = event_target:nienet_sobakis
 				ethos = { ethic = ethic_materialist }
-				count = 15
+				size = 1500
 			}
 			add_building = building_giga_ancient_palace
 			add_building = building_fe_stronghold
@@ -4460,12 +4518,12 @@ country_event = {
 			set_controller = event_target:giga_meopa_fe
 			create_pop_group = {
 				species = event_target:flusion_katzens
-				count = 6
+				size = 600
 			}
 			create_pop_group = {
 				species = event_target:meopa_fe_synths
 				ethos = { ethic = ethic_materialist }
-				count = 63
+				size = 6300
 			}
 			add_building = building_giga_ancient_palace
 			add_building = building_giga_fe_stronghold
@@ -4513,12 +4571,12 @@ country_event = {
 			set_controller = event_target:giga_meopa_fe
 			create_pop_group = {
 				species = event_target:flusion_katzens
-				count = 6
+				size = 600
 			}
 			create_pop_group = {
 				species = event_target:meopa_fe_synths
 				ethos = { ethic = ethic_materialist }
-				count = 50
+				size = 5000
 			}
 			while = {
 				count = 21
@@ -4568,12 +4626,12 @@ country_event = {
 			set_controller = event_target:giga_meopa_fe
 			create_pop_group = {
 				species = event_target:flusion_katzens
-				count = 6
+				size = 600
 			}
 			create_pop_group = {
 				species = event_target:meopa_fe_synths
 				ethos = { ethic = ethic_materialist }
-				count = 50
+				size = 5000
 			}
 			add_building = building_giga_ancient_palace
 			add_building = building_giga_fe_stronghold
@@ -4622,12 +4680,12 @@ country_event = {
 			set_controller = event_target:giga_meopa_fe
 			create_pop_group = {
 				species = event_target:flusion_katzens
-				count = 6
+				size = 600
 			}
 			create_pop_group = {
 				species = event_target:meopa_fe_synths
 				ethos = { ethic = ethic_materialist }
-				count = 50
+				size = 5000
 			}
 			add_building = building_giga_ancient_palace
 			add_building = building_fe_dome

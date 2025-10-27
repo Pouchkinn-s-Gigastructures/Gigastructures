@@ -1,0 +1,29 @@
+if = {
+	limit = { NOT = { has_global_flag = giga_bulk_matter_cost_disabled } }
+	calculate_system_bm = yes
+
+	#Define the base BM cost of the next mega step
+	set_variable = { which = giga_system_bm_cost value = $giga_system_bm_cost$ }
+
+	#Take mega cost modifiers into account
+	set_variable = { which = giga_system_bm_cost_mult value = space_owner.modifier:megastructures_cost_mult }
+	change_variable = { which = giga_system_bm_cost_mult value = 1 }
+	
+	multiply_variable = { which = giga_system_bm_cost value = giga_system_bm_cost_mult }
+
+	if = { #Not enough or exact BM to fulfill, make the discount equal to the amount of BM
+		limit = { check_variable = { which = giga_system_bm value <= giga_system_bm_cost } }
+		set_variable = { which = giga_system_bm_discount value = giga_system_bm }
+	}
+
+	else_if = { #More than enough BM, set the discount to the price and store the rest elsewhere
+		limit = { check_variable = { which = giga_system_bm value > giga_system_bm_cost } }
+		set_variable = { which = giga_system_bm_discount value = giga_system_bm_cost }
+		set_variable = { which = giga_system_bm_cache value = giga_system_bm }
+		subtract_variable = { which = giga_system_bm_cache value = giga_system_bm_cost }
+		set_star_flag = giga_system_bm_cache_needed
+	}
+
+	#Set the cost of the mega
+	subtract_variable = { which = giga_system_bm_cost value = giga_system_bm_discount }
+}
