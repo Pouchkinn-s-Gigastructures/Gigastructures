@@ -293,14 +293,144 @@ dyson_sphere_1 = {
 	}
 }
 
+# from swarm 3, turns into dyson_sphere_2
+# needed because otherwise dyson_sphere_2 needs to check for the ability to upgrade from swarm to sphere
+# and this can mess up if you upgraded from dyson_sphere_1, by incrementing the giga_current_vanilla_dyson value early
+# and then checking it twice, before and after incrementing it
+dyson_sphere_2_fake = {
+    entity = "dyson_sphere_phase_02_entity"
+    construction_entity = "dyson_sphere_part_1_entity"
+    portrait = "GFX_megastructure_construction_background"
+    upgrade_from = {
+        dyson_swarm_3
+    }
+    prerequisites = { "tech_dyson_sphere" }
+    ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+
+    outliner_trigger = {
+        exists = owner
+        NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+    }
+    potential = {
+        NOT = { has_global_flag = vanilla_dyson_disabled }
+        OR = {
+            has_global_flag = vanilla_dyson_capped_u
+            check_variable = {
+                which = giga_current_vanilla_dyson
+                value < value:giga_vanilla_dyson_limit
+            }
+        }
+    }
+    possible = {
+        custom_tooltip = {
+            fail_text = "requires_no_arc_furnace"
+            system_has_arc_furnace = no
+        }
+        custom_tooltip = {
+            fail_text = "requires_no_arc_furnace_construction"
+            if = {
+                limit = {
+                    system_has_arc_furnace = no
+                }
+                NOT = {
+                    solar_system = {
+                        has_star_flag = arc_furnace_construction
+                    }
+                }
+            }
+        }
+        custom_tooltip = {
+            fail_text = "requires_no_colonies"
+            NOT = {
+                any_system_planet = {
+                    OR = {
+                        is_under_colonization = yes
+                        is_colony = yes
+                    }
+                    is_artificial = no
+                    exists = owner
+                    owner = {
+                        is_primitive = no
+                    }
+                }
+            }
+        }
+        custom_tooltip = {
+            fail_text = "blocked_by_pre_ftl_policy"
+            if = {
+                limit = {
+                    any_system_planet = {
+                        exists = owner
+                        owner = {
+                            is_primitive = yes
+                        }
+                    }
+                }
+                from = {
+                    has_policy_flag = interference_aggressive
+                }
+            }
+        }
+    }
+    build_time = @dyson_p2_buildtime_g_star
+    resources = {
+        category = giga_megastructures
+        cost = {
+            unity = @dyson_cost_unity_g_star
+        }
+        inline_script = {
+            script = megastructures/generic_parts/giga_mega_alloy_cost
+            alloys = @dyson_p2_cost_alloys_g_star
+        }
+        cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|alloys|AMOUNT|@dyson_p2_cost_alloys_g_star| }
+        cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|important|RESOURCE|unity|AMOUNT|@dyson_cost_unity_g_star| }
+        produces = { energy = @dyson_p2_produces_energy_g_star }
+    }
+
+    on_build_start = {
+        if = {
+            limit = {
+                fromfrom = {
+                    has_megastructure_flag = giga_dyson_swarm
+                }
+            }
+            from = { change_variable = { which = giga_current_vanilla_dyson value = 1 } }
+        }
+        set_star_flag = dyson_sphere_construction
+        giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = alloys AMOUNT = @dyson_p2_cost_alloys_g_star }
+        giga_ai_savings_withdraw = { CATEGORY = important RESOURCE = unity  AMOUNT = @dyson_cost_unity_g_star }
+    }
+
+    on_build_cancel = {
+        if = {
+            limit = {
+                fromfrom = {
+                    has_megastructure_flag = giga_dyson_swarm
+                }
+            }
+            from = { change_variable = { which = giga_current_vanilla_dyson value = -1 } }
+        }
+        remove_star_flag = dyson_sphere_construction
+    }
+
+    on_build_complete = {
+        remove_star_flag = dyson_sphere_construction
+        save_event_target_as = giga_system
+        if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+        fromfrom = {
+            upgrade_megastructure_to = dyson_sphere_2
+        }
+    }
+}
+
 #Partial Dyson Sphere
 dyson_sphere_2 = {
 	entity = "dyson_sphere_phase_02_entity"
 	construction_entity = "dyson_sphere_part_1_entity"
 	portrait = "GFX_megastructure_construction_background"
 	upgrade_from = { 
-		dyson_sphere_1 
-		dyson_swarm_3 
+		dyson_sphere_1
+        dyson_sphere_2_fake
 	}
 	prerequisites = { "tech_dyson_sphere" }
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
@@ -311,13 +441,16 @@ dyson_sphere_2 = {
 	}
 	potential = {
 		NOT = { has_global_flag = vanilla_dyson_disabled }
-		OR = {
-			has_global_flag = vanilla_dyson_capped_u
-			check_variable = {
-				which = giga_current_vanilla_dyson
-				value < value:giga_vanilla_dyson_limit
-			}
-		}
+        # # NO NEED FOR BELOW
+        # # if upgrading from a sphere_1, we check when we made the frame
+        # # if upgrading from a swarm_3, we check when we made the fake sphere_2
+		# OR = {
+		# 	has_global_flag = vanilla_dyson_capped_u
+		# 	check_variable = {
+		# 		which = giga_current_vanilla_dyson
+		# 		value < value:giga_vanilla_dyson_limit
+		# 	}
+		# }
 	}
 	possible = {
 		custom_tooltip = {
