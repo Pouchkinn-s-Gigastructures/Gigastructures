@@ -18,10 +18,6 @@ giga_worker_weight = {
 		multiply = value:job_weights_modifier|JOB|$JOB$|RESOURCE|$RESOURCE$|FACTOR|$FACTOR|1$|
 	]
 
-	[[TRADE]
-		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_trade_mult|
-	]
-
 	[[AMENITIES]
 		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_amenities_mult|
 	]
@@ -55,10 +51,14 @@ giga_worker_weight = {
 		factor = 0.25
 		can_take_servant_job = yes
 	}
+	modifier = {
+		factor = 5
+		has_trait = trait_cyborg_creed_of_labor
+	}
 
 	# low income modifier
 	modifier = {
-		factor = 1.2
+		factor = 3
 		exists = planet
 		planet = {
 			has_available_jobs = $JOB$
@@ -68,14 +68,14 @@ giga_worker_weight = {
 			is_ai = yes
 			has_monthly_income = {
 				resource = $RESOURCE$
-				value < 0
+				value < 10
 			}
 		}
 	}
 
 	[[RESOURCE2]
 		modifier = {
-			factor = 1.2
+			factor = 3
 			exists = planet
 			planet = {
 				has_available_jobs = $JOB$
@@ -85,7 +85,7 @@ giga_worker_weight = {
 				is_ai = yes
 				has_monthly_income = {
 					resource = $RESOURCE2$
-					value < 0
+					value < 10
 				}
 			}
 		}
@@ -94,7 +94,7 @@ giga_worker_weight = {
 
 
 giga_specialist_weight = {
-	weight = value:giga_specialist_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|][[TRADE]TRADE|yes|][[STICKY]STICKY|$STICKY$|][[INDENTURED]INDENTURED|$INDENTURED$|]
+	weight = value:giga_specialist_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|][[INDENTURED]INDENTURED|$INDENTURED$|]
 
 	# split resources
 	[[RESOURCE2] 
@@ -108,7 +108,7 @@ giga_specialist_weight = {
 }
 
 giga_specialist_triple_weight = {
-	weight = value:giga_specialist_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|][[TRADE]TRADE|yes|][[STICKY]STICKY|$STICKY$|][[INDENTURED]INDENTURED|$INDENTURED$|]
+	weight = value:giga_specialist_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|][[INDENTURED]INDENTURED|$INDENTURED$|]
 
 	multiply = value:giga_specialist_triple_weight_calc|JOB|$JOB$|RESOURCE1|$RESOURCE1$|WEIGHT1|$WEIGHT|0.34$|RESOURCE2|$RESOURCE2$|WEIGHT2|$WEIGHT2|0.33$|RESOURCE3|$RESOURCE3$|WEIGHT3|$WEIGHT3|0.33$|
 }
@@ -152,12 +152,10 @@ giga_specialist_triple_weight_calc = {
 }
 
 giga_specialist_no_resource_weight = {
+	[[JOB]] # consistency
+
 	[[FACTOR]] # stop failure on 2 resources
 	base = @specialist_job_weight
-
-	[[TRADE]
-		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_trade_mult|
-	]
 
 	[[AMENITIES]
 		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_amenities_mult|
@@ -172,10 +170,6 @@ giga_specialist_no_resource_weight = {
 		factor = 0.1
 		can_take_servant_job = yes
 	}
-	modifier = {
-		factor = $STICKY|1.5$
-		has_job = $JOB$
-	}
 
 	[[INDENTURED]
 		modifier = {
@@ -189,10 +183,6 @@ giga_specialist_no_resource_weight = {
 giga_researcher_weight = {
 	base = @specialist_job_weight
 	mult = value:job_weights_research_modifier|JOB|$JOB$|
-
-	[[TRADE]
-		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_trade_mult|
-	]
 
 	[[AMENITIES]
 		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_amenities_mult|
@@ -212,18 +202,18 @@ giga_researcher_weight = {
 		can_take_servant_job = yes
 	}
 	modifier = {
-		factor = 1.5
-		has_job = $JOB$
-	}
-	modifier = {
 		factor = 0.8
 		is_enslaved = yes
 		has_slavery_type = { type = slavery_indentured }
 	}
+	modifier = {
+		factor = 5
+		has_trait = trait_cyborg_creed_of_research
+	}
 }
 
 giga_ruler_weight = {
-	weight = value:giga_ruler_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|][[TRADE]TRADE|yes|][[STICKY]STICKY|$STICKY$|]
+	weight = value:giga_ruler_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|]
 
 	# split resources
 	[[RESOURCE2] 
@@ -237,11 +227,9 @@ giga_ruler_weight = {
 }
 
 giga_ruler_no_resource_weight = {
-	base = @ruler_job_weight
+	[[JOB]] # consistency
 
-	[[TRADE]
-		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_trade_mult|
-	]
+	base = @ruler_job_weight
 
 	[[AMENITIES]
 		multiply = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_amenities_mult|
@@ -252,10 +240,6 @@ giga_ruler_no_resource_weight = {
 		has_citizenship_rights = no
 		NOT = { has_trait = trait_mechanical }
 	}
-	modifier = {
-		factor = $STICKY|5$
-		has_job = $JOB$
-	}
 	# crisis purge
 	modifier = {
 		factor = 0.01
@@ -265,13 +249,6 @@ giga_ruler_no_resource_weight = {
 			OR = {
 				is_country_type = swarm
 				is_country_type = ai_empire
-			}
-		}
-		OR = { # contingency won't purge itself
-			NOT = { exists = event_target:custodian_bot }
-			AND = {
-				exists = event_target:custodian_bot
-				NOT = { species = { is_same_value = event_target:custodian_bot } }
 			}
 		}
 	}
@@ -298,7 +275,6 @@ giga_menial_drone_weight = {
 	[[QUOTA]
 		modifier = {
 			factor = 0.9
-			NOT = { has_job = $JOB$ }
 			owner = {
 				has_monthly_income = {
 					resource = $RESOURCE$
@@ -313,10 +289,6 @@ giga_menial_drone_weight = {
 	]
 
 	modifier = {
-		factor = $STICKY|1.2$
-		has_job = $JOB$
-	}
-	modifier = {
 		factor = 1.1
 		exists = owner
 		years_passed < 1
@@ -326,7 +298,7 @@ giga_menial_drone_weight = {
 }
 
 giga_complex_drone_weight = {
-	weight = value:giga_complex_drone_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|][[STICKY]STICKY|$STICKY$|][[FACTOR]FACTOR|$FACTOR$|]
+	weight = value:giga_complex_drone_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|][[FACTOR]FACTOR|$FACTOR$|]
 
 	# split resources
 	[[RESOURCE2] 
@@ -340,7 +312,7 @@ giga_complex_drone_weight = {
 }
 
 giga_complex_drone_triple_weight = {
-	weight = value:giga_complex_drone_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|][[STICKY]STICKY|$STICKY$|][[FACTOR]FACTOR|$FACTOR$|]
+	weight = value:giga_complex_drone_no_resource_weight|JOB|$JOB$|[[AMENITIES]AMENITIES|yes|][[FACTOR]FACTOR|$FACTOR$|]
 
 	multiply = value:giga_complex_drone_triple_weight_calc|JOB|$JOB$|RESOURCE1|$RESOURCE1$|WEIGHT1|$WEIGHT1|0.34$|RESOURCE2|$RESOURCE2$|WEIGHT2|$WEIGHT2|0.33$|RESOURCE3|$RESOURCE3$|WEIGHT3|$WEIGHT3|0.33$|
 }
@@ -385,6 +357,8 @@ giga_complex_drone_triple_weight_calc = {
 }
 
 giga_complex_drone_no_resource_weight = {
+	[[JOB]] # consistency I guess
+
 	[[FACTOR]] # stop failure on 2 resources
 	base = @complex_drone_job_weight
 
@@ -399,13 +373,6 @@ giga_complex_drone_no_resource_weight = {
 		owner = { has_valid_civic = civic_machine_assimilator }
 		has_trait = trait_cybernetic
 	}
-
-	[[STICKY]
-		modifier = {
-			factor = $STICKY$
-			has_job = $JOB$
-		}
-	]
 }
 
 giga_researcher_drone_weight = {
@@ -425,11 +392,6 @@ giga_researcher_drone_weight = {
 ############################################################################
 # Modifiers
 
-# weight mult for jobs conditionally producing trade value
-giga_trade_weight = {
-	weight = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_trade_mult|
-}
-
 # weight mult for jobs conditionally producing amenities
 giga_amenities_weight = {
 	weight = value:scripted_modifier_job_weight_mult|MODIFIER|pop_job_amenities_mult|
@@ -440,20 +402,11 @@ giga_amenities_dynamic_weight = {
 	base = 1
 
 	modifier = {
-		factor = 0.1
-		NOT = { has_job = $JOB$ }
+		factor = 10
 		exists = planet
 		planet = {
-			free_amenities > 5
-		}
-	}
-
-	modifier = {
-		factor = 5
-		NOT = { has_job = $JOB$ }
-		exists = planet
-		planet = {
-			free_amenities < 2
+			free_amenities < 0
+			has_available_jobs = $JOB$
 		}
 	}
 }
@@ -475,6 +428,7 @@ giga_food_weight = {
 
 		owner = {
 			is_lithoid_empire = yes
+			country_uses_food = no
 			has_monthly_income = {
 				resource = food
 				value >= 0
@@ -501,7 +455,12 @@ giga_army_weight = {
 	modifier = {
 		factor = 10
 		exists = planet
-		planet = { has_modifier = martial_law }
+		planet = {
+			exists = leader
+			leader = {
+				leader_class = commander
+			}
+		}
 	}
 	modifier = {
 		factor = 2
@@ -539,6 +498,10 @@ giga_army_weight = {
 		factor = 2
 		has_trait = trait_lithoid
 	}
+	modifier = {
+		factor = 5
+		has_trait = trait_cyborg_creed_of_war
+	}
 }
 
 # weight mult for jobs considered priests to give them spiritualist alignment
@@ -549,36 +512,5 @@ giga_priest_weight = {
 		factor = 2
 		exists = owner
 		owner = { has_civic = civic_exalted_priesthood }
-	}
-	multiply = value:giga_spiritualist_weight|JOB|$JOB$|
-}
-
-# weight mult for spiritualust aligned jobs (included in giga_priest_weight)
-giga_spiritualist_weight = {
-	base = 1
-
-	modifier = {
-		factor = 1.2
-		has_ethic = ethic_spiritualist # pop ethics, not country, so no fanatic
-	}
-	modifier = {
-		factor = 0.1
-		has_ethic = ethic_materialist
-		NOT = { has_job = $JOB$ }
-	}
-}
-
-# weight mult for militartist aligned jobs
-giga_militarist_weight = {
-	base = 1
-	
-	modifier = {
-		factor = 1.2
-		has_ethic = ethic_militarist # pop ethics, not country, so no fanatic
-	}
-	modifier = {
-		factor = 0.1
-		has_ethic = ethic_pacifist
-		NOT = { has_job = $JOB$ }
 	}
 }

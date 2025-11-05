@@ -2,6 +2,6 @@ version="4.0.*"
 tags={
 	"Gameplay"
 }
-name="Gigastructural Engineering & More (4.1)"
+name="Gigastructural Engineering DEV"
 supported_version="v4.0.*"
 remote_file_id="1121692237"
