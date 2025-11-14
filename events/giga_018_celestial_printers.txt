@@ -54,39 +54,50 @@ country_event = {
 	}
 }
 
-#Ready to crack
+#HARVESTING PLANET FOR BULK MATTER!!!
 country_event = {
 	id = giga_printer.1001
-	title = "giga_printer.1001.name"
-	desc = "giga_printer.1001.desc"
-	hide_window = no
-	show_sound = event_machinery
-	picture = GFX_evt_planet_beam
+	hide_window = yes
 	is_triggered_only = yes
 	location = event_target:planet_being_harvested_for_printing
 
 	immediate = {
+		create_message = {
+			type = GIGA_PLANET_DISMANTLE
+			days = 30
+			localization = giga_planet_dismantle_start
+			target = event_target:planet_being_harvested_for_printing
+		}
 		event_target:planet_being_harvested_for_printing = {
 			planet_event = { id = giga_printer.1002 }
 			if = {
 				limit = {
+					OR = {
+						is_planet_class = pc_gigabrown_dwarf
+						is_planet_class = pc_gas_giant
+					}
+				}
+				change_pc = pc_metallic_hydrogen
+			}
+			else_if = {
+				limit = { is_planet_class = pc_frozen }
+				change_pc = pc_melted_frozen
+			}
+			else_if = {
+				limit = {
 					NOR = {
+						is_planet_class = pc_bulk_matter_cache
 						is_planet_class = pc_asteroid
 						is_planet_class = pc_molten
 					}
 				}
-				change_pc = pc_molten
+				change_pc = pc_strip_mined
 			}
 			if = {
 				limit = { is_colony = yes }
 				destroy_colony = yes
 			}
 		}
-	}
-
-	option = { #Good, good.
-		name = "giga_printer.1001.a"
-		custom_tooltip = "giga_printer.1001.a.tooltip"
 	}
 }
 
@@ -106,7 +117,13 @@ planet_event = {
 		else = {
 			change_planet_size = -1
 			space_owner = { add_resource = { giga_sr_bulk_matter = 1 } }
-			planet_event = { id = giga_printer.1002 days = 180 }
+			if = {
+				limit = { is_planet_class = pc_bulk_matter_cache }
+				planet_event = { id = giga_printer.1002 days = 60 }
+			}
+			else = {
+				planet_event = { id = giga_printer.1002 days = 180 }
+			}
 		}
 	}
 }
@@ -114,31 +131,211 @@ planet_event = {
 #Planet depleted
 country_event = {
 	id = giga_printer.1003
-	title = "giga_printer.1002.name"
-	desc = "giga_printer.1002.desc"
-	show_sound = event_super_explosion
-	picture = GFX_evt_planet_beam
 	is_triggered_only = yes
-	hide_window = no
+	hide_window = yes
 	location = event_target:planet_being_harvested_depleted
 
-	option = { #Good, good.
-		name = "giga_printer.1002.a"
-		custom_tooltip = "giga_printer.1002.a.tooltip"
+	immediate = { #Good, good.
 		add_resource = {
 			alloys = 500
 		}
+		create_message = {
+			type = GIGA_PLANET_DISMANTLE
+			days = 30
+			localization = giga_planet_dismantle_end
+			target = event_target:planet_being_harvested_for_printing
+		}
+		every_planet_within_border = {
+			limit = { has_planet_flag = planet_being_harvested_depleted }
+			solar_system = {
+				random_system_megastructure = {
+					limit = { planet = { has_planet_flag = planet_being_harvested_depleted } }
+					remove_megastructure = THIS
+				}
+			}
+			remove_planet_flag = planet_being_harvested_depleted
+			remove_planet = yes
+		}
+	}
+}
+
+#R we gonna dismantle this system boss?
+country_event = {
+	id = giga_printer.1005
+	title = "giga_printer.1005.name"
+	desc = "giga_printer.1005.desc"
+	hide_window = no
+	show_sound = event_dyson_sphere_build_start
+	picture = GFX_evt_mining_operations
+	is_triggered_only = yes
+	location = from.solar_system
+
+	immediate = {
+		set_variable = { which = giga_system_dismantle_cost_alloys value = @planet_harvest_cost_alloys }
+		set_variable = { which = giga_system_dismantle_cost_energy value = @planet_harvest_cost_energy }
+		set_variable = { which = giga_system_dismantle_cost_mult value = 0 }
+		FROM = {
+			solar_system = {
+				every_system_planet = {
+					limit = { can_dismantle_planet_for_bm = yes }
+					ROOT = { change_variable = { which = giga_system_dismantle_cost_mult value = 1 } }
+				}
+			}
+		}
+
+		multiply_variable = { which = giga_system_dismantle_cost_alloys value = giga_system_dismantle_cost_mult }
+		multiply_variable = { which = giga_system_dismantle_cost_energy value = giga_system_dismantle_cost_mult }
+	}
+
+	option = { #Yes
+		name = "giga_printer.1005.a"
+		custom_tooltip = "giga_printer.1005.a.tooltip"
+		allow = {
+			resource_stockpile_compare = {
+				resource = alloys
+				value >= giga_system_dismantle_cost_alloys
+			}
+			resource_stockpile_compare = {
+				resource = energy
+				value >= giga_system_dismantle_cost_energy
+			}
+		}
+		add_resource = {
+			alloys = -1
+			mult = giga_system_dismantle_cost_alloys
+		}
+		add_resource = {
+			energy = -1
+			mult = giga_system_dismantle_cost_energy
+		}
 		hidden_effect = {
-			every_planet_within_border = {
-				limit = { has_planet_flag = planet_being_harvested_depleted }
+			remove_country_flag = giga_considering_dismantling_system
+			from = {
 				solar_system = {
-					random_system_megastructure = {
-						limit = { planet = { has_planet_flag = planet_being_harvested_depleted } }
-						remove_megastructure = THIS
+					set_star_flag = dismantling_whole_system
+					every_system_planet = {
+						limit = { can_dismantle_planet_for_bm = yes }
+						save_global_event_target_as = planet_being_harvested_for_printing
+						start_dismantling_planet_for_bm = yes
 					}
 				}
-				remove_planet_flag = planet_being_harvested_depleted
-				remove_planet = yes
+			}
+		}
+	}
+
+    option = { #No
+        name = "giga_printer.1005.b"
+        hidden_effect = {
+            remove_country_flag = giga_considering_dismantling_system
+        }
+        default_hide_option = yes
+    }
+}
+
+#Dumping Mass
+planet_event = {
+	id = giga_printer.1004
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = { #No mass is being dumped
+			limit = {
+				has_planet_flag = giga_about_to_dump_mass_on_planet
+				NOT = { has_planet_flag = giga_dumping_mass_on_planet }
+			}
+			remove_planet_flag = giga_about_to_dump_mass_on_planet
+			set_planet_flag = giga_dumping_mass_on_planet
+			set_variable = {
+				which = giga_gained_planet_size
+				value = 0
+			}
+			export_trigger_value_to_variable = {
+				trigger = planet_size
+				variable = giga_original_planet_size
+			}
+			planet_event = { id = giga_printer.1004 days = 10 }
+		}
+		else_if = { #Mass is being dumped
+			limit = {
+				has_planet_flag = giga_dumping_mass_on_planet
+				exists = space_owner
+				space_owner = { resource_stockpile_compare = { resource = giga_sr_bulk_matter value > 0 } }
+			}
+			planet_event = { id = giga_printer.1004 days = 10 }
+			space_owner = { add_resource = { giga_sr_bulk_matter = -1 } }
+			change_planet_size = 1
+			change_variable = { which = giga_gained_planet_size value = 1 }
+			if = { #If it is habitable, turn it into lifeless temperate
+				limit = {
+					NOT = { is_planet_class = pc_ll_temperate }
+					NOT = { is_planet_class = pc_ll_torrid }
+					is_planet_habitable = yes
+				}
+				change_pc = pc_ll_temperate
+			}
+			else_if = { #If it is lifeless temperate, turn it torrid
+				limit = { is_planet_class = pc_ll_temperate }
+				change_pc = pc_ll_torrid
+			}
+			else_if = { #If it is torrid, turn it barren
+				limit = { is_planet_class = pc_ll_torrid }
+				change_pc = pc_barren
+			}
+			else_if = { #If it is frozen, melt it
+				limit = { is_planet_class = pc_frozen }
+				change_pc = pc_melted_frozen
+			}
+			else_if = { #If it has melted and has grown enough, turn it barren as the gas is dilluted
+				limit = {
+					is_planet_class = pc_melted_frozen
+					check_variable = { which = giga_gained_planet_size value > 5 }
+				}
+				change_pc = pc_barren
+			}
+			else_if = { #If it is toxic and has grown enough, turn it barren as the gas is dilluted
+				limit = {
+					is_planet_class = pc_toxic
+					check_variable = { which = giga_gained_planet_size value > 5 }
+				}
+				change_pc = pc_barren
+			}
+			else_if = { #If it has grown too much, turn it molten
+				limit = {
+					NOT = { is_planet_class = pc_gigabrown_dwarf }
+					NOT = { is_planet_class = pc_gas_giant }
+					NOT = { is_planet_class = pc_molten }
+					planet_size > 30
+				}
+				every_moon = {
+					if = { limit = { is_colony = yes } destroy_colony = yes }
+					change_pc = pc_shattered
+				}
+				change_pc = pc_molten
+			}
+			else_if = { #If it has grown too much, turn it into a gas giant and destroy moons
+				limit = {
+					is_planet_class = pc_molten
+					planet_size > 50
+				}
+				change_pc = pc_gas_giant
+				every_moon = { remove_planet = yes }
+			}
+			else_if = { #If it is a gas giant and has grown enough, turn it brown dwarf
+				limit = {
+					is_planet_class = pc_gas_giant
+					planet_size > 60
+				}
+				change_pc = pc_gigabrown_dwarf
+			}
+			else_if = { #Dude. Stop.
+				limit = {
+					is_planet_class = pc_gigabrown_dwarf
+					planet_size > 120
+				}
+				change_pc = pc_m_star
+				set_planet_size = 25
+				remove_planet_flag = giga_dumping_mass_on_planet
 			}
 		}
 	}
