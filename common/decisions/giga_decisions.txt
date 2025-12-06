@@ -431,7 +431,10 @@ decision_psionic_sublimation = {
 	potential = {
 		exists = owner
 		owner = {
-			has_tradition = tr_psionics_psi_corps
+			OR = {
+				has_tradition = tr_psionics_adopt
+				has_tradition = tr_psionics_shroud_adopt
+			}
 			has_technology = giga_tech_psychic_beacon
 			OR = {
 				has_megastructure = psychic_beacon_3
@@ -449,6 +452,7 @@ decision_psionic_sublimation = {
 			has_building = building_eater_sanctum
 			has_building = building_instrument_sanctum
 			has_building = building_whisperers_sanctum
+			has_building = building_cradle_sanctum
 			# equivalent on orbital ring
 			if = {
 				limit = {
@@ -466,10 +470,17 @@ decision_psionic_sublimation = {
 			}
 		}
 		#any_owned_pop_group = { has_job = telepath }
-		num_assigned_jobs = {
-			job = telepath
-			value > 0
+		OR = {
+			num_assigned_jobs = {
+				job = telepath
+				value > 0
+			}
+			num_assigned_jobs = {
+				job = telepath_drone
+				value > 0
+			}
 		}
+		
 	}
 
 	effect = {
@@ -524,166 +535,166 @@ decision_systemcraft_crew = {
 }
 
 # Ringworld Arcology Project
-decision_ringworld_arcology_project = {
-	owned_planets_only = yes
-	icon = decision_arcology_project
-	ai_weight = { weight = 0 }
-	enactment_time = 5400
-
-	resources = {
-		category = decisions
-		cost = { trigger = { has_planet_flag = giga_ringworld_tit }	minerals = 40000 }
-		cost = { trigger = { has_planet_flag = giga_ringworld_beh }	minerals = 40000 }
-		cost = { trigger = { has_planet_flag = giga_ringworld_gar }	minerals = 40000 }
-		cost = {													minerals = 40000 influence = 300 }
-	}
-
-	potential = {
-		NOR = {
-			is_planet_class = pc_ringworld_city
-			has_modifier = resort_colony
-			has_modifier = penal_colony
-			has_modifier = slave_colony
-			ag_is_ancient_ringworld = yes
-			has_global_flag = cityring_disabled
-		}
-		is_planet_class = pc_ringworld_habitable
-		exists = owner
-		owner = { has_ascension_perk = ap_arcology_project }
-	}
-
-	allow = {
-		if = {
-			limit = { has_planet_flag = giga_ringworld_gar }
-			owner = { resource_stockpile_compare = { resource = influence value >= 300 } }
-			owner = { resource_stockpile_compare = { resource = minerals value >= 160000 } }
-		}
-		else_if = {
-			limit = { has_planet_flag = giga_ringworld_beh }
-			owner = { resource_stockpile_compare = { resource = influence value >= 300 } }
-			owner = { resource_stockpile_compare = { resource = minerals value >= 120000 } }
-		}
-		else_if = {
-			limit = { has_planet_flag = giga_ringworld_tit }
-			owner = { resource_stockpile_compare = { resource = influence value >= 300 } }
-			owner = { resource_stockpile_compare = { resource = minerals value >= 80000 } }
-		}
-		else = {
-			owner = { resource_stockpile_compare = { resource = influence value >= 300 } }
-			owner = { resource_stockpile_compare = { resource = minerals value >= 40000 } }
-		}
-		custom_tooltip = {
-			fail_text = "decision_ringworld_arcology_project_requirements"
-			free_district_slots < 1
-			num_districts = { type = district_rw_generator value < 1 }
-			num_districts = { type = district_rw_commercial value < 1 }
-			num_districts = { type = district_rw_science value < 1 }
-			num_districts = { type = district_rw_farming value < 1 }
-		}
-	}
-
-	effect = {
-		# Make city-planet
-		custom_tooltip = "decision_ringworld_arcology_project_effects"
-		hidden_effect = {
-			clear_deposits = yes
-			export_trigger_value_to_variable = {
-				trigger = num_districts
-				parameters = { type = district_rw_industrial  }
-				variable = giga_rw_arc_num_industrial
-			}
-			multiply_variable = { which = giga_rw_arc_num_industrial value = 0.66 }
-			floor_variable = giga_rw_arc_num_industrial
-			change_variable = { which = giga_rw_arc_num_industrial value = 1 }
-			change_pc = pc_ringworld_city
-			set_planet_flag = giga_archology
-			switch = {
-				trigger = has_designation
-				col_foundry = {
-					while = {
-						count = giga_rw_arc_num_industrial
-						add_district = district_rw_alloys
-					}
-				}
-				col_capital_foundry = {
-					while = {
-						count = giga_rw_arc_num_industrial
-						add_district = district_rw_alloys
-					}
-				}
-				col_factory = {
-					while = {
-						count = giga_rw_arc_num_industrial
-						add_district = district_rw_consumer
-					}
-				}
-				col_capital_factory = {
-					while = {
-						count = giga_rw_arc_num_industrial
-						add_district = district_rw_consumer
-					}
-				}
-				default = {
-					multiply_variable = { which = giga_rw_arc_num_industrial value = 0.5 }
-					floor_variable = giga_rw_arc_num_industrial
-					while = {
-						count = giga_rw_arc_num_industrial
-						add_district = district_rw_consumer
-					}
-					while = {
-						count = giga_rw_arc_num_industrial
-						add_district = district_rw_alloys
-					}
-					add_district = district_rw_alloys
-				}
-			}
-			solar_system = { save_event_target_as = giga_system }
-			save_event_target_as = giga_planet
-			planet_event = { id = giga_dialog.2401 }	# Notification
-			owner = {
-				if = {
-					limit = { prev = { has_planet_flag = giga_ringworld_gar } }
-					giga_set_ringworld_graphical_culture = {
-						TARGET = prev
-						SOURCE = this
-						SIZE = gargantuan
-						TYPE = ecu_habitable
-					}
-				}
-				else_if = {
-					limit = { prev = { has_planet_flag = giga_ringworld_beh } }
-					giga_set_ringworld_graphical_culture = {
-						TARGET = prev
-						SOURCE = this
-						SIZE = behemoth
-						TYPE = ecu_habitable
-					}
-				}
-				else_if = {
-					limit = { prev = { has_planet_flag = giga_ringworld_tit } }
-					giga_set_ringworld_graphical_culture = {
-						TARGET = prev
-						SOURCE = this
-						SIZE = titanic
-						TYPE = ecu_habitable
-					}
-				}
-				else = {
-					giga_set_ringworld_graphical_culture = {
-						TARGET = prev
-						SOURCE = this
-						SIZE = vanilla
-						TYPE = ecu_habitable
-						VANILLA_TYPE = habitable
-					}
-				}
-			}
-			if = {		limit = { exists = owner owner = { is_regular_empire = yes } }	while = { count = 3 remove_district = district_rw_city } }
-			else_if = {	limit = { exists = owner owner = { is_hive_empire = yes } }		while = { count = 3 remove_district = district_rw_hive } }
-			else_if = {	limit = { exists = owner owner = { is_machine_empire = yes } }	while = { count = 3 remove_district = district_rw_nexus } }
-		}
-	}
-}
+# decision_ringworld_arcology_project = {
+# 	owned_planets_only = yes
+# 	icon = decision_arcology_project
+# 	ai_weight = { weight = 0 }
+# 	enactment_time = 5400
+#
+# 	resources = {
+# 		category = decisions
+# 		cost = { trigger = { has_planet_flag = giga_ringworld_tit }	minerals = 40000 }
+# 		cost = { trigger = { has_planet_flag = giga_ringworld_beh }	minerals = 40000 }
+# 		cost = { trigger = { has_planet_flag = giga_ringworld_gar }	minerals = 40000 }
+# 		cost = {													minerals = 40000 influence = 300 }
+# 	}
+#
+# 	potential = {
+# 		NOR = {
+# 			is_planet_class = pc_ringworld_city
+# 			has_modifier = resort_colony
+# 			has_modifier = penal_colony
+# 			has_modifier = slave_colony
+# 			ag_is_ancient_ringworld = yes
+# 			has_global_flag = cityring_disabled
+# 		}
+# 		is_planet_class = pc_ringworld_habitable
+# 		exists = owner
+# 		owner = { has_ascension_perk = ap_arcology_project }
+# 	}
+#
+# 	allow = {
+# 		if = {
+# 			limit = { has_planet_flag = giga_ringworld_gar }
+# 			owner = { resource_stockpile_compare = { resource = influence value >= 300 } }
+# 			owner = { resource_stockpile_compare = { resource = minerals value >= 160000 } }
+# 		}
+# 		else_if = {
+# 			limit = { has_planet_flag = giga_ringworld_beh }
+# 			owner = { resource_stockpile_compare = { resource = influence value >= 300 } }
+# 			owner = { resource_stockpile_compare = { resource = minerals value >= 120000 } }
+# 		}
+# 		else_if = {
+# 			limit = { has_planet_flag = giga_ringworld_tit }
+# 			owner = { resource_stockpile_compare = { resource = influence value >= 300 } }
+# 			owner = { resource_stockpile_compare = { resource = minerals value >= 80000 } }
+# 		}
+# 		else = {
+# 			owner = { resource_stockpile_compare = { resource = influence value >= 300 } }
+# 			owner = { resource_stockpile_compare = { resource = minerals value >= 40000 } }
+# 		}
+# 		custom_tooltip = {
+# 			fail_text = "decision_ringworld_arcology_project_requirements"
+# 			free_district_slots < 1
+# 			num_districts = { type = district_rw_generator value < 1 }
+# 			num_districts = { type = district_rw_commercial value < 1 }
+# 			num_districts = { type = district_rw_science value < 1 }
+# 			num_districts = { type = district_rw_farming value < 1 }
+# 		}
+# 	}
+#
+# 	effect = {
+# 		# Make city-planet
+# 		custom_tooltip = "decision_ringworld_arcology_project_effects"
+# 		hidden_effect = {
+# 			clear_deposits = yes
+# 			export_trigger_value_to_variable = {
+# 				trigger = num_districts
+# 				parameters = { type = district_rw_industrial  }
+# 				variable = giga_rw_arc_num_industrial
+# 			}
+# 			multiply_variable = { which = giga_rw_arc_num_industrial value = 0.66 }
+# 			floor_variable = giga_rw_arc_num_industrial
+# 			change_variable = { which = giga_rw_arc_num_industrial value = 1 }
+# 			change_pc = pc_ringworld_city
+# 			set_planet_flag = giga_archology
+# 			switch = {
+# 				trigger = has_designation
+# 				col_foundry = {
+# 					while = {
+# 						count = giga_rw_arc_num_industrial
+# 						add_district = district_rw_alloys
+# 					}
+# 				}
+# 				col_capital_foundry = {
+# 					while = {
+# 						count = giga_rw_arc_num_industrial
+# 						add_district = district_rw_alloys
+# 					}
+# 				}
+# 				col_factory = {
+# 					while = {
+# 						count = giga_rw_arc_num_industrial
+# 						add_district = district_rw_consumer
+# 					}
+# 				}
+# 				col_capital_factory = {
+# 					while = {
+# 						count = giga_rw_arc_num_industrial
+# 						add_district = district_rw_consumer
+# 					}
+# 				}
+# 				default = {
+# 					multiply_variable = { which = giga_rw_arc_num_industrial value = 0.5 }
+# 					floor_variable = giga_rw_arc_num_industrial
+# 					while = {
+# 						count = giga_rw_arc_num_industrial
+# 						add_district = district_rw_consumer
+# 					}
+# 					while = {
+# 						count = giga_rw_arc_num_industrial
+# 						add_district = district_rw_alloys
+# 					}
+# 					add_district = district_rw_alloys
+# 				}
+# 			}
+# 			solar_system = { save_event_target_as = giga_system }
+# 			save_event_target_as = giga_planet
+# 			planet_event = { id = giga_dialog.2401 }	# Notification
+# 			owner = {
+# 				if = {
+# 					limit = { prev = { has_planet_flag = giga_ringworld_gar } }
+# 					giga_set_ringworld_graphical_culture = {
+# 						TARGET = prev
+# 						SOURCE = this
+# 						SIZE = gargantuan
+# 						TYPE = ecu_habitable
+# 					}
+# 				}
+# 				else_if = {
+# 					limit = { prev = { has_planet_flag = giga_ringworld_beh } }
+# 					giga_set_ringworld_graphical_culture = {
+# 						TARGET = prev
+# 						SOURCE = this
+# 						SIZE = behemoth
+# 						TYPE = ecu_habitable
+# 					}
+# 				}
+# 				else_if = {
+# 					limit = { prev = { has_planet_flag = giga_ringworld_tit } }
+# 					giga_set_ringworld_graphical_culture = {
+# 						TARGET = prev
+# 						SOURCE = this
+# 						SIZE = titanic
+# 						TYPE = ecu_habitable
+# 					}
+# 				}
+# 				else = {
+# 					giga_set_ringworld_graphical_culture = {
+# 						TARGET = prev
+# 						SOURCE = this
+# 						SIZE = vanilla
+# 						TYPE = ecu_habitable
+# 						VANILLA_TYPE = habitable
+# 					}
+# 				}
+# 			}
+# 			if = {		limit = { exists = owner owner = { is_regular_empire = yes } }	while = { count = 3 remove_district = district_rw_city } }
+# 			else_if = {	limit = { exists = owner owner = { is_hive_empire = yes } }		while = { count = 3 remove_district = district_rw_hive } }
+# 			else_if = {	limit = { exists = owner owner = { is_machine_empire = yes } }	while = { count = 3 remove_district = district_rw_nexus } }
+# 		}
+# 	}
+# }
 
 # Ringworld Upgrade
 decision_ringworld_upgrade = {
@@ -693,10 +704,10 @@ decision_ringworld_upgrade = {
 
 	resources = {
 		category = decisions
-		cost = { trigger = { has_planet_flag = giga_ringworld_tit }	alloys = 10000 }
-		cost = { trigger = { has_planet_flag = giga_ringworld_beh }	alloys = 10000 }
-		cost = { trigger = { has_planet_flag = giga_ringworld_gar }	alloys = 10000 }
-		cost = {													alloys = 10000 influence = 50 }
+		cost = { trigger = { has_planet_flag = giga_ringworld_tit } alloys = 10000 }
+		cost = { trigger = { has_planet_flag = giga_ringworld_beh } alloys = 10000 }
+		cost = { trigger = { has_planet_flag = giga_ringworld_gar } alloys = 10000 }
+		cost = { alloys = 10000 influence = 50 }
 	}
 
 	potential = {
@@ -734,10 +745,10 @@ decision_ringworld_upgrade = {
 
 	effect = {
 		custom_tooltip = giga_ringworld_upgrade_tt
-		if = {		limit = { has_planet_flag = giga_ringworld_gar }	add_modifier = { modifier = "ringworld_upgrade_timer" days = 3600 } }
-		else_if = {	limit = { has_planet_flag = giga_ringworld_beh }	add_modifier = { modifier = "ringworld_upgrade_timer" days = 2700 } }
-		else_if = {	limit = { has_planet_flag = giga_ringworld_tit }	add_modifier = { modifier = "ringworld_upgrade_timer" days = 1800 } }
-		else = {														add_modifier = { modifier = "ringworld_upgrade_timer" days = 900 } }
+		if = { limit = { has_planet_flag = giga_ringworld_gar } add_modifier = { modifier = "ringworld_upgrade_timer" days = 3600 } }
+		else_if = { limit = { has_planet_flag = giga_ringworld_beh } add_modifier = { modifier = "ringworld_upgrade_timer" days = 2700 } }
+		else_if = { limit = { has_planet_flag = giga_ringworld_tit } add_modifier = { modifier = "ringworld_upgrade_timer" days = 1800 } }
+		else = { add_modifier = { modifier = "ringworld_upgrade_timer" days = 900 } }
 		hidden_effect = { planet_event = { id = giga_mega.101 } }
 	}
 }
