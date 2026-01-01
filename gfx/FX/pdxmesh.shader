@@ -4592,6 +4592,51 @@ Effect PdxMeshTerraAnimateUVSkinnedShadow
 
 
 # // Additions
+
+# // Alpha blended planet shader without the weird emissive multiply on alpha???
+BlendState BlendStateAlphaBlendTest
+{
+	BlendEnable = yes
+	SourceBlend = "SRC_ALPHA"
+	DestBlend = "INV_SRC_ALPHA"
+	AlphaTest = yes
+	WriteMask = "RED|GREEN|BLUE"
+}
+
+Effect PdxMeshAlphaBlendPlanetNoEmissiveMult
+{
+	VertexShader = "VertexPdxMeshStandard"
+	PixelShader = "PixelPdxMeshStandard"
+	BlendState = "BlendStateAlphaBlendTest"
+	RasterizerState = "RasterizerStateNoCulling"
+	Defines = { "IS_PLANET" "EMISSIVE" "NO_ALPHA_MULTIPLIED_EMISSIVE" }
+}
+
+Effect PdxMeshAlphaBlendPlanetNoEmissiveMultSkinned
+{
+	VertexShader = "VertexPdxMeshStandardSkinned"
+	PixelShader = "PixelPdxMeshStandard"
+	BlendState = "BlendStateAlphaBlendTest";
+	RasterizerState = "RasterizerStateNoCulling"
+	Defines = { "IS_PLANET" "EMISSIVE" "NO_ALPHA_MULTIPLIED_EMISSIVE" }
+}
+
+Effect PdxMeshAlphaBlendPlanetNoEmissiveMultShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshAlphaTestShadow"
+	BlendState = "BlendStateAlphaShadow"
+	Defines = { "IS_SHADOW" "IS_PLANET" }
+}
+
+Effect PdxMeshAlphaBlendPlanetNoEmissiveMultSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardSkinnedShadow"
+	PixelShader = "PixelPdxMeshAlphaTestShadow"
+	BlendState = "BlendStateAlphaShadow"
+	Defines = { "IS_SHADOW" "IS_PLANET" }
+}
+
 # // Engineering Test Site Shield
 Effect PdxMeshAlphaAdditiveECB
 {
