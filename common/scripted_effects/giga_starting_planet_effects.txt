@@ -1,0 +1,217 @@
+
+# if the starting planet uses non-shatted ringworld districts generates them
+# also blocks starting anomalies
+
+# this sets district_rw_urban_1 to be a generator
+# district_rw_urban_2 is sometimes set, sometimes not set
+giga_generate_starting_ringworld_districts = {
+    # no anomalies or other bs
+    set_planet_flag = forbid_guillis_planet_modifiers
+    set_planet_flag = gpm_has_planet_rings
+    set_planet_flag = hot_zone				# Real Space (Prevents Rings)
+    set_planet_flag = megastructure
+    set_planet_flag = colony_event			# Vanilla uses to prevent unwanted events on planets
+
+    # arcane generator
+    add_deposit = d_giga_arcane_generator
+
+    # everyone needs energy
+    add_district = district_rw_urban_1
+    add_zone = {
+        district = district_rw_urban_1
+        zone = zone_energy_ring_world
+        zone_slot = 0
+        replace = yes
+    }
+
+    # normal empires
+    #   lithoids get a trade district + deposit
+    #   machines get another generator district
+    #   infernals get a scrap pile building
+    #   biologicals get a farm district
+    if = {
+        limit = {
+            root = { is_gestalt = no }
+        }
+        add_district = district_rw_city
+
+        # lithoid
+        if = {
+            limit = { root = { is_lithoid_empire = yes } }
+            add_district = district_rw_urban_2
+            add_zone = {
+                district = district_rw_urban_2
+                zone = zone_trade_ring_world
+                zone_slot = 0
+                replace = yes
+            }
+            add_deposit = d_great_ring_excavated_mountain
+        }
+        # is indiv machine
+        else_if = {
+            limit = { root = { is_individual_machine = yes } }
+            add_district = district_rw_urban_1
+        }
+        # is infernal
+        else_if = {
+            limit = { root = { is_infernal_empire = yes } }
+            add_building = building_giga_pcc_scrap_pile
+                #PIECAT pls dont delete this building :(
+        }
+        # if biological
+        else = {
+            add_district = district_rw_urban_2
+            add_zone = {
+                district = district_rw_urban_2
+                zone = zone_food_ring_world
+                zone_slot = 0
+                replace = yes
+            }
+        }
+
+        ## zones
+        add_zone = {
+            district = district_rw_city
+            zone = zone_industrial
+            zone_slot = 1
+            replace = no
+        }
+        add_zone = {
+            district = district_rw_city
+            zone = zone_research_unity
+            zone_slot = 2
+            replace = no
+        }
+
+    }
+    # hive empires
+    #   lithoids get another generator district + deposit
+    #   infernals get a scrap pile building
+    #   biologicals get a farm district
+    else_if = {
+        limit = { root = { is_hive_empire = yes } }
+        add_district = district_rw_hive
+
+        # is lithoid
+        if = {
+            limit = { root = { is_lithoid_empire = yes } }
+            add_district = district_rw_urban_1
+            add_deposit = d_great_ring_excavated_mountain
+        }
+        # is infernal
+        else_if = {
+            limit = { root = { is_infernal_empire = yes } }
+            add_building = building_giga_pcc_scrap_pile
+                #PIECAT pls dont delete this building :(
+        }
+        # if biological
+        else = {
+            add_district = district_rw_urban_2
+            add_zone = {
+                district = district_rw_urban_2
+                zone = zone_food_ring_world
+                zone_slot = 0
+                replace = yes
+            }
+        }
+
+        ## zones
+        if = {
+            limit = { owner = { giga_has_consumer_goods_civic_or_individualist = yes } }
+            add_zone = {
+                district = district_rw_hive
+                zone = zone_industrial
+                zone_slot = 1
+                replace = no
+            }
+        }
+        else = {
+            add_zone = {
+                district = district_rw_hive
+                zone = zone_foundry
+                zone_slot = 1
+                replace = no
+            }
+        }
+        add_zone = {
+            district = district_rw_hive
+            zone = zone_research_unity
+            zone_slot = 2
+            replace = no
+        }
+    }
+    # machine empires
+    #   normal get another generator district
+    #   serv/assim lithoids get another generator district + deposit
+    #   serv/assim infernals get a scrap pile building
+    #   serv/assim biologicals get a farm district
+    else_if = {
+        limit = { root = { is_machine_empire = yes } }
+        add_district = district_rw_nexus
+
+        if = {
+            limit = {
+                owner = {
+                    NOR = {
+                        has_civic = civic_machine_servitor
+                        has_civic = civic_machine_assimilator
+                    }
+                }
+            }
+            add_district = district_rw_urban_1
+        }
+        else = {
+            # if has some lithoids
+            if = {
+                limit = {
+                    root = { any_owned_pop_group = { has_trait = trait_lithoid } }
+                }
+                add_district = district_rw_urban_1
+                add_deposit = d_great_ring_excavated_mountain
+            }
+            # has some infernals
+            else_if = {
+                limit = {
+                    root = { any_owned_pop_group = { has_trait = trait_infernal } }
+                }
+                add_building = building_giga_pcc_scrap_pile
+            }
+            # biologicals
+            else = {
+                add_district = district_rw_urban_2
+                add_zone = {
+                    district = district_rw_urban_2
+                    zone = zone_food_ring_world
+                    zone_slot = 0
+                    replace = yes
+                }
+            }
+        }
+
+        ## zones
+        if = {
+            limit = { owner = { giga_has_consumer_goods_civic_or_individualist = yes } }
+            add_zone = {
+                district = district_rw_nexus
+                zone = zone_industrial
+                zone_slot = 1
+                replace = no
+            }
+        }
+        else = {
+            add_zone = {
+                district = district_rw_nexus
+                zone = zone_foundry
+                zone_slot = 1
+                replace = no
+            }
+        }
+        add_zone = {
+            district = district_rw_nexus
+            zone = zone_research_unity # why is there no specific rw version lol
+            zone_slot = 2
+            replace = no
+        }
+    }
+
+}
