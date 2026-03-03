@@ -1,0 +1,450 @@
+giga_qso_remove_old_flags = {
+    remove_country_flag = qso_target_is_binary
+    remove_country_flag = qso_target_is_trinary
+    remove_country_flag = qso_target_is_star_class_sc_a
+    remove_country_flag = qso_target_is_star_class_sc_a_super
+    remove_country_flag = qso_target_is_star_class_sc_ae
+    remove_country_flag = qso_target_is_star_class_sc_b
+    remove_country_flag = qso_target_is_star_class_sc_b_super
+    remove_country_flag = qso_target_is_star_class_sc_c_giant
+    remove_country_flag = qso_target_is_star_class_sc_collapsar
+    remove_country_flag = qso_target_is_star_class_sc_d
+    remove_country_flag = qso_target_is_star_class_sc_f
+    remove_country_flag = qso_target_is_star_class_sc_f_super
+    remove_country_flag = qso_target_is_star_class_sc_g
+    remove_country_flag = qso_target_is_star_class_sc_g_giant
+    remove_country_flag = qso_target_is_star_class_sc_g_super
+    remove_country_flag = qso_target_is_star_class_sc_k
+    remove_country_flag = qso_target_is_star_class_sc_k_giant
+    remove_country_flag = qso_target_is_star_class_sc_k_super
+    remove_country_flag = qso_target_is_star_class_sc_lbv_blue
+    remove_country_flag = qso_target_is_star_class_sc_m
+    remove_country_flag = qso_target_is_star_class_sc_m_giant
+    remove_country_flag = qso_target_is_star_class_sc_m_hyper
+    remove_country_flag = qso_target_is_star_class_sc_m_super
+    remove_country_flag = qso_target_is_star_class_sc_magnetar
+    remove_country_flag = qso_target_is_star_class_sc_microquasar_1
+    remove_country_flag = qso_target_is_star_class_sc_neutron_star
+    remove_country_flag = qso_target_is_star_class_sc_nova_1
+    remove_country_flag = qso_target_is_star_class_sc_o
+    remove_country_flag = qso_target_is_star_class_sc_o_hyper
+    remove_country_flag = qso_target_is_star_class_sc_o_super
+    remove_country_flag = qso_target_is_star_class_sc_p_purple
+    remove_country_flag = qso_target_is_star_class_sc_protostar
+    remove_country_flag = qso_target_is_star_class_sc_pulsar
+    remove_country_flag = qso_target_is_star_class_sc_s_giant
+    remove_country_flag = qso_target_is_star_class_sc_t
+    remove_country_flag = qso_target_is_star_class_sc_tt_red
+    remove_country_flag = qso_target_is_star_class_sc_w_azure
+    remove_country_flag = qso_target_sc_black_hole
+    clear_global_event_target = giga_qso_target_country
+}
+
+giga_qso_setup_owner = {
+    if = {
+        limit = {
+            NOT = {
+                has_country_flag = giga_qso_no_owner
+            }
+        }
+        random_country = {
+            limit = {
+                has_country_flag = giga_qso_target_country@root
+            }
+            save_global_event_target_as = giga_qso_target_country
+        }
+    }
+}
+
+giga_qso_option_internal_if = {
+    if = {
+        limit = {
+            NOT = {
+                has_country_flag = giga_qso_no_owner
+            }
+        }
+        event_target:giga_qso_target_country = {
+            if = {
+                limit = {
+                    NOT = {
+                        is_country_type = primitive
+                    }
+                }
+                every_system_within_border = {
+                    limit = {
+                        ndb_can_target_system = yes
+                        or = {
+                            [[condition]	$condition|always$ = yes ]
+                            [[condition2]
+                                $condition2$ = yes
+                            ]
+                            [[condition3]
+                                $condition3$ = yes
+                            ]
+                            [[condition4] $condition4$ = yes  ]
+                        }
+                    }
+                    giga_event_target_list_save = yes
+                }
+            }
+            else = {
+                random_owned_planet = {
+                    solar_system = {
+                        giga_event_target_list_save = yes
+                    }
+                }
+            }
+        }
+    }
+    else = {
+        every_system = {
+            limit = {
+                ndb_can_target_system = yes
+                NOT = {
+                    exists = owner
+                }
+                or = {
+                    [[condition]	$condition|always$ = yes ]
+                    [[condition2]
+                        $condition2$ = yes
+                    ]
+                    [[condition3]
+                        $condition3$ = yes
+                    ]
+                    [[condition4] $condition4$ = yes]
+                }
+            }
+            giga_event_target_list_save = yes
+        }
+    }
+}
+
+# Cluster
+giga_qso_target_cluster = {
+    save_global_event_target_as = giga_qso_targeted_cluster
+    set_planet_flag = giga_qso_targeted_cluster
+}
+
+giga_qso_untarget_cluster = {
+    event_target:giga_qso_targeted_cluster = {
+        clear_global_event_target = giga_qso_targeted_cluster
+        remove_planet_flag = giga_qso_targeted_cluster
+    }
+}
+
+giga_qso_destroy_cluster = {
+    every_system = {
+        limit = { has_star_flag = giga_qso_target@root }
+        remove_star_flag = giga_qso_target@root
+    }
+    set_star_flag = giga_qso_target@root
+    root = {
+        set_country_flag = giga_ndb_firing_system
+        country_event = { id = giga_ndb.201 days = 2 }
+    }
+}
+
+# System
+giga_qso_target_system = {
+    save_global_event_target_as = giga_qso_targeted_system
+    set_planet_flag = giga_qso_targeted_system
+}
+
+giga_qso_untarget_system = {
+    event_target:giga_qso_targeted_system = {
+        clear_global_event_target = giga_qso_targeted_system
+        remove_planet_flag = giga_qso_targeted_system
+    }
+}
+
+giga_qso_destroy_system = {
+    every_system = {
+        limit = { has_star_flag = giga_qso_target@root }
+        remove_star_flag = giga_qso_target@root
+    }
+    set_star_flag = giga_qso_target@root
+    root = {
+        set_country_flag = giga_ndb_firing_system
+        country_event = { id = giga_ndb.201 days = 2 }
+    }
+}
+
+# Planet
+giga_qso_target_planet = {
+    prev = {
+        if = {
+            limit = { NOT = { is_variable_set = giga_qso_targeted_planets } }
+            set_variable = {
+                which = giga_qso_targeted_planets
+                value = 0
+            }
+        }
+    }
+
+    if = {
+        limit = {
+            prev = {
+                check_variable = { which = giga_qso_targeted_planets value = 0 }
+            }
+        }
+        save_global_event_target_as = giga_qso_targeted_planet_1
+        set_planet_flag = giga_qso_targeted_planet_1
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = 1 }
+        }
+    }
+    else_if = {
+        limit = {
+            prev = {
+                check_variable = { which = giga_qso_targeted_planets value = 1 }
+            }
+        }
+        save_global_event_target_as = giga_qso_targeted_planet_2
+        set_planet_flag = giga_qso_targeted_planet_2
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = 1 }
+        }
+    }
+    else_if = {
+        limit = {
+            prev = {
+                check_variable = { which = giga_qso_targeted_planets value = 2 }
+            }
+        }
+        save_global_event_target_as = giga_qso_targeted_planet_3
+        set_planet_flag = giga_qso_targeted_planet_3
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = 1 }
+        }
+    }
+    else_if = {
+        limit = {
+            prev = {
+                check_variable = { which = giga_qso_targeted_planets value = 3 }
+            }
+        }
+        save_global_event_target_as = giga_qso_targeted_planet_4
+        set_planet_flag = giga_qso_targeted_planet_4
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = 1 }
+        }
+    }
+    else_if = {
+        limit = {
+            prev = {
+                check_variable = { which = giga_qso_targeted_planets value = 4 }
+            }
+        }
+        save_global_event_target_as = giga_qso_targeted_planet_5
+        set_planet_flag = giga_qso_targeted_planet_5
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = 1 }
+        }
+    }
+    else_if = {
+        limit = {
+            prev = {
+                check_variable = { which = giga_qso_targeted_planets value = 5 }
+            }
+        }
+        save_global_event_target_as = giga_qso_targeted_planet_6
+        set_planet_flag = giga_qso_targeted_planet_6
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = 1 }
+        }
+    }
+    else_if = {
+        limit = {
+            prev = {
+                check_variable = { which = giga_qso_targeted_planets value = 6 }
+            }
+        }
+        save_global_event_target_as = giga_qso_targeted_planet_7
+        set_planet_flag = giga_qso_targeted_planet_7
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = 1 }
+        }
+    }
+    else_if = {
+        limit = {
+            prev = {
+                check_variable = { which = giga_qso_targeted_planets value = 7 }
+            }
+        }
+        save_global_event_target_as = giga_qso_targeted_planet_8
+        set_planet_flag = giga_qso_targeted_planet_8
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = 1 }
+        }
+    }
+    else_if = {
+        limit = {
+            prev = {
+                check_variable = { which = giga_qso_targeted_planets value = 8 }
+            }
+        }
+        save_global_event_target_as = giga_qso_targeted_planet_9
+        set_planet_flag = giga_qso_targeted_planet_9
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = 1 }
+        }
+    }
+    else_if = {
+        limit = {
+            prev = {
+                check_variable = { which = giga_qso_targeted_planets value = 9 }
+            }
+        }
+        save_global_event_target_as = giga_qso_targeted_planet_10
+        set_planet_flag = giga_qso_targeted_planet_10
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = 1 }
+        }
+    }
+}
+
+giga_qso_untarget_planet = {
+    prev = {
+        if = {
+            limit = { NOT = { is_variable_set = giga_qso_targeted_planets } }
+            set_variable = {
+                which = giga_qso_targeted_planets
+                value = 0
+            }
+        }
+    }
+
+    if = {
+        limit = {
+            exists = event_target:giga_qso_targeted_planet_10
+            is_same_value = event_target:giga_qso_targeted_planet_10
+        }
+        clear_global_event_target = giga_qso_targeted_planet_10
+        remove_planet_flag = giga_qso_targeted_planet_10
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = -1 }
+        }
+    }
+
+    if = {
+        limit = {
+            exists = event_target:giga_qso_targeted_planet_9
+            is_same_value = event_target:giga_qso_targeted_planet_9
+        }
+        clear_global_event_target = giga_qso_targeted_planet_9
+        remove_planet_flag = giga_qso_targeted_planet_9
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = -1 }
+        }
+    }
+
+    if = {
+        limit = {
+            exists = event_target:giga_qso_targeted_planet_8
+            is_same_value = event_target:giga_qso_targeted_planet_8
+        }
+        clear_global_event_target = giga_qso_targeted_planet_8
+        remove_planet_flag = giga_qso_targeted_planet_8
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = -1 }
+        }
+    }
+
+    if = {
+        limit = {
+            exists = event_target:giga_qso_targeted_planet_7
+            is_same_value = event_target:giga_qso_targeted_planet_7
+        }
+        clear_global_event_target = giga_qso_targeted_planet_7
+        remove_planet_flag = giga_qso_targeted_planet_7
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = -1 }
+        }
+    }
+
+    if = {
+        limit = {
+            exists = event_target:giga_qso_targeted_planet_6
+            is_same_value = event_target:giga_qso_targeted_planet_6
+        }
+        clear_global_event_target = giga_qso_targeted_planet_6
+        remove_planet_flag = giga_qso_targeted_planet_6
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = -1 }
+        }
+    }
+
+    if = {
+        limit = {
+            exists = event_target:giga_qso_targeted_planet_5
+            is_same_value = event_target:giga_qso_targeted_planet_5
+        }
+        clear_global_event_target = giga_qso_targeted_planet_5
+        remove_planet_flag = giga_qso_targeted_planet_5
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = -1 }
+        }
+    }
+
+    if = {
+        limit = {
+            exists = event_target:giga_qso_targeted_planet_4
+            is_same_value = event_target:giga_qso_targeted_planet_4
+        }
+        clear_global_event_target = giga_qso_targeted_planet_4
+        remove_planet_flag = giga_qso_targeted_planet_4
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = -1 }
+        }
+    }
+
+    if = {
+        limit = {
+            exists = event_target:giga_qso_targeted_planet_3
+            is_same_value = event_target:giga_qso_targeted_planet_3
+        }
+        clear_global_event_target = giga_qso_targeted_planet_3
+        remove_planet_flag = giga_qso_targeted_planet_3
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = -1 }
+        }
+    }
+
+    if = {
+        limit = {
+            exists = event_target:giga_qso_targeted_planet_2
+            is_same_value = event_target:giga_qso_targeted_planet_2
+        }
+        clear_global_event_target = giga_qso_targeted_planet_2
+        remove_planet_flag = giga_qso_targeted_planet_2
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = -1 }
+        }
+    }
+
+    if = {
+        limit = {
+            exists = event_target:giga_qso_targeted_planet_1
+            is_same_value = event_target:giga_qso_targeted_planet_1
+        }
+        clear_global_event_target = giga_qso_targeted_planet_1
+        remove_planet_flag = giga_qso_targeted_planet_1
+        prev = {
+            change_variable = { which = giga_qso_targeted_planets value = -1 }
+        }
+    }
+}
+
+giga_qso_destroy_planet = {
+    every_system = {
+        limit = { has_star_flag = giga_qso_target@root }
+        remove_star_flag = giga_qso_target@root
+        every_system_planet = {
+            limit = { has_planet_flag = giga_qso_target@root }
+            remove_planet_flag = giga_qso_target@root
+        }
+    }
+    solar_system = { set_star_flag = giga_qso_target@root }
+    set_planet_flag = giga_qso_target@root
+    # root = { country_event = { id = giga_ndb.008 } }	# Select intensity
+}
