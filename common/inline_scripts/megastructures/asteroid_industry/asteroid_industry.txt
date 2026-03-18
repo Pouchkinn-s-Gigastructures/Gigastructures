@@ -70,3 +70,67 @@ on_build_complete = {
         }
     }
 }
+
+dismantle_time = 360
+
+dismantle_potential = {
+    always = yes
+}
+
+dismantle_possible = {
+    can_dismantle_megastructure = {
+        TECH = giga_tech_asteroid_manufactory
+    }
+    custom_tooltip = {
+        fail_text = requires_not_at_$building$_cap
+        NOT = {
+            owner = {
+                OR = {
+                    # One planet origin building check
+                    AND = {
+                        is_giga_one_planet_origin = yes
+                        num_buildings = {
+                            type = $building$_one_planet
+                            value >= modifier:$building$_country_max
+                        }
+                    }
+
+                    # Regular origin building check
+                    num_buildings = {
+                        type = $building$
+                        value >= modifier:$building$_country_max
+                    }
+                }
+            }
+        }
+    }
+}
+
+on_dismantle_start = {
+    fromfrom.planet = { set_planet_flag = giga_dismantle_not_cancelled planet_event = { id = giga_dismantle.004 days = 361 } }
+}
+
+on_dismantle_cancel = {
+    fromfrom.planet = { remove_planet_flag = giga_dismantle_not_cancelled }
+}
+
+on_dismantle_complete = {
+    from = {
+        add_resource = {
+            alloys = 750
+            mult = modifier:megastructure_dismantle_refund_mult
+        }
+        if = {
+            limit = {
+                check_variable = {
+                    which = giga_current_asteroid_manufactory
+                    value >= 1
+                }
+            }
+            change_variable = {
+                which = giga_current_asteroid_manufactory
+                value = -1
+            }
+        }
+    }
+}
