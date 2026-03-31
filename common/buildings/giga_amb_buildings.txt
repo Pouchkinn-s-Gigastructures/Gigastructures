@@ -1,3 +1,8 @@
+@fe_automation_worker_1 = 0.75
+@fe_automation_worker_2 = 1.00
+@fe_automation_specialist_1 = 0.25
+@fe_automation_specialist_2 = 0.50
+
 building_giga_megaworkshop = {
 	base_buildtime = @b2_time
 	category = manufacturing
@@ -225,7 +230,7 @@ building_giga_living_metal_infusion_plant = {
 	}
 
 	planet_modifier = {
-		planet_giga_megaengineers_produces_mult = 0.20
+		giga_megaconstruction_jobs_bonus_workforce_mult = 0.20
 	}
 
 	triggered_planet_modifier = {
@@ -295,13 +300,15 @@ building_giga_living_metal_infusion_plant = {
 }
 
 building_giga_fe_megaworkshop = {
-	base_buildtime = @b2_time
+	base_buildtime = @b3_time
 	can_build = yes
 	can_demolish = yes
+    planet_limit = 1
 
 	category = manufacturing
 
 	building_sets = {
+        fallen_empire
 		industrial
 		factory
 		foundry
@@ -322,6 +329,7 @@ building_giga_fe_megaworkshop = {
 		NOR = {
 			has_modifier = resort_colony
 			has_modifier = slave_colony
+            has_modifier = penal_colony
 		}
 	}
 
@@ -345,28 +353,89 @@ building_giga_fe_megaworkshop = {
 	resources = {
 		category = planet_buildings
 		cost = {
-			alloys = @b3_minerals
-			sr_living_metal = @fe_sr_cost
+			alloys = @fe_alloy_cost_1
+			sr_living_metal = @fe_rr_cost_1
 		}
 		upkeep = {
-			sr_living_metal = 2
+			sr_living_metal = @fe_rr_upkeep_1
 			alloys = @b2_alloy_upkeep
-			energy = 15
+			energy = @fe_energy_upkeep_1
 		}
+        cost = {
+            trigger = {
+                owner = { is_wilderness_empire = yes }
+            }
+            biomass = @b3_biomass
+        }
 	}
+
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = {
+                is_wilderness_empire = yes
+                has_tradition = tr_purity_finish
+            }
+        }
+        planet_building_build_speed_mult = 0.03
+        planet_decision_enact_speed_mult = 0.03
+    }
 
 	inline_script = {
 		script = planet/supertensiles/giga_megaengineer_job_swap
 		jobs = @fe_jobs
 	}
 
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = { is_fallen_empire_spiritualist = yes }
+        }
+        job_giga_amb_fe_acolyte_foundry_automated_workforce_mult = @fe_automation_specialist_1
+    }
+
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = { is_wilderness_empire = no }
+        }
+        job_giga_megaengineer_automated_workforce_mult = @fe_automation_specialist_1
+        job_giga_megaengineer_drone_automated_workforce_mult = @fe_automation_specialist_1
+    }
+
 	on_queued = {
+        if = { # kill on the same planet
+            limit = {
+                is_variable_set = local_spent_biomass
+                any_owned_pop_group = {
+                    has_trait = trait_wilderness
+                    pop_group_size > local_spent_biomass
+                }
+            }
+            random_owned_pop_group = {
+                limit = {
+                    has_trait = trait_wilderness
+                    pop_group_size > local_spent_biomass
+                }
+                kill_pop_group = {
+                    pop_group = this
+                    amount = local_spent_biomass
+                }
+            }
+        }
+        else_if = {
+            limit = { is_variable_set = local_spent_biomass }
+            owner = {
+                global_biomass_spender = yes
+            }
+        }
 		owner = {
 			subtract_variable = { which = giga_fe_megaworkshop_build_count value = 1 }
 		}
 	}
 
 	on_unqueued = {
+        unqueue_biomass_effect = yes
 		owner = {
 			change_variable = { which = giga_fe_megaworkshop_build_count value = 1 }
 		}
@@ -383,12 +452,14 @@ building_giga_fe_megaworkshop_2 = {
 	base_buildtime = @b2_time
 	can_build = no
 	can_demolish = yes
+    planet_limit = 1
 
 	icon = building_giga_fe_megaworkshop_2
 
 	category = manufacturing
 
 	building_sets = {
+        fallen_empire
 		industrial
 		factory
 		foundry
@@ -409,6 +480,7 @@ building_giga_fe_megaworkshop_2 = {
 		NOR = {
 			has_modifier = resort_colony
 			has_modifier = slave_colony
+            has_modifier = penal_colony
 		}
 	}
 
@@ -423,6 +495,10 @@ building_giga_fe_megaworkshop_2 = {
 				}
 			}
 		}
+        custom_tooltip = {
+            fail_text = cosmogenesis_aborted_tt
+            NOT = { owner = { has_country_flag = cosmogenesis_aborted } }
+        }
 	}
 
 	destroy_trigger = {
@@ -432,36 +508,97 @@ building_giga_fe_megaworkshop_2 = {
 	resources = {
 		category = planet_buildings
 		produces = {
-			giga_sr_amb_megaconstruction = 10
+			giga_sr_amb_megaconstruction = 5
 		}
 		cost = {
-			alloys = @b3_minerals
-			sr_living_metal = @fe_sr_cost
+			alloys = @fe_alloy_cost_2
+			sr_living_metal = @fe_rr_cost_2
 		}
 		upkeep = {
-			sr_living_metal = 2
-			alloys = @[ b2_alloy_upkeep + 10 ]
-			energy = 15
-			unity = 10
+			sr_living_metal = @fe_rr_upkeep_2
+			alloys = @b3_alloy_upkeep
+			energy = @fe_energy_upkeep_2
 		}
+        cost = {
+            trigger = {
+                owner = { is_wilderness_empire = yes }
+            }
+            biomass = @b3_biomass
+        }
 	}
 
-	inline_script = {
-		script = planet/supertensiles/giga_megaengineering_overseer_job_swap
-		jobs = 100
-	}
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = {
+                is_wilderness_empire = yes
+                has_tradition = tr_purity_finish
+            }
+        }
+        planet_building_build_speed_mult = 0.03
+        planet_decision_enact_speed_mult = 0.03
+    }
+
+    planet_modifier = {
+        planet_building_build_speed_mult = 0.1
+        planet_decision_enact_speed_mult = 0.1
+    }
+
 	inline_script = {
 		script = planet/supertensiles/giga_megaengineer_job_swap
-		jobs = @[ fe_jobs - 100 ]
+		jobs = @fe_jobs
 	}
 
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = { is_fallen_empire_spiritualist = yes }
+        }
+        job_giga_amb_fe_acolyte_foundry_automated_workforce_mult = @fe_automation_specialist_2
+    }
+
+    triggered_planet_modifier = {
+        potential = {
+            exists = owner
+            owner = { is_wilderness_empire = no }
+        }
+        job_giga_megaengineer_automated_workforce_mult = @fe_automation_specialist_2
+        job_giga_megaengineer_drone_automated_workforce_mult = @fe_automation_specialist_2
+    }
+
 	on_queued = {
+        if = { # kill on the same planet
+            limit = {
+                is_variable_set = local_spent_biomass
+                any_owned_pop_group = {
+                    has_trait = trait_wilderness
+                    pop_group_size > local_spent_biomass
+                }
+            }
+            random_owned_pop_group = {
+                limit = {
+                    has_trait = trait_wilderness
+                    pop_group_size > local_spent_biomass
+                }
+                kill_pop_group = {
+                    pop_group = this
+                    amount = local_spent_biomass
+                }
+            }
+        }
+        else_if = {
+            limit = { is_variable_set = local_spent_biomass }
+            owner = {
+                global_biomass_spender = yes
+            }
+        }
 		owner = {
 			subtract_variable = { which = giga_fe_megaworkshop_upgrade_count value = 1 }
 		}
 	}
 
 	on_unqueued = {
+        unqueue_biomass_effect = yes
 		owner = {
 			change_variable = { which = giga_fe_megaworkshop_upgrade_count value = 1 }
 		}
