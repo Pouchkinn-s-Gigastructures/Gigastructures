@@ -4,6 +4,8 @@ anti_sirens_shield = {
 	# construction_blocks_and_blocked_by = none # BLOCKING TEST
 	portrait = "GFX_megastructure_construction_background"
 	place_entity_on_planet_plane = no
+	build_type = inside_gravity_well
+	construction_blocks_and_blocked_by = self_type
 	prerequisites = { giga_tech_eawaf_disenchanter_4 }
 
 	outliner_trigger = {
@@ -42,15 +44,25 @@ anti_sirens_shield = {
 	}
 
 	placement_rules = {
-		planet_possible = {
-			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
-			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
-			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
-			custom_tooltip = { fail_text = "requires_not_asteroid"				is_asteroid = no }
-			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
-			custom_tooltip = {
-				fail_text = "requires_not_astral_scar"
-				is_astral_scar = no
+		custom_tooltip = {
+			fail_text = "requires_inside_border"
+			is_inside_border = from
+		}
+		custom_tooltip = {
+			fail_text = "requires_surveyed_system"
+			NOT = {
+				any_system_planet = {
+					is_surveyed = {
+						who = prev.from
+						status = no
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_existing_anti_sirens_shield"
+			NOT = {
+				has_megastructure = anti_sirens_shield
 			}
 		}
 	}
@@ -66,8 +78,14 @@ anti_sirens_shield = {
 			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
 			giga_set_has_mega_flag = yes
 		}
-		event_target:giga_eaw_country = {
-			giga_eawaf_apply_strife_field_effects = yes
+		if = {
+			limit = {
+				NOT = { has_global_flag = giga_eawaf_shroudsonic_enthraller_destroyed }
+				exists = event_target:giga_eawaf_country
+			}
+			event_target:giga_eawaf_country = {
+				giga_eawaf_apply_strife_field_effects = yes
+			}
 		}
 	}
 }
@@ -94,19 +112,30 @@ anti_sirens_shield_dismantle = {
 	possible = { 
 		from = { 
 			hidden_trigger = {
-				is_ai = no # AI please, stop taking these down
-			}  
-		} 
+				NOT = {
+					AND = {
+						NOT = { has_global_flag = giga_eawaf_sirens_defeated }
+						is_ai = yes # AI please, stop taking these down
+					}
+				}
+			}
+		}
 	}
 
-	ai_weight = { factor = 0 } # the completed substellar compressor is very good and very cheap, the AI should not take it down
+	ai_weight = { weight = 999 } #no need for them after the crisis is over
 	on_build_complete = {
 		remove_megastructure = fromfrom
 		fromfrom.planet = {
 			giga_clear_has_mega_flag = yes
 		}
-		event_target:giga_eaw_country = {
-			giga_eawaf_apply_strife_field_effects = yes
+		if = {
+			limit = {
+				NOT = { has_global_flag = giga_eawaf_shroudsonic_enthraller_destroyed }
+				exists = event_target:giga_eawaf_country
+			}
+			event_target:giga_eawaf_country = {
+				giga_eawaf_apply_strife_field_effects = yes
+			}
 		}
 	}
 }
