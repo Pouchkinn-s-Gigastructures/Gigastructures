@@ -1,6 +1,6 @@
 # Gigastructures
 
-test but cooler
+test but even cooler
 
 ## Installing from Github
 
