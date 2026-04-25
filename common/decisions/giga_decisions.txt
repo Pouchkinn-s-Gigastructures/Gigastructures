@@ -1830,3 +1830,126 @@ decision_giga_flood_atmosphere = {
 		add_modifier = { modifier = giga_gas_giant_hab_colony }
 	}
 }
+
+decision_compound_cleanse_planet = {
+	owned_planets_only = yes
+
+	potential = {
+		exists = from
+		exists = space_owner
+		space_owner = { is_same_value = from }
+		is_planet_class = pc_ehof_planet
+		has_global_flag = compound_destroyed
+	}
+
+	resources = {
+		category = decisions
+		cost = { #bigger challenge = more expensive to cleanse worlds into a habitable state
+			trigger = { has_modifier = pc_ehof_terraforming_candidate }
+			giga_sr_negative_mass = 500
+		}
+		cost = {
+			trigger = { NOT = { has_modifier = pc_ehof_terraforming_candidate } }
+			giga_sr_negative_mass = 150
+		}
+	}
+
+	effect = {
+		custom_tooltip = decision_compound_cleanse_planet_tooltip
+		hidden_effect = {
+			if = {
+				limit = { has_orbital_station = yes }
+				orbital_station = { dismantle = yes }
+			}
+			clear_deposits = yes
+			if = { #if previously habitable, turn habitable
+				limit = { has_modifier = pc_ehof_terraforming_candidate }
+				change_pc = pc_nuked
+				set_planet_flag = nuked_planet_anomalies_disabled
+			}
+			else = { #otherwise, roll uninhabitable
+				random_list = { #weights are roughly based on spawn_odds and planet/moon_sizes defined in the planet class
+					6 = {
+						#large planets become gas giants
+						modifier = { factor = 0 is_moon = yes }
+						modifier = { factor = 0 planet_size < 20 }
+						modifier = { factor = 2 planet_size > 25 }
+						modifier = { factor = 4 planet_size > 30 }
+						modifier = { factor = 4 planet_size > 35 }
+						#gas giants don't spawn around black holes in vanilla but that's too absolute here since most are black holes
+						modifier = { factor = 0.5 star = { giga_is_black_hole = yes } }
+						change_pc = pc_gas_giant
+						if = { #make it a helioforming candidate if appropriate
+							limit = {
+								giga_is_gas_giant = yes
+								planet_size >= 35
+								NOR = {
+									has_planet_flag = crisis_vital_planet
+									has_global_flag = suppressor_disabled
+								}
+							}
+							add_modifier = { modifier = "helioforming_candidate" days = -1 }
+						}
+					}
+					20 = { #double likelihood since the planet was literally transmuted then smooshed back together
+						modifier = { factor = 0.1 is_moon = yes planet_size > 12 }
+						modifier = { factor = 0 is_moon = yes planet_size > 14 }
+						modifier = { factor = 0.1 is_moon = no planet_size > 30 }
+						modifier = { factor = 0 is_moon = no planet_size > 35 }
+						change_pc = pc_molten
+					}
+					10 = {
+						modifier = { factor = 0.1 is_moon = yes planet_size > 10 }
+						modifier = { factor = 0 is_moon = yes planet_size > 12 }
+						modifier = { factor = 0.1 is_moon = no planet_size > 30 }
+						modifier = { factor = 0 is_moon = no planet_size > 35 }
+						change_pc = pc_barren
+					}
+					10 = {
+						modifier = { factor = 0.1 is_moon = yes planet_size > 10 }
+						modifier = { factor = 0 is_moon = yes planet_size > 12 }
+						modifier = { factor = 0.1 is_moon = no planet_size > 30 }
+						modifier = { factor = 0 is_moon = no planet_size > 35 }
+						change_pc = pc_barren_cold
+					}
+					10 = {
+						modifier = { factor = 0.1 is_moon = yes planet_size > 10 }
+						modifier = { factor = 0 is_moon = yes planet_size > 12 }
+						modifier = { factor = 0.1 is_moon = no planet_size > 25 }
+						modifier = { factor = 0 is_moon = no planet_size > 30 }
+						change_pc = pc_toxic
+						if = { #roll for toxic terraforming candidate
+							limit = {
+								host_has_dlc = "Toxoids Species Pack"
+								planet_size > 9
+								planet_size < 31
+							}
+							random_list = {
+								100 = {}
+								10 = { #10 instead of 15 like on game start
+									add_modifier = { modifier = toxic_terraforming_candidate }
+									set_planet_flag = toxic_terraforming_candidate
+									complex_trigger_modifier = {
+										trigger = check_galaxy_setup_value
+										parameters = {
+											setting = habitable_worlds_scale
+										}
+										mode = factor
+									}
+								}
+							}
+						}
+					}
+					10 = {
+						modifier = { factor = 0.1 is_moon = yes planet_size > 10 }
+						modifier = { factor = 0 is_moon = yes planet_size > 12 }
+						modifier = { factor = 0.1 is_moon = no planet_size > 25 }
+						modifier = { factor = 0 is_moon = no planet_size > 30 }
+						change_pc = pc_barren_cold
+					}
+				}
+			}
+			reroll_deposits = yes
+		}
+	}
+}

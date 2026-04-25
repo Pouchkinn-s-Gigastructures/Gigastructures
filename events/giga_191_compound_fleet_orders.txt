@@ -370,7 +370,8 @@ fleet_event = {
 				is_country_type = creators
 			}
 		}
-		from = { has_star_flag = compound_capital_system }
+		from = { has_star_flag = compound_system_capital }
+		NOT = { has_global_flag = compound_destroyed }
 	}
 
 	immediate = {
@@ -972,8 +973,13 @@ planet_event = {
 		}
 		else_if = {
 			limit = { reshaper_eligible = yes }
+			if = { #mark habitable planets for becoming habitable again upon cleanup
+				limit = { is_colonizable = yes }
+				set_planet_flag = pc_ehof_terraforming_candidate
+			}
 			destroy_colony = yes
 			clear_planet_modifiers = yes
+			prevent_anomaly = yes
 			clear_deposits = yes
 			ehof_add_dark_matter_deposit = yes
 			change_pc = pc_ehof_planet
@@ -1120,12 +1126,37 @@ planet_event = {
 		remove_planet_flag = compound_reshaper_enroute@from
 
 		# Change the planet into either a blackhole or darkmatter planet, add darkmatter and clear modifiers/colony
+		if = { limit = { is_colony = yes } destroy_colony = yes }
 		clear_planet_modifiers = yes
-		destroy_colony = yes
+		prevent_anomaly = yes
 		clear_deposits = yes
 		ehof_add_dark_matter_deposit = yes
-		if = { limit = { is_star = yes } change_pc = pc_black_hole }
-		else = { change_pc = pc_ehof_planet	}
+		if = {
+			limit = { is_star = yes }
+			change_pc = pc_black_hole
+			solar_system = { #change star class to black hole if all eligible stars have been turned into black holes
+				if = {
+					limit = {
+						count_system_planet = {
+							limit = {
+								is_star = yes
+								reshaper_eligible = no
+							}
+							count = 0
+						}
+					}
+					set_star_class = sc_black_hole
+				}
+			}
+		}
+		#TODO this event should delete any megas on the planet to prevent having eg a dyson swarm with 150 dark matter or a pristine dysfunctional arc furnace
+		else = {
+			if = { #mark habitable planets for becoming habitable again upon cleanup
+				limit = { is_colonizable = yes }
+				set_planet_flag = pc_ehof_terraforming_candidate
+			}
+			change_pc = pc_ehof_planet
+		}
 		create_research_station = { owner = event_target:compound_country }
 
 		# Add counter
