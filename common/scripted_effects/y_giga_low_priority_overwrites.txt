@@ -230,3 +230,80 @@ reckoning_consume_world = {
         clear_variable = remaining_pops_until_next_intensification
     }
 }
+
+# added to NOR to stop changing quasar / smbh to M-star
+hyperthermia_galaxy_effect = {
+    optimize_memory
+    every_system_planet = {
+        limit = {
+            is_star = yes
+            NOR = {
+                is_planet_class = pc_black_hole
+                is_planet_class = pc_m_star
+                is_planet_class = pc_m_giant_star
+                # GIGAS ADDED BEGIN
+                is_planet_class = pc_core_black_hole
+                is_planet_class = pc_core_quasar
+                # GIGAS ADDED END
+            }
+        }
+        create_ambient_object = {
+            type = "red_giant_supernova"
+            play_animation_once = yes
+            location = this
+        }
+        last_created_ambient_object = {
+            set_location = {
+                target = prev
+                distance = 0
+                angle = random
+            }
+        }
+        change_pc = pc_m_giant_star
+        solar_system = { set_star_class = sc_m_giant }
+    }
+    # Handle Contingency Machine Worlds
+    every_system_planet = {
+        limit = {
+            is_planet_class = pc_ai
+            NOT = { has_planet_flag = machine_lair }
+        }
+        destroy_machine_world = yes
+    }
+    random_system_planet = {
+        limit = {
+            is_planet_class = pc_ai
+            has_planet_flag = machine_lair
+        }
+        from.owner = { save_event_target_as = final_machine_world_destroyer }
+        stop_crisis_sound = yes
+        planet_event = { id = crisis.2046 }
+    }
+    every_system_planet = {
+        limit = {
+            OR = {
+                is_colonizable = yes
+                is_colony = yes
+            }
+            NOT = { is_planet_class = pc_city }
+            is_artificial = no
+        }
+        change_pc = pc_volcanic
+        reroll_planet_modifiers = yes
+        reroll_deposits = yes
+        add_deposit = d_volcanic_mineral_layers
+        add_deposit = d_volcanic_stable_plateaus
+    }
+    every_system_colony = {
+        limit = {
+            owner = {
+                NOR = {
+                    is_infernal_empire = yes
+                    has_ascension_perk = ap_galactic_hyperthermia
+                }
+            }
+        }
+        remove_all_buildings = yes
+        destroy_colony = yes
+    }
+}
