@@ -2735,41 +2735,288 @@ apply_giga_bulwark_trad_build_speed = {
 	}
 }
 
+# this isnt smart enough to understand if you have two of the same zone
+# it also overshoots archive because there isnt an archive zone in the alderson
 giga_alderson_repair_effect = {
-	# if = {
-	# 	limit = {
-	# 		num_districts = {
-	# 			type = $pre_repair_district$
-	# 			value > 0
-	# 		}
-	# 	}
-	# }
-	export_trigger_value_to_variable = { 
-		trigger = num_districts 
-		parameters = { type = $pre_repair_district$ }
-		variable = $var_name$
-	}
-	if = {
-		limit = {
-			check_variable = {
-				which = $var_name$
-				value < 6
-			}
-		}
-		set_variable = {
-			which = $var_name$
-			value = 1
-		}
-	}
-	else = {
-		divide_variable = { which = $var_name$ value = 6 }
-		floor_variable = $var_name$
-	}
+    # count the number of urban districts
+    if = {
+        limit = {
+            num_districts = {
+                type = district_city
+                value > 0
+            }
+        }
+        export_trigger_value_to_variable = {
+            trigger = num_districts
+            parameters = { type = district_city }
+            variable = gigas_temp_alderson_counter
+        }
+    }
+    if = {
+        limit = {
+            num_districts = {
+                type = district_nexus
+                value > 0
+            }
+        }
+        export_trigger_value_to_variable = {
+            trigger = num_districts
+            parameters = { type = district_city }
+            variable = gigas_temp_alderson_counter
+        }
+    }
+    if = {
+        limit = {
+            num_districts = {
+                type = district_hive
+                value > 0
+            }
+        }
+        export_trigger_value_to_variable = {
+            trigger = num_districts
+            parameters = { type = district_hive }
+            variable = gigas_temp_alderson_counter
+        }
+    }
+    # alderson zone is worth 15x of a normal zone
+    divide_variable = { which = gigas_temp_alderson_counter value = 15 }
+    ceiling_variable  = gigas_temp_alderson_counter
+
+    # dont think switch will work here so :clueless1:
+    if = {
+        limit = { has_zone = { zone = zone_foundry } }
+        set_planet_flag = gigas_temp_alderson_foundry
+    }
+    if = {
+        limit = { has_zone = { zone = zone_factory } }
+        set_planet_flag = gigas_temp_alderson_factory
+    }
+    if = {
+        limit = { has_zone = { zone = zone_research } }
+        set_planet_flag = gigas_temp_alderson_research
+    }
+    if = {
+        limit = { has_zone = { zone = zone_research_physics } }
+        set_planet_flag = gigas_temp_alderson_research_physics
+    }
+    if = {
+        limit = { has_zone = { zone = zone_research_society } }
+        set_planet_flag = gigas_temp_alderson_research_society
+    }
+    if = {
+        limit = { has_zone = { zone = zone_research_engineering } }
+        set_planet_flag = gigas_temp_alderson_research_engineering
+    }
+    if = {
+        limit = { has_zone = { zone = zone_unity } }
+        set_planet_flag = gigas_temp_alderson_unity
+    }
+    if = {
+        limit = { has_zone = { zone = zone_unity_spiritualist } }
+        set_planet_flag = gigas_temp_alderson_unity_spiritualist
+    }
+    if = {
+        limit = { has_zone = { zone = zone_unity_bio_trophy } }
+        set_planet_flag = gigas_temp_alderson_unity_bio_trophy
+    }
+    if = {
+        limit = { has_zone = { zone = zone_industrial } }
+        set_planet_flag = gigas_temp_alderson_industrial
+    }
+    if = {
+        limit = { has_zone = { zone = zone_fortress } }
+        set_planet_flag = gigas_temp_alderson_fortress
+    }
+    if = {
+        limit = { has_zone = { zone = zone_trade } }
+        set_planet_flag = gigas_temp_alderson_trade
+    }
+    if = {
+        limit = { has_zone = { zone = zone_research_unity } }
+        set_planet_flag = gigas_temp_alderson_archive
+    }
+
+    # now for the food / energy
+    # need 0 variables or else will get an error on comparison
+    if = {
+        limit = {
+            num_districts = {
+                type = district_generator
+                value > 0
+            }
+        }
+        export_trigger_value_to_variable = {
+            trigger = num_districts
+            parameters = { type = district_generator }
+            variable = gigas_temp_alderson_counter_energy
+        }
+        set_planet_flag = gigas_temp_alderson_energy
+    }
+    else = {
+        set_variable = { which = gigas_temp_alderson_counter_energy value = 0}
+    }
+    if = {
+        limit = {
+            num_districts = {
+                type = district_farming
+                value > 0
+            }
+        }
+        export_trigger_value_to_variable = {
+            trigger = num_districts
+            parameters = { type = district_farming }
+            variable = gigas_temp_alderson_counter_food
+        }
+        set_planet_flag = gigas_temp_alderson_food
+    }
+    else = {
+        set_variable = { which = gigas_temp_alderson_counter_food value = 0}
+    }
+    # take whichever one is bigger
+    if = {
+        limit = {  check_variable_arithmetic = { which = gigas_temp_alderson_counter_food value > gigas_temp_alderson_counter_energy } }
+        set_variable = { which = gigas_temp_alderson_counter_gaia value = gigas_temp_alderson_counter_food }
+    }
+    else = {
+        set_variable = { which = gigas_temp_alderson_counter_gaia value = gigas_temp_alderson_counter_energy }
+    }
+    clear_variable = gigas_temp_alderson_counter_energy
+    clear_variable = gigas_temp_alderson_counter_food
+    # rurals with zone = 300, alderson zone = 1500. 1500/300 = 5
+    divide_variable = { which = gigas_temp_alderson_counter_gaia value = 5 }
+    ceiling_variable  = gigas_temp_alderson_counter_gaia
 }
 
 giga_alderson_repair_after_effect = {
-	while = { count = $var_name$ add_district = $post_repair_district$ }
-	set_variable = { which = $var_name$ value = 0 }  
+    upgrade_colony_shelter = yes
+
+    # if we had a zone that goes in the ecu hypersegment, spawn it
+    if = {
+        limit = {
+            OR = {
+                has_planet_flag = gigas_temp_alderson_foundry
+                has_planet_flag = gigas_temp_alderson_factory
+                has_planet_flag = gigas_temp_alderson_industrial
+                has_planet_flag = gigas_temp_alderson_fortress
+            }
+        }
+        while = { count = gigas_temp_alderson_counter add_district = district_alderson_ecu }
+
+        # now put the zones in
+        # cant use a switch because we might hit multiple conditions
+        if = { limit = { has_planet_flag = gigas_temp_alderson_foundry }
+            add_zone = { zone = zone_alderson_alloys }
+        }
+        if = { limit = { has_planet_flag = gigas_temp_alderson_factory }
+            add_zone = { zone = zone_alderson_cg }
+        }
+        if = { limit = { has_planet_flag = gigas_temp_alderson_industrial }
+            add_zone = { zone = zone_alderson_factory }
+            # dont ask me whats going on with this name
+        }
+        if = { limit = { has_planet_flag = gigas_temp_alderson_fortress }
+            add_zone = { zone = zone_alderson_fortress }
+        }
+
+        remove_planet_flag = gigas_temp_alderson_foundry
+        remove_planet_flag = gigas_temp_alderson_factory
+        remove_planet_flag = gigas_temp_alderson_industrial
+        remove_planet_flag = gigas_temp_alderson_fortress
+    }
+
+    # if we had a zone that goes in the computing hypersegment, spawn it
+    if = {
+        limit = {
+            OR = {
+                has_planet_flag = gigas_temp_alderson_research
+                has_planet_flag = gigas_temp_alderson_research_physics
+                has_planet_flag = gigas_temp_alderson_research_society
+                has_planet_flag = gigas_temp_alderson_research_engineering
+                has_planet_flag = gigas_temp_alderson_unity
+                has_planet_flag = gigas_temp_alderson_unity_spiritualist
+                has_planet_flag = gigas_temp_alderson_unity_bio_trophy
+                has_planet_flag = gigas_temp_alderson_trade
+                has_planet_flag = gigas_temp_alderson_archive
+            }
+        }
+        while = { count = gigas_temp_alderson_counter add_district = district_alderson_pcc }
+
+        # now put the zones in
+        # cant use a switch because we might hit multiple conditions
+        if = { limit = { has_planet_flag = gigas_temp_alderson_research }
+            add_zone = { zone = zone_alderson_research }
+        }
+        if = { limit = { has_planet_flag = gigas_temp_alderson_research_physics }
+            add_zone = { zone = zone_alderson_research_physics }
+        }
+        if = { limit = { has_planet_flag = gigas_temp_alderson_research_society }
+            add_zone = { zone = zone_alderson_research_society }
+        }
+        if = { limit = { has_planet_flag = gigas_temp_alderson_research_engineering }
+            add_zone = { zone = zone_alderson_research_engineering }
+        }
+        if = { limit = { has_planet_flag = gigas_temp_alderson_unity }
+            add_zone = { zone = zone_alderson_unity }
+        }
+        if = { limit = { has_planet_flag = gigas_temp_alderson_unity_spiritualist }
+            add_zone = { zone = zone_alderson_unity_spiritualist }
+        }
+        if = { limit = { has_planet_flag = gigas_temp_alderson_unity_bio_trophy }
+            add_zone = { zone = zone_alderson_unity_servitor }
+        }
+        if = { limit = { has_planet_flag = gigas_temp_alderson_trade }
+            add_zone = { zone = zone_alderson_trade }
+        }
+        # spawns an extra zone cause no archive zone :shrug:
+        if = { limit = { has_planet_flag = gigas_temp_alderson_archive }
+            add_zone = { zone = zone_alderson_research }
+            # stupid unity zone split
+            if = { limit = { owner = { is_spiritualist = yes }}
+                add_zone = { zone = zone_alderson_unity_spiritualist }
+            }
+            else_if = { limit = { owner = { has_valid_civic = civic_machine_servitor }}
+                add_zone = { zone = zone_alderson_unity_servitor }
+            }
+            else = {
+                add_zone = { zone = zone_alderson_unity }
+            }
+        }
+
+        remove_planet_flag = gigas_temp_alderson_research
+        remove_planet_flag = gigas_temp_alderson_research_physics
+        remove_planet_flag = gigas_temp_alderson_research_society
+        remove_planet_flag = gigas_temp_alderson_research_engineering
+        remove_planet_flag = gigas_temp_alderson_unity
+        remove_planet_flag = gigas_temp_alderson_unity_spiritualist
+        remove_planet_flag = gigas_temp_alderson_unity_bio_trophy
+        remove_planet_flag = gigas_temp_alderson_trade
+        remove_planet_flag = gigas_temp_alderson_archive
+    }
+
+    # if we had a zone that goes in the gaia hypersegment, spawn it
+    if = {
+        limit = {
+            OR = {
+                has_planet_flag = gigas_temp_alderson_energy
+                has_planet_flag = gigas_temp_alderson_food
+            }
+        }
+        while = { count = gigas_temp_alderson_counter_gaia add_district = district_alderson_gaia }
+
+        # now put the zones in
+        # cant use a switch because we might hit multiple conditions
+        if = { limit = { has_planet_flag = gigas_temp_alderson_energy }
+            add_zone = { zone = zone_alderson_energy }
+        }
+        if = { limit = { has_planet_flag = gigas_temp_alderson_food }
+            add_zone = { zone = zone_alderson_food }
+        }
+        remove_planet_flag = gigas_temp_alderson_energy
+        remove_planet_flag = gigas_temp_alderson_food
+    }
+
+	clear_variable = gigas_temp_alderson_counter
+    clear_variable = gigas_temp_alderson_counter_gaia
 }
 
 clear_giga_mega_balance_modifiers = {
