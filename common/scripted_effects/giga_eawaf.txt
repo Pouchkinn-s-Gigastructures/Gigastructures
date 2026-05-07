@@ -225,16 +225,19 @@ giga_eawaf_update_planet_system_modifiers = {
 
 giga_eawaf_apply_strife_field_effects = {
 	every_system = { #We fetch the distance of every system from Faust. This has to be done regularly in case new systems are added.
-		set_variable = { which = giga_eawaf_distance_from_faust value = 0 }
-		export_trigger_value_to_variable = {
-			trigger = distance
-			parameters = {
-				source = event_target:giga_eawaf_faust_system
-				type = euclidean
+		if = {
+			limit = { NOT = { is_variable_set = giga_eawaf_distance_from_faust } }
+			set_variable = { which = giga_eawaf_distance_from_faust value = 0 }
+			export_trigger_value_to_variable = {
+				trigger = distance
+				parameters = {
+					source = event_target:giga_eawaf_faust_system
+					type = euclidean
+				}
+				variable = giga_eawaf_distance_from_faust
 			}
-			variable = giga_eawaf_distance_from_faust
+			round_variable = giga_eawaf_distance_from_faust
 		}
-		round_variable = giga_eawaf_distance_from_faust
 		if = { #If they are closer to Faust than the Outer Field range variable, BUT further than the Inner Field, apply Outer Field effects.
 			limit = {
 				check_variable = { which = giga_eawaf_distance_from_faust value < event_target:giga_eawaf_country.giga_eawaf_outer_strife_field_range }
@@ -1141,6 +1144,176 @@ giga_eawaf_convert_thrall_army = {
 					species = prev.species
 					type = "eawaf_sirens_army"
 				}
+			}
+		}
+	}
+}
+
+#This is called in two places just in case someone manages to end the crisis without destroying the Enthraller again
+giga_eawaf_destroy_strife_field = {
+	if = {
+		limit = { #don't call this expensive effect again if it correctly disappeared the first time
+			NOT = { has_global_flag = giga_eawaf_shroudsonic_enthraller_destroyed }
+		}
+		set_global_flag = giga_eawaf_shroudsonic_enthraller_destroyed
+		event_target:giga_eawaf_planet.solar_system = {
+			every_system_megastructure = {
+				limit = { is_megastructure_type = giga_eawaf_sirens_megaphone_1 }
+				remove_megastructure = THIS
+			}
+			starbase = {
+				#set_owner = from
+				fleet = {
+					set_owner = from
+					set_controller = from
+				}
+			}
+		}
+		event_target:giga_eawaf_country = {
+			set_variable = { which = giga_eawaf_total_strife value = 0 }
+		}
+		every_system = { #The field is gone
+			limit = { giga_eawaf_is_field_system = yes }
+			#Clear Strife Fields
+			every_system_ambient_object = {
+				limit = { OR = { is_ambient_object_type = giga_eawaf_strife_field_outer_object is_ambient_object_type = giga_eawaf_strife_field_inner_object } }
+				destroy_ambient_object = this
+			}
+			#Remove Strife Field Modifiers
+			every_system_planet = {
+				limit = { is_colony = yes }
+				giga_eawaf_clear_outer_strife_field_modifier = yes
+			}
+			if = {
+				limit = { NOT = { is_variable_set = giga_eawaf_distance_from_faust } }
+				clear_variable = giga_eawaf_distance_from_faust
+			}
+			if = {
+				limit = { has_star_flag = giga_eawaf_outer_field_system }
+				remove_star_flag = giga_eawaf_outer_field_system
+			}
+			if = {
+				limit = { has_star_flag = giga_eawaf_inner_field_system }
+				remove_star_flag = giga_eawaf_inner_field_system
+			}
+			every_fleet_in_system = { #Return ships to owners
+				limit = {
+					controller = { is_country_type = giga_eawaf_sirens }
+					has_fleet_flag = giga_eawaf_enthralled_by_sirens
+				}
+				random_country = {
+					limit = { has_country_flag = giga_eawaf_former_owner@PREV }
+					save_event_target_as = giga_eawaf_former_owner
+				}
+				set_owner = event_target:giga_eawaf_former_owner
+			}
+			log = ""
+			starbase = { #Return starbases to owners
+				if = {
+					limit = {
+						controller = { is_country_type = giga_eawaf_sirens }
+						any_country = { has_country_flag = giga_eawaf_former_owner@PREV }
+					}
+					random_country = {
+						limit = { has_country_flag = giga_eawaf_former_owner@PREV }
+						save_event_target_as = giga_eawaf_former_owner
+					}
+					set_owner = event_target:giga_eawaf_former_owner
+					solar_system = {
+						every_ship_in_system = {
+							limit = {
+								OR = {
+									is_ship_class = shipclass_mining_station
+									is_ship_class = shipclass_research_station
+									is_ship_class = shipclass_observation_station
+									is_ship_class = shipclass_starbase
+									is_ship_class = shipclass_military_station
+									is_space_citadel_ship_size = yes
+								}
+							}
+							fleet = { set_owner = event_target:giga_eawaf_former_owner set_controller = event_target:giga_eawaf_former_owner }
+						}
+					}
+				}
+			}
+			log = ""
+			every_system_planet = { #Return planets to owners
+				limit = {
+					owner = { is_country_type = giga_eawaf_sirens }
+					is_colony = yes
+					has_planet_flag = giga_eawaf_enthralled_by_sirens
+				}
+				random_country = {
+					limit = { has_country_flag = giga_eawaf_former_owner@PREV }
+					save_event_target_as = giga_eawaf_former_owner
+				}
+				set_owner = event_target:giga_eawaf_former_owner
+				set_controller = event_target:giga_eawaf_former_owner
+				solar_system = { starbase = { set_owner = event_target:giga_eawaf_former_owner fleet = { set_controller = event_target:giga_eawaf_former_owner } } }
+			}
+			log = ""
+			every_ship_in_system = { #Clear all strife field modifiers
+				giga_eawaf_clear_strife_field_ship_modifiers = yes
+			}
+			log = ""
+		}
+		log = ""
+		event_target:giga_eawaf_country = {
+			every_system_within_border = {
+				limit = {
+					any_system_planet = {
+						is_colony = yes
+						owner = { is_country_type = giga_eawaf_sirens }
+					}
+					NOR = { has_star_flag = eawaf_system }
+				}
+				random_system_planet = {
+					limit = {
+						is_colony = yes
+						owner = { is_country_type = giga_eawaf_sirens }
+					}
+					create_sirens_splinter_state = yes
+				}
+			}
+			every_system_within_border = {
+				if = {
+					limit = {
+						exists = starbase
+						starbase = { controller = { is_country_type = giga_eawaf_sirens } }
+					}
+					starbase = {
+						fleet = {
+							destroy_fleet = this
+						}
+					}
+					every_ship_in_system = { #don't want to leave unowned stations
+						limit = {
+							OR = {
+								is_ship_class = shipclass_mining_station
+								is_ship_class = shipclass_research_station
+								is_ship_class = shipclass_observation_station
+								is_ship_class = shipclass_starbase
+								is_ship_class = shipclass_military_station
+								is_space_citadel_ship_size = yes
+							}
+						}
+						destroy_ship = this
+					}
+				}
+			}
+			#Clear stragglers
+			every_owned_planet = {
+				limit = {
+					NOT = { has_planet_flag = giga_eawaf_planet }
+					solar_system.starbase.owner = { NOT = { is_country_type = giga_eawaf_sirens } }
+				}
+				set_owner = solar_system.starbase.owner
+			}
+			every_owned_planet = {
+				limit = {
+					NOT = { has_planet_flag = giga_eawaf_planet }
+				}
+				destroy_colony = yes
 			}
 		}
 	}
