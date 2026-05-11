@@ -105,7 +105,7 @@ compound_set_fleet_spawn = {
 					}
 				}
 			}
-			event_target:compound_capital_system.star = { save_global_event_target_as = compound_fleet_spawn }
+			event_target:compound_system_capital.star = { save_global_event_target_as = compound_fleet_spawn }
 		}
 		else = { event_target:compound_invasion_entry.star = { save_global_event_target_as = compound_fleet_spawn } }
 	}
@@ -166,11 +166,11 @@ create_compound_ships = {
 				}
 			}
 			15 = {
-				modifier = { factor = 0		event_target:compound_country = { check_variable = { which = compound_new_fleet value <= 200 } } }
+				modifier = { factor = 0		event_target:compound_country = { check_variable = { which = compound_new_fleet value <= 80 } } }
 				modifier = { factor = 0		event_target:compound_country = { check_variable = { which = hornet value >= 3 } } }
 				modifier = { factor = 0.2	event_target:compound_country = { check_variable = { which = hornet value >= 2 } } }
 				modifier = { factor = 0.4	event_target:compound_country = { check_variable = { which = hornet value >= 1 } } }
-				modifier = { factor = 5		event_target:compound_country = { check_variable = { which = compound_new_fleet value > 200 } } }
+				modifier = { factor = 5		event_target:compound_country = { check_variable = { which = compound_new_fleet value > 150 } } }
 				create_sovereign = yes
 				event_target:compound_country = {
 					subtract_variable = { which = compound_new_fleet value = 16 }				# Fleet allowance
@@ -194,20 +194,58 @@ create_compound_ships = {
 create_compound_fleet = {
 	compound_set_fleet_spawn = yes
 	event_target:compound_fleet_spawn = {
-		random_list = {
-			40 = { event_target:compound_country = { set_variable = { which = compound_new_fleet value = 50 } } }
-			30 = { event_target:compound_country = { set_variable = { which = compound_new_fleet value = 100 } } }
-			20 = { event_target:compound_country = { set_variable = { which = compound_new_fleet value = 200 } } }
-			10 = { event_target:compound_country = { set_variable = { which = compound_new_fleet value = 300 } } }
+		random_list = { #each diff can roll 1 of 3 fleet sizes, so higher diffs tend to have larger fleets in addition to stronger ships
+			0 = {
+				modifier = { add = 1 has_global_flag = compound_capped_1 }
+				modifier = { add = 0 has_global_flag = compound_capped_2 }
+				modifier = { add = 0 has_global_flag = compound_capped_3 }
+				modifier = { add = 0 has_global_flag = compound_capped_4 }
+				event_target:compound_country = { set_variable = { which = compound_new_fleet value = 50 } }
+			}
+			0 = {
+				modifier = { add = 1 has_global_flag = compound_capped_1 }
+				modifier = { add = 1 has_global_flag = compound_capped_2 }
+				modifier = { add = 0 has_global_flag = compound_capped_3 }
+				modifier = { add = 0 has_global_flag = compound_capped_4 }
+				event_target:compound_country = { set_variable = { which = compound_new_fleet value = 80 } }
+			}
+			0 = {
+				modifier = { add = 1 has_global_flag = compound_capped_1 }
+				modifier = { add = 1 has_global_flag = compound_capped_2 }
+				modifier = { add = 1 has_global_flag = compound_capped_3 }
+				modifier = { add = 0 has_global_flag = compound_capped_4 }
+				event_target:compound_country = { set_variable = { which = compound_new_fleet value = 110 } }
+			}
+			0 = {
+				modifier = { add = 0 has_global_flag = compound_capped_1 }
+				modifier = { add = 1 has_global_flag = compound_capped_2 }
+				modifier = { add = 1 has_global_flag = compound_capped_3 }
+				modifier = { add = 1 has_global_flag = compound_capped_4 }
+				event_target:compound_country = { set_variable = { which = compound_new_fleet value = 140 } }
+			}
+			0 = {
+				modifier = { add = 0 has_global_flag = compound_capped_1 }
+				modifier = { add = 0 has_global_flag = compound_capped_2 }
+				modifier = { add = 1 has_global_flag = compound_capped_3 }
+				modifier = { add = 1 has_global_flag = compound_capped_4 }
+				event_target:compound_country = { set_variable = { which = compound_new_fleet value = 170 } }
+			}
+			0 = {
+				modifier = { add = 0 has_global_flag = compound_capped_1 }
+				modifier = { add = 0 has_global_flag = compound_capped_2 }
+				modifier = { add = 0 has_global_flag = compound_capped_3 }
+				modifier = { add = 1 has_global_flag = compound_capped_4 }
+				event_target:compound_country = { set_variable = { which = compound_new_fleet value = 200 } }
+			}
 		}
 
 		create_ehof_admiral = yes
 		create_fleet = {
 			name = "Compound Armada"
-			settings = { is_boss = yes } 
+			settings = { spawn_debris = no is_boss = yes }
 			effect = {
-				create_compound_ships = yes
 				set_owner = event_target:compound_country
+				create_compound_ships = yes
 				assign_leader = event_target:compound_fleet_leader
 				set_fleet_bombardment_stance = compound
 				set_fleet_stance = aggressive
@@ -228,7 +266,7 @@ create_reshaper_compound_fleet = {
 	event_target:compound_country = {
 		change_variable = { which = current_reshapers value = 1 }
 		create_fleet = {
-			settings = { is_boss = yes } 
+			settings = { spawn_debris = no }
 			effect = {
 				set_owner = event_target:compound_country
 				create_ship = {
@@ -247,8 +285,7 @@ create_reshaper_compound_fleet = {
 	}
 }
 
-# Modernized difficulty
-giga_compound_difficulty_modern = {
+giga_compound_difficulty = {
 	switch = {
 		trigger = has_global_flag
 		compound_capped_1 = { add_modifier = { modifier = giga_compound_easy days = -1 } }
@@ -289,7 +326,7 @@ create_architect_compound_fleet = {
 	change_variable = { which = current_architects value = 1 }
 	event_target:compound_country = {
 		create_fleet = {
-			settings = { is_boss = yes } 
+			settings = { spawn_debris = no}
 			effect = {
 				set_owner = event_target:compound_country
 				create_ship = {
@@ -310,10 +347,10 @@ create_architect_compound_fleet = {
 
 create_compound_military_station = {
 	random_list = {
-		40 = { create_fleet = { settings = { is_boss = yes } effect = { set_owner = event_target:compound_country create_ship = { name = random design = "NAME_Barricade"	graphical_culture = "ehof_01" } set_location = { target = event_target:spawn_military_station distance = 15 angle = random } } } }
-		30 = { create_fleet = { settings = { is_boss = yes } effect = { set_owner = event_target:compound_country create_ship = { name = random design = "NAME_Garrison"		graphical_culture = "ehof_01" } set_location = { target = event_target:spawn_military_station distance = 15 angle = random } } } }
-		20 = { create_fleet = { settings = { is_boss = yes } effect = { set_owner = event_target:compound_country create_ship = { name = random design = "NAME_Bastion"		graphical_culture = "ehof_01" } set_location = { target = event_target:spawn_military_station distance = 15 angle = random } } } }
-		10 = { create_fleet = { settings = { is_boss = yes } effect = { set_owner = event_target:compound_country create_ship = { name = random design = "NAME_Bulwark"		graphical_culture = "ehof_01" } set_location = { target = event_target:spawn_military_station distance = 15 angle = random } } } }
+		40 = { create_fleet = { settings = { spawn_debris = no } effect = { set_owner = event_target:compound_country create_ship = { name = random design = "NAME_Barricade"	graphical_culture = "ehof_01" } set_location = { target = event_target:spawn_military_station distance = 15 angle = random } } } }
+		30 = { create_fleet = { settings = { spawn_debris = no } effect = { set_owner = event_target:compound_country create_ship = { name = random design = "NAME_Garrison"		graphical_culture = "ehof_01" } set_location = { target = event_target:spawn_military_station distance = 15 angle = random } } } }
+		20 = { create_fleet = { settings = { spawn_debris = no } effect = { set_owner = event_target:compound_country create_ship = { name = random design = "NAME_Bastion"		graphical_culture = "ehof_01" } set_location = { target = event_target:spawn_military_station distance = 15 angle = random } } } }
+		10 = { create_fleet = { settings = { spawn_debris = no } effect = { set_owner = event_target:compound_country create_ship = { name = random design = "NAME_Bulwark"		graphical_culture = "ehof_01" } set_location = { target = event_target:spawn_military_station distance = 15 angle = random } } } }
 	}
 }
 
@@ -821,7 +858,7 @@ annihilator_sphere = {
 	set_global_flag = sa_target_sphere
 
 	# Save a target
-	event_target:compound_capital_system.star = {
+	event_target:compound_system_capital.star = {
 		if = {
 			limit = { exists = event_target:sa_attack_sphere }
 			clear_global_event_target = sa_attack_sphere
@@ -947,7 +984,7 @@ annihilator_defend = {
 		}
 	}
 	else_if = {
-		limit = {NOT = {exists = event_target:sa_defend_discoverer } } #No valid defense target? this shouldn't really ever happen but as a precaution
+		limit = { NOT = {exists = event_target:sa_defend_discoverer } } #No valid defense target? this shouldn't really ever happen but as a precaution
 		event_target:discoverer_system = {
 			star = { save_global_event_target_as = sa_defend_discoverer }
 		}
@@ -1032,4 +1069,142 @@ if = {
 	clear_variable = $VARIABLE$
 }
 	]
+}
+
+compound_set_system_id = {
+	last_created_system = {
+		if = {
+			limit = {
+				NOT = {
+					exists = event_target:ehof_compound_system_1
+				}
+			}
+			set_star_flag = ehof_compound_system_1
+			save_global_event_target_as = ehof_compound_system_1
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					exists = event_target:ehof_compound_system_2
+				}
+			}
+			set_star_flag = ehof_compound_system_2
+			save_global_event_target_as = ehof_compound_system_2
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					exists = event_target:ehof_compound_system_3
+				}
+			}
+			set_star_flag = ehof_compound_system_3
+			save_global_event_target_as = ehof_compound_system_3
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					exists = event_target:ehof_compound_system_4
+				}
+			}
+			set_star_flag = ehof_compound_system_4
+			save_global_event_target_as = ehof_compound_system_4
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					exists = event_target:ehof_compound_system_5
+				}
+			}
+			set_star_flag = ehof_compound_system_5
+			save_global_event_target_as = ehof_compound_system_5
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					exists = event_target:ehof_compound_system_6
+				}
+			}
+			set_star_flag = ehof_compound_system_6
+			save_global_event_target_as = ehof_compound_system_6
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					exists = event_target:ehof_compound_system_7
+				}
+			}
+			set_star_flag = ehof_compound_system_7
+			save_global_event_target_as = ehof_compound_system_7
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					exists = event_target:ehof_compound_system_8
+				}
+			}
+			set_star_flag = ehof_compound_system_8
+			save_global_event_target_as = ehof_compound_system_8
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					exists = event_target:ehof_compound_system_9
+				}
+			}
+			set_star_flag = ehof_compound_system_9
+			save_global_event_target_as = ehof_compound_system_9
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					exists = event_target:ehof_compound_system_10
+				}
+			}
+			set_star_flag = ehof_compound_system_10
+			save_global_event_target_as = ehof_compound_system_10
+		}
+		# inverted_switch = { #apparently this trigger doesn't exist
+		# 	trigger = exists
+		# 	event_target:ehof_compound_system_1 = {
+		# 		set_star_flag = ehof_compound_system_1
+		# 		save_global_event_target_as = ehof_compound_system_1
+		# 	}
+		# 	event_target:ehof_compound_system_2 = {
+		# 		set_star_flag = ehof_compound_system_2
+		# 		save_global_event_target_as = ehof_compound_system_2
+		# 	}
+		# 	event_target:ehof_compound_system_3 = {
+		# 		set_star_flag = ehof_compound_system_3
+		# 		save_global_event_target_as = ehof_compound_system_3
+		# 	}
+		# 	event_target:ehof_compound_system_4 = {
+		# 		set_star_flag = ehof_compound_system_4
+		# 		save_global_event_target_as = ehof_compound_system_4
+		# 	}
+		# 	event_target:ehof_compound_system_5 = {
+		# 		set_star_flag = ehof_compound_system_5
+		# 		save_global_event_target_as = ehof_compound_system_5
+		# 	}
+		# 	event_target:ehof_compound_system_6 = {
+		# 		set_star_flag = ehof_compound_system_6
+		# 		save_global_event_target_as = ehof_compound_system_6
+		# 	}
+		# 	event_target:ehof_compound_system_7 = {
+		# 		set_star_flag = ehof_compound_system_7
+		# 		save_global_event_target_as = ehof_compound_system_7
+		# 	}
+		# 	event_target:ehof_compound_system_8 = {
+		# 		set_star_flag = ehof_compound_system_8
+		# 		save_global_event_target_as = ehof_compound_system_8
+		# 	}
+		# 	event_target:ehof_compound_system_9 = {
+		# 		set_star_flag = ehof_compound_system_9
+		# 		save_global_event_target_as = ehof_compound_system_9
+		# 	}
+		# 	event_target:ehof_compound_system_10 = {
+		# 		set_star_flag = ehof_compound_system_10
+		# 		save_global_event_target_as = ehof_compound_system_10
+		# 	}
+		# }
+	}
 }
