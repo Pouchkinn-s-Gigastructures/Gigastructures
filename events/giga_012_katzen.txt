@@ -1151,6 +1151,10 @@ country_event = {
 		# GOVERNMENT SHIFTS #
 		#####################
 		remove_country_flag = fusion_age
+		remove_country_flag = tech_frozen
+		remove_country_flag = custom_preftl_diplomacy
+		remove_country_flag = custom_preftl_espionage
+		remove_country_flag = tech_frozen
 		set_country_flag = space_flusion_country
 		force_remove_civic = civic_atmospheric_pollution
 		force_remove_civic = civic_increasing_urbanization
@@ -1169,16 +1173,14 @@ country_event = {
 		every_country = {
 			limit = {
 				ehof_default_country = yes
-				is_homicidal = no
 			}
-			set_country_flag = kaiser_neutral
-		}
-		every_country = {
-			limit = {
-				ehof_default_country = yes
-				is_homicidal = yes
+			if = {
+				limit = { is_homicidal = no }
+				set_country_flag = kaiser_neutral
 			}
-			set_country_flag = kaiser_angry_1 #Pissed if genocidal
+			else = {
+				set_country_flag = kaiser_angry_1 #Pissed if genocidal
+			}
 		}
 		if = {
 			limit = { exists = event_target:flusion_muno_system_owner }
@@ -1369,7 +1371,7 @@ country_event = {
 		country_event = { id = giga_katzen.040 days = 360 random = 60 } #Katzen expansion, runs every year
 		country_event = { id = giga_katzen.041 days = 540 random = 60 } #Kaiser demands stuff, runs every 1.5 years
 		country_event = { id = giga_katzen.070 days = 180 random = 30 } #Warforges
-		country_event = { id = giga_katzen.030 days = 30 }
+		country_event = { id = giga_katzen.030 days = 30 } #Manage warforges and eco
 		country_event = { id = giga_katzen.036 days = 30 } # Leader management
 		country_event = { id = giga_katzen.080 days = 360 } #Flusion expansion
 		# country_event = { id = giga_katzen.082 days = 7200 } #Second flusion expansion
@@ -1601,6 +1603,9 @@ country_event = {
 				}
 			}
 			every_country = {
+				limit = {
+					is_hostile_to = ROOT
+				}
 				set_faction_hostility = {
 					target = ROOT
 					set_hostile = no
@@ -5639,7 +5644,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 			}
 		}
 		#remove attachés from nations at war with kaiser
-		every_country = {
+		every_playable_country = {
 			limit = {
 				is_at_war_with = event_target:flusion_primitives_country
 				has_modifier = katzen_attache
@@ -6987,14 +6992,14 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 	trigger = { any_country = { is_country_type = katzenartig_imperium } }
 
 	immediate = {
-		every_country = {
+		every_playable_country = {
 			limit = {
 				has_modifier = katzen_attache
 				NOT = { has_country_flag = kaiser_happy_4 }
 			}
 			random = {
 				chance = 25
-				country_event = { id = giga_katzen.5002 days = 10 } #increase in opinion!
+				country_event = { id = giga_katzen.5002 days = 10 random = 30 } #increase in opinion!
 			}
 		}
 		set_variable = { #count total systems, used so kaiser can change the name
@@ -7547,7 +7552,7 @@ country_event = {
 	}
 
 	immediate = {
-		every_country = {
+		every_playable_country = {
 			limit = {
 				has_country_flag = kaiser_demand_target
 			}
@@ -7573,9 +7578,7 @@ country_event = {
 			every_system_within_border = { #Attempt to locate a suitable system to demand :KaiserWoke:
 				random_neighbor_system = {
 					limit = {
-						NOT = {
-							any_system_planet = { is_capital = yes } #Can't demand if its a capital
-						}
+						is_capital_system = no #Can't demand if its a capital
 						exists = owner #can't demand unowned systems from you
 						owner = {
 							giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
@@ -8053,7 +8056,7 @@ country_event = {
 				limit = { has_star_flag = kaiser_demands_system_root }
 				remove_star_flag = kaiser_demands_system_root
 			}
-			every_country = {
+			every_playable_country = {
 				limit = {
 					has_country_flag = kaiser_demand_target
 				}
@@ -8186,6 +8189,7 @@ country_event = { #Kaiser demands land!
 					NOR = {
 						is_country = event_target:kaiser_system_demand_target
 						is_overlord_to = event_target:kaiser_system_demand_target
+						is_ai = yes
 					}
 				}
 				country_event = { id = giga_katzen.043 } #Inform galaxy
@@ -8627,7 +8631,7 @@ planet_event = { #Every 6 months, warforges will randomly create a fleet
 }
 
 ###FLUSION EXPANSION###
-#Flusion slowly expands, gaining 2 pops per year.
+#Flusion slowly expands, gaining 200 pops per year.
 country_event = {
 	id = giga_katzen.080
 
@@ -9790,7 +9794,7 @@ country_event = { #Collapse of Katzenartig
 			limit = { has_global_flag = galcom_kaiser_crusade }
 			remove_global_flag = galcom_kaiser_crusade
 		}
-		every_country = {
+		every_playable_country = {
 			limit = { has_modifier = katzen_attache }
 			remove_modifier = katzen_attache
 		}
@@ -11929,8 +11933,6 @@ planet_event = { #After 5 more years, turn it into a real siegfried world (do no
 			species = event_target:flusion_katzens 
 			size = 200
 		}
-		
-		add_building = building_fortress
 
 		#How could I forget? The Flusion tax! 10% of pops go to Flusion (best planet)
 		every_owned_pop_group = {
@@ -11952,21 +11954,26 @@ planet_event = { #After 5 more years, turn it into a real siegfried world (do no
 			}
 		}
 
+		clear_deposits = yes
+		clear_planet_modifiers = yes
+
 		change_pc = {
 			class = pc_giga_siegfried_world
 			inherit_entity = yes
 		}
 
+		#TODO hey what is going on here with these two
 		add_district = district_city_katzen
-		
 		add_district = district_city
+
+		add_building = building_giga_siegfried_global_bunker
+
+		add_building = building_fortress
 		
 		solar_system = {
 			set_star_flag = siegfried_anti_jump_star
 			every_neighbor_system = { set_star_flag = siegfried_anti_jump_star }
 		}
-
-		add_building = building_giga_siegfried_global_bunker
 
 		create_fleet = { #Siegfried defenses
 			name = "Siegfried Array"
@@ -13327,7 +13334,7 @@ country_event = {
 	}
 
 	immediate = {
-		every_country = {
+		every_playable_country = {
 			limit = {
 				has_event_chain = "katzenartig_chain"
 			}
@@ -13347,7 +13354,7 @@ country_event = {
 					is_ship_size = giga_kaiser_moon_flusion
 				}
 			}
-			every_country = {
+			every_playable_country = {
 				limit = {
 					has_event_chain = "katzenartig_chain"
 				}
@@ -13359,7 +13366,7 @@ country_event = {
 			}
 		}
 		every_owned_planet = { #count planets
-			every_country = {
+			every_playable_country = {
 				limit = {
 					has_event_chain = "katzenartig_chain"
 				}
@@ -13374,7 +13381,7 @@ country_event = {
 			limit = {
 				is_megastructure_type = katzen_forge_1
 			}
-			every_country = {
+			every_playable_country = {
 				limit = {
 					has_event_chain = "katzenartig_chain"
 				}
@@ -13386,7 +13393,7 @@ country_event = {
 			}
 		}
 		every_system_within_border = { #count systems
-			every_country = {
+			every_playable_country = {
 				limit = {
 					has_event_chain = "katzenartig_chain"
 				}
