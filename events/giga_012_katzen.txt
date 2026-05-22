@@ -197,12 +197,10 @@ planet_event = {
 		}
 		if = {
 			limit = {
-				exists = observation_outpost
+				exists = observation_outpost_owner
 			}
-			observation_outpost = {
-				owner = { country_event = { id = giga_katzen.006 days = 1 } } 
-				dismantle = yes 
-			}
+			observation_outpost_owner = { country_event = { id = giga_katzen.006 days = 1 } }
+			observation_outpost = { dismantle = yes }
 		}
 		set_planet_flag = flusion_katzen_nuked
 		change_pc = pc_katzenland
@@ -244,6 +242,12 @@ planet_event = {
 			destroy_country = yes
 		}
 		set_update_modifiers_batch = end
+		if = {
+			limit = { has_observation_outpost = yes }
+			observation_outpost = {
+				dismantle = yes
+			}
+		}
 	}
 }
 
@@ -520,7 +524,7 @@ country_event = {
 			modifier = katzen_economy_modifier
 			days = -1
 		}
-		giga_apply_difficulty_setting = yes
+		#giga_apply_difficulty_setting = yes
 
 		#ECO STUFF
 		set_variable = {
@@ -550,6 +554,10 @@ country_event = {
 		}
 		set_variable = {
 			which = kaiser_energy_income
+			value = 0
+		}
+		set_variable = {
+			which = kaiser_trade_income
 			value = 0
 		}
 		set_variable = {
@@ -631,19 +639,19 @@ country_event = {
 		}
 		update_katzen_tech_level_buffs = yes
 		update_katzen_tech_level_display = yes
-		if = {
-			limit = {
-				NOR = {
-					has_global_flag = katzenartig_stellarite
-					has_global_flag = katzenartig_deathwish
-					has_global_flag = katzenartig_improbable
-				}
-			}
-			add_modifier = {
-				modifier = katzenartig_balance
-				days = -1
-			}
-		}
+		# if = {
+		# 	limit = {
+		# 		NOR = {
+		# 			has_global_flag = katzenartig_stellarite
+		# 			has_global_flag = katzenartig_deathwish
+		# 			has_global_flag = katzenartig_improbable
+		# 		}
+		# 	}
+		# 	add_modifier = {
+		# 		modifier = katzenartig_balance
+		# 		days = -1
+		# 	}
+		# }
 		create_country = { # Submarine Country created
 			name = "Subspace Anomaly"
 			type = katzen_submarines
@@ -689,7 +697,7 @@ country_event = {
 		}
 		create_ship_design = { design = "Pawris" }
 		add_ship_design = last_created_design
-		event_target:giga_flusion = {
+		event_target:gigaflusion = {
 			set_sector_capital = yes
 			assign_leader = event_target:flusion_loris
 		}
@@ -1143,6 +1151,10 @@ country_event = {
 		# GOVERNMENT SHIFTS #
 		#####################
 		remove_country_flag = fusion_age
+		remove_country_flag = tech_frozen
+		remove_country_flag = custom_preftl_diplomacy
+		remove_country_flag = custom_preftl_espionage
+		remove_country_flag = tech_frozen
 		set_country_flag = space_flusion_country
 		force_remove_civic = civic_atmospheric_pollution
 		force_remove_civic = civic_increasing_urbanization
@@ -1161,67 +1173,70 @@ country_event = {
 		every_country = {
 			limit = {
 				ehof_default_country = yes
-				is_homicidal = no
 			}
-			set_country_flag = kaiser_neutral
+			if = {
+				limit = { is_homicidal = no }
+				set_country_flag = kaiser_neutral
+			}
+			else = {
+				set_country_flag = kaiser_angry_1 #Pissed if genocidal
+			}
 		}
-		every_country = {
-			limit = {
-				ehof_default_country = yes
-				is_homicidal = yes
-			}
-			set_country_flag = kaiser_angry_1 #Pissed if genocidal
-		}
-		event_target:flusion_muno_system_owner = {
-			remove_country_flag = kaiser_neutral
-			if = {
-				limit = { has_country_flag = contributed_muno_project_1 }
-				set_country_flag = kaiser_happy_1 #The Kaiser remembers your good deeds
-			}
-			if = {
-				limit = { has_country_flag = contributed_muno_project_2 }
-				set_country_flag = kaiser_happy_2 #The Kaiser remembers your good deeds
-			}
-			if = {
-				limit = {
-					has_country_flag = hostile_to_flusion
+		if = {
+			limit = { exists = event_target:flusion_muno_system_owner }
+			event_target:flusion_muno_system_owner = {
+				remove_country_flag = kaiser_neutral
+				if = {
+					limit = { has_country_flag = contributed_muno_project_1 }
+					set_country_flag = kaiser_happy_1 #The Kaiser remembers your good deeds
 				}
-				set_country_flag = kaiser_angry_2 #The Kaiser remembers your bad deeds
-			}
-			if = {
-				limit = {
-					NOR = {
-						has_country_flag = contributed_muno_project_2
-						has_country_flag = contributed_muno_project_1
-						has_country_flag = friendly_to_flusion
+				if = {
+					limit = { has_country_flag = contributed_muno_project_2 }
+					set_country_flag = kaiser_happy_2 #The Kaiser remembers your good deeds
+				}
+				if = {
+					limit = {
 						has_country_flag = hostile_to_flusion
-						has_country_flag = contacted_flusion
-						is_homicidal = yes
-						event_target:flusion_primitives_country = {
-							has_country_flag = flusion_mobilized
+					}
+					set_country_flag = kaiser_angry_2 #The Kaiser remembers your bad deeds
+				}
+				if = {
+					limit = {
+						NOR = {
+							has_country_flag = contributed_muno_project_2
+							has_country_flag = contributed_muno_project_1
+							has_country_flag = friendly_to_flusion
+							has_country_flag = hostile_to_flusion
+							has_country_flag = contacted_flusion
+							is_homicidal = yes
+							event_target:flusion_primitives_country = {
+								has_country_flag = flusion_mobilized
+							}
 						}
 					}
+					set_country_flag = kaiser_neutral #The Kaiser remembers nothing
 				}
-				set_country_flag = kaiser_neutral #The Kaiser remembers nothing
-			}
-			if = {
-				limit = {
-					is_homicidal = yes
-					NOT = {
-						has_country_flag = hostile_to_flusion
+				if = {
+					limit = {
+						is_homicidal = yes
+						NOT = {
+							has_country_flag = hostile_to_flusion
+						}
 					}
+					set_country_flag = kaiser_angry_1 #The Kaiser doesn't like genocide
 				}
-				set_country_flag = kaiser_angry_1 #The Kaiser doesn't like genocide
+				remove_country_flag = contributed_muno_project_1
+				remove_country_flag = contributed_muno_project_2
+				remove_country_flag = friendly_to_flusion
+				remove_country_flag = hostile_to_flusion
 			}
-			remove_country_flag = contributed_muno_project_1
-			remove_country_flag = contributed_muno_project_2
-			remove_country_flag = friendly_to_flusion
-			remove_country_flag = hostile_to_flusion
 		}
 		###################
 
-
-		remove_country_flag = flusion_mobilized
+		if = {
+			limit = { has_country_flag = flusion_mobilized }
+			remove_country_flag = flusion_mobilized
+		}
 		set_graphical_culture = reptilian_01
 		#add resistance buffs
 		add_modifier = {
@@ -1356,7 +1371,7 @@ country_event = {
 		country_event = { id = giga_katzen.040 days = 360 random = 60 } #Katzen expansion, runs every year
 		country_event = { id = giga_katzen.041 days = 540 random = 60 } #Kaiser demands stuff, runs every 1.5 years
 		country_event = { id = giga_katzen.070 days = 180 random = 30 } #Warforges
-		country_event = { id = giga_katzen.030 days = 30 }
+		country_event = { id = giga_katzen.030 days = 30 } #Manage warforges and eco
 		country_event = { id = giga_katzen.036 days = 30 } # Leader management
 		country_event = { id = giga_katzen.080 days = 360 } #Flusion expansion
 		# country_event = { id = giga_katzen.082 days = 7200 } #Second flusion expansion
@@ -1451,8 +1466,6 @@ country_event = {
 		}
 		every_country = {
 			establish_communications_no_message = event_target:flusion_primitives_country
-		}
-		every_country = {
 			establish_contact = {
 				who = event_target:flusion_primitives_country
 				location = event_target:giga_jublio_system
@@ -1590,14 +1603,18 @@ country_event = {
 				}
 			}
 			every_country = {
+				limit = {
+					is_hostile_to = ROOT
+				}
 				set_faction_hostility = {
 					target = ROOT
 					set_hostile = no
 				}
 			}
 		}
-		every_country = {
+		every_playable_country = {
 			limit = {
+				is_ai = no
 				NOT = { has_country_flag = seen_katzenartig }
 			}
 			country_event = { id = giga_katzen.0100 days = 30 } #info
@@ -1817,7 +1834,7 @@ country_event = { #Inform player that Flusion has reached space age
 			}
 		}
 		add_resource = {
-			energy = 7500
+			trade = 7500
 			alloys = 2500
 		}
 		hidden_effect = {
@@ -1843,7 +1860,7 @@ country_event = { #Inform player that Flusion has reached space age
 			}
 		}
 		add_resource = {
-			energy = 2500
+			trade = 2500
 			alloys = 1000
 		}
 		hidden_effect = {
@@ -2710,10 +2727,8 @@ country_event = { #hello
 			}
 			random_system_within_border = {
 				limit = {
-					NOR = {
-						any_system_planet = { is_capital = yes }
-						has_star_flag = Paluush_system
-					}
+					NOT = { has_star_flag = Paluush_system }
+					is_capital_system = no
 					any_neighbor_system = { 
 						exists = owner
 						owner = { is_country_type = katzenartig_imperium } 
@@ -2730,7 +2745,7 @@ country_event = { #hello
 					}
 					NOR = {
 						has_star_flag = kaiser_sell_1
-						any_system_planet = { is_capital = yes }
+						is_capital_system = no
 						has_star_flag = Paluush_system
 					}
 				}
@@ -2743,7 +2758,7 @@ country_event = { #hello
 					NOR = {
 						has_star_flag = kaiser_sell_1
 						has_star_flag = kaiser_sell_2
-						any_system_planet = { is_capital = yes }
+						is_capital_system = no
 						has_star_flag = Paluush_system
 					}
 				}
@@ -2757,7 +2772,7 @@ country_event = { #hello
 						has_star_flag = kaiser_sell_1
 						has_star_flag = kaiser_sell_2
 						has_star_flag = kaiser_sell_3
-						any_system_planet = { is_capital = yes }
+						is_capital_system = no
 						has_star_flag = Paluush_system
 					}
 				}
@@ -3965,12 +3980,12 @@ country_event = { #Trading with Kaiser
 		response_text = "giga_katzen.02011.response"
 		allow = {
 			resource_stockpile_compare = {
-				resource = energy
+				resource = trade
 				value >= 5000
 			}
 		}
 		add_resource = {
-			energy = -5000
+			trade = -5000
 		}
 		hidden_effect = {
 			set_country_flag = buying_katzen_panzers
@@ -4004,12 +4019,12 @@ country_event = { #Trading with Kaiser
 		response_text = "giga_katzen.02011.response"
 		allow = {
 			resource_stockpile_compare = {
-				resource = energy
+				resource = trade
 				value >= 10000
 			}
 		}
 		add_resource = {
-			energy = -10000
+			trade = -10000
 		}
 		hidden_effect = {
 			set_country_flag = buying_katzen_bombers
@@ -4043,12 +4058,12 @@ country_event = { #Trading with Kaiser
 		response_text = "giga_katzen.02011.response"
 		allow = {
 			resource_stockpile_compare = {
-				resource = energy
+				resource = trade
 				value >= 15000
 			}
 		}
 		add_resource = {
-			energy = -15000
+			trade = -15000
 		}
 		hidden_effect = {
 			set_country_flag = buying_katzen_cruisers
@@ -4529,7 +4544,7 @@ country_event = { #Trading with Kaiser
 		custom_tooltip = "giga_katzen.02021.tooltip"
 		response_text = "giga_katzen.02021.response"
 		add_resource = {
-			energy = 15000
+			trade = 15000
 		}
 		hidden_effect = {
 			remove_country_flag = recently_gave_kaiser_land
@@ -4638,7 +4653,7 @@ country_event = { #Trading with Kaiser
 					}
 					ROOT = {
 						add_resource = {
-							energy = 100
+							trade = 100
 							alloys = 50
 						}
 					}
@@ -4661,9 +4676,8 @@ country_event = { #Trading with Kaiser
 						owner = event_target:flusion_primitives_country
 					}
 				}
-				every_system_planet = {
+				every_system_colony = {
 					limit = {
-						is_colony = yes
 						owner = {
 							NOT = { is_country_type = primitive }
 						}
@@ -4733,7 +4747,7 @@ country_event = { #Trading with Kaiser
 					}
 					ROOT = {
 						add_resource = {
-							energy = 100
+							trade = 100
 							alloys = 50
 						}
 					}
@@ -4756,9 +4770,8 @@ country_event = { #Trading with Kaiser
 						owner = event_target:flusion_primitives_country
 					}
 				}
-				every_system_planet = {
+				every_system_colony = {
 					limit = {
-						is_colony = yes
 						owner = {
 							NOT = { is_country_type = primitive }
 						}
@@ -4822,7 +4835,7 @@ country_event = { #Trading with Kaiser
 					}
 					ROOT = {
 						add_resource = {
-							energy = 100
+							trade = 100
 							alloys = 50
 						}
 					}
@@ -4845,9 +4858,8 @@ country_event = { #Trading with Kaiser
 						owner = event_target:flusion_primitives_country
 					}
 				}
-				every_system_planet = {
+				every_system_colony = {
 					limit = {
-						is_colony = yes
 						owner = {
 							NOT = { is_country_type = primitive }
 						}
@@ -4894,12 +4906,12 @@ country_event = {
 		response_text = "giga_katzen.0211.a.response"
 		allow = {
 			resource_stockpile_compare = {
-				resource = energy
+				resource = trade
 				value > 25000
 			}
 		}
 		add_resource = {
-			energy = -25000
+			trade = -25000
 		}
 		hidden_effect = {
 			set_country_flag = kaiser_gave_cetana_intel
@@ -4953,8 +4965,6 @@ country_event = {
 	location = from
 	is_triggered_only = yes
 
-	location = from
-
 	diplomatic = yes
 
 	trigger = {
@@ -4973,11 +4983,11 @@ country_event = {
 		response_text = "giga_katzen.2004.a.response"
 		allow = {
 			resource_stockpile_compare = {
-				resource = energy
+				resource = trade
 				value >= 10000
 			}
 		}
-		add_resource = { energy = -10000 }
+		add_resource = { trade = -10000 }
 		hidden_effect = {
 			decrease_kaiser_opinion = yes
 		}
@@ -5018,10 +5028,7 @@ country_event = { #Manage the Kaiser's big projects!
 		every_planet_within_border = {
 			limit = {
 				is_colony = no
-				OR = {
-					is_planet_habitable = yes
-					giga_is_lifeless = yes
-				}
+				is_planet_habitable = yes
 				planet_size > 12
 				NOT = { has_planet_flag = has_megastructure }
 			}
@@ -5096,9 +5103,11 @@ country_event = { #Manage the Kaiser's big projects!
 						NOT = { has_planet_flag = has_megastructure }
 					}
 					start_terraform_process = pc_continental
-					change_variable = {
-						which = kaiser_resource_stockpile
-						value = -100
+					event_target:flusion_primitives_country = {
+						change_variable = {
+							which = kaiser_resource_stockpile
+							value = -100
+						}
 					}
 				}
 			}
@@ -5172,53 +5181,31 @@ country_event = { #Manage war forges and the Kaiser's eco
 	}
 
 	immediate = {
-		event_target:flusion_primitives_country = {
-			every_planet_within_border = {
-				limit = {
-					is_katzen_colony = yes
-					NOT = { has_planet_flag = katzen_planet_set_up }
-					NOT = { has_planet_flag = gigaflusion }
+		every_owned_planet = {
+			limit = {
+				NOR = {
+					has_planet_flag = katzen_planet_set_up
+					has_planet_flag = gigaflusion
 				}
-				planet_event = { id = giga_katzen.110 days = 30 } #katzenize all non katzen planets
+			}
+			planet_event = { id = giga_katzen.110 days = 30 } #katzenize all non katzen planets
+		}
+		every_planet_within_border = {
+			limit = {
+				has_deposit_for = shipclass_mining_station
+				has_mining_station = no
+			}
+			create_mining_station = {
+				owner = ROOT
 			}
 		}
-		every_system_within_border = {
+		every_planet_within_border = {
 			limit = {
-				any_system_planet = {
-					OR = {
-						AND = {
-							has_deposit_for = shipclass_research_station
-							has_research_station = no
-						}
-						AND = {
-							has_deposit_for = shipclass_mining_station
-							has_mining_station = no
-						}
-					}
-				}
+				has_deposit_for = shipclass_research_station
+				has_mining_station = no
 			}
-			every_system_planet = { 
-				limit = {
-					OR = {
-						AND = {
-							has_deposit_for = shipclass_research_station
-							has_research_station = no
-						}
-						AND = {
-							has_deposit_for = shipclass_mining_station
-							has_mining_station = no
-						}
-					}
-				}
-				switch = { 
-					trigger = has_deposit_for
-					shipclass_research_station = {
-						create_research_station = { owner = event_target:flusion_primitives_country }
-					}
-					shipclass_mining_station = {
-						create_mining_station = { owner = event_target:flusion_primitives_country }
-					}
-				}
+			create_research_station = {
+				owner = ROOT
 			}
 		}
 		every_owned_planet = {
@@ -5241,380 +5228,385 @@ country_event = { #Manage war forges and the Kaiser's eco
 				}
 			}
 		}
-		event_target:flusion_primitives_country = {
-			calculate_kaiser_spending = yes
+		calculate_kaiser_spending = yes
 
-			set_variable = {
-				which = kaiser_alloy_income
-				value = 0
-			}
-			set_variable = {
-				which = kaiser_mineral_income
-				value = 0
-			}
-			set_variable = {
-				which = kaiser_energy_income
-				value = 0
-			}
-			set_variable = {
-				which = kaiser_cg_income
-				value = 0
-			}
+		set_variable = {
+			which = kaiser_alloy_income
+			value = 0
+		}
+		set_variable = {
+			which = kaiser_mineral_income
+			value = 0
+		}
+		set_variable = {
+			which = kaiser_energy_income
+			value = 0
+		}
+		set_variable = {
+			which = kaiser_trade_income
+			value = 0
+		}
+		set_variable = {
+			which = kaiser_cg_income
+			value = 0
+		}
 
-			set_variable = {
-				which = kaiser_gas_income
-				value = 0
-			}
-			set_variable = {
-				which = kaiser_crystal_income
-				value = 0
-			}
-			set_variable = {
-				which = kaiser_motes_income
-				value = 0
-			}
-			set_variable = {
-				which = kaiser_rare_resource_income
-				value = 0
-			}
-			
-			set_variable = {
-				which = kaiser_resource_income
-				value = 0
-			}
+		set_variable = {
+			which = kaiser_gas_income
+			value = 0
+		}
+		set_variable = {
+			which = kaiser_crystal_income
+			value = 0
+		}
+		set_variable = {
+			which = kaiser_motes_income
+			value = 0
+		}
+		set_variable = {
+			which = kaiser_rare_resource_income
+			value = 0
+		}
 
-			export_resource_income_to_variable = {
-				resource = alloys
-				variable = kaiser_alloy_income
-			}
-			export_resource_income_to_variable = {
-				resource = minerals
-				variable = kaiser_mineral_income
-			}
-			export_resource_income_to_variable = {
-				resource = energy
-				variable = kaiser_energy_income
-			}
-			export_resource_income_to_variable = {
-				resource = consumer_goods
-				variable = kaiser_cg_income
-			}
+		set_variable = {
+			which = kaiser_resource_income
+			value = 0
+		}
 
-			export_resource_income_to_variable = {
-				resource = exotic_gases
-				variable = kaiser_gas_income
-			}
-			export_resource_income_to_variable = {
-				resource = rare_crystals
-				variable = kaiser_crystal_income
-			}
-			export_resource_income_to_variable = {
-				resource = volatile_motes
-				variable = kaiser_motes_income
-			}
+		export_resource_income_to_variable = {
+			resource = alloys
+			variable = kaiser_alloy_income
+		}
+		export_resource_income_to_variable = {
+			resource = minerals
+			variable = kaiser_mineral_income
+		}
+		export_resource_income_to_variable = {
+			resource = energy
+			variable = kaiser_energy_income
+		}
+		export_resource_income_to_variable = {
+			resource = trade
+			variable = kaiser_trade_income
+		}
+		export_resource_income_to_variable = {
+			resource = consumer_goods
+			variable = kaiser_cg_income
+		}
 
-			change_variable = {
-				which = kaiser_rare_resource_income
-				value = kaiser_gas_income
-			}
-			change_variable = {
-				which = kaiser_rare_resource_income
-				value = kaiser_crystal_income
-			}
-			change_variable = {
-				which = kaiser_rare_resource_income
-				value = kaiser_motes_income
-			}
+		export_resource_income_to_variable = {
+			resource = exotic_gases
+			variable = kaiser_gas_income
+		}
+		export_resource_income_to_variable = {
+			resource = rare_crystals
+			variable = kaiser_crystal_income
+		}
+		export_resource_income_to_variable = {
+			resource = volatile_motes
+			variable = kaiser_motes_income
+		}
 
-			multiply_variable = {
-				which = kaiser_rare_resource_income
-				value = 0.2
-			}
+		change_variable = {
+			which = kaiser_rare_resource_income
+			value = kaiser_gas_income
+		}
+		change_variable = {
+			which = kaiser_rare_resource_income
+			value = kaiser_crystal_income
+		}
+		change_variable = {
+			which = kaiser_rare_resource_income
+			value = kaiser_motes_income
+		}
 
-			multiply_variable = {
-				which = kaiser_mineral_income
-				value = 0.05
-			}
+		multiply_variable = {
+			which = kaiser_rare_resource_income
+			value = 0.2
+		}
 
-			multiply_variable = {
-				which = kaiser_energy_income
-				value = 0.02
-			}
+		multiply_variable = {
+			which = kaiser_mineral_income
+			value = 0.05
+		}
 
-			multiply_variable = {
-				which = kaiser_cg_income
-				value = 0.2
-			}
+		multiply_variable = {
+			which = kaiser_energy_income
+			value = 0.02
+		}
 
-			ceiling_variable = kaiser_rare_resource_income
-			ceiling_variable = kaiser_alloy_income
-			ceiling_variable = kaiser_mineral_income
-			ceiling_variable = kaiser_energy_income
-			ceiling_variable = kaiser_cg_income
+		multiply_variable = {
+			which = kaiser_trade_income
+			value = 0.02
+		}
 
-			change_variable = {
-				which = kaiser_resource_income
-				value = kaiser_alloy_income
-			}
-			change_variable = {
-				which = kaiser_resource_income
-				value = kaiser_mineral_income
-			}
-			change_variable = {
-				which = kaiser_resource_income
-				value = kaiser_energy_income
-			}
-			change_variable = {
-				which = kaiser_resource_income
-				value = kaiser_cg_income
-			}
+		multiply_variable = {
+			which = kaiser_cg_income
+			value = 0.2
+		}
 
-			change_variable = {
-				which = kaiser_resource_income
-				value = kaiser_rare_resource_income
-			}
+		ceiling_variable = kaiser_rare_resource_income
+		ceiling_variable = kaiser_alloy_income
+		ceiling_variable = kaiser_mineral_income
+		ceiling_variable = kaiser_energy_income
+		ceiling_variable = kaiser_trade_income
+		ceiling_variable = kaiser_cg_income
 
-			change_variable = {
-				which = kaiser_resource_income
-				value = 15
-			}
+		change_variable = {
+			which = kaiser_resource_income
+			value = kaiser_alloy_income
+		}
+		change_variable = {
+			which = kaiser_resource_income
+			value = kaiser_mineral_income
+		}
+		change_variable = {
+			which = kaiser_resource_income
+			value = kaiser_energy_income
+		}
+		change_variable = {
+			which = kaiser_resource_income
+			value = kaiser_trade_income
+		}
+		change_variable = {
+			which = kaiser_resource_income
+			value = kaiser_cg_income
+		}
 
-			change_variable = {
-				which = kaiser_resource_stockpile
-				value = kaiser_resource_income
-			}
+		change_variable = {
+			which = kaiser_resource_income
+			value = kaiser_rare_resource_income
+		}
 
-			subtract_variable = {
-				which = kaiser_resource_stockpile
-				value = kaiser_resource_spending
-			}
+		change_variable = {
+			which = kaiser_resource_income
+			value = 15
+		}
 
-			if = {
-				limit = {
-					check_variable = {
-						which = kaiser_resource_stockpile
-						value < 0
-					}
+		change_variable = {
+			which = kaiser_resource_stockpile
+			value = kaiser_resource_income
+		}
+
+		subtract_variable = {
+			which = kaiser_resource_stockpile
+			value = kaiser_resource_spending
+		}
+
+		if = {
+			limit = {
+				check_variable = {
+					which = kaiser_resource_stockpile
+					value < 0
 				}
-				set_variable = {
+			}
+			set_variable = {
+				which = kaiser_resource_stockpile
+				value = 0
+			}
+		}
+
+		set_variable = {
+			which = kaiser_resource_balance
+			value = kaiser_resource_income
+		}
+
+		subtract_variable = {
+			which = kaiser_resource_balance
+			value = kaiser_resource_spending
+		}
+
+		#If the balance is negative (oh no!!!), disband ships until no longer negative
+		if = {
+			limit = {
+				check_variable = {
+					which = kaiser_resource_balance
+					value < 1
+				}
+				check_variable = {
 					which = kaiser_resource_stockpile
 					value = 0
 				}
+				OR = {
+					any_owned_ship = { is_ship_size = giga_katzen_panzer }
+					any_owned_ship = { is_ship_size = giga_katzen_bomber }
+					any_owned_ship = { is_ship_size = giga_katzen_cruiser }
+				}
 			}
-
-			set_variable = {
-				which = kaiser_resource_balance
-				value = kaiser_resource_income
-			}
-
-			subtract_variable = {
-				which = kaiser_resource_balance
-				value = kaiser_resource_spending
-			}
-
-			#If the balance is negative (oh no!!!), disband ships until no longer negative
-			if = {
+			while = {
 				limit = {
-					check_variable = {
-						which = kaiser_resource_balance
-						value < 1
+					check_variable = { #Scuttle ships until he gets enough resources to last at least another month
+						which = kaiser_resource_spending
+						value > kaiser_resource_stockpile
 					}
-					check_variable = {
-						which = kaiser_resource_stockpile
-						value = 0
-					}
-					OR = {
-						any_owned_ship = { is_ship_size = giga_katzen_panzer }
-						any_owned_ship = { is_ship_size = giga_katzen_bomber }
-						any_owned_ship = { is_ship_size = giga_katzen_cruiser }
+					any_owned_ship = {
+						OR = {
+							is_ship_size = giga_katzen_panzer
+							is_ship_size = giga_katzen_bomber
+							is_ship_size = giga_katzen_cruiser
+							is_ship_size = giga_katzen_submarine
+						}
 					}
 				}
-				while = {
+				random_owned_ship = {
 					limit = {
-						check_variable = { #Scuttle ships until he gets enough resources to last at least another month
-							which = kaiser_resource_spending
-							value > kaiser_resource_stockpile
+						OR = {
+							is_ship_size = giga_katzen_panzer
+							is_ship_size = giga_katzen_bomber
+							is_ship_size = giga_katzen_cruiser
+							is_ship_size = giga_katzen_submarine
 						}
-						any_owned_ship = {
-							OR = {
-								is_ship_size = giga_katzen_panzer
-								is_ship_size = giga_katzen_bomber
-								is_ship_size = giga_katzen_cruiser
-								is_ship_size = giga_katzen_submarine
+					}
+					switch = {
+						trigger = is_ship_size
+						giga_katzen_panzer = {
+							change_variable = {
+								which = kaiser_resource_stockpile
+								value = 85
+							}
+						}
+						giga_katzen_bomber = {
+							change_variable = {
+								which = kaiser_resource_stockpile
+								value = 165
+							}
+						}
+						giga_katzen_cruiser = {
+							change_variable = {
+								which = kaiser_resource_stockpile
+								value = 375
+							}
+						}
+						giga_katzen_submarine = {
+							change_variable = {
+								which = kaiser_resource_stockpile
+								value = 100
 							}
 						}
 					}
-					random_owned_ship = {
-						limit = {
-							OR = {
-								is_ship_size = giga_katzen_panzer
-								is_ship_size = giga_katzen_bomber
-								is_ship_size = giga_katzen_cruiser
-								is_ship_size = giga_katzen_submarine
-							}
-						}
-						switch = {
-							trigger = is_ship_size
-							giga_katzen_panzer = {
-								event_target:flusion_primitives_country = {
-									change_variable = {
-										which = kaiser_resource_stockpile
-										value = 85
-									}
-								}
-							}
-							giga_katzen_bomber = {
-								event_target:flusion_primitives_country = {
-									change_variable = {
-										which = kaiser_resource_stockpile
-										value = 165
-									}
-								}
-							}
-							giga_katzen_cruiser = {
-								event_target:flusion_primitives_country = {
-									change_variable = {
-										which = kaiser_resource_stockpile
-										value = 375
-									}
-								}
-							}
-							giga_katzen_submarine = {
-								event_target:flusion_primitives_country = {
-									change_variable = {
-										which = kaiser_resource_stockpile
-										value = 100
-									}
-								}
-							}
-						}
 
-						delete_ship = this
-					}
-					calculate_kaiser_spending = yes
+					delete_ship = this
 				}
-			}
-
-			calculate_kaiser_spending = yes
-
-			#Research
-			set_variable = {
-				which = kaiser_tech_income
-				value = 0
-			}
-
-			export_resource_income_to_variable = {
-				resource = physics_research
-				variable = kaiser_p_tech_income
-			}
-			export_resource_income_to_variable = {
-				resource = society_research
-				variable = kaiser_s_tech_income
-			}
-			export_resource_income_to_variable = {
-				resource = engineering_research
-				variable = kaiser_e_tech_income
-			}
-			
-			change_variable = {
-				which = kaiser_tech_income
-				value = kaiser_p_tech_income
-			}
-			change_variable = {
-				which = kaiser_tech_income
-				value = kaiser_s_tech_income
-			}
-			change_variable = {
-				which = kaiser_tech_income
-				value = kaiser_e_tech_income
-			}
-
-			ceiling_variable = kaiser_tech_income
-
-			change_variable = { #add to his tech stockpile
-				which = kaiser_tech_stockpile
-				value = kaiser_tech_income
-			}
-
-			ceiling_variable = kaiser_tech_stockpile
-
-			if = { #reached new level, yay!
-				limit = {
-					check_variable = {
-						which = kaiser_tech_stockpile
-						value > kaiser_tech_to_next_level
-					}
-				}
-				subtract_variable = {
-					which = kaiser_tech_stockpile
-					value = kaiser_tech_to_next_level
-				}
-				multiply_variable = {
-					which = kaiser_tech_to_next_level
-					value = 1.25
-				}
-				change_variable = {
-					which = kaiser_tech_level
-					value = 1
-				}
-				ceiling_variable = kaiser_tech_to_next_level
-			}
-
-			update_katzen_tech_level_buffs = yes
-			update_katzen_tech_level_display = yes
-
-			if = {
-				limit = {
-					NOT = { 
-						any_owned_fleet = { 
-							any_owned_ship = {
-								OR = {
-									is_ship_size = giga_massive_planet
-									is_ship_size = giga_kaiser_moon_flusion
-								}
-								has_ship_flag = kaiser_moon_ship
-							} 
-						} 
-					}
-					NOT = { has_country_flag = kaiser_moon_destroyed }
-				}
-				every_country = {
-					limit = { has_country_flag = allied_to_kaiser }
-					country_event = { id = giga_katzen.3003 days = 15 } #FTO collapses
-				}
-				every_country = {
-					limit = { has_country_flag = katzen_vassal }
-					country_event = { id = giga_katzen.0033 days = 15 } #Vassals rebel
-				}
-				every_country = {
-					country_event = { id = giga_katzen.089 }
-				}
-				set_country_flag = kaiser_moon_destroyed
-				add_modifier = {
-					modifier = katzenartig_disarray
-					days = -1
-				}
-				country_event = { id = giga_katmoons.001 days = 3600 } #make a new one CHANGE TO 10 YEARS
+				calculate_kaiser_spending = yes
 			}
 		}
-		country_event = { id = giga_katzen.030 days = 30 }
-		event_target:flusion_primitives_country = {
-			set_variable = {
-				which = "kaiser_ehof_count"
-				value = 0
+
+		calculate_kaiser_spending = yes
+
+		#Research
+		set_variable = {
+			which = kaiser_tech_income
+			value = 0
+		}
+
+		export_resource_income_to_variable = {
+			resource = physics_research
+			variable = kaiser_p_tech_income
+		}
+		export_resource_income_to_variable = {
+			resource = society_research
+			variable = kaiser_s_tech_income
+		}
+		export_resource_income_to_variable = {
+			resource = engineering_research
+			variable = kaiser_e_tech_income
+		}
+
+		change_variable = {
+			which = kaiser_tech_income
+			value = kaiser_p_tech_income
+		}
+		change_variable = {
+			which = kaiser_tech_income
+			value = kaiser_s_tech_income
+		}
+		change_variable = {
+			which = kaiser_tech_income
+			value = kaiser_e_tech_income
+		}
+
+		ceiling_variable = kaiser_tech_income
+
+		change_variable = { #add to his tech stockpile
+			which = kaiser_tech_stockpile
+			value = kaiser_tech_income
+		}
+
+		ceiling_variable = kaiser_tech_stockpile
+
+		if = { #reached new level, yay!
+			limit = {
+				check_variable = {
+					which = kaiser_tech_stockpile
+					value > kaiser_tech_to_next_level
+				}
 			}
-			every_owned_megastructure = {
-				limit = { is_megastructure_type = kaiser_ehof_1 }
-				event_target:flusion_primitives_country = {
-					change_variable = {
-						which = "kaiser_ehof_count"
-						value = 1
+			subtract_variable = {
+				which = kaiser_tech_stockpile
+				value = kaiser_tech_to_next_level
+			}
+			multiply_variable = {
+				which = kaiser_tech_to_next_level
+				value = 1.25
+			}
+			change_variable = {
+				which = kaiser_tech_level
+				value = 1
+			}
+			ceiling_variable = kaiser_tech_to_next_level
+		}
+
+		update_katzen_tech_level_buffs = yes
+		update_katzen_tech_level_display = yes
+
+		if = {
+			limit = {
+				NOT = {
+					any_owned_fleet = {
+						any_owned_ship = {
+							OR = {
+								is_ship_size = giga_massive_planet
+								is_ship_size = giga_kaiser_moon_flusion
+							}
+							has_ship_flag = kaiser_moon_ship
+						}
 					}
 				}
+				NOT = { has_country_flag = kaiser_moon_destroyed }
+			}
+			every_country = {
+				limit = { has_country_flag = allied_to_kaiser }
+				country_event = { id = giga_katzen.3003 days = 15 } #FTO collapses
+			}
+			every_country = {
+				limit = { has_country_flag = katzen_vassal }
+				country_event = { id = giga_katzen.0033 days = 15 } #Vassals rebel
+			}
+			every_playable_country = {
+				limit = { is_ai = no }
+				country_event = { id = giga_katzen.089 }
+			}
+			set_country_flag = kaiser_moon_destroyed
+			add_modifier = {
+				modifier = katzenartig_disarray
+				days = -1
+			}
+			country_event = { id = giga_katmoons.001 days = 3600 } #make a new one CHANGE TO 10 YEARS
+		}
+		country_event = { id = giga_katzen.030 days = 30 }
+		set_variable = {
+			which = "kaiser_ehof_count"
+			value = 0
+		}
+		every_owned_megastructure = {
+			limit = { is_megastructure_type = kaiser_ehof_1 }
+			change_variable = {
+				which = "kaiser_ehof_count"
+				value = 1
 			}
 		}
 		#remove attachés from nations at war with kaiser
-		every_country = {
+		every_playable_country = {
 			limit = {
 				is_at_war_with = event_target:flusion_primitives_country
 				has_modifier = katzen_attache
@@ -5623,9 +5615,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 		}
 		if = { #Flusion being in ground combat will recall the kaiser moon
 			limit = {
-				event_target:flusion_primitives_country = {
-					NOT = { has_country_flag = kaiser_moon_destroyed }
-				}
+				NOT = { has_country_flag = kaiser_moon_destroyed }
 				event_target:gigaflusion = {
 					OR = {
 						has_ground_combat = yes
@@ -5674,19 +5664,17 @@ country_event = { #Manage war forges and the Kaiser's eco
 					days = 720 #can only recall once a year
 				}
 			}
-			event_target:flusion_primitives_country = {
-				random_owned_fleet = {
-					limit = { 					
-						any_owned_ship = {
-							OR = {
-								is_ship_size = giga_massive_planet
-								is_ship_size = giga_kaiser_moon_flusion
-							}
-							has_ship_flag = kaiser_moon_ship
-						}  
+			random_owned_fleet = {
+				limit = {
+					any_owned_ship = {
+						OR = {
+							is_ship_size = giga_massive_planet
+							is_ship_size = giga_kaiser_moon_flusion
+						}
+						has_ship_flag = kaiser_moon_ship
 					}
-					fleet_event = { id = giga_katzenai.012 days = 20 }
 				}
+				fleet_event = { id = giga_katzenai.012 days = 20 }
 			}
 		}
 		every_country = { #if a country allied to kaiser somehow ends up at war with him, end the war
@@ -5751,41 +5739,37 @@ country_event = { #Manage war forges and the Kaiser's eco
 			}
 			set_country_flag = kaiser_angry_1
 		}
-		event_target:flusion_primitives_country = { #Check if can construct a war forge
-			random_owned_planet = {
-				limit = {
-					owner = {
-						OR = {
-							is_country_type = katzenartig_imperium
-							has_country_flag = katzen_vassal
-						}
+		random_owned_planet = { #Check if can construct a war forge
+			limit = {
+				owner = {
+					OR = {
+						is_country_type = katzenartig_imperium
+						has_country_flag = katzen_vassal
 					}
-					solar_system = {
-						NOR = {
-							any_system_megastructure = { is_megastructure_type = katzen_forge_0 } #not another one
-							any_system_megastructure = { is_megastructure_type = katzen_forge_1 } #not another one
-							any_fleet_in_system = { #no hostiles
-								controller = {
-									OR = {
-										is_at_war_with = event_target:flusion_primitives_country
-										is_hostile = event_target:flusion_primitives_country
-									}
+				}
+				solar_system = {
+					NOR = {
+						any_system_megastructure = { is_megastructure_type = katzen_forge_0 } #not another one
+						any_system_megastructure = { is_megastructure_type = katzen_forge_1 } #not another one
+						any_fleet_in_system = { #no hostiles
+							controller = {
+								OR = {
+									is_at_war_with = event_target:flusion_primitives_country
+									is_hostile = event_target:flusion_primitives_country
 								}
 							}
 						}
 					}
 				}
-				save_global_event_target_as = katzen_war_forge_target
-				event_target:flusion_primitives_country = {
-					set_country_flag = found_war_forge_target
-				}
+			}
+			save_global_event_target_as = katzen_war_forge_target
+			event_target:flusion_primitives_country = {
+				set_country_flag = found_war_forge_target
 			}
 		}
 		if = { #This flag ensures it won't spawn another one ontop of the existing one
 			limit = {
-				event_target:flusion_primitives_country = {
-					has_country_flag = found_war_forge_target
-				}
+				has_country_flag = found_war_forge_target
 			}
 			event_target:katzen_war_forge_target = {
 				solar_system = {
@@ -5802,9 +5786,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 					}
 				}
 			}
-			event_target:flusion_primitives_country = {
-				remove_country_flag = found_war_forge_target
-			}
+			remove_country_flag = found_war_forge_target
 		}
 		every_megastructure = { #Delete any katzen war forges in construction in systems with hostile ships
 			limit = {
@@ -6211,104 +6193,50 @@ country_event = { #every 10 years, Kaiser randomly declares war on an AI
 	}
 
 	immediate = {
-		event_target:flusion_primitives_country = {
-			if = {
-				limit = {
-					has_global_flag = katzenartig_stellarite
+		if = {
+			limit = {
+				has_global_flag = katzenartig_stellarite
+			}
+			country_event = { id = giga_katzen.04003 days = 1800 }
+		}
+		else = {
+			country_event = { id = giga_katzen.04003 days = 3600 }
+		}
+		random_neighbor_country = {
+			limit = {
+				is_ai = yes
+				NOR = {
+					has_country_flag = katzenartig_war_declaration_forbidden #for ACE
+					any_subject = { is_ai = no } #not overlord of player
+					is_at_war_with = event_target:flusion_primitives_country
 				}
-				country_event = { id = giga_katzen.04003 days = 1800 }
-			}
-			else = {
-				country_event = { id = giga_katzen.04003 days = 3600 }
-			}
-			random_neighbor_country = {
-				limit = {
-					NOR = {
-						is_country_type = katzenartig_imperium
-						has_country_flag = katzenartig_war_declaration_forbidden #for ACE
+				NAND = { #not in fed with player
+					exists = federation
+					any_federation_ally = {
+						is_ai = no
 					}
-					is_ai = yes
-					NAND = { 
-						exists = federation
-						federation = { 
-							any_member = { 
-								is_ai = no 
-							} 
-						} 
-					} #not in fed with player
-					NOT = { any_subject = { is_ai = no } } #not overlord of player
-					NAND = {
-						exists = overlord
-						overlord = { 
-							is_ai = no 
-						} 
-					} #Not subject of player
-					NOT = { is_at_war_with = event_target:flusion_primitives_country }
-
-					OR = {
-						AND = {
-							NOT = { exists = federation }
-							giga_is_standard_country_type = yes
-							OR = {
-								relative_power = {
-									who = event_target:flusion_primitives_country
-									category = fleet
-									value = equivalent
-								}
-								relative_power = {
-									who = event_target:flusion_primitives_country
-									category = fleet
-									value = inferior
-								}
-								relative_power = {
-									who = event_target:flusion_primitives_country
-									category = fleet
-									value = pathetic
-								}
+				}
+				NAND = { #Not subject of player
+					exists = overlord
+					overlord = {
+						is_ai = no
+					}
+				}
+				OR = {
+					AND = {
+						NOT = { exists = federation }
+						giga_is_standard_country_type = yes
+						OR = {
+							relative_power = {
+								who = event_target:flusion_primitives_country
+								category = fleet
+								value = equivalent
 							}
-						}
-						AND = {
-							giga_is_standard_country_type = yes
-							OR = {
-								relative_power = {
-									who = event_target:flusion_primitives_country
-									category = fleet
-									value = inferior
-								}
-								relative_power = {
-									who = event_target:flusion_primitives_country
-									category = fleet
-									value = pathetic
-								}
+							relative_power = {
+								who = event_target:flusion_primitives_country
+								category = fleet
+								value = inferior
 							}
-							exists = federation
-							NOT = {
-								federation = {
-									any_member = {
-										OR = {
-											relative_power = {
-												who = event_target:flusion_primitives_country
-												category = fleet
-												value = equivalent
-											}
-											relative_power = {
-												who = event_target:flusion_primitives_country
-												category = fleet
-												value = superior
-											}
-											relative_power = {
-												who = event_target:flusion_primitives_country
-												category = fleet
-												value = overwhelming
-											}
-										}
-									}
-								}
-							}
-						}
-						AND = {
-							is_fallen_empire = yes
-							mid_game_years_passed > 50
 							relative_power = {
 								who = event_target:flusion_primitives_country
 								category = fleet
@@ -6316,40 +6244,88 @@ country_event = { #every 10 years, Kaiser randomly declares war on an AI
 							}
 						}
 					}
-				}
-				save_global_event_target_as = kaiser_attack_target
-				event_target:flusion_primitives_country = {
-					declare_war = {
-						target = event_target:kaiser_attack_target
-						attacker_war_goal = "wg_katzen_conquest"
-						name = "Katzenkrieg"
+					AND = {
+						giga_is_standard_country_type = yes
+						OR = {
+							relative_power = {
+								who = event_target:flusion_primitives_country
+								category = fleet
+								value = inferior
+							}
+							relative_power = {
+								who = event_target:flusion_primitives_country
+								category = fleet
+								value = pathetic
+							}
+						}
+						exists = federation
+						NOT = {
+							federation = {
+								any_member = {
+									OR = {
+										relative_power = {
+											who = event_target:flusion_primitives_country
+											category = fleet
+											value = equivalent
+										}
+										relative_power = {
+											who = event_target:flusion_primitives_country
+											category = fleet
+											value = superior
+										}
+										relative_power = {
+											who = event_target:flusion_primitives_country
+											category = fleet
+											value = overwhelming
+										}
+									}
+								}
+							}
+						}
+					}
+					AND = {
+						is_fallen_empire = yes
+						mid_game_years_passed > 50
+						relative_power = {
+							who = event_target:flusion_primitives_country
+							category = fleet
+							value = pathetic
+						}
 					}
 				}
-				every_country = {
-					limit = { has_country_flag = allied_to_kaiser }
-					join_war = event_target:flusion_primitives_country
+			}
+			save_global_event_target_as = kaiser_attack_target
+			event_target:flusion_primitives_country = {
+				declare_war = {
+					target = event_target:kaiser_attack_target
+					attacker_war_goal = "wg_katzen_conquest"
+					name = "Katzenkrieg"
 				}
+			}
+			every_country = {
+				limit = { has_country_flag = allied_to_kaiser }
+				join_war = event_target:flusion_primitives_country
+			}
+			set_kaiser_war_opinion = yes
+			every_country = {
+				limit = { is_in_federation_with = event_target:kaiser_random_war_target }
+				join_war = event_target:kaiser_attack_target
 				set_kaiser_war_opinion = yes
-				every_country = {
-					limit = { is_in_federation_with = event_target:kaiser_random_war_target }
-					join_war = event_target:kaiser_attack_target
-					set_kaiser_war_opinion = yes
-					set_timed_country_flag = {
-						flag = recent_katzenartig_war
-						days = 900
-					}
+				set_timed_country_flag = {
+					flag = recent_katzenartig_war
+					days = 900
 				}
-				every_subject = {
-					join_war = event_target:kaiser_attack_target
-					set_kaiser_war_opinion = yes
-					set_timed_country_flag = {
-						flag = recent_katzenartig_war
-						days = 900
-					}
+			}
+			every_subject = {
+				join_war = event_target:kaiser_attack_target
+				set_kaiser_war_opinion = yes
+				set_timed_country_flag = {
+					flag = recent_katzenartig_war
+					days = 900
 				}
-				every_country = {
-					country_event = { id = giga_katzen.051 }
-				}
+			}
+			every_country = {
+				country_event = { id = giga_katzen.051 }
 			}
 		}
 	}
@@ -6378,14 +6354,19 @@ country_event = { #stellarite kaiser declares war on literally everyone
 		every_country = {
 			limit = {
 				OR = {
-					giga_is_standard_country_type = yes
+					giga_is_standard_country_type = yes #specifically not FEs
 					is_ai = no
 				}
 				NOR = {
 					is_at_war_with = event_target:flusion_primitives_country
 					is_country_type = katzenartig_imperium
-					is_fallen_empire = yes
 				}
+			}
+			set_country_flag = stellarite_kaiser_war #NO PEACE
+			set_kaiser_war_opinion = yes
+			if = {
+				limit = { is_ai = no }
+				country_event = { id = giga_katzen.04005 }
 			}
 			event_target:flusion_primitives_country = {
 				declare_war = {
@@ -6394,11 +6375,6 @@ country_event = { #stellarite kaiser declares war on literally everyone
 					name = "Galaktischerkatzenkreuzzug"
 				}
 			}
-		}
-		every_country = {
-			set_country_flag = stellarite_kaiser_war #NO PEACE
-			set_kaiser_war_opinion = yes
-			country_event = { id = giga_katzen.04005 }
 		}
 	}
 }
@@ -6579,7 +6555,7 @@ country_event = { #laurandar recognized
 		custom_tooltip = "giga_katzen.8004.a.tooltip"
 		add_resource = {
 			influence = 50
-			energy = 500
+			trade = 500
 		}
 		if = {
 			limit = {
@@ -6929,6 +6905,12 @@ country_event = { #infinite kaiser declares war on literally everyone
 					is_ai = no
 				}
 			}
+			set_country_flag = stellarite_kaiser_war #NO PEACE
+			set_kaiser_war_opinion = yes
+			if = {
+				limit = { is_ai = no }
+				country_event = { id = giga_katzen.04007 }
+			}
 			event_target:flusion_primitives_country = {
 				declare_war = {
 					target = PREV
@@ -6936,11 +6918,6 @@ country_event = { #infinite kaiser declares war on literally everyone
 					name = "Galaktischerkatzenkreuzzug"
 				}
 			}
-		}
-		every_country = {
-			set_country_flag = stellarite_kaiser_war #NO PEACE
-			set_kaiser_war_opinion = yes
-			country_event = { id = giga_katzen.04007 }
 		}
 	}
 }
@@ -6967,23 +6944,23 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 	trigger = { any_country = { is_country_type = katzenartig_imperium } }
 
 	immediate = {
-		every_country = {
+		every_playable_country = {
 			limit = {
 				has_modifier = katzen_attache
 				NOT = { has_country_flag = kaiser_happy_4 }
 			}
 			random = {
 				chance = 25
-				country_event = { id = giga_katzen.5002 days = 10 } #increase in opinion!
+				country_event = { id = giga_katzen.5002 days = 10 random = 30 } #increase in opinion!
 			}
 		}
 		set_variable = { #count total systems, used so kaiser can change the name
 			which = "katzen_galaxy_total_system_count"
 			value = trigger:num_galaxy_systems
 		}
-		set_variable = { #count katzen systems, used so kaiser can change the name
-			which = "katzen_total_system_count"
-			value = trigger:count_system_within_border
+		export_trigger_value_to_variable = { #count katzen systems, used so kaiser can change the name
+			variable = katzen_total_system_count
+			trigger = count_system_within_border
 		}
 
 		set_variable = { #check for greater katzen imperium
@@ -7033,7 +7010,10 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 				}
 			}
 			set_name = "Großkatzenartig Imperium"
-			every_country = { country_event = { id = giga_katzen.04001 } }
+			every_playable_country = {
+				limit = { is_ai = no }
+				country_event = { id = giga_katzen.04001 }
+			}
 		}
 
 		if = {
@@ -7066,7 +7046,10 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 				}
 			}
 			set_name = "Galaktisches Katzimperium"
-			every_country = { country_event = { id = giga_katzen.04002 } }
+			every_playable_country = {
+				limit = { is_ai = no }
+				country_event = { id = giga_katzen.04002 }
+			}
 		}
 
 		# Terraform candidates
@@ -7080,8 +7063,10 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 					has_modifier = terraforming_candidate
 					planet_size > 16
 					is_moon = no
-					NOT = { has_planet_flag = megastructure }
-					NOT = { has_planet_flag = has_megastructure }
+					NOR = {
+						has_planet_flag = megastructure
+						has_planet_flag = has_megastructure
+					}
 				}
 				check_variable = {
 					which = kaiser_resource_stockpile
@@ -7097,9 +7082,11 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 					NOT = { has_planet_flag = has_megastructure }
 				}
 				start_terraform_process = pc_continental
-				subtract_variable = {
-					which = kaiser_resource_stockpile
-					value = value:katzen_cost|COST|@kaiser_terraform_cost|
+				event_target:flusion_primitives_country = {
+					subtract_variable = {
+						which = kaiser_resource_stockpile
+						value = value:katzen_cost|COST|@kaiser_terraform_cost|
+					}
 				}
 			}
 		}
@@ -7119,8 +7106,10 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 					planet_size > 16
 					is_moon = no
 					is_colony = no
-					NOT = { has_planet_flag = megastructure }
-					NOT = { has_planet_flag = has_megastructure }
+					NOR = {
+						has_planet_flag = megastructure
+						has_planet_flag = has_megastructure
+					}
 				}
 				check_variable = {
 					which = kaiser_resource_stockpile
@@ -7137,24 +7126,26 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 					planet_size > 16
 					is_moon = no
 					is_colony = no
-					NOT = { has_planet_flag = megastructure }
-					NOT = { has_planet_flag = has_megastructure }
+					NOR = {
+						has_planet_flag = megastructure
+						has_planet_flag = has_megastructure
+					}
 				}
 				start_terraform_process = pc_continental
-				subtract_variable = {
-					which = kaiser_resource_stockpile
-					value = value:katzen_cost|COST|@kaiser_terraform_cost|
+				event_target:flusion_primitives_country = {
+					subtract_variable = {
+						which = kaiser_resource_stockpile
+						value = value:katzen_cost|COST|@kaiser_terraform_cost|
+					}
 				}
 			}
 		}
 
 		if = {
 			limit = {
-				event_target:flusion_primitives_country = {
-					check_variable = {
-						which = kaiser_resource_stockpile
-						value > value:katzen_cost|COST|@kaiser_mega_cost|
-					}
+				check_variable = {
+					which = kaiser_resource_stockpile
+					value > value:katzen_cost|COST|@kaiser_mega_cost|
 				}
 				any_owned_megastructure = {
 					OR = {
@@ -7177,11 +7168,9 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 			}
 			while = {
 				limit = {
-					event_target:flusion_primitives_country = {
-						check_variable = {
-							which = kaiser_resource_stockpile
-							value > value:katzen_cost|COST|@kaiser_mega_cost|
-						}
+					check_variable = {
+						which = kaiser_resource_stockpile
+						value > value:katzen_cost|COST|@kaiser_mega_cost|
 					}
 				}
 				random_owned_megastructure = {
@@ -7230,16 +7219,11 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 		every_planet_within_border = {
 			limit = {
 				is_colony = no
-				OR = {
-					is_planet_habitable = yes
-					giga_is_lifeless = yes
-				}
+				is_planet_habitable = yes
 			}
-			event_target:flusion_primitives_country = {
-				change_variable = {
-					which = katzen_colonization_targets
-					value = 1
-				}
+			change_variable = {
+				which = katzen_colonization_targets
+				value = 1
 			}
 		}
 		random_list = {
@@ -7319,22 +7303,18 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 				}
 				modifier = {
 					add = 85
-					event_target:flusion_primitives_country = {
-						check_variable = {
-							which = katzen_colonization_targets #less than 3 colonizeable planets left
-							value < 3
-						}
+					check_variable = {
+						which = katzen_colonization_targets #less than 3 colonizeable planets left
+						value < 3
 					}
 				}
 			}
 			85 = {
 				modifier = {
 					add = -85
-					event_target:flusion_primitives_country = {
-						check_variable = {
-							which = katzen_colonization_targets #less than 3 colonizeable planets left
-							value < 3
-						}
+					check_variable = {
+						which = katzen_colonization_targets #less than 3 colonizeable planets left
+						value < 3
 					}
 				}
 			}
@@ -7362,11 +7342,7 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 			75 = {
 				random_planet_within_border = { #colonize a planet
 					limit = {
-						OR = {
-							is_planet_habitable = yes
-							giga_is_lifeless = yes
-							is_planet_class = pc_katzenland
-						}
+						is_planet_habitable = yes
 						is_colony = no
 						NOR = {
 							is_holy_world = yes
@@ -7397,29 +7373,12 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 			}
 		}
 
+		# Create starbases in eligible systems
 		every_system_within_border = {
 			every_neighbor_system = {
 				limit = {
 					any_system_planet = { is_star = yes }
-					NOR = {
-						is_star_class = sc_dn		# Wild space compatibility
-						exists = starbase
-						exists = owner
-						any_system_planet = {
-							is_colony = yes
-							owner = {
-								NOT = { is_country_type = primitive }
-							}
-						}
-						any_fleet_in_system = { #no hostiles
-							controller = {
-								OR = {
-									is_at_war_with = event_target:flusion_primitives_country
-									is_hostile = event_target:flusion_primitives_country
-								}
-							}
-						}
-					}
+					is_forbidden_for_kaiser_starbase = no
 				}
 				random = {
 					chance = 50
@@ -7521,10 +7480,8 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		event_target:flusion_primitives_country = {
-			NOT = { has_country_flag = kaiser_moon_destroyed }
-			is_country_type = katzenartig_imperium # Don't check any other countries, none of them should ever be imperium.
-		}
+		NOT = { has_country_flag = kaiser_moon_destroyed }
+		is_country_type = katzenartig_imperium # Don't check any other countries, none of them should ever be imperium.
 	}
 
 	immediate = {
@@ -7542,82 +7499,76 @@ country_event = {
 			limit = { has_star_flag = kaiser_demands_system_root }
 			remove_star_flag = kaiser_demands_system_root
 		}
-		event_target:flusion_primitives_country = {
-			set_variable = { #Reset the value of the Kaiser's deal to 0
-				which = "kaiser_trade_value"
-				value = 0
-			}
-			set_variable = {
-				which = "kaiser_system_demanded"
-				value = 0
-			}
-			every_system_within_border = { #Attempt to locate a suitable system to demand :KaiserWoke:
-				random_neighbor_system = {
-					limit = {
-						NOT = {
-							any_system_planet = { is_capital = yes } #Can't demand if its a capital
-						}
-						exists = owner #can't demand unowned systems from you
-						owner = {
-							giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
-							NOR = {
-								is_at_war_with = event_target:flusion_primitives_country #Not at war
-								has_country_flag = allied_to_kaiser
-								has_country_flag = recent_kaiser_demand #short cd
-								has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
-								has_country_flag = kaiser_demand_target #kaiser isn't currently demanding stuff
-								has_country_flag = katzen_vassal
-								AND = {
-									is_ai = yes
-									OR = {
-										has_country_flag = kaiser_happy_2
-										has_country_flag = kaiser_happy_3
-										has_country_flag = kaiser_happy_4
-									}
+		set_variable = { #Reset the value of the Kaiser's deal to 0
+			which = "kaiser_trade_value"
+			value = 0
+		}
+		set_variable = {
+			which = "kaiser_system_demanded"
+			value = 0
+		}
+		every_system_within_border = { #Attempt to locate a suitable system to demand :KaiserWoke:
+			random_neighbor_system = {
+				limit = {
+					is_capital_system = no #Can't demand if its a capital
+					exists = owner #can't demand unowned systems from you
+					owner = {
+						giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
+						NOR = {
+							is_at_war_with = event_target:flusion_primitives_country #Not at war
+							has_country_flag = allied_to_kaiser
+							has_country_flag = recent_kaiser_demand #short cd
+							has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
+							has_country_flag = kaiser_demand_target #kaiser isn't currently demanding stuff
+							has_country_flag = katzen_vassal
+							AND = {
+								is_ai = yes
+								OR = {
+									has_country_flag = kaiser_happy_2
+									has_country_flag = kaiser_happy_3
+									has_country_flag = kaiser_happy_4
 								}
-								AND = {
-									is_subject = yes
-									overlord = {
-										has_country_flag = allied_to_kaiser
-									}
+							}
+							AND = {
+								is_subject = yes
+								overlord = {
+									has_country_flag = allied_to_kaiser
 								}
-								AND = {
-									is_subject = yes
-									is_at_war = yes
-								}
+							}
+							AND = {
+								is_subject = yes
+								is_at_war = yes
 							}
 						}
 					}
-					save_global_event_target_as = kaiser_system_1 #First system demanded
-					set_star_flag = kaiser_demands_system
-					calculate_system_value_kaiser = yes
-					owner = {
-						set_country_flag = kaiser_demand_target
-						save_event_target_as = kaiser_system_demand_target
+				}
+				save_global_event_target_as = kaiser_system_1 #First system demanded
+				set_star_flag = kaiser_demands_system
+				calculate_system_value_kaiser = yes
+				owner = {
+					set_country_flag = kaiser_demand_target
+					save_event_target_as = kaiser_system_demand_target
+				}
+				event_target:flusion_primitives_country = {
+					set_variable = {
+						which = "kaiser_system_demanded"
+						value = 1
 					}
-					event_target:flusion_primitives_country = {
-						set_variable = {
-							which = "kaiser_system_demanded"
-							value = 1
-						}
+				}
+				random_neighbor_system = {
+					limit = {
+						owner = { is_country_type = katzenartig_imperium } #The root system
 					}
-					random_neighbor_system = {
-						limit = {
-							owner = { is_country_type = katzenartig_imperium } #The root system
-						}
-						save_global_event_target_as = kaiser_system_0
-						set_star_flag = kaiser_demands_system_root
-					}
+					save_global_event_target_as = kaiser_system_0
+					set_star_flag = kaiser_demands_system_root
 				}
 			}
 		}
 		if = { #Check if Kaiser did find a suitable system
 			limit = {
-				event_target:flusion_primitives_country = {
-					check_variable = {
-						which = "kaiser_system_demanded"
-						value = 1
-					}
+				check_variable = {
+					which = "kaiser_system_demanded"
+					value = 1
 				}
 			}
 			random_system = { #Attempt to find a second one neighboring the first one, and calculate the deal's total value
@@ -7626,9 +7577,7 @@ country_event = {
 				}
 				random_neighbor_system = {
 					limit = {
-						NOT = {
-							any_system_planet = { is_capital = yes } #Can't demand if its a capital
-						}
+						is_capital_system = no #Can't demand if its a capital
 						exists = owner #can't demand unowned systems from you
 						owner = {
 							giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
@@ -7660,11 +7609,9 @@ country_event = {
 		}
 		if = { #3rd system
 			limit = {
-				event_target:flusion_primitives_country = {
-					check_variable = {
-						which = "kaiser_system_demanded"
-						value = 2
-					}
+				check_variable = {
+					which = "kaiser_system_demanded"
+					value = 2
 				}
 			}
 			random_system = { #Attempt to find a third one neighboring either demanded systems OR the root
@@ -7674,10 +7621,8 @@ country_event = {
 						has_star_flag = kaiser_demands_system_root
 					}
 					any_neighbor_system = {
-						NOR = {
-							any_system_planet = { is_capital = yes } #Can't demand if its a capital
-							has_star_flag = kaiser_demands_system #Not already demanded
-						}
+						NOT = { has_star_flag = kaiser_demands_system} #Not already demanded
+						is_capital_system = no #Can't demand if its a capital
 						exists = owner #can't demand unowned systems from you
 						owner = {
 							giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
@@ -7695,10 +7640,8 @@ country_event = {
 				}
 				random_neighbor_system = {
 					limit = {
-						NOR = {
-							any_system_planet = { is_capital = yes } #Can't demand if its a capital
-							has_star_flag = kaiser_demands_system #Not already demanded
-						}
+						NOT = { has_star_flag = kaiser_demands_system} #Not already demanded
+						is_capital_system = no #Can't demand if its a capital
 						exists = owner
 						owner = {
 							giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
@@ -7760,10 +7703,8 @@ country_event = {
 								has_star_flag = kaiser_demands_system_root
 							}
 							any_neighbor_system = {
-								NOR = {
-									any_system_planet = { is_capital = yes } #Can't demand if its a capital
-									has_star_flag = kaiser_demands_system #Not already demanded
-								}
+								NOT = { has_star_flag = kaiser_demands_system} #Not already demanded
+								is_capital_system = no #Can't demand if its a capital
 								exists = owner
 								owner = {
 									giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
@@ -7781,10 +7722,8 @@ country_event = {
 						}
 						random_neighbor_system = {
 							limit = {
-								NOR = {
-									any_system_planet = { is_capital = yes } #Can't demand if its a capital
-									has_star_flag = kaiser_demands_system #Not already demanded
-								}
+								NOT = { has_star_flag = kaiser_demands_system } #Not already demanded
+								is_capital_system = no  #Can't demand if its a capital
 								exists = owner
 								owner = {
 									giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
@@ -7848,10 +7787,8 @@ country_event = {
 								has_star_flag = kaiser_demands_system_root
 							}
 							any_neighbor_system = {
-								NOR = {
-									any_system_planet = { is_capital = yes } #Can't demand if its a capital
-									has_star_flag = kaiser_demands_system #Not already demanded
-								}
+								NOT = { has_star_flag = kaiser_demands_system } #Not already demanded
+								is_capital_system = no  #Can't demand if its a capital
 								exists = owner
 								owner = {
 									giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
@@ -7869,10 +7806,8 @@ country_event = {
 						}
 						random_neighbor_system = {
 							limit = {
-								NOR = {
-									any_system_planet = { is_capital = yes } #Can't demand if its a capital
-									has_star_flag = kaiser_demands_system #Not already demanded
-								}
+								NOT = { has_star_flag = kaiser_demands_system } #Not already demanded
+								is_capital_system = no  #Can't demand if its a capital
 								owner = {
 									giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
 									NOR = {
@@ -7910,67 +7845,66 @@ country_event = {
 					has_star_flag = kaiser_demands_system
 				}
 			}
-			event_target:flusion_primitives_country = { #Calculate how many alloys Kaiser will give.
-				country_event = { id = giga_katzen.041 days = 270 random = 60 } #Kaiser demands stuff again in 1.5 years
-				if = {
-					limit = {
-						event_target:kaiser_system_demand_target = {
-							has_country_flag = kaiser_happy_3
-							has_country_flag = kaiser_happy_4
-						}
-					}
-					multiply_variable = {
-						which = "kaiser_trade_value"
-						value = 160 #Better deals if he's friendly
+			#Calculate how many alloys Kaiser will give.
+			country_event = { id = giga_katzen.041 days = 270 random = 60 } #Kaiser demands stuff again in 1.5 years
+			if = {
+				limit = {
+					event_target:kaiser_system_demand_target = {
+						has_country_flag = kaiser_happy_3
+						has_country_flag = kaiser_happy_4
 					}
 				}
-				else_if = {
-					limit = {
-						event_target:kaiser_system_demand_target = {
-							has_country_flag = kaiser_happy_2
-						}
-					}
-					multiply_variable = {
-						which = "kaiser_trade_value"
-						value = 140 #Better deals if he's friendly
+				multiply_variable = {
+					which = "kaiser_trade_value"
+					value = 160 #Better deals if he's friendly
+				}
+			}
+			else_if = {
+				limit = {
+					event_target:kaiser_system_demand_target = {
+						has_country_flag = kaiser_happy_2
 					}
 				}
-				else_if = {
-					limit = {
-						event_target:kaiser_system_demand_target = {
-							has_country_flag = kaiser_happy_1
-						}
-					}
-					multiply_variable = {
-						which = "kaiser_trade_value"
-						value = 120 #Better deals if he's friendly
-					}
+				multiply_variable = {
+					which = "kaiser_trade_value"
+					value = 140 #Better deals if he's friendly
 				}
-				else_if = {
-					limit = {
-						event_target:kaiser_system_demand_target = {
-							kaiser_is_angry = yes
-						}
-					}
-					multiply_variable = {
-						which = "kaiser_trade_value"
-						value = 75 #Worse deals if he's pissed
+			}
+			else_if = {
+				limit = {
+					event_target:kaiser_system_demand_target = {
+						has_country_flag = kaiser_happy_1
 					}
 				}
-				else = {
-					multiply_variable = {
-						which = "kaiser_trade_value"
-						value = 100
+				multiply_variable = {
+					which = "kaiser_trade_value"
+					value = 120 #Better deals if he's friendly
+				}
+			}
+			else_if = {
+				limit = {
+					event_target:kaiser_system_demand_target = {
+						kaiser_is_angry = yes
 					}
 				}
-				set_variable = {
-					which = "kaiser_trade_value_alloys"
-					value = "kaiser_trade_value"
+				multiply_variable = {
+					which = "kaiser_trade_value"
+					value = 75 #Worse deals if he's pissed
 				}
-				divide_variable = {
-					which = "kaiser_trade_value_alloys"
-					value = 2
+			}
+			else = {
+				multiply_variable = {
+					which = "kaiser_trade_value"
+					value = 100
 				}
+			}
+			set_variable = {
+				which = "kaiser_trade_value_alloys"
+				value = "kaiser_trade_value"
+			}
+			divide_variable = {
+				which = "kaiser_trade_value_alloys"
+				value = 2
 			}
 			if = { #send the actual demand
 				limit = {
@@ -7987,16 +7921,6 @@ country_event = {
 							AND = {
 								is_subject = yes
 								is_ai = no
-								overlord = {
-									is_ai = yes
-								}
-							}
-							AND = {
-								is_subject = yes
-								is_ai = no
-								overlord = {
-									is_ai = no
-								}
 							}
 						}
 					}
@@ -8040,9 +7964,7 @@ country_event = {
 				}
 				remove_country_flag = kaiser_demand_target
 			}
-			event_target:flusion_primitives_country = {
-				country_event = { id = giga_katzen.041 days = 180 random = 60 } #Kaiser tries again in only 8 months if no eligible land grabs
-			}
+			country_event = { id = giga_katzen.041 days = 180 random = 60 } #Kaiser tries again in only 8 months if no eligible land grabs
 		}
 	}
 }
@@ -8167,6 +8089,7 @@ country_event = { #Kaiser demands land!
 					NOR = {
 						is_country = event_target:kaiser_system_demand_target
 						is_overlord_to = event_target:kaiser_system_demand_target
+						is_ai = yes
 					}
 				}
 				country_event = { id = giga_katzen.043 } #Inform galaxy
@@ -8212,7 +8135,7 @@ country_event = { #Kaiser demands land!
 					}
 					ROOT = {
 						add_resource = {
-							energy = 100
+							trade = 100
 							alloys = 50
 						}
 					}
@@ -8239,9 +8162,8 @@ country_event = { #Kaiser demands land!
 						owner = event_target:flusion_primitives_country
 					}
 				}
-				every_system_planet = {
+				every_system_colony = {
 					limit = {
-						is_colony = yes
 						owner = {
 							NOT = { is_country_type = primitive }
 						}
@@ -8509,7 +8431,7 @@ country_event = { #Every 6 months, ship-producing structures will randomly creat
 	immediate = {
 		country_event = { id = giga_katzen.070 days = 230 random = 30 }
 		if = {
-			limit = { event_target:flusion_primitives_country = { NOT = { has_country_flag = giga_kaiser_stockpiling_resources } } }
+			limit = { NOT = { has_country_flag = giga_kaiser_stockpiling_resources } }
 			every_owned_megastructure = {
 				limit = {
 					is_megastructure_type = katzen_forge_1
@@ -8609,7 +8531,7 @@ planet_event = { #Every 6 months, warforges will randomly create a fleet
 }
 
 ###FLUSION EXPANSION###
-#Flusion slowly expands, gaining 2 pops per year.
+#Flusion slowly expands, gaining 200 pops per year.
 country_event = {
 	id = giga_katzen.080
 
@@ -9346,9 +9268,8 @@ country_event = { #Flusion is INVADED
 				add_deposit = d_flusio_arcology_administration
 			}
 			solar_system = {
-				every_system_planet = {
+				every_system_colony = {
 					limit = {
-						is_colony = yes
 						NOT = {
 							has_planet_flag = gigaflusion
 						}
@@ -9455,9 +9376,8 @@ planet_event = { #Flusion is COLOSSUS'D (nanobots)
 		event_target:gigaflusion = {
 			set_owner = event_target:flusion_conqueror
 			solar_system = {
-				every_system_planet = {
+				every_system_colony = {
 					limit = {
-						is_colony = yes
 						NOT = {
 							has_planet_flag = gigaflusion
 						}
@@ -9722,7 +9642,7 @@ country_event = { #Collapse of Katzenartig
 			limit = { has_global_flag = galcom_kaiser_crusade }
 			remove_global_flag = galcom_kaiser_crusade
 		}
-		every_country = {
+		every_playable_country = {
 			limit = { has_modifier = katzen_attache }
 			remove_modifier = katzen_attache
 		}
@@ -9822,9 +9742,8 @@ country_event = { #Collapse of Katzenartig
 							value > 1
 						}
 					}
-					random_planet_within_border = { #designate one planet as solakia
+					random_owned_planet = { #designate one planet as solakia
 						limit = {
-							is_katzen_colony = yes
 							solar_system = {
 								NOT = { has_star_flag = flusion_system }
 							}
@@ -9904,9 +9823,8 @@ country_event = { #Collapse of Katzenartig
 							value > 1
 						}
 					}
-					random_planet_within_border = { #designate one planet as laurn
+					random_owned_planet = { #designate one planet as laurn
 						limit = {
-							is_katzen_colony = yes
 							solar_system = {
 								NOT = { has_star_flag = flusion_system }
 							}
@@ -9986,9 +9904,8 @@ country_event = { #Collapse of Katzenartig
 							value > 1
 						}
 					}
-					random_planet_within_border = { #designate one planet as kronk
+					random_owned_planet = { #designate one planet as kronk
 						limit = {
-							is_katzen_colony = yes
 							solar_system = {
 								NOT = { has_star_flag = flusion_system }
 							}
@@ -10086,9 +10003,8 @@ country_event = { #Collapse of Katzenartig
 							value > 1
 						}
 					}
-					random_planet_within_border = { #designate one planet as the capital
+					random_owned_planet = { #designate one planet as the capital
 						limit = {
-							is_katzen_colony = yes
 							solar_system = {
 								NOT = { has_star_flag = flusion_system }
 							}
@@ -10168,9 +10084,8 @@ country_event = { #Collapse of Katzenartig
 							value > 1
 						}
 					}
-					random_planet_within_border = { #designate one planet as the capital
+					random_owned_planet = { #designate one planet as the capital
 						limit = {
-							is_katzen_colony = yes
 							solar_system = {
 								NOT = { has_star_flag = flusion_system }
 							}
@@ -10250,9 +10165,8 @@ country_event = { #Collapse of Katzenartig
 							value > 1
 						}
 					}
-					random_planet_within_border = { #designate one planet as the capital
+					random_owned_planet = { #designate one planet as the capital
 						limit = {
-							is_katzen_colony = yes
 							solar_system = {
 								NOT = { has_star_flag = flusion_system }
 							}
@@ -10332,9 +10246,8 @@ country_event = { #Collapse of Katzenartig
 							value > 1
 						}
 					}
-					random_planet_within_border = { #designate one planet as the capital
+					random_owned_planet = { #designate one planet as the capital
 						limit = {
-							is_katzen_colony = yes
 							solar_system = {
 								NOT = { has_star_flag = flusion_system }
 							}
@@ -10445,9 +10358,8 @@ country_event = { #Collapse of Katzenartig
 							value > 0
 						}
 					}
-					random_planet_within_border = { #designate one planet as the capital
+					random_owned_planet = { #designate one planet as the capital
 						limit = {
-							is_katzen_colony = yes
 							solar_system = {
 								NOT = { has_star_flag = flusion_system }
 							}
@@ -10537,9 +10449,8 @@ country_event = { #Collapse of Katzenartig
 							value > 0
 						}
 					}
-					random_planet_within_border = { #designate one planet as the capital
+					random_owned_planet = { #designate one planet as the capital
 						limit = {
-							is_katzen_colony = yes
 							solar_system = {
 								NOT = { has_star_flag = flusion_system }
 							}
@@ -10628,9 +10539,8 @@ country_event = { #Collapse of Katzenartig
 							value > 0
 						}
 					}
-					random_planet_within_border = { #designate one planet as the capital
+					random_owned_planet = { #designate one planet as the capital
 						limit = {
-							is_katzen_colony = yes
 							solar_system = {
 								NOT = { has_star_flag = flusion_system }
 							}
@@ -10878,7 +10788,6 @@ country_event = { #Collapse of Katzenartig
 			}
 		}
 		every_country = {
-			country_event = { id = giga_katzen.097 }
 			if = {
 				limit = { has_modifier = solak_partisans_1 }
 				remove_modifier = solak_partisans_1
@@ -10890,6 +10799,10 @@ country_event = { #Collapse of Katzenartig
 			if = {
 				limit = { has_modifier = solak_partisans_3 }
 				remove_modifier = solak_partisans_3
+			}
+			if = {
+				limit = { is_ai = no }
+				country_event = { id = giga_katzen.097 }
 			}
 		}
 		if = { #if flusion got blown up
@@ -11320,28 +11233,26 @@ planet_event = {
 				0 = { #Siegfried World. All artificially terraformed planets surrounding Jublio will become Siegfried worlds, and terraformed planets themselves have a 40% chance of becoming one.
 					set_planet_flag = giga_katzen_fortress_world
 					modifier = {
-						add = 50 #CHANGE
+						add = 50 #TODO CHANGE
 						has_planet_flag = katzen_planet_colonized
 					}
 					modifier = {
 						add = 200
 						has_planet_flag = katzen_planet_colonized
-						solar_system = { has_star_flag = flusion_system }
-					}
-					modifier = {
-						add = 200
-						has_planet_flag = katzen_planet_colonized
-						solar_system = { any_neighbor_system = { has_star_flag = flusion_system } }
-					}
-					modifier = {
-						add = 200
-						has_planet_flag = katzen_planet_colonized
-						solar_system = { any_neighbor_system = { any_neighbor_system = { has_star_flag = flusion_system } } }
-					}
-					modifier = {
-						add = 200
-						has_planet_flag = katzen_planet_colonized
-						solar_system = { any_neighbor_system = { any_neighbor_system = { any_neighbor_system = { has_star_flag = flusion_system } } } }
+						solar_system = {
+							OR = {
+								has_star_flag = flusion_system
+								any_system = {
+									distance = {
+										source = prev
+										use_bypasses = no
+										min_jumps = 1
+										max_jumps = 2
+									}
+									has_star_flag = flusion_system
+								}
+							}
+						}
 					}
 					modifier = {
 						factor = 0
@@ -11868,8 +11779,6 @@ planet_event = { #After 5 more years, turn it into a real siegfried world (do no
 			species = event_target:flusion_katzens 
 			size = 200
 		}
-		
-		add_building = building_fortress
 
 		#How could I forget? The Flusion tax! 10% of pops go to Flusion (best planet)
 		every_owned_pop_group = {
@@ -11891,21 +11800,26 @@ planet_event = { #After 5 more years, turn it into a real siegfried world (do no
 			}
 		}
 
+		clear_deposits = yes
+		clear_planet_modifiers = yes
+
 		change_pc = {
 			class = pc_giga_siegfried_world
 			inherit_entity = yes
 		}
 
+		#TODO hey what is going on here with these two
 		add_district = district_city_katzen
-		
 		add_district = district_city
+
+		add_building = building_giga_siegfried_global_bunker
+
+		add_building = building_fortress
 		
 		solar_system = {
 			set_star_flag = siegfried_anti_jump_star
 			every_neighbor_system = { set_star_flag = siegfried_anti_jump_star }
 		}
-
-		add_building = building_giga_siegfried_global_bunker
 
 		create_fleet = { #Siegfried defenses
 			name = "Siegfried Array"
@@ -12321,6 +12235,7 @@ country_event = {
 			}
 		}
 		every_playable_country = {
+			limit = { is_ai = no }
 			country_event = { id = giga_katzen.122 } 
 		}
 	}
@@ -13265,7 +13180,7 @@ country_event = {
 	}
 
 	immediate = {
-		every_country = {
+		every_playable_country = {
 			limit = {
 				has_event_chain = "katzenartig_chain"
 			}
@@ -13285,7 +13200,7 @@ country_event = {
 					is_ship_size = giga_kaiser_moon_flusion
 				}
 			}
-			every_country = {
+			every_playable_country = {
 				limit = {
 					has_event_chain = "katzenartig_chain"
 				}
@@ -13296,11 +13211,8 @@ country_event = {
 				}
 			}
 		}
-		every_planet_within_border = { #count planets
-			limit = {
-				is_katzen_colony = yes
-			}
-			every_country = {
+		every_owned_planet = { #count planets
+			every_playable_country = {
 				limit = {
 					has_event_chain = "katzenartig_chain"
 				}
@@ -13315,7 +13227,7 @@ country_event = {
 			limit = {
 				is_megastructure_type = katzen_forge_1
 			}
-			every_country = {
+			every_playable_country = {
 				limit = {
 					has_event_chain = "katzenartig_chain"
 				}
@@ -13327,7 +13239,7 @@ country_event = {
 			}
 		}
 		every_system_within_border = { #count systems
-			every_country = {
+			every_playable_country = {
 				limit = {
 					has_event_chain = "katzenartig_chain"
 				}
