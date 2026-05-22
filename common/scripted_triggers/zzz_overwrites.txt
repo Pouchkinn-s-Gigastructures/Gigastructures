@@ -1882,6 +1882,91 @@ can_destroy_planet_with_PLANET_KILLER_MAW = {
 	}
 }
 
+can_destroy_planet_with_PLANET_KILLER_SMELTER = {
+	custom_tooltip = {
+		fail_text = is_not_a_standard_planet_or_megastructure
+		is_a_planet_megastructure = yes
+		is_asteroid = no
+		NOT = { is_planet_class = pc_astral_scar }
+		giga_is_birch_world = no
+	}
+	custom_tooltip = {
+		fail_text = is_shielded
+		NOR = {
+			is_planet_class = pc_shielded
+			is_planet_class = pc_ringworld_shielded
+			is_planet_class = pc_habitat_shielded
+		}
+	}
+	custom_tooltip = {
+		fail_text = is_non_artificial
+		is_artificial = no
+	}
+	custom_tooltip = {
+		fail_text = fotd_cant_collossus
+		NOT = { has_planet_flag = fotd_seperatist_planet@from.owner }
+		exists = from.owner
+		from.owner = {
+			NOT = { has_country_flag = fotd_seperatist_country@from.owner }
+		}
+	}
+	custom_tooltip = {
+		fail_text = is_not_hot_planet
+		NOR = {
+			is_planet_class = pc_volcanic
+			is_planet_class = pc_molten
+		}
+	}
+	if = { # Uninhabited & primitives are okay, but own colonies should check for pop status
+		limit = { is_inside_border = from.owner }
+		if = {
+			limit = {
+				exists = owner
+				owner = { is_same_value = from.owner }
+				any_owned_species = {
+					NOT = { has_trait = trait_infernal }
+				}
+			}
+			custom_tooltip = {
+				fail_text = requires_purge_allowed
+				success_text = will_purge_non_extremophile_pops
+				from.owner = {
+					is_ai = no
+					has_policy_flag = purge_allowed
+				}
+			}
+		}
+	}
+	else = {
+		custom_tooltip = {
+			fail_text = is_not_hostile_or_primitive_or_ours
+			OR = {
+				planet_is_hostile_or_crisis = yes
+				AND = {
+					exists = owner
+					owner = { is_country_type = primitive }
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			exists = owner
+			owner = { is_country_type = primitive }
+		}
+		custom_tooltip = {
+			fail_text = primitives_not_in_borders
+			exists = space_owner
+			space_owner = { is_same_value = from.owner }
+		}
+		custom_tooltip = {
+			fail_text = primitives_not_full_interference
+			from.owner = {
+				has_policy_flag = interference_aggressive
+			}
+		}
+	}
+}
 
 # many events check this
 # notably habitat orbital destruction which bugs out otherwise
@@ -2009,7 +2094,7 @@ has_galactic_wonders = {
         }
 
 		has_ascension_perk = ap_galactic_wonders
-		### These can probbaly be removed in 4.4/when they're removed from the basegame
+		### These can probably be removed in 4.4/when they're removed from the basegame
 		has_ascension_perk = ap_galactic_wonders_utopia
 		has_ascension_perk = ap_galactic_wonders_megacorp
 		has_ascension_perk = ap_galactic_wonders_utopia_and_megacorp
@@ -2109,12 +2194,10 @@ has_ringworld_output_boost = {
 giga_is_unscrappable = {
 	OR = {
 		is_ship_size = asteroid_artillery
-		is_ship_size = giga_massive_planet #attack moons
+		is_ship_size = giga_war_moon #attack moons
 		is_ship_size = giga_planet_behemoth #Planetcraft
 		is_ship_size = giga_systemcraft
 		is_ship_size = giga_war_moon_flusion
-		is_ship_size = giga_war_moon_fe
-		is_ship_size = giga_planet_behemoth_fe
 	}
 }
 
