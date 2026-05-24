@@ -43,7 +43,7 @@ terraform_site_0 = {
 			has_global_flag = terraform_barren_disabled
 			has_global_flag = terraform_toxic_disabled
 		}
-		AND = {
+		OR = {
 			OR = {
 				has_global_flag = geothermal_capped_u
 				check_variable = {
@@ -126,9 +126,21 @@ terraform_site_0 = {
 			custom_tooltip = {
 				fail_text = "planet_is_already_terraformable"
 				NOR = {
-					has_modifier = terraforming_candidate
-					has_modifier = toxic_terraforming_candidate
-					has_modifier = frozen_terraforming_candidate
+					# In case the planet class was changed from what it is supposed to be terraformed from normally
+					AND = {
+						has_modifier = terraforming_candidate
+						giga_is_barren_cn = yes
+					}
+					AND = {
+						has_modifier = toxic_terraforming_candidate
+						giga_is_toxic = yes
+						from = { has_ascension_perk = ap_detox }
+					}
+					AND = {
+						has_modifier = frozen_terraforming_candidate
+						giga_is_frozen = yes
+						from = { has_ascension_perk = ap_hydrocentric }
+					}
 				}
 			}
 			custom_tooltip = { 
@@ -155,6 +167,7 @@ terraform_site_0 = {
 						from = { has_technology = giga_tech_terraform_toxic }
 					}
 				}
+				NOT = { has_planet_flag = legendary_leader_planet }
 			}
 			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
 			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
@@ -250,6 +263,10 @@ terraform_site_0 = {
 			giga_set_has_mega_flag = yes
 			set_planet_flag = giga_terraforming_megastructure
 			giga_save_lifeless_resources = yes
+			# In case the planet class was changed from what it is supposed to be terraformed from normally
+			remove_modifier = terraforming_candidate
+			remove_modifier = toxic_terraforming_candidate
+			remove_modifier = frozen_terraforming_candidate
 		}
 	}
 }
@@ -269,11 +286,19 @@ terraform_molten_0 = {
 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
 	}
 
+	resources = { category = giga_kilostructures }
+
 	potential = { always = no }
 	possible = { always = no }
 
 	on_build_complete = {
 		save_event_target_as = giga_system
+        if = {
+            limit = { exists = fromfrom.planet }
+            fromfrom.planet = {
+                save_event_target_as = giga_planet
+            }
+        } # adding the proper event target for notif event
 		from = {
 			country_event = { id = giga_dialog.4001 }
 			change_variable = { which = giga_current_geothermal value = 1 }
@@ -283,7 +308,7 @@ terraform_molten_0 = {
 
 terraform_molten_1 = {
 	entity = "geothermal_stabilizer_2_entity"
-	construction_entity = "geothermal_stabilizer_2_construction_entity"
+	construction_entity = "geothermal_stabilizer_2_entity"
 	portrait = "GFX_megastructure_molten_world"
 	upgrade_from = { terraform_molten_0 }
 	scales_with_planet = yes
@@ -325,6 +350,13 @@ terraform_molten_1 = {
 				add_modifier = { modifier = megastructure_terraforming_candidate days = -1 }
 				save_event_target_as = giga_planet
 				if = {
+					limit = {
+						root.from = { is_ai = yes }
+						has_infernals = yes
+					}
+					start_terraform_process = pc_volcanic
+				}
+				else_if = {
 					limit = { root.from = { is_ai = yes } }
 					start_terraform_process = pc_ll_torrid
 				}
@@ -348,11 +380,19 @@ terraform_toxic_0 = {
 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
 	}
 
+	resources = { category = giga_kilostructures }
+
 	potential = { always = no }
 	possible = { always = no }
 
 	on_build_complete = {
 		save_event_target_as = giga_system
+        if = {
+            limit = { exists = fromfrom.planet }
+            fromfrom.planet = {
+                save_event_target_as = giga_planet
+            }
+        } # adding the proper event target for notif event
 		from = {
 			change_variable = { which = giga_current_terraform_toxic value = 1 }
 			country_event = { id = giga_dialog.3901 }
@@ -362,7 +402,7 @@ terraform_toxic_0 = {
 
 terraform_toxic_1 = {
 	entity = "atmo_purifier_rings_entity"
-	construction_entity = "atmo_purifier_just_poles_entity"
+	construction_entity = "atmo_purifier_rings_entity"
 	portrait = "GFX_megastructure_toxic_world"
 	upgrade_from = { terraform_toxic_0 }
 	scales_with_planet = yes
@@ -374,7 +414,7 @@ terraform_toxic_1 = {
 	
 	build_time = @terraform_toxic_time
 	resources = {
-		category = megastructures
+		category = giga_kilostructures
 		cost = {
 			unity = @giga_kilo_unity_cost
 		}
@@ -496,11 +536,19 @@ terraform_barren_0 = {
 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
 	}
 
+	resources = { category = giga_kilostructures }
+
 	potential = { always = no }
 	possible = { always = no }
 
 	on_build_complete = {
 		save_event_target_as = giga_system
+        if = {
+            limit = { exists = fromfrom.planet }
+            fromfrom.planet = {
+                save_event_target_as = giga_planet
+            }
+        } # adding the proper event target for notif event
 		from = {
 			change_variable = { which = giga_current_terraform_barren value = 1 }
 			country_event = { id = giga_dialog.3801 }
@@ -510,7 +558,7 @@ terraform_barren_0 = {
 
 terraform_barren_1 = {
 	entity = "terraform_barren_2_entity"
-	construction_entity = "terraform_barren_2_construction_entity"
+	construction_entity = "terraform_barren_2_entity"
 	portrait = "GFX_megastructure_barren"
 	upgrade_from = { terraform_barren_0 }
 	scales_with_planet = yes

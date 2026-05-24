@@ -8,6 +8,7 @@ create_birch_aeternum = {
 			portrait = lux_aeternite
 			homeworld = THIS
 			traits = {
+				trait = trait_organic
 				trait = trait_bionic_implants
 				trait = trait_fertile
 				trait = trait_psionic
@@ -26,6 +27,7 @@ create_birch_aeternum = {
 			homeworld = THIS
 			traits = {
 				trait = trait_pc_continental_preference
+				trait = trait_organic
 				trait = trait_robust
 				trait = trait_erudite
 				trait = trait_fertile
@@ -39,8 +41,8 @@ create_birch_aeternum = {
 
 	if = {
 		limit = {
-			host_has_dlc = "Lithoids Species Pack"
-			host_has_dlc = "Synthetic Dawn Story Pack"
+			has_lithoids = yes
+			has_synthetic_dawn = yes
 		}
 		create_species = {
 			name = "Psikosynthetic"
@@ -82,14 +84,6 @@ create_birch_aeternum = {
 		}
 	}
 
-	create_pop_group = {
-		species = event_target:birch_aeternites
-		size = 25000
-	}
-	create_pop_group = {
-		species = event_target:birch_aeternites_robots
-		count = 10000
-	}
 	create_country = {
 		species = event_target:birch_aeternites
 		name = "Aeternum"
@@ -182,34 +176,184 @@ create_birch_aeternum = {
 				create_ship_design = { design = "Suojelija" }
 				add_ship_design = last_created_design
 			}
-		}
-	}
-	set_owner = event_target:birch_aeternum
-	set_capital = yes
-	while = {
-		count = 10
-		create_army = { name = "Aeternite Guardians"	owner = last_created_country species = event_target:birch_aeternites type = "aeternite_defender"}
-	}
-	add_modifier = {
-		modifier = birch_world_grand_shield
-		days = -1
-	}
-	if = {
-		limit = { NOT = { has_global_flag = giga_core_aeternum_5 } }
-		add_modifier = {
-			modifier = aeternum_birch_world
-			days = -1
-		}
-	}
-	else = {
-		add_modifier = {
-			modifier = aeternum_birch_world_acot
-			days = -1
+
+			# difficulty adjustment modifiers
+			switch = {
+				trigger = has_global_flag
+				giga_core_aeternum_1 = { add_modifier = { modifier = aeternum_nerf_1 } }
+				giga_core_aeternum_3 = { add_modifier = { modifier = aeternum_buff_3 } }
+				giga_core_aeternum_4 = { add_modifier = { modifier = aeternum_buff_4 } }
+				giga_core_aeternum_5 = { add_modifier = { modifier = aeternum_buff_5 } }
+				default = { add_modifier = { modifier = aeternum_balance } }
+			}
+
 		}
 	}
 
+	set_owner = event_target:birch_aeternum
+	set_capital = yes
+
+	create_pop_group = {
+		species = event_target:birch_aeternites
+		size = 25000
+	}
+	create_pop_group = {
+		species = event_target:birch_aeternites_robots
+		size = 10000
+	}
+
+	add_modifier = { modifier = birch_world_grand_shield }
+	add_modifier = { modifier = birch_world_decaying }
+
+	# big cap boosts so the calculations stick while adding districts relying on other districts, removed at the end
+	add_modifier = { modifier = giga_birch_restoration_fix }
+
+	# prime insula
+	# capital, two farms, housing
+	add_building = building_giga_aeternum_birch_capital
+	add_building = {
+		building = building_giga_aeternum_ultrafarm
+		district = district_giga_birch_structure
+	}
+	add_building = {
+		building = building_giga_aeternum_ultrafarm
+		district = district_giga_birch_structure
+	}
+	add_building = {
+		building = building_giga_aeternum_housing
+		district = district_giga_birch_structure
+	}
+
+	# palace zone
+	# computer
+	add_zone = {
+		district = district_giga_birch_structure
+		zone = zone_giga_birch_structure_ops_aiondia
+		zone_slot = 1 #slot_giga_birch_structure_extra
+		replace = yes
+	}
+	add_building = {
+		building = building_giga_aeternum_ruler_computer
+		zone = zone_giga_birch_structure_ops_aiondia
+	}
+
+	# orykta
+	# energy city, two generators, two mineral sectors, refinery sector, refinery building
+	add_district = district_giga_birch_orykta
+
+	add_building = {
+		building = building_giga_aeternum_megacity_energy
+		district = district_giga_birch_orykta
+	}
+	add_building = {
+		building = building_giga_aeternum_quantum_reactor
+		district = district_giga_birch_orykta
+	}
+	add_building = {
+		building = building_giga_aeternum_quantum_reactor
+		district = district_giga_birch_orykta
+	}
+
+	# orykta sectors
+	add_district = district_giga_birch_orykta_minerals
+	add_district = district_giga_birch_orykta_minerals
+	add_district = district_giga_birch_orykta_refinery
+	add_building = {
+		building = building_giga_aeternum_synthetizer
+		district = district_giga_birch_orykta_refinery
+	}
+
+	# ktisma
+	# CG city, two CG buildings, two foundry sectors, either a further foundry sector or ST sector with megaconstruction city
+	add_district = district_giga_birch_ktisma
+	add_building = {
+		building = building_giga_aeternum_megacity_factory
+		district = district_giga_birch_ktisma
+	}
+	add_building = {
+		building = building_giga_aeternum_leisure_center
+		district = district_giga_birch_ktisma
+	}
+	add_building = {
+		building = building_giga_aeternum_leisure_center
+		district = district_giga_birch_ktisma
+	}
+
+	# ktisma sectors
+	add_district = district_giga_birch_ktisma_foundry
+	add_district = district_giga_birch_ktisma_foundry
+
 	if = {
-		limit = { has_global_flag = giga_core_aeternum_5 }
+		limit = {
+			has_global_flag = @giga_amb_flag
+		}
+		add_district = district_giga_birch_ktisma_supertensiles
+		add_building = {
+			building = building_giga_aeternum_megacity_megaconstruction
+			district = district_giga_birch_ktisma_supertensiles
+		}
+	}
+	else = {
+		add_district = district_giga_birch_ktisma_foundry
+		add_building = {
+			building = building_giga_aeternum_megacity_megaconstruction
+			district = district_giga_birch_ktisma_foundry
+		}
+	}
+
+	# physma
+	# psionic city, capacitor, housing, lab sector with science city, unity sector with unity city, fortress sector with military city
+	add_district = district_giga_birch_physma
+
+	add_building = {
+		building = building_giga_aeternum_megacity_psionic
+		district = district_giga_birch_physma
+	}
+	add_building = {
+		building = building_giga_aeternum_psi_halls
+		district = district_giga_birch_physma
+	}
+	add_building = {
+		building = building_giga_aeternum_housing
+		district = district_giga_birch_physma
+	}
+
+	# physma sectors
+	add_district = district_giga_birch_physma_laboratory
+	add_building = {
+		building = building_giga_aeternum_megacity_research
+		district = district_giga_birch_physma_laboratory
+	}
+
+	add_district = district_giga_birch_physma_administration
+	add_building = {
+		building = building_giga_aeternum_megacity_unity
+		district = district_giga_birch_physma_administration
+	}
+
+	add_district = district_giga_birch_physma_fortress
+	add_building = {
+		building = building_giga_aeternum_megacity_military
+		district = district_giga_birch_physma_fortress
+	}
+
+	# blockers
+	add_deposit = d_giga_aiondia_blocker_structure
+	add_deposit = d_giga_aiondia_blocker_orykta
+	add_deposit = d_giga_aiondia_blocker_ktisma
+	add_deposit = d_giga_aiondia_blocker_physma
+
+	# armies and acot :pensive:
+	if = {
+		limit = { NOT = { has_global_flag = giga_core_aeternum_5 } }
+		#add_modifier = { modifier = aeternum_birch_world }
+		while = {
+			count = 10
+			create_army = { name = "Aeternite Guardians"	owner = last_created_country species = event_target:birch_aeternites type = "aeternite_defender"}
+		}
+	}
+	else = {
+		#add_modifier = { modifier = aeternum_birch_world_acot }
 		event_target:birch_aeternites = {
 			if = {
 				limit = { has_trait = trait_pc_void_birch_preference }
@@ -220,23 +364,25 @@ create_birch_aeternum = {
 			if = {
 				limit = { has_trait = trait_pc_birch_preference }
 				modify_species = {
-				remove_trait = trait_pc_birch_preference
+					remove_trait = trait_pc_birch_preference
 				}
 			}
 		}
 		change_pc = pc_void_birch #Lol
 		while = {
-			count = 30
-			create_army = { name = "Aeternite Guardians"	owner = last_created_country species = event_target:birch_aeternites type = "aeternite_defender"} 
+			count = 40
+			create_army = { name = "Aeternite Guardians"	owner = last_created_country species = event_target:birch_aeternites type = "aeternite_defender"}
 		}
 		set_name = "Aeternal Aiondia"
 	}
-	add_district = district_giga_planet_city
-	add_district = district_giga_planet_city
-	add_district = district_giga_planet_city
-	add_district = district_giga_planet_city
-	add_district = district_giga_planet_city
-	add_district = district_giga_planet_city
+
+	# recalculate birch variables
+	owner = {
+		country_event = { id = giga_birch.004 }
+	}
+
+	# remove the bonus capacities now that everything is in place
+	remove_modifier = giga_birch_restoration_fix
 }
 
 create_aeternite_home_platform = {

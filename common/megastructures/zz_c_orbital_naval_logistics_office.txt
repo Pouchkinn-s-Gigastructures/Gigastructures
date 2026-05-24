@@ -1,0 +1,221 @@
+orbital_naval_logistics_office_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	entity_offset = { x = 0 y = -20 }
+	prerequisites = { giga_tech_orbital_naval_logistics }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	build_time = 1080
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			influence = 100
+			unity = @giga_small_mega_unity_cost
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 5000
+		}
+		upkeep = { energy = 5 }
+	}
+
+	potential = {
+		has_technology = giga_tech_orbital_naval_logistics
+		NOT = { has_global_flag = orbital_naval_logistics_disabled }
+		OR = {
+			has_global_flag = orbital_naval_logistics_capped_u
+			check_variable = {
+				which = giga_current_orbital_naval_logistics
+				value < value:orbital_naval_logistics_limit
+			}
+		}
+	}
+
+	possible = {
+		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					has_global_flag = orbital_naval_logistics_capped_u
+					check_variable = {
+						which = giga_current_orbital_naval_logistics
+						value < value:orbital_naval_logistics_limit
+					}
+				}
+			}
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = { fail_text = "requires_surveyed_planet"			is_surveyed = { who = prev.from status = yes } }
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+			custom_tooltip = {
+				fail_text = "requires_not_astral_scar"
+				is_astral_scar = no
+			}
+			custom_tooltip = {
+				fail_text = "requires_colonized_planet_orbital_ring"
+				is_colony = yes
+				exists = owner
+				exists = controller
+				controller = { is_same_value = prev.owner }
+			}
+			custom_tooltip = {
+				fail_text = "must_build_around_developed_planet"
+				or = {
+					and = {
+						is_colony = yes
+						exists = owner
+						exists = controller
+						has_upgraded_capital = yes
+					}
+				}
+			}
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = {
+				fail_text = "requires_no_orbital_debris"
+				NOR = {
+					has_planet_flag = has_orbital_debris
+				}
+			}
+		}
+	}
+
+	ai_weight = {
+		weight = value:giga_ai_base_mega
+
+		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|25|
+		mult = value:giga_ai_core_territory
+		mult = value:giga_ai_build_low_priority
+		mult = value:giga_ai_unlock_low_priority
+		mult = value:giga_ai_militarist
+
+		modifier = { factor = 2.00	from = { has_federation = yes federation = { has_federation_type = research_federation } } }
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = {
+			create_message = {
+				type = MEGASTRUCTURE_BUILT
+				localization = MESSAGE_MEGASTRUCTURE_BUILT
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
+				}
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
+			}
+			change_variable = { which = giga_current_orbital_naval_logistics value = 1 }
+		}
+		fromfrom.planet = {
+			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
+			giga_set_has_mega_flag = yes
+		}
+	}
+}
+
+orbital_naval_logistics_office_1 = {
+	entity = "orbital_naval_logistics_1_entity"
+	construction_entity = "orbital_naval_logistics_1_construction_entity"
+	portrait = "GFX_megastructure_orbital_naval_logistics"
+	place_entity_on_planet_plane = no
+	entity_offset = { x = 0 y = -20 }
+	upgrade_from = { orbital_naval_logistics_office_0 }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	build_time = 3600
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			unity = @giga_small_mega_unity_cost
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 7500
+		}
+		upkeep = {
+			energy = 25
+			trade = 24
+		}
+
+		upkeep = {
+			trade = 1.5
+			multiplier = planet.value:giga_count_jobs|JOB|soldier|JOB2|warrior_drone|
+		}
+	}
+
+	potential = { NOT = { has_global_flag = orbital_naval_logistics_disabled } }
+	possible = {
+		from = {
+			has_technology = giga_tech_orbital_naval_logistics
+		}
+	}
+
+	country_modifier = {
+		country_naval_cap_add = 64
+	}
+
+	triggered_country_modifier = {
+		potential = { always = yes }
+		country_naval_cap_add = 4
+		multiplier = fromfrom.planet.value:giga_count_jobs|JOB|soldier|JOB2|warrior_drone|
+	}
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		fromfrom = { set_megastructure_flag = giga_outliner_hidden_by_@owner }
+		save_event_target_as = giga_system
+		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
+		from = {
+			create_message = {
+				type = MEGASTRUCTURE_UPGRADED
+				localization = MESSAGE_MEGASTRUCTURE_UPGRADED
+				days = 30
+				target = from # the Go To
+				variable = {
+					type = name
+					localization = MEGASTRUCTURE
+					scope = from
+				}
+				variable = {
+					type = name
+					localization = SYSTEM
+					scope = root
+				}
+			}
+			if = {
+				limit = {
+					NOR = {
+						has_global_flag = giga_achievements_disabled
+						has_country_flag = giga_achievement_66
+					}
+				}
+				set_country_flag = giga_achievement_66
+				set_timed_country_flag = { flag = giga_achievement_66_notification days = 30 }
+				giga_achievement_sound = yes
+			}
+		}
+	}
+}

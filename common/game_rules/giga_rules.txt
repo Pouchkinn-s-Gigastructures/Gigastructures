@@ -13,9 +13,6 @@ can_enter_system_by_jump = {
 				has_star_flag = sealed_system
 			}
 		}
-
-        # Formless system
-        NOT = { has_star_flag = formless_system }
 		
 		# L-Cluster/Compound_Cluster
 		OR = {
@@ -41,6 +38,25 @@ can_enter_system_by_jump = {
 				has_star_flag = sealed_system
 			}
 		}
+
+        # Formless system
+        NOT = { has_star_flag = formless_system }
+
+        # Hyperthermia core system
+        NOT = { has_star_flag = hyperthermia_system }
+
+		### Ancient Cache of Technologies
+		# PHANON
+		NOR = {
+			has_star_flag = phanon_home_base
+			any_neighbor_system = {
+				has_star_flag = phanon_home_base
+			}
+		}
+
+		# Outer-Cluster
+		NOT = { has_star_flag = outercluster }
+
 	}
 }
 
@@ -54,6 +70,7 @@ can_orbitable_repair_ships = {
 				has_starbase_size >= starbase_deep_space_citadel_1
 				has_starbase_size = juggernaut
 				has_starbase_size = enclave_mercenary_station
+				ia_acot_advanced_starbase = yes
 			}
 			fleet = {
 				is_disabled = no
@@ -69,6 +86,21 @@ can_orbitable_repair_ships = {
 				is_megastructure_type = the_vat_2
 				is_megastructure_type = the_vat_3
 				is_megastructure_type = the_vat_4
+
+				### Ancient Cache of Technologies
+				inline_script = {
+					script = generic_parts/giga_toggled_code
+					code = "
+						is_megastructure_type = acot_precursor_colossus_base
+						is_megastructure_type = acot_precursor_colossus_stage_two
+						is_megastructure_type = acot_amerigo
+						is_megastructure_type = acot_amerigo_ae
+						is_megastructure_type = acot_amerigo_se
+						is_megastructure_type = acot_amerigo_oe
+						is_megastructure_type = acot_phanon_master_reactor_sphere
+					"
+					toggle = @has_ancient_caches
+				}
 			}
 		}
 	}
@@ -76,12 +108,30 @@ can_orbitable_repair_ships = {
 
 # Overwritten to add sphere
 can_orbital_bombard = {
-	exists = from.owner
+	exists = FROM.OWNER
 	NOT = {
 		any_controlled_ship = {
 			is_ship_size = colossus
 		}
 	}
+
+	### Ancient Cache of Technologies
+	NAND = {
+		owner = { is_progenitor_empires = no }
+		from = {
+			OR = {
+				inline_script = {
+					script = generic_parts/giga_toggled_code
+					code = "
+						is_planet_class = pc_acot_pmc_vault
+						is_planet_class = pc_acot_enigmopolis
+					"
+					toggle = @has_ancient_caches
+				}
+			}
+		}
+	}
+
 	OR = {
 		AND = {
 			ROOT.CONTROLLER = {
@@ -108,16 +158,23 @@ can_orbital_bombard = {
 				is_country_type = ai_empire
 				is_country_type = cybrex_empire
 				is_country_type = abandoned_hatchery
-				is_country_type = compound_empire
-				is_country_type = sbtg_stellarborne_empire
-				is_country_type = void_lifeforms_1
-				is_country_type = void_lifeforms_2
-				is_country_type = katzenartig_imperium
-				is_country_type = giga_eawaf_sirens
 				AND = {
 					is_country_type = awakened_marauders
 					ROOT.CONTROLLER = { is_hostile = prev }
 				}
+
+				### Gigas
+				is_country_type = compound_empire
+				is_country_type = katzenartig_imperium
+				is_country_type = giga_eawaf_sirens
+
+				### Ancient Cache of Technologies
+				is_country_type = sbtg_stellarborne_empire
+				is_country_type = void_lifeforms_1
+				is_country_type = void_lifeforms_2
+				is_country_type = acot_exterminatus_victim
+				is_country_type = acot_phanon_base
+				is_country_type = acot_phanon_retaliator
 			}
 		}
 		ROOT.CONTROLLER = {
@@ -131,19 +188,26 @@ can_orbital_bombard = {
 				is_country_type = dormant_marauders
 				is_country_type = marauder_raiders
 				is_country_type = ruined_marauders
+                is_country_type = debt_collectors
 				is_country_type = gray_goo
-				is_country_type = debt_collectors
 				is_country_type = vol
 				is_country_type = behemoth_hatchling
 				is_country_type = abandoned_hatchery
+
+				### Gigas
 				is_country_type = compound_empire
-				is_country_type = sbtg_stellarborne_empire
-				is_country_type = void_lifeforms_1
-				is_country_type = void_lifeforms_2
-				is_country_type = acot_crazed_stellarite
 				is_country_type = katzenartig_imperium
 				is_country_type = giga_hypersiphon_major_incursion
 				is_country_type = giga_eawaf_sirens
+
+				### Ancient Cache of Technologies
+				is_country_type = void_lifeforms_1
+				is_country_type = void_lifeforms_2
+				is_country_type = acot_exterminatus_victim
+				is_country_type = acot_crazed_stellarite
+				is_country_type = acot_phanon_base
+				is_country_type = acot_phanon_retaliator
+
 				AND = {
 					is_country_type = frenzied_voidworms
 					has_country_flag = can_bombard
@@ -151,8 +215,8 @@ can_orbital_bombard = {
 				}
 				AND = {
 					OR = {
-						is_country_type = formless
 						is_country_type = awakened_marauders
+                        is_country_type = formless
 					}
 					FROM.CONTROLLER = { is_hostile = prev }
 				}
@@ -162,15 +226,16 @@ can_orbital_bombard = {
 						is_ship_size = voidworms_titan
 					}
 				}
+				has_country_flag = revengeful_patron
 			}
 		}
 		AND = {
     	    from.controller = {
     	        is_country_type = faction
-    	        NOT = { is_same_value = root.controller }
+    	        NOT = { is_same_value = ROOT.CONTROLLER }
     	    }
     	    from.owner = {
-    	        is_same_value = root.controller
+    	        is_same_value = ROOT.CONTROLLER
     	    }
 		}
 	}
@@ -266,7 +331,7 @@ can_planet_support_orbital_station = {
 # This = country, Country that wants to get an external leader
 # From = country, country that we are trying to get from
 can_get_external_leader_pool_candidate = {
-	exists = FROM
+	exists = from
 	OR = {
 		has_diplo_migration_treaty = from
 		is_in_federation_with = from
@@ -390,7 +455,6 @@ can_colonize_with_species = {
 		NOT = { has_trait = trait_self_modified }
 		is_same_species = root
 	}
-	# has_cybernetic_creed_trait = no Removed from the vanilla rule
 	NOR = {
 		has_trait = trait_pathogenic_genes
 		has_trait = trait_limited_cybernetic

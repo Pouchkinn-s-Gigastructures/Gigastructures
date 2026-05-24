@@ -76,6 +76,10 @@ quasi_stellar_obliterator_0 = {
 			country_event = { id = giga_qso.2000 }	# Notification
 			set_country_flag = built_quasistellar
 		}
+
+		# TEMPORARY, UNTIL QSO FED CAN BE REWORKED
+		if = { limit = { OR = { has_global_flag = giga_galactic_fed_shuffle} } remove_global_flag = giga_galactic_fed_shuffle set_global_flag = giga_galactic_fed_disabled }
+		if = { limit = { OR = { has_global_flag = giga_galactic_fed_always} } remove_global_flag = giga_galactic_fed_always set_global_flag = giga_galactic_fed_disabled }
 	}
 }
 
@@ -100,6 +104,10 @@ quasi_stellar_obliterator_1 = {
 			script = megastructures/generic_parts/giga_mega_alloy_cost
 			alloys = 250000
 		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_bulk_matter_cost
+			giga_sr_bulk_matter = @quasi_stellar_obliterator_1_bm_cost
+		}
 		upkeep = { alloys = 50 }
 	}
 
@@ -112,6 +120,11 @@ quasi_stellar_obliterator_1 = {
 		star = {
 			set_planet_entity = { entity = "core_quasar_compressed_entity" }
 			set_name = "Compressed Hyperquasar"
+		}
+		from = {
+			country_event = {
+				id = giga_qso.2001
+			}
 		}
 	}
 }
@@ -140,12 +153,24 @@ quasi_stellar_obliterator_2 = {
 			script = megastructures/generic_parts/giga_mega_alloy_cost
 			alloys = 300000
 		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_bulk_matter_cost
+			giga_sr_bulk_matter = @quasi_stellar_obliterator_2_bm_cost
+		}
 		upkeep = { alloys = 100 }
 	}
 
 	potential = {
 		has_ascension_perk = ap_qso
 		has_technology = giga_tech_quasi_stellar_3
+	}
+
+	on_build_complete = {
+		from = {
+			country_event = {
+				id = giga_qso.2002
+			}
+		}
 	}
 }
 
@@ -173,6 +198,10 @@ quasi_stellar_obliterator_3 = {
 			script = megastructures/generic_parts/giga_mega_alloy_cost
 			alloys = 325000
 		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_bulk_matter_cost
+			giga_sr_bulk_matter = @quasi_stellar_obliterator_1_bm_cost
+		}
 		upkeep = { alloys = 250 }
 	}
 
@@ -180,6 +209,14 @@ quasi_stellar_obliterator_3 = {
 		has_ascension_perk = ap_qso
 		has_technology = giga_tech_quasi_stellar_4
 	}
+	on_build_complete = {
+		from = {
+			country_event = {
+				id = giga_qso.2003
+			}
+		}
+	}
+
 }
 
 quasi_stellar_obliterator_4 = {
@@ -206,6 +243,10 @@ quasi_stellar_obliterator_4 = {
 			script = megastructures/generic_parts/giga_mega_alloy_cost
 			alloys = 350000
 		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_bulk_matter_cost
+			giga_sr_bulk_matter = @quasi_stellar_obliterator_4_bm_cost
+		}
 		upkeep = { alloys = 500 }
 	}
 
@@ -215,16 +256,40 @@ quasi_stellar_obliterator_4 = {
 	}
 
 	on_build_complete = {
-		from = { set_country_flag = qso_intensity_med }
+		# Set variables/flags (charge rate, targeted systems/planets)
+		from = {
+			set_country_flag = qso_intensity_med
+			if = {
+				limit = { NOT = { is_variable_set = giga_qso_targeted_systems } }
+				set_variable = {
+					which = giga_qso_targeted_systems
+					value = 0
+				}
+			}
+			if = {
+				limit = { NOT = { is_variable_set = giga_qso_targeted_planets } }
+				set_variable = {
+					which = giga_qso_targeted_planets
+					value = 0
+				}
+			}
+		}
 		spawn_megastructure = {
 			type = "quasi_stellar_gateway_off"
 			coords_from = fromfrom.planet
 			owner = owner
+			init_effect = {
+				set_megastructure_flag = giga_outliner_hidden_by_@from
+			}
+		}
+		from = {
+			country_event = {
+				id = giga_qso.2004
+			}
 		}
 	}
 }
 
-#COMPLETE#
 quasi_stellar_obliterator_5 = {
 	entity = "quasistellar_obliterator_5_entity"
 	construction_entity = "quasistellar_obliterator_5_construction_entity"
@@ -249,11 +314,16 @@ quasi_stellar_obliterator_5 = {
 			script = megastructures/generic_parts/giga_mega_alloy_cost
 			alloys = 400000
 		}
-		upkeep = {
-			alloys = 1000
-			energy = 500
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_bulk_matter_cost
+			giga_sr_bulk_matter = @quasi_stellar_obliterator_5_bm_cost
 		}
-		produces = { sr_magical_neutronium = 10 }
+		inline_script = {
+			script = megastructures/quasi_stellar_obliterator/qso_upkeep_output
+		}
+		upkeep = {
+			alloys = 1250
+		}
 	}
 
 	potential = {
@@ -280,11 +350,17 @@ quasi_stellar_obliterator_5 = {
 				}
 				set_country_flag = giga_has_active_hyperweapon
 			}
+			from = {
+				country_event = {
+					id = giga_qso.2005
+				}
+			}
 		}
 	}
 }
 
-#Access the menu#
+# Menu Access
+## Tags: @technical
 quasi_stellar_obliterator_6 = {
 	entity = ""
 	portrait = "GFX_megastructure_quasar"
@@ -314,21 +390,21 @@ quasi_stellar_obliterator_6 = {
 			owner = from
 		}
 		from = {
-			if = {
-				limit = {
-					NOR = {
-						has_country_flag = quasistellar_planet_busting
-						has_country_flag = quasistellar_fleet_busting
-						has_country_flag = quasistellar_stellar_busting
-						has_country_flag = quasistellar_cluster_busting
-					}
-				}
-				country_event = { id = giga_qso.1 }
-			}
-			else_if = { limit = { has_country_flag = quasistellar_planet_busting }	country_event = { id = giga_qso.101 } }
-			else_if = { limit = { has_country_flag = quasistellar_fleet_busting }	country_event = { id = giga_qso.204 } }
-			else_if = { limit = { has_country_flag = quasistellar_stellar_busting }	country_event = { id = giga_qso.301 } }
-			else_if = { limit = { has_country_flag = quasistellar_cluster_busting }	country_event = { id = giga_qso.401 } }
+			# if = {
+			# 	limit = {
+			# 		NOR = {
+			# 			has_country_flag = quasistellar_planet_busting
+			# 			has_country_flag = quasistellar_fleet_busting
+			# 			has_country_flag = quasistellar_stellar_busting
+			# 			has_country_flag = quasistellar_cluster_busting
+			# 		}
+			# 	}
+				country_event = { id = giga_qso.001 }
+			# }
+			# else_if = { limit = { has_country_flag = quasistellar_planet_busting }	country_event = { id = giga_qso.101 } }
+			# else_if = { limit = { has_country_flag = quasistellar_fleet_busting }	country_event = { id = giga_qso.204 } }
+			# else_if = { limit = { has_country_flag = quasistellar_stellar_busting }	country_event = { id = giga_qso.301 } }
+			# else_if = { limit = { has_country_flag = quasistellar_cluster_busting }	country_event = { id = giga_qso.401 } }
 			set_country_flag = quasistellar_menu_active
 			if = {
 				limit = {
@@ -340,11 +416,33 @@ quasi_stellar_obliterator_6 = {
 	}
 }
 
-###Portal###
-quasi_stellar_gateway_off = {
-	entity = "quasistellar_gateway_off_mega_entity"
+##################
+### Wormholes ####
+##################
+
+# Cluster/System
+## Tags: @technical
+quasi_stellar_marker_star_firing = { #wormhole
+	entity = "quasistellar_obliterator_wormhole_firing_star_entity"
 	portrait = "GFX_megastructure_construction_background"
-	entity_offset = { x = 0 y = -950 }
+	place_entity_on_planet_plane = no
+	upgrade_desc = hide
+	potential = { always = no }
+	resources = { category = giga_kilostructures }
+		
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+}
+
+# Planet
+## Tags: @technical
+quasi_stellar_marker_planet_firing = { #wormhole
+	entity = "quasistellar_obliterator_wormhole_firing_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	upgrade_desc = hide
 	potential = { always = no }
 	resources = { category = giga_kilostructures }
 		
@@ -355,6 +453,23 @@ quasi_stellar_gateway_off = {
 	
 }
 
+# Inactive QSO Gateway
+## Tags: @technical
+quasi_stellar_gateway_off = {
+	entity = "quasistellar_gateway_off_mega_entity"
+	portrait = "GFX_megastructure_construction_background"
+	entity_offset = { x = 0 y = -950 }
+	potential = { always = no }
+	resources = { category = giga_kilostructures }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+}
+
+# Active QSO Gateway
+## Tags: @technical
 quasi_stellar_gateway_on = { #wormhole
 	entity = "quasistellar_gateway_mega_entity"
 	portrait = "GFX_megastructure_construction_background"
@@ -364,389 +479,92 @@ quasi_stellar_gateway_on = { #wormhole
 	upgrade_desc = hide
 	potential = { always = no }
 	resources = { category = giga_kilostructures }
-		
+
 	outliner_trigger = {
 		exists = owner
 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
 	}
-	
 }
 
-###Target marker###
-quasi_stellar_marker_planet = {
-	entity = ""
-	portrait = "GFX_megastructure_construction_background"
-	entity_offset = { x = 0 y = 0 }
-	
-	outliner_trigger = {
-		exists = owner
-		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
-	}
-	
-	build_time = 0
-	resources = {
-		category = giga_kilostructures
-		cost = { energy = 10 }
-	}
+########################
+### FIRING ANIMATION ###
+########################
 
-	potential = {
-		has_technology = giga_tech_quasi_stellar_6
-		has_country_flag = quasistellar_planet_busting
-		NOT = { has_global_flag = quasistellar_disabled }
-	}
-
-	possible = {
-		custom_tooltip = { fail_text = "cant_build_here_ehof"	NOT = { any_system_planet = { has_planet_flag = cant_build_here } } }
-		custom_tooltip = {
-			fail_text = "requires_no_more_than_10"
-			count_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_planet }
-				count < 10
-			}
-		}
-		custom_tooltip = {
-			fail_text = "requires_no_hostiles"
-			hidden_trigger = {
-				NOT = { any_fleet_in_system = { owner = { is_country_type = blokkat_stripminers } } }
-				NOT = {
-					any_fleet_in_system = {
-						OR = {
-							owner = { is_country_type = synth_queen }
-							owner = { is_country_type = synth_queen_convoys }
-							owner = { is_country_type = synth_queen_outposts }
-							owner = { is_country_type = synth_queen_storm }
-						}
-					}
-				}
-			}
-		}
-	}
-
-	placement_rules = {
-		planet_possible = {
-			custom_tooltip = { fail_text = "must_build_around_planet"					is_star = no is_astral_scar = no }
-			custom_tooltip = { fail_text = "requires_no_existing_target_marker_qso"		NOT = { has_planet_flag = quasistellar_target_planet } }
-		}
-	}
-
-	ai_weight = { factor = 0 }
-
-	on_build_complete = {
-		set_star_flag = quasistellar_target_planet
-		fromfrom.planet = { set_planet_flag = quasistellar_target_planet }
-		event_target:quasistellar_owner = { #counting the planets targeted to apply refund & cost if needed
-			if = {		limit = { has_country_flag = qso_9 } remove_country_flag = qso_9 set_country_flag = qso_10 }
-			else_if = {	limit = { has_country_flag = qso_8 } remove_country_flag = qso_8 set_country_flag = qso_9 }
-			else_if = {	limit = { has_country_flag = qso_7 } remove_country_flag = qso_7 set_country_flag = qso_8 }
-			else_if = {	limit = { has_country_flag = qso_6 } remove_country_flag = qso_6 set_country_flag = qso_7 }
-			else_if = {	limit = { has_country_flag = qso_5 } remove_country_flag = qso_5 set_country_flag = qso_6 }
-			else_if = {	limit = { has_country_flag = qso_4 } remove_country_flag = qso_4 set_country_flag = qso_5 }
-			else_if = {	limit = { has_country_flag = qso_3 } remove_country_flag = qso_3 set_country_flag = qso_4 }
-			else_if = {	limit = { has_country_flag = qso_2 } remove_country_flag = qso_2 set_country_flag = qso_3 }
-			else_if = {	limit = { has_country_flag = qso_1 } remove_country_flag = qso_1 set_country_flag = qso_2 }
-			else = { set_country_flag = qso_1 }
-		}
-	}
-}
-
-quasi_stellar_marker_planet_open = { #wormhole
-	entity = "quasistellar_obliterator_wormhole_entity"
-	portrait = "GFX_megastructure_construction_background"
-	place_entity_on_planet_plane = no
-	upgrade_from = { quasi_stellar_marker_planet }
-	upgrade_desc = hide
+# Central Charging Beam
+## Tags: @technical
+quasi_stellar_obliterator_firing_1 = {
+	entity = "quasistellar_obliterator_firing_1_entity"
+	portrait = "GFX_megastructure_quasar"
 	potential = { always = no }
-	resources = { category = giga_kilostructures }
-		
-	outliner_trigger = {
-		exists = owner
-		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
-	}
-	
+	resources = { category = giga_gigastructures }
 }
 
-quasi_stellar_marker_planet_firing = { #wormhole
-	entity = "quasistellar_obliterator_wormhole_firing_entity"
-	portrait = "GFX_megastructure_construction_background"
-	place_entity_on_planet_plane = no
-	upgrade_from = { quasi_stellar_marker_planet_open }
-	upgrade_desc = hide
+# Radial Charging Beam 1
+## Tags: @technical
+quasi_stellar_obliterator_firing_2 = {
+	entity = "quasistellar_obliterator_firing_2_entity"
+	portrait = "GFX_megastructure_quasar"
 	potential = { always = no }
-	resources = { category = giga_kilostructures }
-		
-	outliner_trigger = {
-		exists = owner
-		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
-	}
-	
+	resources = { category = giga_gigastructures }
+	upgrade_from = { quasi_stellar_obliterator_firing_1 }
 }
 
-###CLUSTER DESTRUCTION###
-quasi_stellar_marker_cluster = {
-	entity = ""
-	portrait = "GFX_megastructure_construction_background"
-	entity_offset = { x = 0 y = 0 }
-	
-	outliner_trigger = {
-		exists = owner
-		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
-	}
-	
-	build_time = 0
-	resources = {
-		category = giga_kilostructures
-		cost = { energy = 10 }
-	}
-
-	potential = {
-		has_technology = giga_tech_quasi_stellar_6
-		NOT = { has_global_flag = quasistellar_disabled }
-		has_country_flag = quasistellar_cluster_busting
-		NOT = { any_megastructure = { is_megastructure_type = quasi_stellar_marker_cluster } }
-	}
-
-	possible = {
-		custom_tooltip = { fail_text = "cant_build_here_ehof"		NOT = { any_system_planet = { has_planet_flag = cant_build_here } } }
-		custom_tooltip = { fail_text = "already_have_target"		NOT = { has_star_flag = quasistellar_target_cluster } }
-		custom_tooltip = {
-			fail_text = "requires_no_hostiles"
-			NOT = {
-				any_fleet_in_system = {
-					owner = {
-						OR = {
-							is_at_war_with = event_target:quasistellar_owner
-							is_hostile = event_target:quasistellar_owner
-						}
-					}
-				}
-			}
-			NOT = { has_star_flag = blokkat_system_being_stripmined }
-			NOT = { has_star_flag = blokkat_stripmined_system }
-			NOT = {
-				any_fleet_in_system = {
-					OR = {
-						owner = { is_country_type = synth_queen }
-						owner = { is_country_type = synth_queen_convoys }
-						owner = { is_country_type = synth_queen_outposts }
-						owner = { is_country_type = synth_queen_storm }
-					}
-				}
-			}
-			NOT = {
-				any_fleet_in_system = {
-					owner = { is_country_type = blokkat_stripminers }
-				}
-			}
-			NOT = {
-				any_neighbor_system = {
-					any_fleet_in_system = {
-						owner = { is_country_type = blokkat_stripminers }
-					}
-				}
-			}
-		}
-	}
-
-	placement_rules = {
-		planet_possible = {
-			custom_tooltip = { fail_text = "must_build_around_star"		is_star = yes }
-			custom_tooltip = { fail_text = "already_have_target"		solar_system = { NOT = { has_star_flag = quasistellar_target_cluster } } }
-			custom_tooltip = {
-				fail_text = "cant_target_this_planet"
-				NOR = {
-					is_planet_class = pc_core_quasar
-					is_planet_class = pc_core_black_hole
-					is_planet_class = pc_giga_empty_space
-				}
-			}
-		}
-	}
-
-	ai_weight = { factor = 0 }
-
-	on_build_complete = {
-		set_star_flag = quasistellar_target_cluster
-		every_neighbor_system = {
-			limit = {
-				NOT = {
-					any_system_planet = {
-						OR = {
-							has_planet_flag = cant_target_this_planet
-							has_planet_flag = cant_build_here
-						}
-					}
-				}
-			}
-			set_star_flag = quasistellar_target_cluster
-		}
-		event_target:quasistellar_owner = { set_country_flag = qso_1 }
-	}
-}
-
-quasi_stellar_marker_cluster_open = { #wormhole
-	entity = "quasistellar_obliterator_wormhole_cluster_entity"
-	portrait = "GFX_megastructure_construction_background"
-	place_entity_on_planet_plane = no
-	upgrade_from = { quasi_stellar_marker_cluster }
-	upgrade_desc = hide
+# Radial Charging Beam 2
+## Tags: @technical
+quasi_stellar_obliterator_firing_3 = {
+	entity = "quasistellar_obliterator_firing_3_entity"
+	portrait = "GFX_megastructure_quasar"
 	potential = { always = no }
-	resources = { category = giga_kilostructures }
-		
-	outliner_trigger = {
-		exists = owner
-		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
-	}
-	
+	resources = { category = giga_gigastructures }
+	upgrade_from = { quasi_stellar_obliterator_firing_2 }
 }
 
-quasi_stellar_marker_cluster_firing = { #wormhole
-	entity = "quasistellar_obliterator_wormhole_firing_cluster_entity"
-	portrait = "GFX_megastructure_construction_background"
-	place_entity_on_planet_plane = no
-	upgrade_from = { quasi_stellar_marker_cluster_open }
-	upgrade_desc = hide
+# Radial Charging Beam 3
+## Tags: @technical
+quasi_stellar_obliterator_firing_4 = {
+	entity = "quasistellar_obliterator_firing_4_entity"
+	portrait = "GFX_megastructure_quasar"
 	potential = { always = no }
-	resources = { category = giga_kilostructures }
-		
-	outliner_trigger = {
-		exists = owner
-		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
-	}
-	
+	resources = { category = giga_gigastructures }
+	upgrade_from = { quasi_stellar_obliterator_firing_3 }
 }
 
-###STAR DESTRUCTION###
-quasi_stellar_marker_star = {
-	entity = ""
-	portrait = "GFX_megastructure_construction_background"
-	entity_offset = { x = 0 y = 0 }
-	
-	outliner_trigger = {
-		exists = owner
-		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
-	}
-	
-	build_time = 0
-	resources = {
-		category = giga_kilostructures
-		cost = { energy = 10 }
-	}
-
-	potential = {
-		has_technology = giga_tech_quasi_stellar_6
-		NOT = { has_global_flag = quasistellar_disabled }
-		has_country_flag = quasistellar_stellar_busting
-	}
-
-	possible = {
-		custom_tooltip = { fail_text = "cant_build_here_ehof"		NOT = { any_system_planet = { has_planet_flag = cant_build_here } } }
-		custom_tooltip = { fail_text = "already_have_target"		NOT = { has_star_flag = quasistellar_target_cluster } }
-		custom_tooltip = { fail_text = "requires_no_more_than_4"	count_megastructure = { limit = { is_megastructure_type = quasi_stellar_marker_star } count <= 4 } }
-		custom_tooltip = {
-			fail_text = "requires_no_hostiles"
-			NOT = {
-				any_fleet_in_system = {
-					owner = {
-						OR = {
-							is_at_war_with = event_target:quasistellar_owner
-							is_hostile = event_target:quasistellar_owner
-						}
-					}
-				}
-			}
-			NOT = { has_star_flag = blokkat_system_being_stripmined }
-			NOT = { has_star_flag = blokkat_stripmined_system }
-			NOT = {
-				any_fleet_in_system = {
-					OR = {
-						owner = { is_country_type = synth_queen }
-						owner = { is_country_type = synth_queen_convoys }
-						owner = { is_country_type = synth_queen_outposts }
-						owner = { is_country_type = synth_queen_storm }
-					}
-				}
-			}
-			NOT = {
-				any_fleet_in_system = {
-					owner = { is_country_type = blokkat_stripminers }
-				}
-			}
-			NOT = {
-				any_neighbor_system = {
-					any_fleet_in_system = {
-						owner = { is_country_type = blokkat_stripminers }
-					}
-				}
-			}
-		}
-	}
-
-	placement_rules = {
-		planet_possible = {
-			custom_tooltip = { fail_text = "must_build_around_star"		is_star = yes }
-			custom_tooltip = { fail_text = "already_have_target"		solar_system = { NOT = { has_star_flag = quasistellar_target_cluster } } }
-			custom_tooltip = {
-				fail_text = "cant_target_this_planet"
-				NOR = {
-					is_planet_class = pc_core_quasar
-					is_planet_class = pc_core_black_hole
-					is_planet_class = pc_giga_empty_space
-				}
-			}
-		}
-	}
-
-	ai_weight = { factor = 0 }
-
-	on_build_complete = {
-		set_star_flag = quasistellar_target_star
-		event_target:quasistellar_owner = { #counting the stars targeted to apply refund & cost if needed
-			if = {		limit = { has_country_flag = qso_3 } remove_country_flag = qso_3 set_country_flag = qso_4 }
-			else_if = {	limit = { has_country_flag = qso_2 } remove_country_flag = qso_2 set_country_flag = qso_3 }
-			else_if = {	limit = { has_country_flag = qso_1 } remove_country_flag = qso_1 set_country_flag = qso_2 }
-			else = { set_country_flag = qso_1 }
-		}
-	}
-}
-
-quasi_stellar_marker_star_open = { #wormhole
-	entity = "quasistellar_obliterator_wormhole_star_entity"
-	portrait = "GFX_megastructure_construction_background"
-	place_entity_on_planet_plane = no
-	upgrade_from = { quasi_stellar_marker_star }
-	upgrade_desc = hide
+# Radial Charging Beam 4
+## Tags: @technical
+quasi_stellar_obliterator_firing_5 = {
+	entity = "quasistellar_obliterator_firing_5_entity"
+	portrait = "GFX_megastructure_quasar"
 	potential = { always = no }
-	resources = { category = giga_kilostructures }
-		
-	outliner_trigger = {
-		exists = owner
-		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
-	}
-	
+	resources = { category = giga_gigastructures }
+	upgrade_from = { quasi_stellar_obliterator_firing_4 }
 }
 
-quasi_stellar_marker_star_firing = { #wormhole
-	entity = "quasistellar_obliterator_wormhole_firing_star_entity"
-	portrait = "GFX_megastructure_construction_background"
-	place_entity_on_planet_plane = no
-	upgrade_from = { quasi_stellar_marker_star_open }
-	upgrade_desc = hide
+# Radial Charging Beam 5
+## Tags: @technical
+quasi_stellar_obliterator_firing_6 = {
+	entity = "quasistellar_obliterator_firing_6_entity"
+	portrait = "GFX_megastructure_quasar"
 	potential = { always = no }
-	resources = { category = giga_kilostructures }
-		
-	outliner_trigger = {
-		exists = owner
-		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
-	}
-	
+	resources = { category = giga_gigastructures }
+	upgrade_from = { quasi_stellar_obliterator_firing_5 }
 }
 
-###FIRING ANIMATION###
-quasi_stellar_obliterator_firing_1 = {			entity = "quasistellar_obliterator_firing_1_entity"			portrait = "GFX_megastructure_quasar" potential = { always = no } resources = { category = giga_gigastructures } }
-quasi_stellar_obliterator_firing_laser_1 = {	entity = "quasistellar_obliterator_firing_laser_1_entity"	portrait = "GFX_megastructure_quasar" potential = { always = no } resources = { category = giga_gigastructures } }
-quasi_stellar_obliterator_firing_laser_2 = {	entity = "quasistellar_obliterator_firing_laser_2_entity"	portrait = "GFX_megastructure_quasar" potential = { always = no } resources = { category = giga_gigastructures } }
-quasi_stellar_obliterator_firing_laser_3 = {	entity = "quasistellar_obliterator_firing_laser_3_entity"	portrait = "GFX_megastructure_quasar" potential = { always = no } resources = { category = giga_gigastructures } }
-quasi_stellar_obliterator_firing_laser_4 = {	entity = "quasistellar_obliterator_firing_laser_4_entity"	portrait = "GFX_megastructure_quasar" potential = { always = no } resources = { category = giga_gigastructures } }
-quasi_stellar_obliterator_firing_laser_5 = {	entity = "quasistellar_obliterator_firing_laser_5_entity"	portrait = "GFX_megastructure_quasar" potential = { always = no } resources = { category = giga_gigastructures } }
-quasi_stellar_obliterator_firing_laser_6 = {	entity = "quasistellar_obliterator_firing_laser_6_entity"	portrait = "GFX_megastructure_quasar" potential = { always = no } resources = { category = giga_gigastructures } }
-quasi_stellar_obliterator_firing_laser_big = {	entity = "quasistellar_obliterator_firing_laser_big_entity"	portrait = "GFX_megastructure_quasar" potential = { always = no } resources = { category = giga_gigastructures } }
+# Radial Charging Beam 6
+## Tags: @technical
+quasi_stellar_obliterator_firing_7 = {
+	entity = "quasistellar_obliterator_firing_7_entity"
+	portrait = "GFX_megastructure_quasar"
+	potential = { always = no }
+	resources = { category = giga_gigastructures }
+	upgrade_from = { quasi_stellar_obliterator_firing_6 }
+}
+
+# Firing
+## Tags: @technical
+quasi_stellar_obliterator_firing_8 = {
+	entity = "quasistellar_obliterator_firing_8_entity"
+	portrait = "GFX_megastructure_quasar"
+	potential = { always = no }
+	resources = { category = giga_gigastructures }
+	upgrade_from = { quasi_stellar_obliterator_firing_7 }
+}

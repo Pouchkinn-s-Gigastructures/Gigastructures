@@ -1,0 +1,231 @@
+# Shroud Seal
+
+@entity_x				= -8
+@entity_y				= -8
+
+shroud_seal = {
+	entity = "shroud_seal_entity"
+	construction_entity = "shroud_seal_entity"
+	construction_scale = 1.2 #to avoid z-fighting of consrucion entity with the base entity
+	portrait = "GFX_megastructure_shroud_seal_background"
+	is_shroud_seal = yes
+	place_entity_on_planet_plane = no
+	build_type = inside_gravity_well
+	show_galactic_map_icon = yes
+	entity_offset = { x = @entity_x y = @entity_y }
+	build_time = 1800
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	resources = {
+		category = giga_kilostructures
+		cost = {
+			alloys = 500
+			sr_zro = 100
+		}
+		upkeep = {
+			energy = 5
+		}
+		produces = {
+			trigger = {
+				exists = owner
+				owner = {
+					has_relic = r_the_lost_patron
+				}
+			}
+			unity = 25
+		}
+	}
+
+	triggered_country_modifier = {
+		potential = {
+			exists = owner
+			owner = {
+				has_relic = r_the_lost_patron
+			}
+		}
+		country_naval_cap_add = 10
+	}
+
+	triggered_country_modifier = {
+		potential = {
+			exists = owner
+			owner = { has_technology = tech_storm_prediction_1 }
+		}
+		# Does nothing: only for tooltip
+		shroud_storm_repelling = 0.75
+	}
+
+	construction_blocks_and_blocked_by = none
+	prerequisites = { "tech_psionic_suppression" }
+	show_prereqs = yes
+
+	dismantle_time = 180
+	dismantle_potential = {
+		always = yes
+	}
+	can_be_dismantled_by_non_owner = yes
+	dismantle_possible = {
+		solar_system = { is_owned_by = from }
+		if = { # Check if observer can dismantle Shroud Seal
+			limit = {
+				NOT = { is_owned_by = from }
+			}
+			custom_tooltip = shroud_seal_dismantle_conditions_tt
+			hidden_trigger = {
+				solar_system = {
+					NOT = {
+						any_fleet_in_system = {
+							is_ship_class = shipclass_military
+							exists = controller
+							controller = { is_hostile = from }
+						}
+					}
+				}
+			}
+		}
+	}
+	should_ai_dismantle = {
+		from = { giga_is_standard_country_type = yes }
+		OR = {
+			from = { is_psionic = yes }
+			solar_system = {
+				NOR = {
+					has_psionic_aura = yes
+					any_neighbor_system = {
+						OR = {
+							system_has_hostile_aura = { COUNTRY = root.from }
+							any_neighbor_system = {
+								system_has_hostile_aura = { COUNTRY = root.from }
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	on_dismantle_complete = {
+		on_shroud_seal_destroyed = yes
+	}
+
+	possible = {
+		hidden_trigger = {
+			exists = starbase
+		}
+		custom_tooltip = {
+			fail_text = "requires_inside_border"
+			is_inside_border = from
+		}
+		custom_tooltip = {
+			fail_text = "requires_surveyed_system"
+			NOT = {
+				any_system_planet = {
+					is_surveyed = {
+						who = prev.from
+						status = no
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_existing_shroud_seal"
+			NOT = { has_megastructure = shroud_seal }
+		}
+	}
+
+	# Root = System
+	# From = Country
+	ai_weight = {
+		base = 0
+		modifier = {
+			add = 5
+			from = { is_psionic = no }
+			any_neighbor_system = {
+				system_has_hostile_aura = { COUNTRY = root.from }
+			}
+		}
+		modifier = {
+			add = 50
+			from = { is_psionic = no }
+			system_has_hostile_aura = { COUNTRY = root.from }
+		}
+		# If someone else has the EotC aura, building at least 3 Shroud Seals becomes upmost priority, no matter previous conditions
+		modifier = {
+			set = 1000
+			from = {
+				count_owned_megastructure = {
+					limit = { is_megastructure_type = shroud_seal }
+					count < 3
+				}
+			}
+			any_playable_country = {
+				NOT = { is_same_value = root.from }
+				has_covenant_with_end_of_the_cycle = yes
+			}
+		}
+		modifier = {
+			factor = 0
+			any_neighbor_system = {
+				has_megastructure = shroud_seal
+			}
+		}
+	}
+
+	# Aura decay is calculated by Auras themselves
+
+	on_build_start = {}
+	on_build_cancel = {}
+	on_build_complete = {
+		fromfrom = {
+			set_megastructure_flag = giga_outliner_hidden_by_@owner
+		}
+        add_modifier = {
+            modifier = shroud_seal_modifier
+            days = -1
+        }
+		every_playable_country = {
+			limit = {
+				has_event_chain = mindwarden_enclave_chain
+			}
+			add_event_chain_counter = {
+				event_chain = mindwarden_enclave_chain
+				counter = shroud_seals_built
+				amount = 1
+			}
+		}
+		every_playable_country = {
+			limit = {
+				has_event_chain = shroud_seal_construction_chain
+				prev = {
+					exists = event_target:exiled_system_border@prev
+					is_same_value = event_target:exiled_system_border@prev
+				}
+			}
+			add_event_chain_counter = {
+				event_chain = shroud_seal_construction_chain
+				counter = shroud_seal_built
+				amount = 1
+			}
+		}
+		every_playable_country = {
+			limit = {
+				has_event_chain = shroud_seal_reconstruction_chain
+				prev = {
+					exists = event_target:exiled_system_border@prev
+					is_same_value = event_target:exiled_system_border@prev
+				}
+			}
+			add_event_chain_counter = {
+				event_chain = shroud_seal_reconstruction_chain
+				counter = shroud_seal_built
+				amount = 1
+			}
+		}
+        add_eotc_aura_shroud_seal = yes
+	}
+
+	show_in_outliner = yes
+}

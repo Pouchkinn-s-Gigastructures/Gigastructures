@@ -1,0 +1,146 @@
+# Deep Space Citadel First Stage
+deep_space_citadel_0 = {
+    entity = ""
+    construction_entity = "deep_space_01_starbase_citadel_section_1_entity"
+    portrait = "GFX_megastructure_construction_background"
+    place_entity_on_planet_plane = no
+    build_type = inside_gravity_well
+    show_in_outliner = no
+    use_planet_resource = no
+    build_time = 1080 # 3 years
+    must_select_ship_design = yes
+
+    starbase = starbase_level_deep_space_citadel_1
+
+    resources = {
+        category = megastructures
+        cost = {
+            unity = 2500
+        }
+        cost = {
+            trigger = {
+                country_uses_bio_ships = no
+            }
+            alloys = @starhold_cost
+        }
+        cost = {
+            trigger = {
+                country_uses_bio_ships = yes
+            }
+            alloys = @starhold_cost
+            mult = 0.5
+        }
+        cost = {
+            trigger = {
+                country_uses_bio_ships = yes
+            }
+            food = @starhold_cost
+            mult = @halved_alloy_to_food_cost_ratio
+        }
+    }
+
+    construction_blocks_and_blocked_by = self_type
+    prerequisites = { "tech_deep_space_citadel" }
+
+    potential = {
+        always = yes
+    }
+
+    possible = {
+        hidden_trigger = {
+            exists = starbase
+        }
+        custom_tooltip = {
+            fail_text = "requires_inside_border"
+            is_inside_border = from
+        }
+        custom_tooltip = {
+            fail_text = "requires_surveyed_system"
+            NOT = {
+                any_system_planet = {
+                    is_surveyed = {
+                        who = prev.from
+                        status = no
+                    }
+                }
+            }
+        }
+        custom_tooltip = {
+            fail_text = "requires_less_than_x_deep_space_citadel"
+            count_ship_in_system = {
+                limit = {
+                    is_space_citadel_ship_size = yes
+                }
+                count < from.modifier:deep_space_citadel_limit_add
+            }
+        }
+    }
+
+    placement_rules = {
+        planet_possible = {
+            custom_tooltip = {
+                fail_text = "BUILD_MEGASTRUCTURE_PLANET_TARGET_NEEDED"	# these loc lines are inverted
+                always = no
+            }
+        }
+    }
+
+    # root = system
+    # from = country
+    ai_weight = {
+        factor = 15
+
+        modifier = {
+            add = 10
+            is_bottleneck_system = yes
+        }
+
+        complex_trigger_modifier = {
+            trigger = count_neighbor_system
+            mode = add
+            mult = 1
+        }
+
+        complex_trigger_modifier = {
+            trigger = count_starbase_in_system
+            mode = add
+            mult = -1
+        }
+
+        complex_trigger_modifier = {
+            trigger = count_bypass_in_system
+            mode = add
+            mult = 1
+        }
+
+        modifier = {
+            factor = 0.1
+            starbase = { NOT = { has_starbase_size >= starbase_starfortress } }
+        }
+
+        modifier = {
+            add = 5
+            any_neighbor_system = {
+                exists = owner
+                NOT = {
+                    owner = { is_same_value = from }
+                }
+            }
+        }
+
+        modifier = {
+            factor = 1.15
+            from = {
+                has_origin = origin_starlit_citadel
+            }
+        }
+    }
+
+    on_build_start = {}
+    on_build_cancel = {}
+    on_build_complete = {
+        fromfrom = {
+            remove_megastructure = this
+        }
+    }
+}

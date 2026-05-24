@@ -1,0 +1,27 @@
+
+name: Check pull request source branch
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+jobs:
+  check-branches:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+    
+      - name: Check branches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.base_ref }}" == "Live-Branch" ]; then
+            gh pr comment ${{ github.event.pull_request.number }} --body "Merge requests to Live-Branch will be automatically rejected. Please make your pull request target branch Master-Dev instead."
+            gh pr close ${{ github.event.pull_request.number }}
+            exit 1
+          fi

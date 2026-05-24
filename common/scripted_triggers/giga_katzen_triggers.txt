@@ -49,21 +49,13 @@ kaiser_can_demand_system = {
 		has_star_flag = kaiser_demands_system #Not already demanded
 	}
 	owner = {
-		is_country_type = default #Only demand from regular empires (kaiser isn't suicidal)
+		giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
 		NOR = {
 			is_at_war_with = event_target:flusion_primitives_country #Not at war
 			is_in_federation_with = event_target:flusion_primitives_country #Not allied (kaiser isn't THAT cocky)
 			has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
 		}
 		has_country_flag = kaiser_demand_target #Same guy as before
-	}
-}
-
-katzen_is_genocidal = {
-	OR = {
-		has_valid_civic = civic_fanatic_purifiers
-		has_valid_civic = civic_hive_devouring_swarm
-		has_valid_civic = civic_machine_terminator
 	}
 }
 
@@ -75,18 +67,21 @@ is_small_katzen_fleet = {
 }
 
 has_katzen_colony = {
-	any_system_planet = { #Must have a colony
-		owner = { is_country_type = katzenartig_imperium }
-		is_colony = yes
+	any_system_planet = {
+		is_katzen_colony = yes
 	}
+}
+
+is_katzen_colony = {
+	owner = { is_country_type = katzenartig_imperium }
+	is_colony = yes
 }
 
 katzen_jump_blocked_system = {
 	exists = owner
 	owner = { is_country_type = katzenartig_imperium }
 	any_system_planet = { #Must have a colony
-		owner = { is_country_type = katzenartig_imperium }
-		is_colony = yes
+		is_katzen_colony = yes
 		has_planet_flag = gigaflusion
 		event_target:flusion_primitives_country = {
 			check_variable = {
@@ -113,41 +108,95 @@ is_valid_kaiser_moon_candidate = {
 }
 
 is_viable_system_for_submarine = {
-	NOR = {
-		any_ship_in_system = { is_ship_size = giga_massive_planet }
-		any_ship_in_system = { is_ship_size = giga_planet_behemoth }
-		any_ship_in_system = { is_ship_size = giga_systemcraft }
+	NOT = {
+		any_ship_in_system = {
+			is_ship_size = giga_massive_planet
+			is_ship_size = giga_war_moon_fe #FEs don't seem to use this at a glance but it's here in case that changes
+			is_ship_size = giga_planet_behemoth
+			is_ship_size = giga_planet_behemoth_fe
+			is_ship_size = giga_aeternum_planetcraft
+			is_ship_size = giga_corrona_planetcraft
+			is_ship_size = giga_systemcraft
+			is_ship_size = giga_o_systemcraft
+			is_ship_size = quasarmod_quasarcraft
+		}
+	}
+}
+
+#Used for Kaiser moon recall and Flusion destruction perp identification
+#Kaiser also recalls for any Corronian ship but I've left that out the trigger so this could be used elsewhere
+katzen_is_planetkiller = {
+	OR = {
+		is_ship_size = colossus
+		is_ship_size = toxic_god
+		is_ship_size = giga_toxic_god
+		is_ship_size = giga_systemcraft
+		is_ship_size = giga_o_systemcraft
+		is_ship_size = quasarmod_quasarcraft
+		is_ship_size = precursor_colossus
+		is_ship_size = sofe_ancient_weapon
+		is_ship_size = star_eater
+		is_ship_size = reshaper #Compound colossus
+		is_ship_size = giga_aeternum_colossus
+		is_ship_size = behemoth_03 #lowest Behemoth class with a planetkiller weapon
+		is_ship_size = behemoth_04
+		is_ship_size = voidspawn_boss
+		is_ship_size = synth_queen_titan
+		is_ship_size = warped_consciousness #The Reckoning / End of the Cycle boss
 	}
 }
 
 is_allowed_for_kaiser_spawn = {
-	NOR = { 
-		# is_fe_cluster = yes
-		# has_star_flag = giga_system_seven # Testing purposes
+	NOR = {
 		has_star_flag = empire_home_system
+		has_star_flag = empire_cluster
+
+		#MEM
+		has_star_flag = mem_severance_relic_system
+
+		# is_fe_cluster = yes
 		AND = {
 			exists = space_owner
 			space_owner = { is_fallen_empire = yes }
 		}
-		any_neighbor_system = {
+		any_system = {
+			distance = {
+				source = this
+				min_jumps  = 1
+				max_jumps = 2
+				use_bypasses = no
+			}
 			OR = {
-				# is_fe_cluster = yes
 				has_star_flag = empire_home_system
+				has_star_flag = empire_cluster
+				# is_fe_cluster = yes
 				AND = {
 					exists = space_owner
 					space_owner = { is_fallen_empire = yes }
 				}
-				any_neighbor_system = {
-					OR = {
-						# is_fe_cluster = yes
-						has_star_flag = empire_home_system
-						AND = {
-							exists = space_owner
-							space_owner = { is_fallen_empire = yes }
-						}
-					}
-				} 
 			}
 		}
 	}
 }
+
+# used in can_generate_military_leader_from_pop rule overwrite
+# should make sure external candidates drawn from the imperium are only katzen
+#Root = country
+#This = pop
+# giga_kaiser_only_katzen_military_candidates = {
+# 	if = {
+# 		limit = {
+# 			exists = owner
+# 			owner = {
+# 				is_country_type = katzenartig_imperium
+# 			}
+# 			exists = event_target:flusion_katzens
+# 		}
+# 		or = {
+# 			root = {
+# 				is_country_type = katzenartig_imperium
+# 			}
+# 			is_same_species = event_target:flusion_katzens
+# 		}
+# 	}
+# }

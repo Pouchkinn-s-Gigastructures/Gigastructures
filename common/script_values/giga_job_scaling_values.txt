@@ -15,7 +15,7 @@ giga_job_scaling_per_building = {
         mode = weight
     }
 
-    multiply = modifier:giga_planet_job_size
+    multiply = modifier:giga_planet_job_size_value
 }
 
 giga_job_scaling_country_modifier = {
@@ -26,12 +26,34 @@ giga_job_scaling_country_modifier = {
         weight = owner.modifier:$MODIFIER$
     }
 
-    multiply = modifier:giga_planet_job_size
+    multiply = modifier:giga_planet_job_size_value
 }
 
 giga_job_scaling_plus_base = {
     base = 1
-    add = modifier:giga_planet_job_size
+    add = modifier:giga_planet_job_size_value
+}
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+# Efficiency offset
+# some effects shouldn't scale, or scale less with job efficiency
+
+# tragically, can't get psychic or similar efficiency
+giga_job_efficiency_offset_inner = {
+    base = 1
+    add = modifier:pop_bonus_workforce_mult
+    add = modifier:pop_cat_$category$_bonus_workforce_mult
+    add = modifier:pop_$job$_bonus_workforce_mult
+    min = 0.01
+}
+
+giga_job_efficiency_offset = {
+    base = 1
+    divide = value:giga_job_efficiency_offset_inner|category|$category$|job|$job$|
+    mult = $fraction|1$
+    add = @[ 1 - $fraction|1$ ]
 }
 
 ########################################################################################################################
@@ -39,279 +61,322 @@ giga_job_scaling_plus_base = {
 ########################################################################################################################
 # Density scaling
 
-giga_planet_density_offset_modifier_by_pops = {
-    weight = modifier:$modifier$
-    subtract = modifier:giga_$modifier$_offset
-    [[countCountry]
-        modifier = {
-            exists = owner
-            subtract = owner.modifier:giga_$modifier$_offset
-        }
-    ]
-    [[positiveOnly]
-        min = 0
-    ]
-    [[negativeOnly]
-        max = 0
-    ]
-    multiply = value:giga_planet_density_by_pops|pops|$pops|200$|
-}
-
-giga_planet_density_offset_modifier_by_districts = {
-    weight = modifier:$modifier$
-    subtract = modifier:giga_$modifier$_offset
-    [[countCountry]
-        modifier = {
-            exists = owner
-            subtract = owner.modifier:giga_$modifier$_offset
-        }
-    ]
-    [[positiveOnly]
-        min = 0
-    ]
-    [[negativeOnly]
-        max = 0
-    ]
-    multiply = value:giga_planet_density_by_districts|districts|$districts|25$|
-}
-
-######################################################
-
-giga_planet_density_offset_jobs_by_pops = {
+giga_job_workforce = {
     complex_trigger_modifier = {
-        trigger = num_assigned_jobs
-        parameters = {
-            job = $job$
-        }
-        mode = weight
-    }
-    multiply = value:giga_planet_density_by_pops|pops|$pops|200$|
-}
-
-giga_planet_density_offset_jobs_by_districts = {
-    complex_trigger_modifier = {
-        trigger = num_assigned_jobs
-        parameters = {
-            job = $job$
-        }
-        mode = weight
-    }
-    multiply = value:giga_planet_density_by_districts|districts|$districts|25$|
-}
-
-######################################################
-
-giga_planet_density_offset_bureaucrats_by_pops = {
-    base = 0
-    complex_trigger_modifier = {
-        trigger = num_assigned_jobs
-        parameters = { job = bureaucrat }
-        mode = add
-    }
-    complex_trigger_modifier = {
-        trigger = num_assigned_jobs
-        parameters = { job = manager }
-        mode = add
-    }
-    complex_trigger_modifier = {
-        trigger = num_assigned_jobs
-        parameters = { job = steward }
-        mode = add
-    }
-    complex_trigger_modifier = {
-        trigger = num_assigned_jobs
-        parameters = { job = priest }
-        mode = add
-    }
-    complex_trigger_modifier = {
-        trigger = num_assigned_jobs
-        parameters = { job = death_priest }
-        mode = add
-    }
-    complex_trigger_modifier = {
-        trigger = num_assigned_jobs
-        parameters = { job = haruspex }
-        mode = add
-    }
-    complex_trigger_modifier = {
-        trigger = num_assigned_jobs
-        parameters = { job = preacher }
-        mode = add
-    }
-
-    # bug branch jobs
-    inline_script = {
-        script = generic_parts/giga_toggled_code
-
-        code = "
-            complex_trigger_modifier = {
-                trigger = num_assigned_jobs
-                parameters = { job = bugged_luminosity_priest }
-                mode = add
-            }
-            complex_trigger_modifier = {
-                trigger = num_assigned_jobs
-                parameters = { job = bugged_warrior_priest }
-                mode = add
-            }
-        "
-
-        toggle = @has_bug_branch
-    }
-
-    multiply = value:giga_planet_density_by_pops|pops|$pops|200$|
-}
-
-######################################################
-
-giga_planet_density_offset_trait_by_pops = {
-    complex_trigger_modifier = {
-        trigger = count_owned_pop_amount
+        trigger = count_owned_workforce
         parameters = {
             limit = {
-                has_trait = $trait$
+                has_job_type = miner
             }
         }
         mode = weight
     }
-    multiply = value:giga_planet_density_by_pops|pops|$pops|200$|
 }
 
-giga_planet_density_offset_trait_by_districts = {
-    complex_trigger_modifier = {
-        trigger = count_owned_pop_amount
-        parameters = {
-            limit = {
-                has_trait = $trait$
-            }
-        }
-        mode = weight
+giga_planet_density_offset = {
+    # idea behind this is getting the current planet level value of the modifier, getting the job density value
+    # treating the modifier as 1-density times what it "should" be, then applying the new value to that.
+    # in theory this should be stable
+
+    weight = modifier:$modifier$ # get the modifier on the planet
+    [[base] subtract = value:giga_planet_density_$modifier$_base ] # subtract any base value for the modifier if we define one
+    modifier = {
+        exists = owner
+        subtract = owner.modifier:$modifier$ # subtract the country value
     }
-    multiply = value:giga_planet_density_by_districts|districts|$districts|25$|
+
+    # at this point we should have the planet value of the modifier being "added" to it
+
+    # now we divide by the *old* density from the previous update, read as a modifier from the planet to get the "raw" value out
+    # then multiply by the *new* density value to get what it should be for the next update
+    divide = value:giga_planet_density_offset_divisor
+    multiply = value:giga_planet_density_by_pops # re-multiply by the new density value to get the final multiplier
 }
 
-######################################################
-
-giga_planet_density_offset_trigger_by_pops = {
-    weight = trigger:$trigger$
-    multiply = value:giga_planet_density_by_pops|pops|$pops|200$|
+giga_planet_density_offset_divisor = {
+    weight = modifier:giga_high_density_scaling_mult
+    mult = 0.5
+    add = 1
 }
 
-giga_planet_density_offset_trigger_by_districts = {
-    weight = trigger:$trigger$
-    multiply = value:giga_planet_density_by_districts|districts|$districts|25$|
+giga_planet_density_planet_stability_add_base = {
+    base = 20 # test
 }
 
-######################################################
-giga_planet_density_offset_pop_category_by_pops = {
-    complex_trigger_modifier = {
-        trigger = count_owned_pop_amount
-        parameters = {
-            limit = {
-                is_pop_category = $category$
-            }
-        }
-        mode = weight
-    }
-    multiply = value:giga_planet_density_by_pops|pops|$pops|200$|
-}
-
-giga_planet_density_offset_pop_category_by_districts = {
-    complex_trigger_modifier = {
-        trigger = count_owned_pop_amount
-        parameters = {
-            limit = {
-                is_pop_category = $category$
-            }
-        }
-        mode = weight
-    }
-    multiply = value:giga_planet_density_by_districts|districts|$districts|25$|
-}
-
-########################################################################################################################
+# giga_planet_density_offset_modifier_by_pops = {
+#     weight = modifier:$modifier$
+#     subtract = modifier:giga_$modifier$_offset
+#     [[countCountry]
+#         modifier = {
+#             exists = owner
+#             subtract = owner.modifier:giga_$modifier$_offset
+#         }
+#     ]
+#     [[positiveOnly]
+#         min = 0
+#     ]
+#     [[negativeOnly]
+#         max = 0
+#     ]
+#     multiply = value:giga_planet_density_by_pops|pops|$pops|20000$|
+# }
+#
+# giga_planet_density_offset_modifier_by_districts = {
+#     weight = modifier:$modifier$
+#     subtract = modifier:giga_$modifier$_offset
+#     [[countCountry]
+#         modifier = {
+#             exists = owner
+#             subtract = owner.modifier:giga_$modifier$_offset
+#         }
+#     ]
+#     [[positiveOnly]
+#         min = 0
+#     ]
+#     [[negativeOnly]
+#         max = 0
+#     ]
+#     multiply = value:giga_planet_density_by_districts|districts|$districts|25$|
+# }
+#
+# ######################################################
+#
+# giga_planet_density_offset_jobs_by_pops = {
+#     complex_trigger_modifier = {
+#         trigger = num_assigned_jobs
+#         parameters = {
+#             job = $job$
+#         }
+#         mode = weight
+#     }
+#     multiply = value:giga_planet_density_by_pops|pops|$pops|20000$|
+#     divide = 100 # Divide by 100 since 4.0 changed how pop numbers work
+# }
+#
+# giga_planet_density_offset_jobs_by_districts = {
+#     complex_trigger_modifier = {
+#         trigger = num_assigned_jobs
+#         parameters = {
+#             job = $job$
+#         }
+#         mode = weight
+#     }
+#     multiply = value:giga_planet_density_by_districts|districts|$districts|25$|
+# }
+#
+# ######################################################
+#
+# giga_planet_density_offset_bureaucrats_by_pops = {
+#     base = 0
+#     complex_trigger_modifier = {
+#         trigger = num_assigned_jobs
+#         parameters = { job = bureaucrat }
+#         mode = add
+#     }
+#     complex_trigger_modifier = {
+#         trigger = num_assigned_jobs
+#         parameters = { job = manager }
+#         mode = add
+#     }
+#     complex_trigger_modifier = {
+#         trigger = num_assigned_jobs
+#         parameters = { job = steward }
+#         mode = add
+#     }
+#     complex_trigger_modifier = {
+#         trigger = num_assigned_jobs
+#         parameters = { job = priest }
+#         mode = add
+#     }
+#     complex_trigger_modifier = {
+#         trigger = num_assigned_jobs
+#         parameters = { job = death_priest }
+#         mode = add
+#     }
+#     complex_trigger_modifier = {
+#         trigger = num_assigned_jobs
+#         parameters = { job = haruspex }
+#         mode = add
+#     }
+#     complex_trigger_modifier = {
+#         trigger = num_assigned_jobs
+#         parameters = { job = preacher }
+#         mode = add
+#     }
+#
+#     # bug branch jobs
+#     inline_script = {
+#         script = generic_parts/giga_toggled_code
+#
+#         code = "
+#             complex_trigger_modifier = {
+#                 trigger = num_assigned_jobs
+#                 parameters = { job = bugged_luminosity_priest }
+#                 mode = add
+#             }
+#             complex_trigger_modifier = {
+#                 trigger = num_assigned_jobs
+#                 parameters = { job = bugged_warrior_priest }
+#                 mode = add
+#             }
+#         "
+#
+#         toggle = @has_bug_branch
+#     }
+#
+#     multiply = value:giga_planet_density_by_pops|pops|$pops|20000$|
+# }
+#
+# ######################################################
+#
+# giga_planet_density_offset_trait_by_pops = {
+#     complex_trigger_modifier = {
+#         trigger = count_owned_pop_amount
+#         parameters = {
+#             limit = {
+#                 has_trait = $trait$
+#             }
+#         }
+#         mode = weight
+#     }
+#     multiply = value:giga_planet_density_by_pops|pops|$pops|20000$|
+# }
+#
+# giga_planet_density_offset_trait_by_districts = {
+#     complex_trigger_modifier = {
+#         trigger = count_owned_pop_amount
+#         parameters = {
+#             limit = {
+#                 has_trait = $trait$
+#             }
+#         }
+#         mode = weight
+#     }
+#     multiply = value:giga_planet_density_by_districts|districts|$districts|25$|
+# }
+#
+# ######################################################
+#
+# giga_planet_density_offset_trigger_by_pops = {
+#     weight = trigger:$trigger$
+#     multiply = value:giga_planet_density_by_pops|pops|$pops|20000$|
+# }
+#
+# giga_planet_density_offset_trigger_by_districts = {
+#     weight = trigger:$trigger$
+#     multiply = value:giga_planet_density_by_districts|districts|$districts|25$|
+# }
+#
+# ######################################################
+# giga_planet_density_offset_pop_category_by_pops = {
+#     complex_trigger_modifier = {
+#         trigger = count_owned_pop_amount
+#         parameters = {
+#             limit = {
+#                 is_pop_category = $category$
+#             }
+#         }
+#         mode = weight
+#     }
+#     multiply = value:giga_planet_density_by_pops|pops|$pops|20000$|
+# }
+#
+# giga_planet_density_offset_pop_category_by_districts = {
+#     complex_trigger_modifier = {
+#         trigger = count_owned_pop_amount
+#         parameters = {
+#             limit = {
+#                 is_pop_category = $category$
+#             }
+#         }
+#         mode = weight
+#     }
+#     multiply = value:giga_planet_density_by_districts|districts|$districts|25$|
+# }
+#
+# ########################################################################################################################
 # by pop count
 
 giga_planet_density_by_pops = {
     weight = 1
-    subtract = value:giga_planet_density_by_pops_inner_1|pops|$pops$|
+    subtract = value:giga_planet_density_by_pops_inner_1
     multiply = -1
 }
 
 giga_planet_density_by_pops_inner_1 = {
     weight = 1
-    divide = value:giga_planet_density_by_pops_inner_2|pops|$pops$|
+    divide = value:giga_planet_density_by_pops_inner_2
 }
 
 giga_planet_density_by_pops_inner_2 = {
     weight = trigger:pop_amount
-    divide = $pops$ # diminish for every this many pops
+    divide = @giga_high_density_scaling_population # diminish for every this many pops
     min = 1
 }
 
-######################################################
-# by district count
-
-giga_planet_density_by_districts = {
-    weight = 1
-    subtract = value:giga_planet_density_by_districts_inner_1|districts|$districts$|
-    multiply = -1
-}
-
-giga_planet_density_by_districts_inner_1 = {
-    weight = 1
-    divide = value:giga_planet_density_by_districts_inner_2|districts|$districts$|
-}
-
-giga_planet_density_by_districts_inner_2 = {
-    weight = trigger:num_districts
-    divide = $districts$ # diminish for every this many districts
-    min = 1
-}
-
-######################################################
-# specific cases
-
-giga_planet_density_offset_shroud_conduit_by_pops = {
-    base = 1
-    multiply = value:scripted_modifier_mult|MODIFIER|giga_shroud_conduit_worker_bonus_mult|
-    multiply = value:giga_planet_density_offset_jobs_by_pops|job|$job$|
-}
-
-giga_planet_density_count_bio_trophies = {
-    complex_trigger_modifier = {
-        trigger = count_owned_pop_amount
-        parameters = {
-            limit = {
-                has_job = bio_trophy
-                happiness >= 0.5
-            }
-        }
-        mode = weight
-    }
-}
-
-giga_planet_density_offset_by_bio_trophies = {
-    weight = value:giga_planet_density_count_bio_trophies
-    multiply = value:giga_planet_density_by_pops|pops|$pops|200$|
-}
-
-giga_planet_density_offset_by_bio_trophy_booster_buildings = {
-    complex_trigger_modifier = {
-        trigger = num_buildings
-        parameters = {
-            type = $building$
-        }
-        mode = weight
-    }
-    multiply = value:giga_planet_density_offset_by_bio_trophies
-}
-
-giga_planet_density_soldier_stability = {
-    weight = modifier:job_soldier_stability_add
-    multiply = value:giga_planet_density_offset_jobs_by_pops|job|soldier|
-}
-giga_planet_density_warrior_drone_stability = {
-    weight = modifier:job_soldier_stability_add
-    multiply = value:giga_planet_density_offset_jobs_by_pops|job|warrior_drone|
-}
+# ######################################################
+# # by district count
+#
+# giga_planet_density_by_districts = {
+#     weight = 1
+#     subtract = value:giga_planet_density_by_districts_inner_1|districts|$districts$|
+#     multiply = -1
+# }
+#
+# giga_planet_density_by_districts_inner_1 = {
+#     weight = 1
+#     divide = value:giga_planet_density_by_districts_inner_2|districts|$districts$|
+# }
+#
+# giga_planet_density_by_districts_inner_2 = {
+#     weight = trigger:num_districts
+#     divide = $districts$ # diminish for every this many districts
+#     min = 1
+# }
+#
+# ######################################################
+# # specific cases
+#
+# giga_planet_density_offset_shroud_conduit_by_pops = {
+#     base = 1
+#     multiply = value:scripted_modifier_mult|MODIFIER|giga_shroud_conduit_worker_bonus_mult|
+#     multiply = value:giga_planet_density_offset_jobs_by_pops|job|$job$|
+# }
+#
+# giga_planet_density_count_bio_trophies = {
+#     complex_trigger_modifier = {
+#         trigger = count_owned_pop_amount
+#         parameters = {
+#             limit = {
+#                 has_job = bio_trophy
+#                 happiness >= 0.5
+#             }
+#         }
+#         mode = weight
+#     }
+# }
+#
+# giga_planet_density_offset_by_bio_trophies = {
+#     weight = value:giga_planet_density_count_bio_trophies
+#     multiply = value:giga_planet_density_by_pops|pops|$pops|20000$|
+# }
+#
+# giga_planet_density_offset_by_bio_trophy_booster_buildings = {
+#     complex_trigger_modifier = {
+#         trigger = num_buildings
+#         parameters = {
+#             type = $building$
+#         }
+#         mode = weight
+#     }
+#     multiply = value:giga_planet_density_offset_by_bio_trophies
+# }
+#
+# giga_planet_density_soldier_stability = {
+#     weight = modifier:job_soldier_stability_add
+#     multiply = value:giga_planet_density_offset_jobs_by_pops|job|soldier|
+# }
+# giga_planet_density_warrior_drone_stability = {
+#     weight = modifier:job_soldier_stability_add
+#     multiply = value:giga_planet_density_offset_jobs_by_pops|job|warrior_drone|
+# }
