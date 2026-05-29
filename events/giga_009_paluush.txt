@@ -819,7 +819,7 @@ fleet_event = {
 				limit = { is_reanimator = yes } #Meopa
 				country_event = { id = giga_katzenland.010 days = 90 }
 			}
-			set_country_flag = found_katzenland_katzens
+			set_country_flag = found_katzenland_katzens_nuked
 			small_artifact_reward = yes
 			if = {
 				limit = {
@@ -873,7 +873,7 @@ fleet_event = {
 				}
 			}
 			country_event = { id = giga_flusion.002 }
-			set_country_flag = found_katzenland_katzens
+			set_country_flag = found_katzenland_katzens_nuked
 			small_artifact_reward = yes
 			if = {
 				limit = {
@@ -1019,6 +1019,24 @@ country_event = {
 	}
 }
 
+#set found Gatzo flag for empires that meet a Gatzo Fallen Empire
+country_event = {
+	id = giga_katzenland.013
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		from = {
+			is_fallen_empire = yes
+			has_country_flag = giga_meopa_fe
+		}
+	}
+
+	immediate = {
+		set_country_flag = found_katzenland_katzens_alive
+	}
+}
+
 namespace = giga_flusion
 
 #######################################################
@@ -1029,12 +1047,12 @@ ship_event = {
 	id = giga_flusion.001
 	title = "giga_flusion.001.name"
 	desc = {
-		text = "giga_flusion.001.desc"
-		trigger = { NOT = { has_global_flag = meopa_spawned_as_fe } }
+		text = "giga_flusion.001.katzens.desc"
+		trigger = { NOT = { has_global_flag = flusion_no_katzens } }
 	}
 	desc = { #Something is missing...
 		text = "giga_flusion.001.nokatzens.desc"
-		trigger = { has_global_flag = meopa_spawned_as_fe }
+		trigger = { has_global_flag = flusion_no_katzens }
 	}
 	picture = GFX_evt_assembly_fight
 	show_sound = event_pre_ftl_civilization
@@ -1057,7 +1075,7 @@ ship_event = {
 
 	immediate = {
 		if = {
-			limit = { NOT = { has_global_flag = meopa_spawned_as_fe } }
+			limit = { NOT = { has_global_flag = flusion_no_katzens } }
 			owner = { set_country_flag = found_flusion_katzens }
 		}
 	}
@@ -1066,7 +1084,10 @@ ship_event = {
 		name = "giga_flusion.001.a"
 		trigger = {
 			owner = {
-				NOT = { has_country_flag = found_katzenland_katzens }
+				NOR = {
+					has_country_flag = found_katzenland_katzens_nuked
+					has_country_flag = found_katzenland_katzens_alive
+				}
 			}
 		}
 		owner = {
@@ -1083,13 +1104,14 @@ ship_event = {
 		name = "giga_flusion.001.b"
 		trigger = {
 			owner = {
-				has_country_flag = found_katzenland_katzens
+				OR = {
+					has_country_flag = found_katzenland_katzens_nuked
+					has_country_flag = found_katzenland_katzens_alive
+				}
 			}
 		}
-		hidden_effect = {
-			owner = {
-				country_event = { id = giga_flusion.002 }
-			}
+		owner = {
+			country_event = { id = giga_flusion.002 }
 		}
 	}
 }
@@ -1098,7 +1120,15 @@ ship_event = {
 country_event = {
 	id = giga_flusion.002
 	title = "giga_flusion.002.name"
-	desc = "giga_flusion.002.desc"
+
+	desc = {
+		trigger = { has_country_flag = found_katzenland_katzens_nuked }
+		text = "giga_flusion.002.katzenland_nuked.desc"
+	}
+	desc = {
+		trigger = { has_country_flag = found_katzenland_katzens_alive }
+		text = "giga_flusion.002.katzenland_alive.desc"
+	}
 	picture = GFX_evt_atmospheric_flight
 	show_sound = event_alien_signal
 	is_triggered_only = yes
@@ -1173,11 +1203,11 @@ country_event = {
 	title = "giga_flusion.004.name"
 	desc = {
 		text = "giga_flusion.004.a.desc"
-		trigger = { NOT = { has_country_flag = found_katzenland_katzens } }
+		trigger = { NOT = { has_country_flag = found_katzenland_katzens_nuked } }
 	}
 	desc = {
 		text = "giga_flusion.004.b.desc"
-		trigger = { has_country_flag = found_katzenland_katzens }
+		trigger = { has_country_flag = found_katzenland_katzens_nuked }
 	}
 	picture = GFX_evt_relic_world_street
 	show_sound = event_air_raid_siren
@@ -1258,7 +1288,7 @@ country_event = {
 	option = {
 		name = "giga_flusion.004.a"
 		trigger = {
-			NOT = { has_country_flag = found_katzenland_katzens }
+			NOT = { has_country_flag = found_katzenland_katzens_nuked }
 		}
 		hidden_effect = {
 			set_country_flag = flusion_katzens_nuked
@@ -1268,7 +1298,7 @@ country_event = {
 	option = {
 		name = "giga_flusion.004.b"
 		trigger = {
-			has_country_flag = found_katzenland_katzens
+			has_country_flag = found_katzenland_katzens_nuked
 		}
 		hidden_effect = {
 			if = {
@@ -1657,8 +1687,11 @@ planet_event = {
 	}
 
 	trigger = {
-		NOT = { has_global_flag = meopa_spawned_as_fe }
-		NOT = { has_global_flag = warmoon_disabled }
+		NOR = {
+			has_global_flag = flusion_no_katzens
+			has_global_flag = warmoon_disabled
+			has_planet_flag = muno_project_event
+		}
 		solar_system = {
 			exists = owner
 			owner = { ehof_default_country = yes }
@@ -1668,7 +1701,6 @@ planet_event = {
 			is_country_type = primitive
 			has_country_flag = fusion_age
 		}
-		NOT = { has_planet_flag = muno_project_event }
 		NOT = { has_global_flag = flusion_muno_event_happened }
 		event_target:gigamuno = {
 			AND = {
@@ -2500,7 +2532,7 @@ country_event = { #Nuclear War
 	option = {
 		name = "giga_flusion.3301.a" #Counts as Katzens getting nuked
 		trigger = {
-			NOT = { has_country_flag = found_katzenland_katzens }
+			NOT = { has_country_flag = found_katzenland_katzens_nuked }
 		}
 		hidden_effect = {
 			set_country_flag = flusion_katzens_nuked
@@ -2510,7 +2542,7 @@ country_event = { #Nuclear War
 	option = {
 		name = "giga_flusion.3301.b" #Counts as Katzens getting nuked
 		trigger = {
-			has_country_flag = found_katzenland_katzens
+			has_country_flag = found_katzenland_katzens_nuked
 		}
 		hidden_effect = {
 			if = {
