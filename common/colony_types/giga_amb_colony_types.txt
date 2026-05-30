@@ -10,30 +10,33 @@
 @built_buildings_medium_threshold = 2
 @built_buildings_high_threshold = 4
 
+@stickiness = 10
+@stickiness_low = 5
+@zone_urban = 100
+@zone_rural = 10
+@rural_max_size = 13
+@rural_over_max_size = -20
+
 # Megalogistics Center
 col_giga_supertensiles_foundry = {
 	icon = GFX_giga_colony_type_supertensiles_foundry
 
 	potential = {
 		has_global_flag = @giga_amb_flag
-		exists = owner
 		NOR = {
-			uses_district_set = habitat
+			uses_district_set = city_world
+			planet_is_ring_world_equivalent = yes
+			planet_is_habitat_equivalent = yes
+			uses_district_set = cosmogenesis_world
 		}
 		is_special_colony_type = no
 		is_capital = no
+		NOT = { is_planet_class = pc_nanotech }
 	}
 
-	planet_modifier = {
-		planet_building_giga_megaworkshop_build_speed_mult = 0.25
-		planet_building_giga_megaworkshop_hub_build_speed_mult = 0.25
-		planet_giga_megaengineers_upkeep_mult = -0.20
-	}
-	triggered_planet_modifier = {
-		potential = { uses_district_set = ring_world }
-		pop_growth_speed = 0.1
-		planet_pop_assembly_mult = 0.1
-		planet_pop_assembly_organic_mult = 0.1
+	inline_script = {
+		script = colony_types/colony_type_planet_modifier
+		MODIFIER = giga_megaconstruction_jobs_bonus_workforce_mult
 	}
 
 	triggered_planet_modifier = {
@@ -48,17 +51,7 @@ col_giga_supertensiles_foundry = {
 			}
 		}
 		modifier = {
-			planet_giga_megaengineers_produces_mult = 0.05
-		}
-	}
-
-	triggered_planet_modifier = {
-		potential = {
-			exists = owner
-			owner = { has_tradition = tr_adaptability_finish }
-		}
-		modifier = {
-			planet_giga_megaengineers_produces_mult = 0.05
+			giga_megaconstruction_jobs_bonus_workforce_mult = 0.025
 		}
 	}
 
@@ -99,7 +92,7 @@ col_giga_supertensiles_foundry = {
 			}
 		}
 		modifier = {
-			add = 5
+			add = @stickiness
 			has_designation = col_giga_supertensiles_foundry
 		}
 		modifier = {
@@ -112,26 +105,30 @@ col_giga_supertensiles_foundry = {
 				is_ai = yes
 			}
 		}
-		modifier = {
-			add = 5
-			has_building = building_giga_megaworkshop
+
+		complex_trigger_modifier = {
+			trigger = num_buildings
+			parameters = {
+				type = building_giga_megaworkshop
+			}
+			mode = add
+			mult = 2
 		}
-		modifier = {
-			add = 10
-			num_buildings = { type = building_giga_megaworkshop value >= @built_buildings_medium_threshold }
+
+		complex_trigger_modifier = {
+			trigger = num_buildings
+			parameters = {
+				type = building_giga_megaworkshop_hub
+			}
+			mode = add
+			mult = 4
 		}
-		modifier = {
-			add = 20
-			num_buildings = { type = building_giga_megaworkshop value >= @built_buildings_high_threshold }
-		}
-		modifier = {
-			add = 15
-			has_building = building_giga_megaworkshop_hub
-		}
+
 		modifier = {
 			add = 10
 			has_building = building_giga_living_metal_infusion_plant
 		}
+
 		modifier = {
 			factor = 0
 			num_buildings = { type = building_giga_megaworkshop value = 0 }
@@ -146,14 +143,15 @@ col_giga_habitat_supertensiles_foundry = {
 
 	potential = {
 		has_global_flag = @giga_amb_flag
-		uses_district_set = habitat
+		planet_is_habitat_equivalent = yes
 		is_capital = no
 	}
-	planet_modifier = {
-		planet_building_giga_megaworkshop_build_speed_mult = 0.25
-		planet_building_giga_megaworkshop_hub_build_speed_mult = 0.25
-		planet_giga_megaengineers_upkeep_mult = -0.20
+
+	inline_script = {
+		script = colony_types/colony_type_planet_modifier
+		MODIFIER = giga_megaconstruction_jobs_bonus_workforce_mult
 	}
+
 	triggered_planet_modifier = {
 		potential = {
 			exists = owner
@@ -166,7 +164,7 @@ col_giga_habitat_supertensiles_foundry = {
 			}
 		}
 		modifier = {
-			planet_giga_megaengineers_produces_mult = 0.05
+			giga_megaconstruction_jobs_bonus_workforce_mult = 0.025
 		}
 	}
 
@@ -177,25 +175,27 @@ col_giga_habitat_supertensiles_foundry = {
 			owner = { has_monthly_income = { resource = giga_sr_amb_megaconstruction value < 10 } }
 		}
 		modifier = {
-			factor = 3
+			factor = @stickiness
 			has_designation = col_giga_habitat_supertensiles_foundry
 		}
-		modifier = {
-			add = 5
-			has_building = building_giga_megaworkshop
+		complex_trigger_modifier = {
+			trigger = num_buildings
+			parameters = {
+				type = building_giga_megaworkshop
+			}
+			mode = add
+			mult = 2
 		}
-		modifier = {
-			add = 5
-			num_buildings = { type = building_giga_megaworkshop value >= @built_buildings_medium_threshold }
+
+		complex_trigger_modifier = {
+			trigger = num_buildings
+			parameters = {
+				type = building_giga_megaworkshop_hub
+			}
+			mode = add
+			mult = 4
 		}
-		modifier = {
-			add = 10
-			num_buildings = { type = building_giga_megaworkshop value >= @built_buildings_high_threshold }
-		}
-		modifier = {
-			add = 10
-			has_building = building_giga_megaworkshop_hub
-		}
+
 		modifier = {
 			add = 10
 			has_building = building_giga_living_metal_infusion_plant
@@ -204,10 +204,6 @@ col_giga_habitat_supertensiles_foundry = {
 			factor = 0
 			num_buildings = { type = building_giga_megaworkshop value = 0 }
 			num_buildings = { type = building_giga_megaworkshop_hub value = 0 }
-		}
-		modifier = {
-			factor = 3
-			num_buildings = { type = building_giga_megaworkshop value >= @built_buildings_medium_threshold }
 		}
 	}
 }

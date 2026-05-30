@@ -4,11 +4,11 @@ namespace = giga_qso
 ### Main menu ###############################################################################################################################
 #############################################################################################################################################
 country_event = {
-	id = giga_qso.1
-	title = "giga_qso.1.name"
-	desc = "giga_qso.1.desc"
+	id = giga_qso.001
+	title = "giga_qso.001.name"
+	desc = "giga_qso.001.desc"
 	show_sound = event_mystic_reveal
-	location = fromfrom
+	custom_gui = "ehof_mainui_window"
 	is_triggered_only = yes
 	diplomatic = yes
 	picture_event_data = {
@@ -16,19 +16,42 @@ country_event = {
 		room = giga_qso_room
 	}
 
-	option = { name = "giga_qso.1.fire"			hidden_effect = { country_event = { id = giga_qso.10 } } }										# pick target
-	option = { name = "giga_qso.1.parameters"	hidden_effect = { country_event = { id = giga_qso.500 } } }										# parameters
-	option = { name = "giga_qso.1.quit"			hidden_effect = { remove_country_flag = quasistellar_menu_active } default_hide_option = yes }	# quit
+	immediate = {
+		hidden_effect = { giga_qso_variable_safety_check = yes }
+	}
+
+	# Target Management
+	option = {
+		custom_gui = "ehof_mainui_option_big" name = "giga_qso.001.fire"
+		hidden_effect = { country_event = { id = giga_qso.002 } }
+	}
+
+	# Power Management
+	option = {
+		custom_gui = "ehof_mainui_option_big" name = "giga_qso.001.power_management"
+		hidden_effect = { country_event = { id = giga_qso.008 } }
+	}
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank" name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.001 } }
+	}
+
+	# Close Control Panel
+	option = {
+		custom_gui = "ehof_mainui_option_big" name = "giga_qso.001.quit"
+		hidden_effect = { remove_country_flag = quasistellar_menu_active }
+		default_hide_option = yes
+	}
 }
 
-###################################
-### Options #######################
-###################################
+### Target Management ##
 country_event = {
-	id = giga_qso.500
-	title = "giga_qso.500.name"
-	desc = "giga_qso.500.desc"
-	location = fromfrom
+	id = giga_qso.002
+	title = "giga_qso.002.name"
+	desc = "giga_qso.002.desc"
+	custom_gui = "ehof_mainui_window"
 	is_triggered_only = yes
 	diplomatic = yes
 	picture_event_data = {
@@ -36,154 +59,2092 @@ country_event = {
 		room = giga_qso_room
 	}
 
-	# increase
+	immediate = {
+		remove_country_flag = giga_qso_hostile
+		remove_country_flag = giga_qso_neutral
+		remove_country_flag = giga_qso_friendly
+	}
+
+	### Target Selection ###
 	option = {
-		name = "giga_qso.500.increase"
-		allow = { NOT = { has_country_flag = qso_intensity_physicslimits } }
+		name = "giga_qso.002.a"
+		custom_gui = "ehof_mainui_miniheader"
+		hidden_effect = { country_event = { id = giga_qso.002 } }
+	}
+
+	# Hostile
+	option = {
+		name = "giga_qso.002.b"
+		custom_gui = "ehof_mainui_option_big"
+		allow = {
+			custom_tooltip = {
+				fail_text = "must_be_at_war"
+				any_country = {
+					is_valid_ndb_hostile_target_country = yes
+				}
+			}
+		}
 		hidden_effect = {
-			country_event = { id = giga_qso.500 }
+			set_country_flag = giga_qso_hostile
+			country_event = { id = giga_qso.003 }
+		}
+	}
+
+	# Neutral
+	option = {
+		name = "giga_qso.002.c"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = {
+			set_country_flag = giga_qso_neutral
+			country_event = { id = giga_qso.003 }
+		}
+	}
+
+	# Friendly
+	option = {
+		name = "giga_qso.002.d"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = {
+			set_country_flag = giga_qso_friendly
+			country_event = { id = giga_qso.003 }
+		}
+	}
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.002 } }
+	}
+
+	## Cluster Management ###
+	option = {
+		name = "giga_qso.002.e"
+		custom_gui = "ehof_mainui_miniheader"
+		hidden_effect = { country_event = { id = giga_qso.002 } }
+	}
+
+	# Destroy Targeted Cluster
+	option = {
+		custom_gui = "ehof_mainui_option_big"
+		name = "giga_qso.002.f"
+		allow = {
+			custom_tooltip = {
+				fail_text = "giga.qso.noclustertodestroy"
+				exists = event_target:giga_qso_targeted_cluster
+			}
+
+			resource_stockpile_compare = {
+				resource = giga_sr_quasaric_energy
+				value >= 120
+			}
+		}
+		hidden_effect = {
+			country_event = {
+				id = giga_qso.0070
+			}
+		}
+	}
+
+	# Discard Targeted Cluster
+	option = {
+		custom_gui = "ehof_mainui_option_big"
+		name = "giga_qso.002.g"
+		allow = { custom_tooltip = { fail_text = "giga.qso.noclustertoremove" exists = event_target:giga_qso_targeted_cluster } }
+		hidden_effect = {
+			event_target:giga_qso_targeted_cluster = {
+				giga_qso_untarget_cluster = yes
+			}
+			country_event = {
+				id = giga_qso.002
+			}
+		}
+	}
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.002 } }
+	}
+
+	### System Management ###
+	option = {
+		custom_gui = "ehof_mainui_miniheader"
+		name = "giga_qso.002.h"
+		hidden_effect = { country_event = { id = giga_qso.002 } }
+	}
+
+	# Destroy Targeted Systems
+	option = {
+		custom_gui = "ehof_mainui_option_big"
+		name = "giga_qso.002.i"
+		allow = {
+			custom_tooltip = {
+				fail_text = "giga.qso.nosystemtodestroy"
+				giga_qso_any_system_targeted = yes
+			}
+
+			resource_stockpile_compare = {
+				resource = giga_sr_quasaric_energy
+				value >= giga_qso_targeted_systems
+				mult = 40
+			}
+		}
+		hidden_effect = {
+			country_event = {
+				id = giga_qso.0071
+			}
+		}
+
+	}
+
+	# Discard Targeted System
+	option = {
+		custom_gui = "ehof_mainui_option_big"
+		name = "giga_qso.002.j"
+		allow = { custom_tooltip = { fail_text = "giga.qso.nosystemtoremove" giga_qso_any_system_targeted = yes } }
+		hidden_effect = {
+			country_event = {
+				id = giga_qso.0072
+			}
+		}
+	}
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.002 } }
+	}
+
+	### Planet Management ###
+	option = {
+		custom_gui = "ehof_mainui_miniheader"
+		name = "giga_qso.002.k"
+		hidden_effect = { country_event = { id = giga_qso.002 } }
+	}
+
+	# Destroy Targeted Planets
+	option = {
+		custom_gui = "ehof_mainui_option_big"
+		name = "giga_qso.002.l"
+		allow = {
+			custom_tooltip = {
+				fail_text = "giga.qso.noplanetstodestroy"
+				giga_qso_any_planet_targeted = yes
+			}
+
+			resource_stockpile_compare = {
+				resource = giga_sr_quasaric_energy
+				value >= 5
+				mult = giga_qso_targeted_planets
+			}
+		}
+		hidden_effect = {
+			country_event = {
+				id = giga_qso.0073
+			}
+		}
+
+	}
+
+	# Discard a Targeted Planet
+	option = {
+		custom_gui = "ehof_mainui_option_big"
+		name = "giga_qso.002.m"
+		allow = { custom_tooltip = { fail_text = "giga.qso.noplanetstoremove" giga_qso_any_planet_targeted = yes } }
+		hidden_effect = {
+			country_event = {
+				id = giga_qso.0074
+			}
+		}
+	}
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.002 } }
+	}
+
+	# Back
+	option = {
+		name = "ehof_goback"
+		custom_gui = "ehof_mainui_option_big"
+		default_hide_option = yes
+		hidden_effect = { country_event = { id = giga_qso.001 } }
+	}
+}
+
+# Country Selection
+country_event = {
+	id = giga_qso.003
+	title = "giga_qso.002.name"
+	desc = "giga_qso.003.desc"
+	custom_gui = "ehof_mainui_window"
+	is_triggered_only = yes
+	diplomatic = yes
+	picture_event_data = {
+		portrait = root.species
+		room = giga_qso_room
+	}
+
+	immediate = {
+		remove_country_flag = giga_qso_no_owner
+
+		every_country = {
+			limit = { has_country_flag = giga_qso_target_country@root }
+			remove_country_flag = giga_qso_target_country@root
+		}
+
+		giga_event_target_list_clear = yes
+
+		if = {
+			limit = { has_country_flag = giga_qso_hostile }
+			every_country = {
+				limit = {
+					is_valid_ndb_hostile_target_country  = yes
+				}
+				giga_event_target_list_save = yes
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = giga_qso_neutral }
+			every_country = {
+				limit = {
+					is_valid_ndb_neutral_target_country = yes
+				}
+				giga_event_target_list_save = yes
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = giga_qso_friendly }
+			every_country = {
+				limit = {
+					is_valid_ndb_friendly_target_country = yes
+				}
+				giga_event_target_list_save = yes
+			}
+		}
+	}
+
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_001 = yes } name = "etl_001" hidden_effect = { event_target:etl_001 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_002 = yes } name = "etl_002" hidden_effect = { event_target:etl_002 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_003 = yes } name = "etl_003" hidden_effect = { event_target:etl_003 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_004 = yes } name = "etl_004" hidden_effect = { event_target:etl_004 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_005 = yes } name = "etl_005" hidden_effect = { event_target:etl_005 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_006 = yes } name = "etl_006" hidden_effect = { event_target:etl_006 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_007 = yes } name = "etl_007" hidden_effect = { event_target:etl_007 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_008 = yes } name = "etl_008" hidden_effect = { event_target:etl_008 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_009 = yes } name = "etl_009" hidden_effect = { event_target:etl_009 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_010 = yes } name = "etl_010" hidden_effect = { event_target:etl_010 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_011 = yes } name = "etl_011" hidden_effect = { event_target:etl_011 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_012 = yes } name = "etl_012" hidden_effect = { event_target:etl_012 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_013 = yes } name = "etl_013" hidden_effect = { event_target:etl_013 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_014 = yes } name = "etl_014" hidden_effect = { event_target:etl_014 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_015 = yes } name = "etl_015" hidden_effect = { event_target:etl_015 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_016 = yes } name = "etl_016" hidden_effect = { event_target:etl_016 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_017 = yes } name = "etl_017" hidden_effect = { event_target:etl_017 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_018 = yes } name = "etl_018" hidden_effect = { event_target:etl_018 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_019 = yes } name = "etl_019" hidden_effect = { event_target:etl_019 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_020 = yes } name = "etl_020" hidden_effect = { event_target:etl_020 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_021 = yes } name = "etl_021" hidden_effect = { event_target:etl_021 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_022 = yes } name = "etl_022" hidden_effect = { event_target:etl_022 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_023 = yes } name = "etl_023" hidden_effect = { event_target:etl_023 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_024 = yes } name = "etl_024" hidden_effect = { event_target:etl_024 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_025 = yes } name = "etl_025" hidden_effect = { event_target:etl_025 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_026 = yes } name = "etl_026" hidden_effect = { event_target:etl_026 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_027 = yes } name = "etl_027" hidden_effect = { event_target:etl_027 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_028 = yes } name = "etl_028" hidden_effect = { event_target:etl_028 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_029 = yes } name = "etl_029" hidden_effect = { event_target:etl_029 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_030 = yes } name = "etl_030" hidden_effect = { event_target:etl_030 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_031 = yes } name = "etl_031" hidden_effect = { event_target:etl_031 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_032 = yes } name = "etl_032" hidden_effect = { event_target:etl_032 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_033 = yes } name = "etl_033" hidden_effect = { event_target:etl_033 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_034 = yes } name = "etl_034" hidden_effect = { event_target:etl_034 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_035 = yes } name = "etl_035" hidden_effect = { event_target:etl_035 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_036 = yes } name = "etl_036" hidden_effect = { event_target:etl_036 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_037 = yes } name = "etl_037" hidden_effect = { event_target:etl_037 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_038 = yes } name = "etl_038" hidden_effect = { event_target:etl_038 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_039 = yes } name = "etl_039" hidden_effect = { event_target:etl_039 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_040 = yes } name = "etl_040" hidden_effect = { event_target:etl_040 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_041 = yes } name = "etl_041" hidden_effect = { event_target:etl_041 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_042 = yes } name = "etl_042" hidden_effect = { event_target:etl_042 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_043 = yes } name = "etl_043" hidden_effect = { event_target:etl_043 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_044 = yes } name = "etl_044" hidden_effect = { event_target:etl_044 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_045 = yes } name = "etl_045" hidden_effect = { event_target:etl_045 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_046 = yes } name = "etl_046" hidden_effect = { event_target:etl_046 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_047 = yes } name = "etl_047" hidden_effect = { event_target:etl_047 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_048 = yes } name = "etl_048" hidden_effect = { event_target:etl_048 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_049 = yes } name = "etl_049" hidden_effect = { event_target:etl_049 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_050 = yes } name = "etl_050" hidden_effect = { event_target:etl_050 = { set_country_flag = giga_qso_target_country@root } country_event = { id = giga_qso.004 } } }
+
+	option = {
+		trigger = { has_country_flag = giga_qso_neutral }
+		name = "giga_ndb.003.a"	# No country (empty space)
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = {
+			set_country_flag = giga_qso_no_owner
+			country_event = { id = giga_qso.004 }
+		}
+	}
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.003 } }
+	}
+
+	# Back
+	option = {
+		name = "ehof_goback"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = { country_event = { id = giga_qso.002 } }
+		default_hide_option = yes
+	}
+
+	# Cancel
+	option = {
+		name = "giga_ndb.002.e"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = { country_event = { id = giga_qso.001 } }
+	}
+}
+
+# Star Class Selection
+country_event = {
+	id = giga_qso.004
+	title = "giga_qso.002.name"
+	desc = "giga_qso.004.desc"
+	custom_gui = "ehof_mainui_window"
+	is_triggered_only = yes
+	diplomatic = yes
+	picture_event_data = {
+		portrait = root.species
+		room = giga_qso_room
+	}
+
+	immediate = {
+		giga_qso_remove_old_flags = yes
+		giga_qso_setup_owner = yes
+	}
+
+	option = {
+		name = "ehof_category_06"
+		custom_gui = "ehof_mainui_option_big"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_binary
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_binary
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "ehof_category_07"
+		custom_gui = "ehof_mainui_option_big"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_trinary
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_trinary
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	#############################
+	# Dwarves ###################
+	#############################
+	option = {
+		name = "ehof_category_02"
+		custom_gui = "ehof_mainui_miniheader"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = ehof_category_dwarves
+			}
+		}
+		hidden_effect = { country_event = { id = giga_qso.004 } }
+	}
+
+	option = {
+		name = "sc_f"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_f
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_f
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_g"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_g
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_g
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_k"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_k
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_k
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_m"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_m
+			}
+
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_m
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_d"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_d
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_d
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_t"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_t
+				condition2 = is_star_class_sc_l
+				condition3 = is_star_class_sc_y
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_t
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	#############################
+	# Stars #####################
+	#############################
+	option = {
+		name = "ehof_category_03"
+		custom_gui = "ehof_mainui_miniheader"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = ehof_category_stars
+			}
+		}
+		hidden_effect = { country_event = { id = giga_qso.004 } }
+	}
+
+	option = {
+		name = "sc_b"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_b
+
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_b
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_a"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_a
+
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_a
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_o"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_o
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_o
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_p_purple"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_p_purple
+				condition2 = is_star_class_sc_p_green
+				condition3 = is_star_class_sc_p_red
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_p_purple
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_lbv_blue"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_lbv_blue
+				condition2 = is_star_class_sc_lbv_green
+				condition3 = is_star_class_sc_lbv_red
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_lbv_blue
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_tt_red"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_tt_orange
+				condition2 = is_star_class_sc_tt_red
+				condition3 = is_star_class_sc_tt_white
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_tt_red
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_w_azure"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_w_azure
+				condition2 = is_star_class_sc_w_green
+				condition3 = is_star_class_sc_w_purple
+				condition4 = is_star_class_sc_w_red
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_w_azure
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	#############################
+	# Giants ####################
+	#############################
+	option = {
+		name = "ehof_category_04"
+		custom_gui = "ehof_mainui_miniheader"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = ehof_category_giants
+			}
+		}
+		hidden_effect = { country_event = { id = giga_qso.004 } }
+	}
+
+	option = {
+		name = "sc_m_giant"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_m_giant
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_m_giant
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_k_giant"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_k_giant
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_k_giant
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_g_giant"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_g_giant
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_g_giant
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_o_super"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_o_super
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_o_super
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_b_super"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_b_super
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_b_super
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_a_super"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_a_super
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_a_super
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_f_super"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_f_super
+
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_f_super
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_g_super"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_g_super
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_g_super
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_k_super"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_k_super
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_k_super
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_m_super"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_m_super
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_m_super
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_o_hyper"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_o_hyper
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_o_hyper
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_m_hyper"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_m_hyper
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_m_hyper
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	#############################
+	# Stellar Remnants ##########
+	#############################
+	option = {
+		name = "ehof_category_05"
+		custom_gui = "ehof_mainui_miniheader"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = ehof_category_remnants
+			}
+		}
+		hidden_effect = { country_event = { id = giga_qso.004 } }
+	}
+
+	option = {
+		name = "sc_neutron_star"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_neutron_star
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_neutron_star
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_pulsar"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_pulsar
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_pulsar
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_microquasar_1"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_quasar
+				condition2 = is_star_class_sc_microquasar_1
+				condition3 = is_star_class_sc_microquasar_2
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_microquasar_1
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_collapsar"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_collapsar
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_collapsar
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_magnetar"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_magnetar
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_magnetar
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_protostar"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_protostar
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_protostar
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_ae"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_ae
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_ae
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_s_giant"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_s_giant
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_s_giant
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_c_giant"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_c_giant
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_c_giant
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	option = {
+		name = "sc_nova_1"
+		custom_gui = "ehof_mainui_option_small"
+		trigger = {
+			qso_new_pick_target_type_1 = {
+				condition = is_star_class_sc_nova_1
+				condition2 = is_star_class_sc_nova_2
+			}
+		}
+		hidden_effect = {
+			set_country_flag = qso_target_is_star_class_sc_nova_1
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.004 } }
+	}
+
+	# Back
+	option = {
+		name = "ehof_goback"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = { country_event = { id = giga_qso.003 } }
+		default_hide_option = yes
+	}
+
+	# Cancel
+	option = {
+		name = "giga_ndb.002.e"
+		custom_gui = "ehof_mainui_option_big"
+
+		hidden_effect = { country_event = { id = giga_qso.001 } }
+	}
+}
+
+# System Selection
+country_event = {
+	id = giga_qso.005
+	title = "giga_qso.002.name"
+	desc = "giga_qso.005.desc"
+	custom_gui = "ehof_mainui_window"
+	is_triggered_only = yes
+	diplomatic = yes
+	picture_event_data = {
+		portrait = root.species
+		room = giga_qso_room
+	}
+
+	immediate = {
+		every_system = {
+			limit = { has_star_flag = giga_qso_target_system@root }
+			remove_star_flag = giga_qso_target_system@root
+		}
+		giga_event_target_list_clear = yes
+		switch = {
+			trigger = has_country_flag
+
+			qso_target_is_binary = {
+				giga_qso_option_internal_if = {
+					condition = is_binary
+				}
+			}
+			qso_target_is_trinary = {
+				giga_qso_option_internal_if = {
+					condition = is_trinary
+				}
+			}
+			qso_target_is_star_class_sc_f = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_f
+				}
+			}
+			qso_target_is_star_class_sc_g = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_g
+				}
+			}
+			qso_target_is_star_class_sc_k  = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_k
+				}
+			}
+			qso_target_is_star_class_sc_m = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_m
+				}
+			}
+			qso_target_is_star_class_sc_d = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_d
+				}
+			}
+			qso_target_is_star_class_sc_t = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_t
+					condition2 = is_star_class_sc_l
+					condition3 = is_star_class_sc_y
+				}
+			}
+			qso_target_is_star_class_sc_b = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_b
+
+				}
+			}
+			qso_target_is_star_class_sc_a = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_a
+				}
+			}
+			qso_target_is_star_class_sc_o = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_o
+				}
+			}
+			qso_target_is_star_class_sc_p_purple = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_p_purple
+					condition2 = is_star_class_sc_p_green
+					condition3 = is_star_class_sc_p_red
+				}
+			}
+			qso_target_is_star_class_sc_lbv_blue = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_lbv_blue
+					condition2 = is_star_class_sc_lbv_green
+					condition3 = is_star_class_sc_lbv_red
+				}
+			}
+			qso_target_is_star_class_sc_tt_red = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_tt_red
+					condition2 = is_star_class_sc_tt_orange
+					condition3 = is_star_class_sc_tt_white
+				}
+			}
+			qso_target_is_star_class_sc_w_azure = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_w_azure
+					condition2 = is_star_class_sc_w_green
+					condition3 = is_star_class_sc_w_purple
+					condition4 = is_star_class_sc_w_red
+				}
+			}
+			qso_target_is_star_class_sc_m_giant = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_m_giant
+
+				}
+			}
+			qso_target_is_star_class_sc_k_giant = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_k_giant
+				}
+			}
+			qso_target_is_star_class_sc_g_giant = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_g_giant
+				}
+			}
+			qso_target_is_star_class_sc_o_super = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_o_super
+				}
+			}
+			qso_target_is_star_class_sc_b_super = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_b_super
+				}
+			}
+			qso_target_is_star_class_sc_a_super = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_a_super
+				}
+			}
+			qso_target_is_star_class_sc_f_super = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_f_super
+				}
+			}
+			qso_target_is_star_class_sc_g_super = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_g_super
+				}
+			}
+			qso_target_is_star_class_sc_k_super = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_k_super
+				}
+			}
+			qso_target_is_star_class_sc_m_super = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_m_super
+				}
+			}
+			qso_target_is_star_class_sc_o_hyper = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_o_hyper
+				}
+			}
+			qso_target_is_star_class_sc_m_hyper = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_m_hyper
+				}
+			}
+			qso_target_is_star_class_sc_neutron_star = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_neutron_star
+				}
+			}
+			qso_target_is_star_class_sc_pulsar = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_pulsar
+				}
+			}
+			qso_target_sc_black_hole = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_black_hole
+					condition2 = is_star_class_sc_birch
+					condition3 = is_star_class_sc_ehof_black_hole
+				}
+			}
+			qso_target_is_star_class_sc_microquasar_1 = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_quasar
+					condition2 = is_star_class_sc_microquasar_1
+					condition3 = is_star_class_sc_microquasar_2
+				}
+			}
+			qso_target_is_star_class_sc_collapsar = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_collapsar
+				}
+			}
+			qso_target_is_star_class_sc_magnetar = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_magnetar
+				}
+			}
+			qso_target_is_star_class_sc_protostar = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_protostar
+				}
+			}
+			qso_target_is_star_class_sc_ae = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_ae
+				}
+			}
+			qso_target_is_star_class_sc_s_giant = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_s_giant
+				}
+			}
+			qso_target_is_star_class_sc_c_giant = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_c_giant
+				}
+			}
+			qso_target_is_star_class_sc_nova_1 = {
+				giga_qso_option_internal_if = {
+					condition = is_star_class_sc_nova_1
+					condition2 = is_star_class_sc_nova_2
+				}
+			}
+		}
+	}
+
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_001 = yes } name = "etl_001" hidden_effect = { event_target:etl_001 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_002 = yes } name = "etl_002" hidden_effect = { event_target:etl_002 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_003 = yes } name = "etl_003" hidden_effect = { event_target:etl_003 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_004 = yes } name = "etl_004" hidden_effect = { event_target:etl_004 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_005 = yes } name = "etl_005" hidden_effect = { event_target:etl_005 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_006 = yes } name = "etl_006" hidden_effect = { event_target:etl_006 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_007 = yes } name = "etl_007" hidden_effect = { event_target:etl_007 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_008 = yes } name = "etl_008" hidden_effect = { event_target:etl_008 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_009 = yes } name = "etl_009" hidden_effect = { event_target:etl_009 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_010 = yes } name = "etl_010" hidden_effect = { event_target:etl_010 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_011 = yes } name = "etl_011" hidden_effect = { event_target:etl_011 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_012 = yes } name = "etl_012" hidden_effect = { event_target:etl_012 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_013 = yes } name = "etl_013" hidden_effect = { event_target:etl_013 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_014 = yes } name = "etl_014" hidden_effect = { event_target:etl_014 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_015 = yes } name = "etl_015" hidden_effect = { event_target:etl_015 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_016 = yes } name = "etl_016" hidden_effect = { event_target:etl_016 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_017 = yes } name = "etl_017" hidden_effect = { event_target:etl_017 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_018 = yes } name = "etl_018" hidden_effect = { event_target:etl_018 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_019 = yes } name = "etl_019" hidden_effect = { event_target:etl_019 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_020 = yes } name = "etl_020" hidden_effect = { event_target:etl_020 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_021 = yes } name = "etl_021" hidden_effect = { event_target:etl_021 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_022 = yes } name = "etl_022" hidden_effect = { event_target:etl_022 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_023 = yes } name = "etl_023" hidden_effect = { event_target:etl_023 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_024 = yes } name = "etl_024" hidden_effect = { event_target:etl_024 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_025 = yes } name = "etl_025" hidden_effect = { event_target:etl_025 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_026 = yes } name = "etl_026" hidden_effect = { event_target:etl_026 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_027 = yes } name = "etl_027" hidden_effect = { event_target:etl_027 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_028 = yes } name = "etl_028" hidden_effect = { event_target:etl_028 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_029 = yes } name = "etl_029" hidden_effect = { event_target:etl_029 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_030 = yes } name = "etl_030" hidden_effect = { event_target:etl_030 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_031 = yes } name = "etl_031" hidden_effect = { event_target:etl_031 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_032 = yes } name = "etl_032" hidden_effect = { event_target:etl_032 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_033 = yes } name = "etl_033" hidden_effect = { event_target:etl_033 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_034 = yes } name = "etl_034" hidden_effect = { event_target:etl_034 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_035 = yes } name = "etl_035" hidden_effect = { event_target:etl_035 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_036 = yes } name = "etl_036" hidden_effect = { event_target:etl_036 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_037 = yes } name = "etl_037" hidden_effect = { event_target:etl_037 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_038 = yes } name = "etl_038" hidden_effect = { event_target:etl_038 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_039 = yes } name = "etl_039" hidden_effect = { event_target:etl_039 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_040 = yes } name = "etl_040" hidden_effect = { event_target:etl_040 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_041 = yes } name = "etl_041" hidden_effect = { event_target:etl_041 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_042 = yes } name = "etl_042" hidden_effect = { event_target:etl_042 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_043 = yes } name = "etl_043" hidden_effect = { event_target:etl_043 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_044 = yes } name = "etl_044" hidden_effect = { event_target:etl_044 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_045 = yes } name = "etl_045" hidden_effect = { event_target:etl_045 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_046 = yes } name = "etl_046" hidden_effect = { event_target:etl_046 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_047 = yes } name = "etl_047" hidden_effect = { event_target:etl_047 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_048 = yes } name = "etl_048" hidden_effect = { event_target:etl_048 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_049 = yes } name = "etl_049" hidden_effect = { event_target:etl_049 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_050 = yes } name = "etl_050" hidden_effect = { event_target:etl_050 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_051 = yes } name = "etl_051" hidden_effect = { event_target:etl_051 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_052 = yes } name = "etl_052" hidden_effect = { event_target:etl_052 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_053 = yes } name = "etl_053" hidden_effect = { event_target:etl_053 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_054 = yes } name = "etl_054" hidden_effect = { event_target:etl_054 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_055 = yes } name = "etl_055" hidden_effect = { event_target:etl_055 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_056 = yes } name = "etl_056" hidden_effect = { event_target:etl_056 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_057 = yes } name = "etl_057" hidden_effect = { event_target:etl_057 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_058 = yes } name = "etl_058" hidden_effect = { event_target:etl_058 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_059 = yes } name = "etl_059" hidden_effect = { event_target:etl_059 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_060 = yes } name = "etl_060" hidden_effect = { event_target:etl_060 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_061 = yes } name = "etl_061" hidden_effect = { event_target:etl_061 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_062 = yes } name = "etl_062" hidden_effect = { event_target:etl_062 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_063 = yes } name = "etl_063" hidden_effect = { event_target:etl_063 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_064 = yes } name = "etl_064" hidden_effect = { event_target:etl_064 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_065 = yes } name = "etl_065" hidden_effect = { event_target:etl_065 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_066 = yes } name = "etl_066" hidden_effect = { event_target:etl_066 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_067 = yes } name = "etl_067" hidden_effect = { event_target:etl_067 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_068 = yes } name = "etl_068" hidden_effect = { event_target:etl_068 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_069 = yes } name = "etl_069" hidden_effect = { event_target:etl_069 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_070 = yes } name = "etl_070" hidden_effect = { event_target:etl_070 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_071 = yes } name = "etl_071" hidden_effect = { event_target:etl_071 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_072 = yes } name = "etl_072" hidden_effect = { event_target:etl_072 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_073 = yes } name = "etl_073" hidden_effect = { event_target:etl_073 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_074 = yes } name = "etl_074" hidden_effect = { event_target:etl_074 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_075 = yes } name = "etl_075" hidden_effect = { event_target:etl_075 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_076 = yes } name = "etl_076" hidden_effect = { event_target:etl_076 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_077 = yes } name = "etl_077" hidden_effect = { event_target:etl_077 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_078 = yes } name = "etl_078" hidden_effect = { event_target:etl_078 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_079 = yes } name = "etl_079" hidden_effect = { event_target:etl_079 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_080 = yes } name = "etl_080" hidden_effect = { event_target:etl_080 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_081 = yes } name = "etl_081" hidden_effect = { event_target:etl_081 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_082 = yes } name = "etl_082" hidden_effect = { event_target:etl_082 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_083 = yes } name = "etl_083" hidden_effect = { event_target:etl_083 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_084 = yes } name = "etl_084" hidden_effect = { event_target:etl_084 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_085 = yes } name = "etl_085" hidden_effect = { event_target:etl_085 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_086 = yes } name = "etl_086" hidden_effect = { event_target:etl_086 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_087 = yes } name = "etl_087" hidden_effect = { event_target:etl_087 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_088 = yes } name = "etl_088" hidden_effect = { event_target:etl_088 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_089 = yes } name = "etl_089" hidden_effect = { event_target:etl_089 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_090 = yes } name = "etl_090" hidden_effect = { event_target:etl_090 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_091 = yes } name = "etl_091" hidden_effect = { event_target:etl_091 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_092 = yes } name = "etl_092" hidden_effect = { event_target:etl_092 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_093 = yes } name = "etl_093" hidden_effect = { event_target:etl_093 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_094 = yes } name = "etl_094" hidden_effect = { event_target:etl_094 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_095 = yes } name = "etl_095" hidden_effect = { event_target:etl_095 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_096 = yes } name = "etl_096" hidden_effect = { event_target:etl_096 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_097 = yes } name = "etl_097" hidden_effect = { event_target:etl_097 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_098 = yes } name = "etl_098" hidden_effect = { event_target:etl_098 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_099 = yes } name = "etl_099" hidden_effect = { event_target:etl_099 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_100 = yes } name = "etl_100" hidden_effect = { event_target:etl_100 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_101 = yes } name = "etl_101" hidden_effect = { event_target:etl_101 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_102 = yes } name = "etl_102" hidden_effect = { event_target:etl_102 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_103 = yes } name = "etl_103" hidden_effect = { event_target:etl_103 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_104 = yes } name = "etl_104" hidden_effect = { event_target:etl_104 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_105 = yes } name = "etl_105" hidden_effect = { event_target:etl_105 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_106 = yes } name = "etl_106" hidden_effect = { event_target:etl_106 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_107 = yes } name = "etl_107" hidden_effect = { event_target:etl_107 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_108 = yes } name = "etl_108" hidden_effect = { event_target:etl_108 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_109 = yes } name = "etl_109" hidden_effect = { event_target:etl_109 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_110 = yes } name = "etl_110" hidden_effect = { event_target:etl_110 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_111 = yes } name = "etl_111" hidden_effect = { event_target:etl_111 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_112 = yes } name = "etl_112" hidden_effect = { event_target:etl_112 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_113 = yes } name = "etl_113" hidden_effect = { event_target:etl_113 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_114 = yes } name = "etl_114" hidden_effect = { event_target:etl_114 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_115 = yes } name = "etl_115" hidden_effect = { event_target:etl_115 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_116 = yes } name = "etl_116" hidden_effect = { event_target:etl_116 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_117 = yes } name = "etl_117" hidden_effect = { event_target:etl_117 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_118 = yes } name = "etl_118" hidden_effect = { event_target:etl_118 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_119 = yes } name = "etl_119" hidden_effect = { event_target:etl_119 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_120 = yes } name = "etl_120" hidden_effect = { event_target:etl_120 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_121 = yes } name = "etl_121" hidden_effect = { event_target:etl_121 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_122 = yes } name = "etl_122" hidden_effect = { event_target:etl_122 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_123 = yes } name = "etl_123" hidden_effect = { event_target:etl_123 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_124 = yes } name = "etl_124" hidden_effect = { event_target:etl_124 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_125 = yes } name = "etl_125" hidden_effect = { event_target:etl_125 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_126 = yes } name = "etl_126" hidden_effect = { event_target:etl_126 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_127 = yes } name = "etl_127" hidden_effect = { event_target:etl_127 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_128 = yes } name = "etl_128" hidden_effect = { event_target:etl_128 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_129 = yes } name = "etl_129" hidden_effect = { event_target:etl_129 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_130 = yes } name = "etl_130" hidden_effect = { event_target:etl_130 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_131 = yes } name = "etl_131" hidden_effect = { event_target:etl_131 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_132 = yes } name = "etl_132" hidden_effect = { event_target:etl_132 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_133 = yes } name = "etl_133" hidden_effect = { event_target:etl_133 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_134 = yes } name = "etl_134" hidden_effect = { event_target:etl_134 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_135 = yes } name = "etl_135" hidden_effect = { event_target:etl_135 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_136 = yes } name = "etl_136" hidden_effect = { event_target:etl_136 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_137 = yes } name = "etl_137" hidden_effect = { event_target:etl_137 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_138 = yes } name = "etl_138" hidden_effect = { event_target:etl_138 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_139 = yes } name = "etl_139" hidden_effect = { event_target:etl_139 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_140 = yes } name = "etl_140" hidden_effect = { event_target:etl_140 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_141 = yes } name = "etl_141" hidden_effect = { event_target:etl_141 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_142 = yes } name = "etl_142" hidden_effect = { event_target:etl_142 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_143 = yes } name = "etl_143" hidden_effect = { event_target:etl_143 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_144 = yes } name = "etl_144" hidden_effect = { event_target:etl_144 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_145 = yes } name = "etl_145" hidden_effect = { event_target:etl_145 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_146 = yes } name = "etl_146" hidden_effect = { event_target:etl_146 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_147 = yes } name = "etl_147" hidden_effect = { event_target:etl_147 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_148 = yes } name = "etl_148" hidden_effect = { event_target:etl_148 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_149 = yes } name = "etl_149" hidden_effect = { event_target:etl_149 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_150 = yes } name = "etl_150" hidden_effect = { event_target:etl_150 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_151 = yes } name = "etl_151" hidden_effect = { event_target:etl_151 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_152 = yes } name = "etl_152" hidden_effect = { event_target:etl_152 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_153 = yes } name = "etl_153" hidden_effect = { event_target:etl_153 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_154 = yes } name = "etl_154" hidden_effect = { event_target:etl_154 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_155 = yes } name = "etl_155" hidden_effect = { event_target:etl_155 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_156 = yes } name = "etl_156" hidden_effect = { event_target:etl_156 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_157 = yes } name = "etl_157" hidden_effect = { event_target:etl_157 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_158 = yes } name = "etl_158" hidden_effect = { event_target:etl_158 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_159 = yes } name = "etl_159" hidden_effect = { event_target:etl_159 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_160 = yes } name = "etl_160" hidden_effect = { event_target:etl_160 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_161 = yes } name = "etl_161" hidden_effect = { event_target:etl_161 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_162 = yes } name = "etl_162" hidden_effect = { event_target:etl_162 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_163 = yes } name = "etl_163" hidden_effect = { event_target:etl_163 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_164 = yes } name = "etl_164" hidden_effect = { event_target:etl_164 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_165 = yes } name = "etl_165" hidden_effect = { event_target:etl_165 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_166 = yes } name = "etl_166" hidden_effect = { event_target:etl_166 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_167 = yes } name = "etl_167" hidden_effect = { event_target:etl_167 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_168 = yes } name = "etl_168" hidden_effect = { event_target:etl_168 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_169 = yes } name = "etl_169" hidden_effect = { event_target:etl_169 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_170 = yes } name = "etl_170" hidden_effect = { event_target:etl_170 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_171 = yes } name = "etl_171" hidden_effect = { event_target:etl_171 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_172 = yes } name = "etl_172" hidden_effect = { event_target:etl_172 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_173 = yes } name = "etl_173" hidden_effect = { event_target:etl_173 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_174 = yes } name = "etl_174" hidden_effect = { event_target:etl_174 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_175 = yes } name = "etl_175" hidden_effect = { event_target:etl_175 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_176 = yes } name = "etl_176" hidden_effect = { event_target:etl_176 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_177 = yes } name = "etl_177" hidden_effect = { event_target:etl_177 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_178 = yes } name = "etl_178" hidden_effect = { event_target:etl_178 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_179 = yes } name = "etl_179" hidden_effect = { event_target:etl_179 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_180 = yes } name = "etl_180" hidden_effect = { event_target:etl_180 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_181 = yes } name = "etl_181" hidden_effect = { event_target:etl_181 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_182 = yes } name = "etl_182" hidden_effect = { event_target:etl_182 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_183 = yes } name = "etl_183" hidden_effect = { event_target:etl_183 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_184 = yes } name = "etl_184" hidden_effect = { event_target:etl_184 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_185 = yes } name = "etl_185" hidden_effect = { event_target:etl_185 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_186 = yes } name = "etl_186" hidden_effect = { event_target:etl_186 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_187 = yes } name = "etl_187" hidden_effect = { event_target:etl_187 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_188 = yes } name = "etl_188" hidden_effect = { event_target:etl_188 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_189 = yes } name = "etl_189" hidden_effect = { event_target:etl_189 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_190 = yes } name = "etl_190" hidden_effect = { event_target:etl_190 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_191 = yes } name = "etl_191" hidden_effect = { event_target:etl_191 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_192 = yes } name = "etl_192" hidden_effect = { event_target:etl_192 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_193 = yes } name = "etl_193" hidden_effect = { event_target:etl_193 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_194 = yes } name = "etl_194" hidden_effect = { event_target:etl_194 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_195 = yes } name = "etl_195" hidden_effect = { event_target:etl_195 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_196 = yes } name = "etl_196" hidden_effect = { event_target:etl_196 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_197 = yes } name = "etl_197" hidden_effect = { event_target:etl_197 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_198 = yes } name = "etl_198" hidden_effect = { event_target:etl_198 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_199 = yes } name = "etl_199" hidden_effect = { event_target:etl_199 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_200 = yes } name = "etl_200" hidden_effect = { event_target:etl_200 = { set_star_flag = giga_qso_target_system@root } country_event = { id = giga_qso.006 } } }
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.005 } }
+	}
+
+	# Back
+	option = {
+		name = "ehof_goback"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = { country_event = { id = giga_qso.004 } }
+		default_hide_option = yes
+	}
+
+	# Cancel
+	option = {
+		name = "giga_ndb.002.e"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = { country_event = { id = giga_qso.001 } }
+	}
+}
+
+# Cluster/System/Planet Targeting
+country_event = {
+	id = giga_qso.006
+	title = "giga_qso.002.name"
+	desc = "giga_qso.006.desc"
+	custom_gui = "ehof_mainui_window"
+	is_triggered_only = yes
+	diplomatic = yes
+	picture_event_data = {
+		portrait = root.species
+		room = giga_qso_room
+	}
+
+	immediate = {
+		remove_country_flag = giga_qso_firing_cluster
+		remove_country_flag = giga_qso_firing_system
+		remove_country_flag = giga_qso_firing_planet
+		if = {
+			limit = {
+				NOT = {
+					any_galaxy_planet = { giga_qso_is_planet_targeted = yes }
+				}
+			}
+			set_variable = {
+				which = giga_qso_targeted_planets
+				value = 0
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					any_galaxy_planet = { giga_qso_is_system_targeted = yes }
+				}
+			}
+			set_variable = {
+				which = giga_qso_targeted_systems
+				value = 0
+			}
+		}
+	}
+
+	# Cluster
+	option = {
+		name = "giga_qso.006.a"
+		custom_gui = "ehof_mainui_option_big"
+		allow = {
+			custom_tooltip = {
+				fail_text = "giga_ndb.006.cantnukeowncaptialsystem"
+				any_system = {
+					has_star_flag = giga_qso_target_system@root
+					NOR = {
+						any_system_planet = {
+							is_capital = yes
+							exists = owner
+							owner = { is_same_value = root }
+						}
+						any_neighbor_system = {
+							any_system_planet = {
+								is_capital = yes
+								exists = owner
+								owner = { is_same_value = root }
+							}
+						}
+					}
+				}
+			}
+		}
+		hidden_effect = {
+			set_country_flag = giga_qso_firing_cluster
+			random_system = {
+				limit = { has_star_flag = giga_qso_target_system@root }
+				star = {
+					giga_qso_target_cluster = yes
+				}
+			}
+			country_event = { id = giga_qso.001 }
+		}
+	}
+
+	# System
+	option = {
+		name = "giga_qso.006.b"
+		custom_gui = "ehof_mainui_option_big"
+		# response_text = "giga_qso.006.system"
+		allow = {
+			custom_tooltip = {
+				fail_text = "giga_ndb.006.cantnukeowncaptialsystem"
+				any_system = {
+					has_star_flag = giga_qso_target_system@root
+					NOT = {
+						any_system_planet = {
+							is_capital = yes
+							exists = owner
+							owner = { is_same_value = root }
+						}
+					}
+				}
+			}
+
+			custom_tooltip = {
+				fail_text = "giga.qso.maxtargetedsystems"
+				check_variable = {
+					which = giga_qso_targeted_systems
+					value < 4
+				}
+			}
+
+			custom_tooltip = {
+				fail_text = "giga.qso.canttargetsystemtwice"
+				any_system = {
+					has_star_flag = giga_qso_target_system@root
+					qso_can_target_system = yes
+				}
+			}
+		}
+		hidden_effect = {
+			# set_country_flag = giga_qso_firing_system
+			random_system = {
+				limit = { has_star_flag = giga_qso_target_system@root }
+				star = {
+					giga_qso_target_system = yes
+				}
+			}
+			country_event = { id = giga_qso.005 }
+		}
+	}
+
+	# Planet
+	option = {
+		name = "giga_qso.006.c"
+		custom_gui = "ehof_mainui_option_big"
+		allow = {
+			custom_tooltip = {
+				fail_text = "giga.qso.novalidtargets"
+				any_system = {
+					has_star_flag = giga_qso_target_system@root
+					any_system_planet = { qso_can_target_planet = yes }
+				}
+			}
+
+			custom_tooltip = {
+				fail_text = "giga.qso.maxtargetedplanets"
+				check_variable = {
+					which = giga_qso_targeted_planets
+					value < 10
+				}
+			}
+		}
+		hidden_effect = {
+			country_event = { id = giga_qso.007 }
+		}
+	}
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.006 } }
+	}
+
+	# Back
+	option = {
+		name = "ehof_goback"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = { country_event = { id = giga_qso.005 } }
+		default_hide_option = yes
+	}
+
+	# Cancel
+	option = {
+		name = "giga_ndb.002.e"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = { country_event = { id = giga_qso.001 } }
+	}
+}
+
+# Specific Planet Targeting
+country_event = {
+	id = giga_qso.007
+	title = "giga_qso.002.name"
+	desc = "giga_qso.007.desc"
+	custom_gui = "ehof_mainui_window"
+	is_triggered_only = yes
+	diplomatic = yes
+	picture_event_data = {
+		portrait = root.species
+		room = giga_qso_room
+	}
+
+	immediate = {
+		giga_event_target_list_clear = yes
+		random_system = {
+			limit = { has_star_flag = giga_qso_target_system@root }
+			every_system_planet = {
+				limit = { qso_can_target_planet = yes }
+				giga_event_target_list_save = yes
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					any_galaxy_planet = { giga_qso_is_planet_targeted = yes }
+				}
+			}
+			set_variable = {
+				which = giga_qso_targeted_planets
+				value = 0
+			}
+		}
+	}
+
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_001 = yes } name = "etl_001" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_001 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_002 = yes } name = "etl_002" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_002 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_003 = yes } name = "etl_003" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_003 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_004 = yes } name = "etl_004" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_004 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_005 = yes } name = "etl_005" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_005 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_006 = yes } name = "etl_006" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_006 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_007 = yes } name = "etl_007" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_007 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_008 = yes } name = "etl_008" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_008 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_009 = yes } name = "etl_009" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_009 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_010 = yes } name = "etl_010" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_010 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_011 = yes } name = "etl_011" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_011 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_012 = yes } name = "etl_012" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_012 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_013 = yes } name = "etl_013" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_013 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_014 = yes } name = "etl_014" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_014 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_015 = yes } name = "etl_015" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_015 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_016 = yes } name = "etl_016" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_016 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_017 = yes } name = "etl_017" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_017 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_018 = yes } name = "etl_018" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_018 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_019 = yes } name = "etl_019" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_019 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_020 = yes } name = "etl_020" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_020 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_021 = yes } name = "etl_021" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_021 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_022 = yes } name = "etl_022" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_022 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_023 = yes } name = "etl_023" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_023 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_024 = yes } name = "etl_024" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_024 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_025 = yes } name = "etl_025" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_025 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_026 = yes } name = "etl_026" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_026 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_027 = yes } name = "etl_027" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_027 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_028 = yes } name = "etl_028" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_028 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_029 = yes } name = "etl_029" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_029 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_030 = yes } name = "etl_030" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_030 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_031 = yes } name = "etl_031" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_031 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_032 = yes } name = "etl_032" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_032 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_033 = yes } name = "etl_033" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_033 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_034 = yes } name = "etl_034" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_034 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_035 = yes } name = "etl_035" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_035 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_036 = yes } name = "etl_036" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_036 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_037 = yes } name = "etl_037" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_037 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_038 = yes } name = "etl_038" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_038 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_039 = yes } name = "etl_039" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_039 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_040 = yes } name = "etl_040" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_040 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_041 = yes } name = "etl_041" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_041 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_042 = yes } name = "etl_042" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_042 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_043 = yes } name = "etl_043" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_043 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_044 = yes } name = "etl_044" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_044 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_045 = yes } name = "etl_045" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_045 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_046 = yes } name = "etl_046" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_046 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_047 = yes } name = "etl_047" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_047 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_048 = yes } name = "etl_048" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_048 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_049 = yes } name = "etl_049" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_049 = { giga_qso_target_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { etl_050 = yes } name = "etl_050" hidden_effect = { country_event = { id = giga_qso.006 } event_target:etl_050 = { giga_qso_target_planet = yes } } }
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.007 } }
+	}
+
+	# Back
+	option = {
+		name = "ehof_goback"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = { country_event = { id = giga_qso.006 } }
+		default_hide_option = yes
+	}
+
+	# Cancel
+	option = {
+		name = "giga_ndb.002.e"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = { country_event = { id = giga_qso.001 } }
+	}
+}
+
+# Destroy Targeted Cluster
+country_event = {
+	id = giga_qso.0070
+	title = "giga_qso.002.name"
+	desc = "giga_qso.0070.desc"
+	custom_gui = "ehof_mainui_window"
+	is_triggered_only = yes
+	diplomatic = yes
+	picture_event_data = {
+		portrait = root.species
+		room = giga_qso_room
+	}
+
+	# Fire!
+	option = {
+		name = "giga_qso.001.confirmdestruction"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = {
+			remove_country_flag = quasistellar_menu_active
+			set_country_flag = quasistellar_cluster_busting
+			set_country_flag = quasistellar_firing
+			country_event = { id = giga_qso.10 days = 1 }
+			# every_system = { limit = { star = { giga_qso_is_cluster_targeted = yes } } spawn_megastructure = { type = quasi_stellar_marker_star_firing planet = system_star init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } }
+		}
+	}
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.0070 } }
+	}
+
+	# Back
+	option = {
+		name = "ehof_goback"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = { country_event = { id = giga_qso.002 } }
+		default_hide_option = yes
+	}
+}
+
+# Destroy Targeted Systems
+country_event = {
+	id = giga_qso.0071
+	title = "giga_qso.002.name"
+	desc = "giga_qso.0071.desc"
+	custom_gui = "ehof_mainui_window"
+	is_triggered_only = yes
+	diplomatic = yes
+	picture_event_data = {
+		portrait = root.species
+		room = giga_qso_room
+	}
+
+	# Fire!
+	option = {
+		name = "giga_qso.001.confirmdestruction"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = {
+			remove_country_flag = quasistellar_menu_active
+			set_country_flag = quasistellar_cluster_busting
+			set_country_flag = quasistellar_firing
+			country_event = { id = giga_qso.10 }
+			country_event = { id = giga_qso.18 days = 20 }
+			every_system = { limit = { star = { giga_qso_is_system_targeted = yes } } spawn_megastructure = { type = quasi_stellar_marker_star_firing planet = system_star init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } }
+		}
+	}
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.0071 } }
+	}
+
+	# Back
+	option = {
+		name = "ehof_goback"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = { country_event = { id = giga_qso.002 } }
+		default_hide_option = yes
+	}
+}
+
+# Discard Targeted Systems
+country_event = {
+	id = giga_qso.0072
+	title = "giga_qso.002.name"
+	desc = "giga_qso.0072.desc"
+	custom_gui = "ehof_mainui_window"
+	is_triggered_only = yes
+	diplomatic = yes
+	picture_event_data = {
+		portrait = root.species
+		room = giga_qso_room
+	}
+
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { giga_qso_targeted_system_1 = yes } name = "giga_qso_targeted_system_1" hidden_effect = { country_event = { id = giga_qso.002 } event_target:giga_qso_targeted_system_1 = { giga_qso_untarget_system = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { giga_qso_targeted_system_2 = yes } name = "giga_qso_targeted_system_2" hidden_effect = { country_event = { id = giga_qso.002 } event_target:giga_qso_targeted_system_2 = { giga_qso_untarget_system = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { giga_qso_targeted_system_3 = yes } name = "giga_qso_targeted_system_3" hidden_effect = { country_event = { id = giga_qso.002 } event_target:giga_qso_targeted_system_3 = { giga_qso_untarget_system = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { giga_qso_targeted_system_4 = yes } name = "giga_qso_targeted_system_4" hidden_effect = { country_event = { id = giga_qso.002 } event_target:giga_qso_targeted_system_4 = { giga_qso_untarget_system = yes } } }
+
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.0072 } }
+	}
+
+	# Back
+	option = {
+		name = "ehof_goback"
+		custom_gui = "ehof_mainui_option_big"
+		default_hide_option = yes
+		hidden_effect = { country_event = { id = giga_qso.001 } }
+	}
+}
+
+# Destroy Targeted Planets
+country_event = {
+	id = giga_qso.0073
+	title = "giga_qso.002.name"
+	desc = "giga_qso.0073.desc"
+	custom_gui = "ehof_mainui_window"
+	is_triggered_only = yes
+	diplomatic = yes
+	picture_event_data = {
+		portrait = root.species
+		room = giga_qso_room
+	}
+
+	# Fire!
+	option = {
+		name = "giga_qso.001.confirmdestruction"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = {
+			remove_country_flag = quasistellar_menu_active
+			set_country_flag = quasistellar_planet_busting
+			set_country_flag = quasistellar_firing
+			country_event = { id = giga_qso.10 }
+			country_event = { id = giga_qso.19 days = 20 }
+			# if = { limit = { giga_qso_targeted_planet_1 = yes } event_target:giga_qso_targeted_planet_1.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_1 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			# if = { limit = { giga_qso_targeted_planet_2 = yes } event_target:giga_qso_targeted_planet_2.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_2 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			# if = { limit = { giga_qso_targeted_planet_3 = yes } event_target:giga_qso_targeted_planet_3.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_3 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			# if = { limit = { giga_qso_targeted_planet_4 = yes } event_target:giga_qso_targeted_planet_4.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_4 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			# if = { limit = { giga_qso_targeted_planet_5 = yes } event_target:giga_qso_targeted_planet_5.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_5 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			# if = { limit = { giga_qso_targeted_planet_6 = yes } event_target:giga_qso_targeted_planet_6.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_6 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			# if = { limit = { giga_qso_targeted_planet_7 = yes } event_target:giga_qso_targeted_planet_7.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_7 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			# if = { limit = { giga_qso_targeted_planet_8 = yes } event_target:giga_qso_targeted_planet_8.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_8 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			# if = { limit = { giga_qso_targeted_planet_9 = yes } event_target:giga_qso_targeted_planet_9.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_9 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			# if = { limit = { giga_qso_targeted_planet_10 = yes } event_target:giga_qso_targeted_planet_10.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_10 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+		}
+	}
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.0073 } }
+	}
+
+	# Back
+	option = {
+		name = "ehof_goback"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = { country_event = { id = giga_qso.002 } }
+		default_hide_option = yes
+	}
+}
+
+# Discard Targeted Planets
+country_event = {
+	id = giga_qso.0074
+	title = "giga_qso.002.name"
+	desc = "giga_qso.0074.desc"
+	custom_gui = "ehof_mainui_window"
+	is_triggered_only = yes
+	diplomatic = yes
+	picture_event_data = {
+		portrait = root.species
+		room = giga_qso_room
+	}
+
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { giga_qso_targeted_planet_1 = yes } name = "giga_qso_targeted_planet_1" hidden_effect = { country_event = { id = giga_qso.002 } event_target:giga_qso_targeted_planet_1 = { giga_qso_untarget_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { giga_qso_targeted_planet_2 = yes } name = "giga_qso_targeted_planet_2" hidden_effect = { country_event = { id = giga_qso.002 } event_target:giga_qso_targeted_planet_2 = { giga_qso_untarget_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { giga_qso_targeted_planet_3 = yes } name = "giga_qso_targeted_planet_3" hidden_effect = { country_event = { id = giga_qso.002 } event_target:giga_qso_targeted_planet_3 = { giga_qso_untarget_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { giga_qso_targeted_planet_4 = yes } name = "giga_qso_targeted_planet_4" hidden_effect = { country_event = { id = giga_qso.002 } event_target:giga_qso_targeted_planet_4 = { giga_qso_untarget_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { giga_qso_targeted_planet_5 = yes } name = "giga_qso_targeted_planet_5" hidden_effect = { country_event = { id = giga_qso.002 } event_target:giga_qso_targeted_planet_5 = { giga_qso_untarget_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { giga_qso_targeted_planet_6 = yes } name = "giga_qso_targeted_planet_6" hidden_effect = { country_event = { id = giga_qso.002 } event_target:giga_qso_targeted_planet_6 = { giga_qso_untarget_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { giga_qso_targeted_planet_7 = yes } name = "giga_qso_targeted_planet_7" hidden_effect = { country_event = { id = giga_qso.002 } event_target:giga_qso_targeted_planet_7 = { giga_qso_untarget_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { giga_qso_targeted_planet_8 = yes } name = "giga_qso_targeted_planet_8" hidden_effect = { country_event = { id = giga_qso.002 } event_target:giga_qso_targeted_planet_8 = { giga_qso_untarget_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { giga_qso_targeted_planet_9 = yes } name = "giga_qso_targeted_planet_9" hidden_effect = { country_event = { id = giga_qso.002 } event_target:giga_qso_targeted_planet_9 = { giga_qso_untarget_planet = yes } } }
+	option = { custom_gui = "ehof_mainui_option_big" trigger = { giga_qso_targeted_planet_10 = yes } name = "giga_qso_targeted_planet_10" hidden_effect = { country_event = { id = giga_qso.002 } event_target:giga_qso_targeted_planet_10 = { giga_qso_untarget_planet = yes } } }
+
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.0074 } }
+	}
+
+	# Back
+	option = {
+		name = "ehof_goback"
+		custom_gui = "ehof_mainui_option_big"
+		default_hide_option = yes
+		hidden_effect = { country_event = { id = giga_qso.001 } }
+	}
+}
+
+# Power Management
+country_event = {
+	id = giga_qso.008
+	title = "giga_qso.008.name"
+	desc = "giga_qso.008.desc"
+	custom_gui = "ehof_mainui_window"
+	is_triggered_only = yes
+	diplomatic = yes
+	picture_event_data = {
+		portrait = root.species
+		room = giga_qso_room
+	}
+
+	# Increase
+	option = {
+		name = "giga_qso.008.increase"
+		custom_gui = "ehof_mainui_option_big"
+		allow = { NOT = { has_country_flag = qso_intensity_maximum } }
+		hidden_effect = {
+			if = {
+				limit = {
+					NOR = {
+						has_country_flag = qso_intensity_none
+						has_country_flag = qso_intensity_minimal
+						has_country_flag = qso_intensity_low
+						has_country_flag = qso_intensity_med
+						has_country_flag = qso_intensity_high
+					}
+				}
+				set_country_flag = qso_intensity_med
+			}
+			country_event = { id = giga_qso.008 }
 			if = {
 				limit = { has_country_flag = qso_intensity_none }
 				remove_country_flag = qso_intensity_none
-				set_country_flag = qso_intensity_verylow
-				add_modifier = { modifier = qso_intensity_verylow }
-				remove_modifier = "qso_intensity_none"
+				set_country_flag = qso_intensity_minimal
 			}
 			else_if = {
-				limit = { has_country_flag = qso_intensity_verylow }
-				remove_country_flag = qso_intensity_verylow
+				limit = { has_country_flag = qso_intensity_minimal }
+				remove_country_flag = qso_intensity_minimal
 				set_country_flag = qso_intensity_low
-				add_modifier = { modifier = qso_intensity_low }
-				remove_modifier = "qso_intensity_verylow"
 			}
 			else_if = {
 				limit = { has_country_flag = qso_intensity_low }
 				remove_country_flag = qso_intensity_low
 				set_country_flag = qso_intensity_med
-				remove_modifier = "qso_intensity_low"
 			}
 			else_if = {
 				limit = { has_country_flag = qso_intensity_med }
 				remove_country_flag = qso_intensity_med
 				set_country_flag = qso_intensity_high
-				add_modifier = { modifier = "qso_intensity_high" }
 			}
 			else_if = {
 				limit = { has_country_flag = qso_intensity_high }
 				remove_country_flag = qso_intensity_high
-				set_country_flag = qso_intensity_veryhigh
-				add_modifier = { modifier = qso_intensity_veryhigh }
-				remove_modifier = "qso_intensity_high"
-			}
-			else_if = {
-				limit = { has_country_flag = qso_intensity_veryhigh }
-				remove_country_flag = qso_intensity_veryhigh
-				set_country_flag = qso_intensity_extremely
-				add_modifier = { modifier = qso_intensity_extremely }
-				remove_modifier = "qso_intensity_veryhigh"
-			}
-			else_if = {
-				limit = { has_country_flag = qso_intensity_extremely }
-				remove_country_flag = qso_intensity_extremely
-				set_country_flag = qso_intensity_insane
-				add_modifier = { modifier = qso_intensity_insane }
-				remove_modifier = "qso_intensity_extremely"
-			}
-			else_if = {
-				limit = { has_country_flag = qso_intensity_insane }
-				remove_country_flag = qso_intensity_insane
-				set_country_flag = qso_intensity_physicslimits
-				add_modifier = { modifier = qso_intensity_physicslimits }
-				remove_modifier = "qso_intensity_insane"
+				set_country_flag = qso_intensity_maximum
 			}
 		}
 	}
 
 	# intensity display
-	option = { name = "giga_qso.500.intensityphysicslimits"	trigger = { has_country_flag = qso_intensity_physicslimits }	hidden_effect = { country_event = { id = giga_qso.500 } } }
-	option = { name = "giga_qso.500.intensityinsane"		trigger = { has_country_flag = qso_intensity_insane }			hidden_effect = { country_event = { id = giga_qso.500 } } }
-	option = { name = "giga_qso.500.intensityextremely"		trigger = { has_country_flag = qso_intensity_extremely }		hidden_effect = { country_event = { id = giga_qso.500 } } }
-	option = { name = "giga_qso.500.intensityveryhigh"		trigger = { has_country_flag = qso_intensity_veryhigh }			hidden_effect = { country_event = { id = giga_qso.500 } } }
-	option = { name = "giga_qso.500.intensityhigh"			trigger = { has_country_flag = qso_intensity_high }				hidden_effect = { country_event = { id = giga_qso.500 } } }
-	option = { name = "giga_qso.500.intensitymed"			trigger = { has_country_flag = qso_intensity_med }				hidden_effect = { country_event = { id = giga_qso.500 } } }
-	option = { name = "giga_qso.500.intensitylow"			trigger = { has_country_flag = qso_intensity_low }				hidden_effect = { country_event = { id = giga_qso.500 } } }
-	option = { name = "giga_qso.500.intensityverylow"		trigger = { has_country_flag = qso_intensity_verylow }			hidden_effect = { country_event = { id = giga_qso.500 } } }
-	option = { name = "giga_qso.500.intensitynone"			trigger = { has_country_flag = qso_intensity_none }				hidden_effect = { country_event = { id = giga_qso.500 } } }
+	option = { custom_gui = "ehof_mainui_option_big" name = "giga_qso.008.intensitymaximum"	trigger = { has_country_flag = qso_intensity_maximum }			hidden_effect = { country_event = { id = giga_qso.008 } } custom_tooltip = giga_qso.008.intensitymaximum.tooltip }
+	option = { custom_gui = "ehof_mainui_option_big" name = "giga_qso.008.intensityhigh"			trigger = { has_country_flag = qso_intensity_high }		hidden_effect = { country_event = { id = giga_qso.008 } } custom_tooltip = giga_qso.008.intensityhigh.tooltip }
+	option = { custom_gui = "ehof_mainui_option_big" name = "giga_qso.008.intensitymed"			trigger = { has_country_flag = qso_intensity_med }			hidden_effect = { country_event = { id = giga_qso.008 } } custom_tooltip = giga_qso.008.intensitymed.tooltip }
+	option = { custom_gui = "ehof_mainui_option_big" name = "giga_qso.008.intensitylow"			trigger = { has_country_flag = qso_intensity_low }			hidden_effect = { country_event = { id = giga_qso.008 } } custom_tooltip = giga_qso.008.intensitylow.tooltip }
+	option = { custom_gui = "ehof_mainui_option_big" name = "giga_qso.008.intensityminimal"		trigger = { has_country_flag = qso_intensity_minimal }		hidden_effect = { country_event = { id = giga_qso.008 } } custom_tooltip = giga_qso.008.intensityminimal.tooltip }
+	option = { custom_gui = "ehof_mainui_option_big" name = "giga_qso.008.intensitynone"			trigger = { has_country_flag = qso_intensity_none }		hidden_effect = { country_event = { id = giga_qso.008 } } custom_tooltip = giga_qso.008.intensitynone.tooltip }
 
-	# decrease
+
+	# Decrease
 	option = {
-		name = "giga_qso.500.decrease"
+		name = "giga_qso.008.decrease"
+		custom_gui = "ehof_mainui_option_big"
 		allow = { NOT = { has_country_flag = qso_intensity_none } }
 		hidden_effect = {
-			country_event = { id = giga_qso.500 }
 			if = {
-				limit = { has_country_flag = qso_intensity_physicslimits }
-				remove_country_flag = qso_intensity_physicslimits
-				set_country_flag = qso_intensity_insane
-				add_modifier = { modifier = qso_intensity_insane }
-				remove_modifier = "qso_intensity_physicslimits"
+				limit = {
+					NOR = {
+						has_country_flag = qso_intensity_none
+						has_country_flag = qso_intensity_minimal
+						has_country_flag = qso_intensity_low
+						has_country_flag = qso_intensity_med
+						has_country_flag = qso_intensity_high
+						has_country_flag = qso_intensity_maximum
+					}
+				}
+				set_country_flag = qso_intensity_med
 			}
-			else_if = {
-				limit = { has_country_flag = qso_intensity_insane }
-				remove_country_flag = qso_intensity_insane
-				set_country_flag = qso_intensity_extremely
-				add_modifier = { modifier = qso_intensity_extremely }
-				remove_modifier = "qso_intensity_insane"
-			}
-			else_if = {
-				limit = { has_country_flag = qso_intensity_extremely }
-				remove_country_flag = qso_intensity_extremely
-				set_country_flag = qso_intensity_veryhigh
-				add_modifier = { modifier = qso_intensity_veryhigh }
-				remove_modifier = "qso_intensity_extremely"
-			}
-			else_if = {
-				limit = { has_country_flag = qso_intensity_veryhigh }
-				remove_country_flag = qso_intensity_veryhigh
+
+			country_event = { id = giga_qso.008 }
+			if = {
+				limit = { has_country_flag = qso_intensity_maximum }
+				remove_country_flag = qso_intensity_maximum
 				set_country_flag = qso_intensity_high
-				add_modifier = { modifier = qso_intensity_high }
-				remove_modifier = "qso_intensity_veryhigh"
 			}
 			else_if = {
 				limit = { has_country_flag = qso_intensity_high }
 				remove_country_flag = qso_intensity_high
 				set_country_flag = qso_intensity_med
-				remove_modifier = "qso_intensity_high"
 			}
 			else_if = {
 				limit = { has_country_flag = qso_intensity_med }
 				remove_country_flag = qso_intensity_med
 				set_country_flag = qso_intensity_low
-				add_modifier = { modifier = "qso_intensity_low" }
 			}
 			else_if = {
 				limit = { has_country_flag = qso_intensity_low }
 				remove_country_flag = qso_intensity_low
-				set_country_flag = qso_intensity_verylow
-				add_modifier = { modifier = qso_intensity_verylow }
-				remove_modifier = "qso_intensity_low"
+				set_country_flag = qso_intensity_minimal
 			}
 			else_if = {
-				limit = { has_country_flag = qso_intensity_verylow }
-				remove_country_flag = qso_intensity_verylow
+				limit = { has_country_flag = qso_intensity_minimal }
+				remove_country_flag = qso_intensity_minimal
 				set_country_flag = qso_intensity_none
-				add_modifier = { modifier = qso_intensity_none }
-				remove_modifier = "qso_intensity_verylow"
 			}
 		}
 	}
 
-	option = { name = "giga_qso.500.dump"		hidden_effect = { country_event = { id = giga_qso.501 } } }									# dump stuff
-	option = { name = "giga_qso.1.menu"		hidden_effect = { country_event = { id = giga_qso.1 } } }										# back to menu
-	option = { name = "giga_qso.1.quit"		hidden_effect = { remove_country_flag = quasistellar_menu_active } default_hide_option = yes }	# quit
+	# Dump Resources
+	option = { custom_gui = "ehof_mainui_option_big" name = "giga_qso.008.dump"		hidden_effect = { country_event = { id = giga_qso.009 } } }									# dump stuff
+
+	# Blank Space
+	option = {
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.008 } }
+	}
+
+	# Back
+	option = {
+		name = "ehof_goback"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = { country_event = { id = giga_qso.001 } }
+		default_hide_option = yes
+	}
 }
 
-# dump resources
+# Resource Dumping
 country_event = {
-	id = giga_qso.501
-	title = "giga_qso.501.name"
-	desc = "giga_qso.501.desc"
-	location = fromfrom
+	id = giga_qso.009
+	title = "giga_qso.009.name"
+	desc = "giga_qso.009.desc"
+	custom_gui = "ehof_mainui_window"
 	is_triggered_only = yes
 	diplomatic = yes
 	picture_event_data = {
@@ -191,1076 +2152,245 @@ country_event = {
 		room = giga_qso_room
 	}
 
-	# dump minerals
+	# Food
 	option = {
-		name = "giga_qso.500.minerals"
+		name = "giga_qso.008.food"
+		custom_gui = "ehof_mainui_option_big"
+		allow = { resource_stockpile_compare = { resource = food value >= 150000 } }
+		add_resource = { giga_sr_quasaric_energy = 30 }
+		add_resource = { food = -150000 }
+		hidden_effect = { country_event = { id = giga_qso.009 } }
+	}
+
+	# Minerals
+	option = {
+		name = "giga_qso.008.minerals"
+		custom_gui = "ehof_mainui_option_big"
 		allow = { resource_stockpile_compare = { resource = minerals value >= 100000 } }
 		add_resource = { giga_sr_quasaric_energy = 30 }
 		add_resource = { minerals = -100000 }
-		hidden_effect = { country_event = { id = giga_qso.501 } }
+		hidden_effect = { country_event = { id = giga_qso.009 } }
 	}
 
-	# dump alloys
+	# Consumer Goods
 	option = {
-		name = "giga_qso.500.alloys"
+		name = "giga_qso.008.goods"
+		custom_gui = "ehof_mainui_option_big"
+		allow = { resource_stockpile_compare = { resource = consumer_goods value >= 75000 } }
+		add_resource = { giga_sr_quasaric_energy = 30 }
+		add_resource = { consumer_goods = -75000 }
+		hidden_effect = { country_event = { id = giga_qso.009 } }
+	}
+
+	# Alloys
+	option = {
+		name = "giga_qso.008.alloys"
+		custom_gui = "ehof_mainui_option_big"
 		allow = { resource_stockpile_compare = { resource = alloys value >= 50000 } }
 		add_resource = { giga_sr_quasaric_energy = 30 }
 		add_resource = { alloys = -50000 }
 		hidden_effect = {
-			country_event = { id = giga_qso.501 }
+			country_event = { id = giga_qso.009 }
 		}
 	}
 
-	# dump food
+
+	# Bulk Matter
 	option = {
-		name = "giga_qso.500.food"
-		allow = { resource_stockpile_compare = { resource = food value >= 50000 } }
+		name = "giga_qso.008.bulkmatter"
+		custom_gui = "ehof_mainui_option_big"
+		allow = { resource_stockpile_compare = { resource = giga_sr_bulk_matter value >= 15 } }
 		add_resource = { giga_sr_quasaric_energy = 30 }
-		add_resource = { food = -50000 }
-		hidden_effect = { country_event = { id = giga_qso.501 } }
+		add_resource = { giga_sr_bulk_matter = -15 }
+		hidden_effect = { country_event = { id = giga_qso.009 } }
 	}
 
-	# dump consumer goods
+	# undesirable Pops
+	 option = {
+		 name = "giga_qso.008.undesirable"
+		 custom_gui = "ehof_mainui_option_big"
+		 custom_tooltip = giga_qso.008.undesirable.tooltip
+		 allow = { count_owned_pop_amount = { limit = { has_citizenship_type = { country = root type = citizenship_purge } } count > 2500 } }
+		 add_resource = { giga_sr_quasaric_energy = 5 }
+		 random_owned_pop_group = { limit = { has_citizenship_type = { country = root type = citizenship_purge } } kill_pop_group = { pop_group = this amount = 2500 } }
+		 hidden_effect = { country_event = { id = giga_qso.009 } }
+	 }
+
+	# Blank Space
 	option = {
-		name = "giga_qso.500.goods"
-		allow = { resource_stockpile_compare = { resource = consumer_goods value >= 70000 } }
-		add_resource = { giga_sr_quasaric_energy = 30 }
-		add_resource = { consumer_goods = -70000 }
-		hidden_effect = { country_event = { id = giga_qso.501 } }
+		custom_gui = "ehof_mainui_blank"
+		name = "ehof_header_blank"
+		hidden_effect = { country_event = { id = giga_qso.009 } }
 	}
 
-	# # dump undesirables (that's messed up) 4.0 rework lmao lol *explodes*
-	# option = {
-	# 	name = "giga_qso.500.undesirable"
-	# 	custom_tooltip = giga_qso.500.undesirable.tooltip
-	# 	allow = { count_owned_pop_amount = { limit = { has_citizenship_type = { country = root type = citizenship_purge } } count > 2500 } }
-	# 	add_resource = { giga_sr_quasaric_energy = 5 }
-	# 	while = { count = 25 random_owned_pop_group = { limit = { has_citizenship_type = { country = root type = citizenship_purge } } kill_pop = yes } }
-	# 	hidden_effect = { country_event = { id = giga_qso.501 } }
-	# }
-
-	option = { name = "giga_qso.1.panel"	hidden_effect = { country_event = { id = giga_qso.500 } } }
-	option = { name = "giga_qso.1.menu"	hidden_effect = { country_event = { id = giga_qso.1 } } }										# back to menu
-	option = { name = "giga_qso.1.quit"	hidden_effect = { remove_country_flag = quasistellar_menu_active } default_hide_option = yes }	# quit
+	# Back
+	option = {
+		name = "ehof_goback"
+		custom_gui = "ehof_mainui_option_big"
+		hidden_effect = { country_event = { id = giga_qso.008 } }
+		default_hide_option = yes
+	}
 }
 
-###################################
-### Firing ########################
-###################################
+#############################################################################################################################################
+### Charge Up/Firing Animation ########################################################################################################################
+#############################################################################################################################################
+
+# Central Charging Beam
 country_event = {
 	id = giga_qso.10
-	title = "giga_qso.10.name"
-	desc = "giga_qso.10.desc"
-	location = fromfrom
-	is_triggered_only = yes
-	diplomatic = yes
-	picture_event_data = {
-		portrait = root.species
-		room = giga_qso_room
-	}
-
-	option = { name = "giga_qso.10.fleet"		hidden_effect = { country_event = { id = giga_qso.200 } } }				# initiates fire at fleet event chain
-	option = { name = "giga_qso.10.planet"		hidden_effect = { country_event = { id = giga_qso.100 } } }				# initiates fire at planet event chain
-	option = { name = "giga_qso.10.star"		hidden_effect = { country_event = { id = giga_qso.300 } } }				# initiates fire at star event chain
-	option = { name = "giga_qso.10.starcluster"	hidden_effect = { country_event = { id = giga_qso.400 } } }				# initiates fire at cluster event chain
-	option = { name = "giga_qso.1.menu"			hidden_effect = { country_event = { id = giga_qso.1 } } }				# back to menu
-	option = { name = "giga_qso.1.quit"			hidden_effect = { remove_country_flag = quasistellar_menu_active } default_hide_option = yes }	# quit
-}
-
-# Planet Destruction
-###################################
-country_event = {
-	id = giga_qso.100
-	title = "giga_qso.100.name"
-	desc = "giga_qso.100.desc"
-	location = fromfrom
-	is_triggered_only = yes
-	diplomatic = yes
-	picture_event_data = {
-		portrait = root.species
-		room = giga_qso_room
-	}
-
-	option = {
-		name = "giga_qso.100.yes"
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 5 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			set_country_flag = quasistellar_planet_busting #used to bring up the different menu when opening the panel again
-			save_global_event_target_as = quasistellar_owner #used to scope to the country owning the quasistellar
-		}
-	}
-
-	option = { name = "giga_qso.100.no"	hidden_effect = { country_event = { id = giga_qso.10 } } default_hide_option = yes }	# cancel
-}
-
-# Place the markers
-country_event = {
-	id = giga_qso.101
-	title = "giga_qso.101.name"
-	desc = "giga_qso.101.desc"
-	show_sound = event_mystic_reveal
-	location = fromfrom
-	is_triggered_only = yes
-	diplomatic = yes
-	picture_event_data = {
-		portrait = root.species
-		room = giga_qso_room
-	}
-
-	#FIRE!
-	option = {
-		name = "giga_qso.101.fire.1" #1 planets
-		trigger = { has_country_flag = qso_1 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 5 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_planet_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.103 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_planet }
-				upgrade_megastructure_to = quasi_stellar_marker_planet_open
-			}
-		}
-	}
-
-	option = {
-		name = "giga_qso.101.fire.2" #2 planets
-		trigger = { has_country_flag = qso_2 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 10 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_planet_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.103 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_planet }
-				upgrade_megastructure_to = quasi_stellar_marker_planet_open
-			}
-		}
-	}
-
-	option = {
-		name = "giga_qso.101.fire.3" #3 planets
-		trigger = { has_country_flag = qso_3 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 15 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_planet_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.103 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_planet }
-				upgrade_megastructure_to = quasi_stellar_marker_planet_open
-			}
-		}
-	}
-
-	option = {
-		name = "giga_qso.101.fire.4" #4 planets
-		trigger = { has_country_flag = qso_4 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 20 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_planet_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.103 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_planet }
-				upgrade_megastructure_to = quasi_stellar_marker_planet_open
-			}
-		}
-	}
-
-	option = {
-		name = "giga_qso.101.fire.5" #5 planets
-		trigger = { has_country_flag = qso_5 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 25 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_planet_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.103 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_planet }
-				upgrade_megastructure_to = quasi_stellar_marker_planet_open
-			}
-		}
-	}
-
-	option = {
-		name = "giga_qso.101.fire.6" #6 planets
-		trigger = { has_country_flag = qso_6 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 30 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_planet_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.103 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_planet }
-				upgrade_megastructure_to = quasi_stellar_marker_planet_open
-			}
-		}
-	}
-
-	option = {
-		name = "giga_qso.101.fire.7" #7 planets
-		trigger = { has_country_flag = qso_7 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 35 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_planet_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.103 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_planet }
-				upgrade_megastructure_to = quasi_stellar_marker_planet_open
-			}
-		}
-	}
-
-	option = {
-		name = "giga_qso.101.fire.8" #8 planets
-		trigger = { has_country_flag = qso_8 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 40 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_planet_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.103 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_planet }
-				upgrade_megastructure_to = quasi_stellar_marker_planet_open
-			}
-		}
-	}
-
-	option = {
-		name = "giga_qso.101.fire.9" #9 planets
-		trigger = { has_country_flag = qso_9 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 45 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_planet_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.103 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_planet }
-				upgrade_megastructure_to = quasi_stellar_marker_planet_open
-			}
-		}
-	}
-
-	option = {
-		name = "giga_qso.101.fire.10" #10 planets
-		trigger = { has_country_flag = qso_10 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 50 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_planet_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.103 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_planet }
-				upgrade_megastructure_to = quasi_stellar_marker_planet_open
-			}
-		}
-	}
-
-	#not done with markers
-	option = { name = "giga_qso.101.markers"		hidden_effect = { remove_country_flag = quasistellar_menu_active } }
-
-	#cancel
-	option = {
-		name = "giga_qso.101.cancel"
-		default_hide_option = yes
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_planet_busting
-			remove_country_flag = qso_10
-			remove_country_flag = qso_9
-			remove_country_flag = qso_8
-			remove_country_flag = qso_7
-			remove_country_flag = qso_6
-			remove_country_flag = qso_5
-			remove_country_flag = qso_4
-			remove_country_flag = qso_3
-			remove_country_flag = qso_2
-			remove_country_flag = qso_1
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_planet }
-				remove_megastructure = this
-			}
-			every_system = {
-				limit = { has_star_flag = quasistellar_target_planet }
-				every_system_planet = {
-					limit = { has_planet_flag = quasistellar_target_planet }
-					remove_planet_flag = quasistellar_target_planet
-				}
-			}
-		}
-	}
-}
-
-country_event = { #blast
-	id = giga_qso.103
 	is_triggered_only = yes
 	hide_window = yes
 
 	immediate = {
-		every_system = {
-			limit = { has_star_flag = quasistellar_target_planet }
-			every_system_planet = {
-				limit = { has_planet_flag = quasistellar_target_planet }
-				if = {
-					limit = { is_colony = yes }
-					add_threat = { who = root amount = 3 } # Threat
-					owner = {
-						add_static_war_exhaustion = {
-							attacker = root
-							location = prev
-							value_for_planet_destruction = 1
-						}
-					}
-
-					if = {
-						limit = { NOT = { has_global_flag = qso_opinions } }
-						set_timed_global_flag = { flag = qso_opinions days = 30 }
-						if = {
-							limit = {
-								exists = owner
-								owner = {
-									NOR = {
-										is_country_type = ai_empire
-										is_country_type = swarm
-										is_country_type = extradimensional
-										is_country_type = extradimensional_2
-										is_country_type = extradimensional_3
-									}
-								}
-							}
-							owner = { add_opinion_modifier = { who = root modifier = opinion_broke_our_planet } }
-							every_country = {
-								limit = {
-									NOR = {
-										is_same_value = prev.owner
-										is_country_type = primitive
-										has_overlord = root
-										has_defensive_pact = root
-										is_country = root
-										is_in_federation_with = root
-										has_valid_civic = civic_fanatic_purifiers
-										has_valid_civic = civic_hive_devouring_swarm
-										has_valid_civic = civic_machine_terminator
-									}
-								}
-								add_opinion_modifier = { who = root modifier = opinion_broke_planet }
-							}
-						}
-						else = {
-							owner = { add_opinion_modifier = { who = root modifier = opinion_broke_our_empty_planet } }
-							every_country = {
-								limit = {
-									NOR = {
-										is_same_value = prev.owner
-										is_country_type = primitive
-										has_overlord = root
-										has_defensive_pact = root
-										is_country = root
-										is_in_federation_with = root
-										has_valid_civic = civic_fanatic_purifiers
-										has_valid_civic = civic_hive_devouring_swarm
-										has_valid_civic = civic_machine_terminator
-									}
-								}
-								add_opinion_modifier = { who = root modifier = opinion_broke_empty_planet }
-							}
-						}
-					}
+		country_event = { id = giga_qso.11 days = 1 }
+		random_owned_megastructure = {
+			limit = { is_megastructure_type = quasi_stellar_obliterator_5 }
+			remove_megastructure = this
+			solar_system = {
+				spawn_megastructure = {
+					type = quasi_stellar_obliterator_firing_1
+					owner = owner
+					init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner }
 				}
-
-				if = {
-					limit = { is_planet_class = pc_ai }
-					if = {
-						limit = { NOT = { has_planet_flag = machine_lair } }
-						planet_event = { id = giga_qso.111 } # contingency planet
-						every_country = { country_event = { id = giga_qso.110 } } # message
-					}
-					else = {
-						planet_event = { id = giga_qso.113 } # contingency planet
-						every_country = { country_event = { id = giga_qso.112 } } # message to everyone
-					}
-				}
-
-				if = {
-					limit = { is_planet_class = pc_infested }
-					planet_event = { id = giga_qso.115 } # Infested world
-				}
-
-				if = {
-					limit = {
-						has_planet_flag = gigaflusion
-						has_global_flag = katzenartig_imperium_happened
-						NOT = { has_global_flag = katzenartig_imperium_defeated }
-						any_country = { is_country_type = katzen_submarines } 
-					}
-					ROOT = { set_country_flag = player_country_cracked_flusion }
-				}	
-
-				if = {
-					limit = {
-						OR = {
-							planet_size < 25
-							giga_habitable_structure = yes
-							is_planet_class = pc_ice_asteroid
-							is_planet_class = pc_asteroid
-							is_planet_class = pc_crystal_asteroid
-						}
-					}
-					giga_remove_planet = yes # The planet is too small, or is artificial, instantly obliterated
-				}
-				else = { set_planet_size = 23 }
-
-				if = {
-					limit = { NOT = { has_planet_flag = quasistellar_impact } }
-					set_planet_flag = quasistellar_impact
-					if = { #check if its a gaseous body
-						limit = {
-							giga_is_gas_giant = yes
-							giga_brown_dwarf = yes
-						}
-						change_pc = pc_metallic_hydrogen
-					}
-					else = { change_pc = pc_molten }
-				}
-
-				# Automatically declare war (lol)
-				if = {
-					limit = {
-						exists = owner
-						owner = {
-							NOR = {
-								is_in_federation_with = root
-								is_at_war_with = root
-								is_country_type = ai_empire
-								is_country_type = swarm
-								is_country_type = extradimensional
-								is_country_type = extradimensional_2
-								is_country_type = extradimensional_3
-							}
-						}
-					}
-					root = {
-						declare_war = { # You shot a QSO you don't get defender buffs
-							target = owner
-							attacker_war_goal = "wg_hyperweapon"
-						}
-					}
-
+				random_system_megastructure = {
+					limit = { is_megastructure_type = quasi_stellar_gateway_off }
+					upgrade_megastructure_to = quasi_stellar_gateway_on
 				}
 			}
 		}
-
-		every_megastructure = {
-			limit = { is_megastructure_type = quasi_stellar_marker_planet_open }
-			upgrade_megastructure_to = quasi_stellar_marker_planet_firing
-		}
-		country_event = { id = giga_qso.105 days = 15 }	# Reset QSO
-		country_event = { id = giga_qso.1031 days = 10 } # Ends invalid war if country destroyed
 	}
 }
 
+# Radial Charging Beam 1
 country_event = {
-	id = giga_qso.1031
+	id = giga_qso.11 #1 laser
 	is_triggered_only = yes
 	hide_window = yes
-	trigger = {
-		any_war = {
-			using_war_goal = { type = wg_hyperweapon owner = attacker }
-		}
-	}
 
 	immediate = {
+		country_event = { id = giga_qso.12 days = 1 }
+		random_owned_megastructure = {
+			limit = { is_megastructure_type = quasi_stellar_obliterator_firing_1 }
+			upgrade_megastructure_to = quasi_stellar_obliterator_firing_2
+		}
+	}
+}
+
+# Radial Charging Beam 2
+country_event = {
+	id = giga_qso.12
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		country_event = { id = giga_qso.13 days = 1 }
+		random_owned_megastructure = {
+			limit = { is_megastructure_type = quasi_stellar_obliterator_firing_2 }
+			upgrade_megastructure_to = quasi_stellar_obliterator_firing_3		}
+	}
+}
+
+# Radial Charging Beam 3
+country_event = {
+	id = giga_qso.13
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		country_event = { id = giga_qso.14 days = 1 }
+		random_owned_megastructure = {
+			limit = { is_megastructure_type = quasi_stellar_obliterator_firing_3 }
+			upgrade_megastructure_to = quasi_stellar_obliterator_firing_4		}
+	}
+}
+
+# Radial Charging Beam 4
+country_event = {
+	id = giga_qso.14
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		country_event = { id = giga_qso.15 days = 1 }
+		random_owned_megastructure = {
+			limit = { is_megastructure_type = quasi_stellar_obliterator_firing_4 }
+			upgrade_megastructure_to = quasi_stellar_obliterator_firing_5		}
+	}
+}
+
+# Radial Charging Beam 5
+country_event = {
+	id = giga_qso.15
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		country_event = { id = giga_qso.16 days = 1 }
+		random_owned_megastructure = {
+			limit = { is_megastructure_type = quasi_stellar_obliterator_firing_5 }
+			upgrade_megastructure_to = quasi_stellar_obliterator_firing_6		}
+	}
+}
+
+# Radial Charging Beam 6
+country_event = {
+	id = giga_qso.16 #6 lasers
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		country_event = { id = giga_qso.17 days = 13 }
+		random_owned_megastructure = {
+			limit = { is_megastructure_type = quasi_stellar_obliterator_firing_6 }
+			upgrade_megastructure_to = quasi_stellar_obliterator_firing_7		}
+	}
+}
+
+# Firing!
+country_event = {
+	id = giga_qso.17
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		random_owned_megastructure = {
+			limit = { is_megastructure_type = quasi_stellar_obliterator_firing_7 }
+			upgrade_megastructure_to = quasi_stellar_obliterator_firing_8
+		}
+
 		if = {
 			limit = {
-				any_war = {
-					using_war_goal = { type = wg_hyperweapon owner = attacker }
-					NOT = { exists = defender } 
-				}
+				has_country_flag = quasistellar_cluster_busting
 			}
-			every_war = {
-				limit = {
-					using_war_goal = { type = wg_hyperweapon owner = attacker }
-					NOT = { exists = defender } 
-				}
-				save_event_target_as = end_this_war
-			}
-			set_truce = { target = event_target:end_this_war type = war }
+			every_system = { limit = { star = { giga_qso_is_cluster_targeted = yes } } spawn_megastructure = { type = quasi_stellar_marker_star_firing planet = system_star init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } }
+			remove_country_flag = quasistellar_cluster_busting
+			country_event = { id = giga_qso.18 days = 5 }
 		}
-	}
-}
-
-# Reset everything
-country_event = {
-	id = giga_qso.105
-	is_triggered_only = yes
-	hide_window = yes
-
-	immediate = {
-		remove_country_flag = quasistellar_firing
-		remove_country_flag = qso_10
-		remove_country_flag = qso_9
-		remove_country_flag = qso_8
-		remove_country_flag = qso_7
-		remove_country_flag = qso_6
-		remove_country_flag = qso_5
-		remove_country_flag = qso_4
-		remove_country_flag = qso_3
-		remove_country_flag = qso_2
-		remove_country_flag = qso_1
-
-		random_owned_megastructure = {
-			limit = { is_megastructure_type = quasi_stellar_gateway_on }
-			solar_system = {
-				spawn_megastructure = { type = "quasi_stellar_gateway_off"		owner = root }
-				spawn_megastructure = { type = "quasi_stellar_obliterator_5"	owner = root }
-			}
-		}
-
-		every_megastructure = {
+		if = {
 			limit = {
-				OR = {
-					is_megastructure_type = quasi_stellar_marker_planet_firing
-					is_megastructure_type = quasi_stellar_marker_star_firing
-					is_megastructure_type = quasi_stellar_marker_cluster_firing
-					is_megastructure_type = quasi_stellar_gateway_on
-					is_megastructure_type = quasi_stellar_obliterator_firing_1
-					is_megastructure_type = quasi_stellar_obliterator_firing_laser_1
-					is_megastructure_type = quasi_stellar_obliterator_firing_laser_2
-					is_megastructure_type = quasi_stellar_obliterator_firing_laser_3
-					is_megastructure_type = quasi_stellar_obliterator_firing_laser_4
-					is_megastructure_type = quasi_stellar_obliterator_firing_laser_5
-					is_megastructure_type = quasi_stellar_obliterator_firing_laser_6
-					is_megastructure_type = quasi_stellar_obliterator_firing_laser_big
-				}
+				has_country_flag = quasistellar_system_busting
 			}
-			remove_megastructure = this
+			every_system = { limit = { star = { giga_qso_is_system_targeted = yes } } spawn_megastructure = { type = quasi_stellar_marker_star_firing planet = system_star init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } }
+			remove_country_flag = quasistellar_system_busting
+			country_event = { id = giga_qso.18 days = 5 }
 		}
-	}
-}
-
-# Fleet Destruction
-###################################
-country_event = {
-	id = giga_qso.200
-	title = "giga_qso.200.name"
-	desc = "giga_qso.200.desc"
-	location = fromfrom
-	is_triggered_only = yes
-	diplomatic = yes
-	picture_event_data = {
-		portrait = root.species
-		room = giga_qso_room
-	}
-
-	option = {
-		name = "giga_qso.200.yes"
-		hidden_effect = {
-			country_event = { id = giga_qso.201 }
-			remove_country_flag = quasistellar_menu_active
-			set_country_flag = quasistellar_fleet_busting #used to bring up the different menu when opening the panel again
-			save_global_event_target_as = quasistellar_owner #used to scope to the country owning the quasistellar
-			random_owned_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_obliterator_5 }
-				solar_system = {
-					random_system_planet = {
-						limit = { is_planet_class = pc_core_quasar }
-						save_global_event_target_as = quasar_gun_blackhole
-					}
-				}
+		if = {
+			limit = {
+				has_country_flag = quasistellar_planet_busting
 			}
-			create_fleet = {
-				name = "Quasi-Stellar Calibrator"
-				settings = {
-					spawn_debris = no
-					can_change_composition = no
-				}
-				effect = {
-					set_owner = event_target:quasistellar_owner
-					create_ship = {
-						name = "Quasi-Stellar Calibrator"
-						design = "Quasistellar Calibrator"
-						effect = { set_ship_flag = calibrator_ship }
-					}
-					set_location = event_target:quasar_gun_blackhole
-				}
-			}
-		}
-	}
-
-	option = { name = "giga_qso.100.no"		hidden_effect = { country_event = { id = giga_qso.10 } } default_hide_option = yes }	# cancel
-}
-
-country_event = { #the ship is there
-	id = giga_qso.201
-	title = "giga_qso.201.name"
-	desc = "giga_qso.201.desc"
-	location = fromfrom
-	picture = GFX_evt_fleet_neutral
-	show_sound = event_mystic_reveal
-	is_triggered_only = yes
-	option = { name = "giga_qso.201.a" }
-}
-
-country_event = { #the ship is gone (disbanded)
-	id = giga_qso.202
-	title = "giga_qso.202.name"
-	desc = "giga_qso.202.desc"
-	picture = GFX_evt_fleet_neutral
-	show_sound = event_mystic_reveal
-	is_triggered_only = yes
-
-	trigger = {
-		NOT = { has_country_flag = quasistellar_fleet_busting_successful }
-		from = { is_ship_size = quasi_stellar_calibrator }
-	}
-
-	immediate = {
-		if = { #the firing procedure has NOT started
-			limit = { has_country_flag = quasistellar_fleet_busting }
-			remove_country_flag = quasistellar_fleet_busting
-		}
-		else_if = { #the firing procedure HAS started
-			limit = { has_country_flag = quasistellar_firing }
-			set_timed_country_flag = { flag = quasistellar_fleet_busting_failed days = 10 }
-			add_resource = { giga_sr_quasaric_energy = 20 }
-			country_event = { id = giga_qso.105 }	# Reset QSO
-			remove_country_flag = quasistellar_firing
-		}
-	}
-
-	option = { name = "giga_qso.202.a" }
-}
-
-country_event = { #the ship is gone (destroyed)
-	id = giga_qso.203
-	title = "giga_qso.203.name"
-	desc = "giga_qso.203.desc"
-	picture = GFX_evt_fleet_neutral
-	show_sound = event_mystic_reveal
-	is_triggered_only = yes
-
-	trigger = { fromfrom = { is_ship_size = quasi_stellar_calibrator } }
-
-	immediate = {
-		if = { # if the firing procedure has NOT started
-			limit = { has_country_flag = quasistellar_fleet_busting }
-			remove_country_flag = quasistellar_fleet_busting
-		}
-		else_if = { # if the firing procedure HAS started
-			limit = { has_country_flag = quasistellar_firing }
-			set_timed_country_flag = { flag = quasistellar_fleet_busting_failed days = 10 }
-			add_resource = { giga_sr_quasaric_energy = 20 }
-			country_event = { id = giga_qso.105 }	# Reset QSO
-			remove_country_flag = quasistellar_firing
-		}
-	}
-
-	option = { name = "giga_qso.203.a" }
-}
-
-country_event = { #target locked
-	id = giga_qso.204
-	title = "giga_qso.204.name"
-	desc = "giga_qso.204.desc"
-	show_sound = event_mystic_reveal
-	location = fromfrom
-	is_triggered_only = yes
-	diplomatic = yes
-	picture_event_data = {
-		portrait = root.species
-		room = giga_qso_room
-	}
-
-	#FIRE!
-	option = {
-		name = "giga_qso.204.fire"
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 20 } }
-		hidden_effect = {
-			random_owned_ship = {
-				limit = { is_ship_size = quasi_stellar_calibrator }
-				solar_system = {
-					random_system_planet = {
-						limit = { is_star = yes }
-						save_global_event_target_as = quasi_stellar_fleet_target
-					}
-				}
-			}
-			country_event = { id = giga_qso.206 days = 5 }
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_fleet_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.205 }
-			set_country_flag = quasistellar_fleet_busting_successful
-			every_owned_ship = {
-				limit = { is_ship_size = quasi_stellar_calibrator }
-				save_event_target_as = quasistellar_calibrator
-			}
-			create_fleet = { #lock the calibrator
-				name = "Quasi-Stellar Calibrator"
-				settings = {
-					spawn_debris = no
-					can_change_composition = no
-				}
-				effect = {
-					set_owner = event_target:quasistellar_owner
-					create_ship = {
-						name = "Quasi-Stellar Calibrator"
-						design = "Locked Quasistellar Calibrator"
-						effect = {
-							set_ship_flag = calibrator_ship
-						}
-					}
-					set_location = event_target:quasistellar_calibrator
-				}
-			}
-			event_target:quasistellar_calibrator = { delete_ship = this }
-			remove_country_flag = quasistellar_fleet_busting_successful
-			random_owned_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_obliterator_5 }
-				remove_megastructure = this
-				solar_system = {
-					spawn_megastructure = { type = "quasi_stellar_obliterator_firing_1"	owner = root }
-					random_system_megastructure = {
-						limit = { is_megastructure_type = quasi_stellar_gateway_off }
-						upgrade_megastructure_to = quasi_stellar_gateway_on
-					}
-				}
-			}
-		}
-	}
-
-	option = { name = "giga_qso.204.markers"		hidden_effect = { remove_country_flag = quasistellar_menu_active } }	# Not done with markers
-
-	#cancel
-	option = {
-		name = "giga_qso.101.cancel"
-		default_hide_option = yes
-		hidden_effect = {
-			country_event = { id = giga_qso.10 }
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_fleet_busting
-			every_owned_ship = {
-				limit = { is_ship_size = quasi_stellar_calibrator }
-				delete_ship = this
-			}
-		}
-	}
-}
-
-country_event = { #calibrating
-	id = giga_qso.205
-	title = "giga_qso.205.name"
-	desc = "giga_qso.205.desc"
-	location = fromfrom
-	picture = GFX_evt_fleet_neutral
-	show_sound = event_mystic_reveal
-	is_triggered_only = yes
-	option = { name = "giga_qso.205.a" }
-}
-
-country_event = { #firing!
-	id = giga_qso.206
-	title = "giga_qso.206.name"
-	desc = "giga_qso.206.desc"
-	location = fromfrom
-	picture = GFX_evt_machine_space_battle
-	show_sound = event_air_raid_siren
-	is_triggered_only = yes
-	trigger = { NOT = { has_country_flag = quasistellar_fleet_busting_failed } }
-
-	immediate = {
-		set_country_flag = quasistellar_fleet_busting_successful
-		every_owned_ship = {
-			limit = { is_ship_size = quasi_stellar_calibrator }
-			delete_ship = this
-		}
-		country_event = { id = giga_qso.1001 } #initiate firing sequence
-		country_event = { id = giga_qso.207 days = 5 } #the wormhole opens
-	}
-
-	option = { name = "giga_qso.206.a" }
-}
-
-country_event = { # Firing!
-	id = giga_qso.207
-	hide_window = yes
-	is_triggered_only = yes
-
-	immediate = {
-		remove_country_flag = quasistellar_fleet_busting_successful
-		country_event = { id = giga_qso.208 days = 30 } # Delete it
-		create_fleet = {
-			name = "Quasistellar Wormhole"
-			settings = {
-				spawn_debris = no
-				can_change_composition = no
-				is_boss = yes
-			}
-			effect = {
-				set_owner = event_target:quasistellar_owner
-				create_ship = {
-					name = "Quasistellar Wormhole"
-					design = "Quasistellar Wormhole"
-					effect = { set_ship_flag = quasistellarwormhole_ship }
-				}
-				set_location = event_target:quasi_stellar_fleet_target
-			}
-		}
-	}
-}
-
-country_event = { # Delete it
-	id = giga_qso.208
-	hide_window = yes
-	is_triggered_only = yes
-
-	immediate = {
-		remove_country_flag = quasistellar_firing
-		every_owned_ship = {
-			limit = { is_ship_size = quasi_stellar_wormhole }
-			delete_ship = this
-		}
-		country_event = { id = giga_qso.105 }	# Reset QSO
-	}
-}
-
-# Star Destruction
-###################################
-country_event = {
-	id = giga_qso.300
-	title = "giga_qso.300.name"
-	desc = "giga_qso.300.desc"
-	location = fromfrom
-	is_triggered_only = yes
-	diplomatic = yes
-	picture_event_data = {
-		portrait = root.species
-		room = giga_qso_room
-	}
-
-	option = {
-		name = "giga_qso.100.yes"
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 40 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			set_country_flag = quasistellar_stellar_busting #used to bring up the different menu when opening the panel again
-			save_global_event_target_as = quasistellar_owner #used to scope to the country owning the quasistellar
-		}
-	}
-
-	option = { name = "giga_qso.100.no" hidden_effect = { country_event = { id = giga_qso.10 } } default_hide_option = yes }	# cancel
-}
-
-# Place the markers
-country_event = {
-	id = giga_qso.301
-	title = "giga_qso.301.name"
-	desc = "giga_qso.301.desc"
-	show_sound = event_mystic_reveal
-	location = fromfrom
-	is_triggered_only = yes
-	diplomatic = yes
-	picture_event_data = {
-		portrait = root.species
-		room = giga_qso_room
-	}
-
-	#FIRE!
-	option = {
-		name = "giga_qso.301.fire.1" #1 stars
-		trigger = { has_country_flag = qso_1 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 40 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_stellar_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.4031 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_star }
-				upgrade_megastructure_to = quasi_stellar_marker_star_open
-			}
-		}
-	}
-
-	option = {
-		name = "giga_qso.301.fire.2" #2 stars
-		trigger = { has_country_flag = qso_2 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 80 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_stellar_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.4031 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_star }
-				upgrade_megastructure_to = quasi_stellar_marker_star_open
-			}
-		}
-	}
-
-	option = {
-		name = "giga_qso.301.fire.3" #3 stars
-		trigger = { has_country_flag = qso_3 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 120 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_stellar_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.4031 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_star }
-				upgrade_megastructure_to = quasi_stellar_marker_star_open
-			}
-		}
-	}
-
-	option = {
-		name = "giga_qso.301.fire.4" #4 stars
-		trigger = { has_country_flag = qso_4 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 160 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_stellar_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.4031 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_star }
-				upgrade_megastructure_to = quasi_stellar_marker_star_open
-			}
-		}
-	}
-
-	option = { name = "giga_qso.301.markers"		hidden_effect = { remove_country_flag = quasistellar_menu_active } }	# Not done with markers
-	option = {	# Cancel
-		name = "giga_qso.101.cancel"
-		default_hide_option = yes
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_stellar_busting
-			remove_country_flag = qso_4
-			remove_country_flag = qso_3
-			remove_country_flag = qso_2
-			remove_country_flag = qso_1
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_star }
-				remove_megastructure = this
-			}
-			every_system = {
-				limit = { has_star_flag = quasistellar_target_star }
-				remove_star_flag = quasistellar_target_star
-			}
-		}
-	}
-}
-
-# Cluster Destruction
-###################################
-country_event = {
-	id = giga_qso.400
-	title = "giga_qso.400.name"
-	desc = "giga_qso.400.desc"
-	location = fromfrom
-	is_triggered_only = yes
-	diplomatic = yes
-	picture_event_data = {
-		portrait = root.species
-		room = giga_qso_room
-	}
-
-	option = {
-		name = "giga_qso.100.yes"
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 120 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			set_country_flag = quasistellar_cluster_busting		# used to bring up the different menu when opening the panel again
-			save_global_event_target_as = quasistellar_owner	# used to scope to the country owning the quasistellar
-		}
-	}
-
-	option = { name = "giga_qso.100.no"	hidden_effect = { country_event = { id = giga_qso.10 } } default_hide_option = yes }	# cancel
-}
-
-# Place the markers
-country_event = {
-	id = giga_qso.401
-	title = "giga_qso.401.name"
-	desc = "giga_qso.401.desc"
-	show_sound = event_mystic_reveal
-	location = fromfrom
-	is_triggered_only = yes
-	diplomatic = yes
-	picture_event_data = {
-		portrait = root.species
-		room = giga_qso_room
-	}
-
-	# FIRE!
-	option = {
-		name = "giga_qso.401.fire" #STAR CLUSTER
-		trigger = { has_country_flag = qso_1 }
-		allow = { resource_stockpile_compare = { resource = giga_sr_quasaric_energy value >= 120 } }
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_cluster_busting
-			set_country_flag = quasistellar_firing
-			country_event = { id = giga_qso.1000 }
-			country_event = { id = giga_qso.4031 days = 15 }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_cluster }
-				upgrade_megastructure_to = quasi_stellar_marker_cluster_open
-			}
-		}
-	}
-
-	# Not done with markers
-	option = {
-		name = "giga_qso.401.markers"
-		hidden_effect = { remove_country_flag = quasistellar_menu_active }
-	}
-
-	# Cancel
-	option = {
-		name = "giga_qso.101.cancel"
-		default_hide_option = yes
-		hidden_effect = {
-			remove_country_flag = quasistellar_menu_active
-			remove_country_flag = quasistellar_cluster_busting
-			remove_country_flag = qso_1
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_cluster }
-				remove_megastructure = this
-			}
-			every_system = {
-				limit = { has_star_flag = quasistellar_target_cluster }
-				remove_star_flag = quasistellar_target_cluster
-			}
+			if = { limit = { giga_qso_targeted_planet_1 = yes } event_target:giga_qso_targeted_planet_1.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_1 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			if = { limit = { giga_qso_targeted_planet_2 = yes } event_target:giga_qso_targeted_planet_2.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_2 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			if = { limit = { giga_qso_targeted_planet_3 = yes } event_target:giga_qso_targeted_planet_3.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_3 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			if = { limit = { giga_qso_targeted_planet_4 = yes } event_target:giga_qso_targeted_planet_4.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_4 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			if = { limit = { giga_qso_targeted_planet_5 = yes } event_target:giga_qso_targeted_planet_5.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_5 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			if = { limit = { giga_qso_targeted_planet_6 = yes } event_target:giga_qso_targeted_planet_6.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_6 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			if = { limit = { giga_qso_targeted_planet_7 = yes } event_target:giga_qso_targeted_planet_7.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_7 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			if = { limit = { giga_qso_targeted_planet_8 = yes } event_target:giga_qso_targeted_planet_8.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_8 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			if = { limit = { giga_qso_targeted_planet_9 = yes } event_target:giga_qso_targeted_planet_9.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_9 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			if = { limit = { giga_qso_targeted_planet_10 = yes } event_target:giga_qso_targeted_planet_10.solar_system = { spawn_megastructure = { type = quasi_stellar_marker_planet_firing planet = event_target:giga_qso_targeted_planet_10 init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } } } }
+			remove_country_flag = quasistellar_planet_busting
+			country_event = { id = giga_qso.19 days = 5 }
 		}
 	}
 }
@@ -1268,32 +2398,10 @@ country_event = {
 #############################################################################################################################################
 ### Destruction Events ######################################################################################################################
 #############################################################################################################################################
-country_event = {
-	id = giga_qso.4031
-	is_triggered_only = yes
-	hide_window = yes
 
-	immediate = {
-		country_event = { id = giga_qso.403 days = 5 }
-		if = {
-			limit = { any_megastructure = { is_megastructure_type = quasi_stellar_marker_cluster_open } }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_cluster_open }
-				upgrade_megastructure_to = quasi_stellar_marker_cluster_firing
-			}
-		}
-		else_if = {
-			limit = { any_megastructure = { is_megastructure_type = quasi_stellar_marker_star_open } }
-			every_megastructure = {
-				limit = { is_megastructure_type = quasi_stellar_marker_star_open }
-				upgrade_megastructure_to = quasi_stellar_marker_star_firing
-			}
-		}
-	}
-}
-
+# Cluster/System Destruction
 country_event = {
-	id = giga_qso.403
+	id = giga_qso.18
 	is_triggered_only = yes
 	hide_window = yes
 
@@ -1302,15 +2410,22 @@ country_event = {
 
 		every_system = {
 			limit = {
-				OR = {
-					has_star_flag = quasistellar_target_star
-					has_star_flag = quasistellar_target_cluster
+				star = {
+					OR = {
+						giga_qso_is_cluster_targeted = yes
+						giga_qso_is_system_targeted = yes
+					}
 				}
 			}
-			remove_star_flag = quasistellar_target_star
-			remove_star_flag = quasistellar_target_cluster
-
+			star = {
+				giga_qso_untarget_cluster = yes
+				giga_qso_untarget_system = yes
+			}
 			every_system_planet = {
+				if = {
+					limit = { giga_qso_is_planet_targeted = yes }
+					giga_qso_untarget_planet = yes
+				}
 				if = {
 					limit = { is_colony = yes }
 					add_threat = { who = root amount = 4 } # Threat
@@ -1348,9 +2463,7 @@ country_event = {
 										has_defensive_pact = root
 										is_country = root
 										is_in_federation_with = root
-										has_valid_civic = civic_fanatic_purifiers
-										has_valid_civic = civic_hive_devouring_swarm
-										has_valid_civic = civic_machine_terminator
+										is_homicidal = yes
 									}
 								}
 								add_opinion_modifier = { who = root modifier = opinion_broke_system }
@@ -1367,9 +2480,7 @@ country_event = {
 										has_defensive_pact = root
 										is_country = root
 										is_in_federation_with = root
-										has_valid_civic = civic_fanatic_purifiers
-										has_valid_civic = civic_hive_devouring_swarm
-										has_valid_civic = civic_machine_terminator
+										is_homicidal = yes
 									}
 								}
 								add_opinion_modifier = { who = root modifier = opinion_broke_empty_system }
@@ -1437,7 +2548,7 @@ country_event = {
 							any_system_planet = { has_planet_flag = gigaflusion }
 							has_global_flag = katzenartig_imperium_happened
 							NOT = { has_global_flag = katzenartig_imperium_defeated }
-							any_country = { is_country_type = katzen_submarines } 
+							any_country = { is_country_type = katzen_submarines }
 						}
 						ROOT = { set_country_flag = player_country_cracked_flusion }
 					}
@@ -1466,7 +2577,7 @@ country_event = {
 								angle = random
 							}
 						}
-					} 
+					}
 				}
 				create_ambient_object = { type = "nebula_L8_entity" location = this }
 				create_ambient_object = { type = "nebula_L10_entity" location = this }
@@ -1489,7 +2600,6 @@ country_event = {
 					NOR = {
 						mega_blokkats_wont_stripmine = yes
 						is_megastructure_type = quasi_stellar_marker_star_firing
-						is_megastructure_type = quasi_stellar_marker_cluster_firing
 						is_megastructure_type = blokkat_harvester_charged_mothership
 						is_megastructure_type = blokkat_harvester_charged
 						is_megastructure_type = blokkat_harvester_charging_up_mothership
@@ -1502,10 +2612,234 @@ country_event = {
 			set_asteroid_belt = { radius = 0 }
 			every_neighbor_system = { remove_hyperlane_safe = { from = prev to = this } }
 			every_fleet_in_system = {
-				limit = { owner = { NOT = { is_immune_to_giga_hyperweapon = yes } } } 
-				destroy_fleet = this 
+				limit = { owner = { NOT = { is_immune_to_giga_hyperweapon = yes } } }
+				destroy_fleet = this
 			}
 			giga_remove_system_debris = yes
+		}
+	}
+}
+
+# Planet Destruction
+country_event = { #blast
+	id = giga_qso.19
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		every_galaxy_planet = {
+			limit = { giga_qso_is_planet_targeted = yes }
+			giga_qso_untarget_planet = yes
+			if = {
+				limit = { is_colony = yes }
+				add_threat = { who = root amount = 3 } # Threat
+				owner = {
+					add_static_war_exhaustion = {
+						attacker = root
+						location = prev
+						value_for_planet_destruction = 1
+					}
+				}
+
+				if = {
+					limit = { NOT = { has_global_flag = qso_opinions } }
+					set_timed_global_flag = { flag = qso_opinions days = 30 }
+					if = {
+						limit = {
+							exists = owner
+							owner = {
+								NOR = {
+									is_country_type = ai_empire
+									is_country_type = swarm
+									is_country_type = extradimensional
+									is_country_type = extradimensional_2
+									is_country_type = extradimensional_3
+								}
+							}
+						}
+						owner = { add_opinion_modifier = { who = root modifier = opinion_broke_our_planet } }
+						every_country = {
+							limit = {
+								NOR = {
+									is_same_value = prev.owner
+									is_country_type = primitive
+									has_overlord = root
+									has_defensive_pact = root
+									is_country = root
+									is_in_federation_with = root
+									is_homicidal = yes
+								}
+							}
+							add_opinion_modifier = { who = root modifier = opinion_broke_planet }
+						}
+					}
+					else = {
+						owner = { add_opinion_modifier = { who = root modifier = opinion_broke_our_empty_planet } }
+						every_country = {
+							limit = {
+								NOR = {
+									is_same_value = prev.owner
+									is_country_type = primitive
+									has_overlord = root
+									has_defensive_pact = root
+									is_country = root
+									is_in_federation_with = root
+									is_homicidal = yes
+								}
+							}
+							add_opinion_modifier = { who = root modifier = opinion_broke_empty_planet }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { is_planet_class = pc_ai }
+				if = {
+					limit = { NOT = { has_planet_flag = machine_lair } }
+					planet_event = { id = giga_qso.111 } # contingency planet
+					every_country = { country_event = { id = giga_qso.110 } } # message
+				}
+				else = {
+					planet_event = { id = giga_qso.113 } # contingency planet
+					every_country = { country_event = { id = giga_qso.112 } } # message to everyone
+				}
+			}
+
+			if = {
+				limit = { is_planet_class = pc_infested }
+				planet_event = { id = giga_qso.115 } # Infested world
+			}
+
+			if = {
+				limit = {
+					has_planet_flag = gigaflusion
+					has_global_flag = katzenartig_imperium_happened
+					NOT = { has_global_flag = katzenartig_imperium_defeated }
+					any_country = { is_country_type = katzen_submarines }
+				}
+				ROOT = { set_country_flag = player_country_cracked_flusion }
+			}
+
+			if = {
+				limit = {
+					OR = {
+						planet_size < 25
+						giga_habitable_structure = yes
+						is_planet_class = pc_ice_asteroid
+						is_planet_class = pc_asteroid
+						is_planet_class = pc_crystal_asteroid
+					}
+				}
+				giga_remove_planet = yes # The planet is too small, or is artificial, instantly obliterated
+			}
+			else = { set_planet_size = 23 }
+
+			if = {
+				limit = { NOT = { has_planet_flag = quasistellar_impact } }
+				set_planet_flag = quasistellar_impact
+				if = { #check if its a gaseous body
+					limit = {
+						giga_is_gas_giant = yes
+						giga_brown_dwarf = yes
+					}
+					change_pc = pc_metallic_hydrogen
+				}
+				else = { change_pc = pc_molten }
+			}
+
+			# Automatically declare war (lol)
+			if = {
+				limit = {
+					exists = owner
+					owner = {
+						NOR = {
+							is_in_federation_with = root
+							is_at_war_with = root
+							is_country_type = ai_empire
+							is_country_type = swarm
+							is_country_type = extradimensional
+							is_country_type = extradimensional_2
+							is_country_type = extradimensional_3
+						}
+					}
+				}
+				root = {
+					declare_war = { # You shot a QSO you don't get defender buffs
+						target = owner
+						attacker_war_goal = "wg_hyperweapon"
+					}
+				}
+
+			}
+		}
+
+		country_event = { id = giga_qso.105 days = 15 }	# Reset QSO
+		country_event = { id = giga_qso.191 days = 10 } # Ends invalid war if country destroyed
+	}
+}
+
+# Reset Everything
+country_event = {
+	id = giga_qso.105
+	is_triggered_only = yes
+	hide_window = yes
+
+	immediate = {
+		remove_country_flag = quasistellar_firing
+
+		random_owned_megastructure = {
+			limit = { is_megastructure_type = quasi_stellar_gateway_on }
+			solar_system = {
+				spawn_megastructure = { type = "quasi_stellar_gateway_off" owner = root init_effect = { set_megastructure_flag = giga_outliner_hidden_by_@owner } }
+				spawn_megastructure = { type = "quasi_stellar_obliterator_5" owner = root }
+			}
+		}
+
+		every_megastructure = {
+			limit = {
+				OR = {
+					is_megastructure_type = quasi_stellar_marker_planet_firing
+					is_megastructure_type = quasi_stellar_marker_star_firing
+					is_megastructure_type = quasi_stellar_gateway_on
+					is_megastructure_type = quasi_stellar_obliterator_firing_1
+					is_megastructure_type = quasi_stellar_obliterator_firing_2
+					is_megastructure_type = quasi_stellar_obliterator_firing_3
+					is_megastructure_type = quasi_stellar_obliterator_firing_4
+					is_megastructure_type = quasi_stellar_obliterator_firing_5
+					is_megastructure_type = quasi_stellar_obliterator_firing_6
+					is_megastructure_type = quasi_stellar_obliterator_firing_7
+					is_megastructure_type = quasi_stellar_obliterator_firing_8
+				}
+			}
+			remove_megastructure = this
+		}
+	}
+}
+
+# Ends invalid war if country destroyed
+country_event = {
+	id = giga_qso.191
+	is_triggered_only = yes
+	hide_window = yes
+	trigger = { any_war = { using_war_goal = { type = wg_hyperweapon owner = attacker } } }
+
+	immediate = {
+		if = {
+			limit = {
+				any_war = {
+					using_war_goal = { type = wg_hyperweapon owner = attacker }
+					NOT = { exists = defender }
+				}
+			}
+			every_war = {
+				limit = {
+					using_war_goal = { type = wg_hyperweapon owner = attacker }
+					NOT = { exists = defender }
+				}
+				save_event_target_as = end_this_war
+			}
+			set_truce = { target = event_target:end_this_war type = war }
 		}
 	}
 }
@@ -1808,164 +3142,6 @@ planet_event = {
 	}
 }
 
-#############################################################################################################################################
-### Firing Animation ########################################################################################################################
-#############################################################################################################################################
-country_event = {
-	id = giga_qso.1000 #the barrel & gateway lights up
-	is_triggered_only = yes
-	hide_window = yes
-
-	immediate = {
-		country_event = { id = giga_qso.1001 days = 1 }
-		random_owned_megastructure = {
-			limit = { is_megastructure_type = quasi_stellar_obliterator_5 }
-			remove_megastructure = this
-			solar_system = {
-				spawn_megastructure = {
-					type = quasi_stellar_obliterator_firing_1
-					owner = owner
-				}
-				random_system_megastructure = {
-					limit = { is_megastructure_type = quasi_stellar_gateway_off }
-					upgrade_megastructure_to = quasi_stellar_gateway_on
-				}
-			}
-		}
-	}
-}
-
-country_event = {
-	id = giga_qso.1001 #1 laser
-	is_triggered_only = yes
-	hide_window = yes
-
-	immediate = {
-		country_event = { id = giga_qso.1002 days = 1 }
-		random_owned_megastructure = {
-			limit = { is_megastructure_type = quasi_stellar_obliterator_firing_1 }
-			solar_system = {
-				spawn_megastructure = {
-					type = quasi_stellar_obliterator_firing_laser_1
-					owner = owner
-				}
-			}
-		}
-	}
-}
-
-country_event = {
-	id = giga_qso.1002 #2 lasers
-	is_triggered_only = yes
-	hide_window = yes
-
-	immediate = {
-		country_event = { id = giga_qso.1003 days = 1 }
-		random_owned_megastructure = {
-			limit = { is_megastructure_type = quasi_stellar_obliterator_firing_1 }
-			solar_system = {
-				spawn_megastructure = {
-					type = quasi_stellar_obliterator_firing_laser_2
-					owner = owner
-				}
-			}
-		}
-	}
-}
-
-country_event = {
-	id = giga_qso.1003 #3 lasers
-	is_triggered_only = yes
-	hide_window = yes
-
-	immediate = {
-		country_event = { id = giga_qso.1004 days = 1 }
-		random_owned_megastructure = {
-			limit = { is_megastructure_type = quasi_stellar_obliterator_firing_1 }
-			solar_system = {
-				spawn_megastructure = {
-					type = quasi_stellar_obliterator_firing_laser_3
-					owner = owner
-				}
-			}
-		}
-	}
-}
-
-country_event = {
-	id = giga_qso.1004 #4 lasers
-	is_triggered_only = yes
-	hide_window = yes
-
-	immediate = {
-		country_event = { id = giga_qso.1005 days = 1 }
-		random_owned_megastructure = {
-			limit = { is_megastructure_type = quasi_stellar_obliterator_firing_1 }
-			solar_system = {
-				spawn_megastructure = {
-					type = quasi_stellar_obliterator_firing_laser_4
-					owner = owner
-				}
-			}
-		}
-	}
-}
-
-country_event = {
-	id = giga_qso.1005 #5 lasers
-	is_triggered_only = yes
-	hide_window = yes
-
-	immediate = {
-		country_event = { id = giga_qso.1006 days = 1 }
-		random_owned_megastructure = {
-			limit = { is_megastructure_type = quasi_stellar_obliterator_firing_1 }
-			solar_system = {
-				spawn_megastructure = {
-					type = quasi_stellar_obliterator_firing_laser_5
-					owner = owner
-				}
-			}
-		}
-	}
-}
-
-country_event = {
-	id = giga_qso.1006 #6 lasers
-	is_triggered_only = yes
-	hide_window = yes
-
-	immediate = {
-		country_event = { id = giga_qso.1007 days = 3 }
-		random_owned_megastructure = {
-			limit = { is_megastructure_type = quasi_stellar_obliterator_firing_1 }
-			solar_system = {
-				spawn_megastructure = {
-					type = quasi_stellar_obliterator_firing_laser_6
-					owner = owner
-				}
-			}
-		}
-	}
-}
-
-country_event = {
-	id = giga_qso.1007 #BIG laser
-	is_triggered_only = yes
-	hide_window = yes
-
-	immediate = {
-		random_owned_megastructure = {
-			limit = { is_megastructure_type = quasi_stellar_obliterator_firing_1 }
-			solar_system = {
-				spawn_megastructure = {
-					type = quasi_stellar_obliterator_firing_laser_big
-					owner = owner
-				}
-			}
-		}
-	}
-}
 
 #############################################################################################################################################
 ### Construction Events #####################################################################################################################
@@ -1989,8 +3165,6 @@ country_event = {
 	picture = GFX_evt_qso
 	location = fromfrom
 	is_triggered_only = yes
-
-	trigger = { from = { is_megastructure_type = quasi_stellar_obliterator_1 } }
 
 	immediate = {
 		add_threat = { who = root amount = 10 } #threat
@@ -2019,7 +3193,6 @@ country_event = {
 	picture = GFX_evt_qso
 	location = fromfrom
 	is_triggered_only = yes
-	trigger = { from = { is_megastructure_type = quasi_stellar_obliterator_2 } }
 	immediate = { add_threat = { who = root amount = 10 } } #threat
 	option = { name = "giga_qso.2002.a" }
 }
@@ -2032,7 +3205,6 @@ country_event = {
 	picture = GFX_evt_qso
 	location = fromfrom
 	is_triggered_only = yes
-	trigger = { from = { is_megastructure_type = quasi_stellar_obliterator_3 } }
 
 	immediate = {
 		if = {
@@ -2060,11 +3232,7 @@ country_event = {
 		}
 		else_if = { # player is genocidal
 			limit = {
-				OR = {
-					has_valid_civic = civic_fanatic_purifiers
-					has_valid_civic = civic_hive_devouring_swarm
-					has_valid_civic = civic_machine_terminator
-				}
+				is_homicidal = yes
 				NOR = { #cant happen twice
 					has_global_flag = galactic_pact_formed
 					has_global_flag = galactic_hyperstate_formed
@@ -2152,7 +3320,6 @@ country_event = {
 	picture = GFX_evt_qso
 	location = fromfrom
 	is_triggered_only = yes
-	trigger = { from = { is_megastructure_type = quasi_stellar_obliterator_4 } }
 
 	immediate = {
 		if = {
@@ -2180,11 +3347,7 @@ country_event = {
 		}
 		else_if = { # player is genocidal
 			limit = {
-				OR = {
-					has_valid_civic = civic_fanatic_purifiers
-					has_valid_civic = civic_hive_devouring_swarm
-					has_valid_civic = civic_machine_terminator
-				}
+				is_homicidal = yes
 				NOR = { #cant happen twice
 					has_global_flag = galactic_pact_formed
 					has_global_flag = galactic_hyperstate_formed
@@ -2299,7 +3462,6 @@ country_event = { #at this point, the hyperweapon is actually being constructed,
 	picture = GFX_evt_qso
 	location = fromfrom
 	is_triggered_only = yes
-	trigger = { from = { is_megastructure_type = quasi_stellar_obliterator_5 } }
 
 	immediate = {
 		if = {
@@ -2310,9 +3472,7 @@ country_event = { #at this point, the hyperweapon is actually being constructed,
 						has_defensive_pact = root
 						is_country = root
 						is_in_federation_with = root
-						has_valid_civic = civic_fanatic_purifiers
-						has_valid_civic = civic_hive_devouring_swarm
-						has_valid_civic = civic_machine_terminator
+						is_homicidal = yes
 					}
 					ehof_default_country = yes
 					is_ai = yes
@@ -2343,11 +3503,7 @@ country_event = { #at this point, the hyperweapon is actually being constructed,
 			}
 			else_if = { # player is genocidal
 				limit = {
-					OR = {
-						has_valid_civic = civic_fanatic_purifiers
-						has_valid_civic = civic_hive_devouring_swarm
-						has_valid_civic = civic_machine_terminator
-					}
+					is_homicidal = yes
 					NOR = { #cant happen twice
 						has_global_flag = galactic_pact_formed
 						has_global_flag = galactic_hyperstate_formed
@@ -2474,9 +3630,7 @@ country_event = {
 					is_country_type = extradimensional
 					is_country_type = extradimensional_2
 					is_country_type = extradimensional_3
-					has_valid_civic = civic_fanatic_purifiers
-					has_valid_civic = civic_hive_devouring_swarm
-					has_valid_civic = civic_machine_terminator
+					is_homicidal = yes
 				}
 				ehof_default_country = yes
 				is_ai = yes
@@ -2624,9 +3778,7 @@ country_event = {
 					is_country_type = extradimensional
 					is_country_type = extradimensional_2
 					is_country_type = extradimensional_3
-					has_valid_civic = civic_fanatic_purifiers
-					has_valid_civic = civic_hive_devouring_swarm
-					has_valid_civic = civic_machine_terminator
+					is_homicidal = yes
 				}
 				ehof_default_country = yes
 				is_ai = yes
@@ -2639,21 +3791,15 @@ country_event = {
 			limit = {
 				any_country = {
 					has_country_flag = giga_galactic_pact_member
-					OR = {
-						is_country_type = fallen_empire
-						is_country_type = awakened_fallen_empire
-					}
-					NOT = { has_ethic = ethic_fanatic_xenophobe }
+					is_fallen_empire = yes
+					is_fanatic_xenophobe = no
 				}
 			}
 			random_country = {
 				limit = {
 					has_country_flag = giga_galactic_pact_member
-					OR = {
-						is_country_type = fallen_empire
-						is_country_type = awakened_fallen_empire
-					}
-					NOT = { has_ethic = ethic_fanatic_xenophobe }
+					is_fallen_empire = yes
+					is_fanatic_xenophobe = no
 				}
 				remove_country_flag = giga_galactic_pact_member
 				set_country_flag = giga_galactic_pact_leader
@@ -2879,11 +4025,7 @@ country_event = {
 						value = pathetic
 					}
 				}
-				OR = {
-					has_valid_civic = civic_machine_terminator
-					has_valid_civic = civic_fanatic_purifiers
-					has_valid_civic = civic_hive_devouring_swarm
-				}
+				is_homicidal = yes
 				is_ai = yes
 			}
 			country_event = { id = giga_fed.4005 days = 30 }

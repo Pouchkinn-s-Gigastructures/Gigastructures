@@ -1,0 +1,83 @@
+1 = {
+    # if candle 1 is already defined, make sure we're not placing at the same location, or within a close angle
+    modifier = {
+        exists = event_target:giga_candle_1
+        event_target:giga_candle_1 = {
+            # prevent same distance
+            check_variable = { which = giga_candle_distance value = $distance$ }
+            # with either the same or opposite angle
+            or = {
+                # prevent the same angle
+                check_variable = { which = giga_candle_rotation value = $rotation$ }
+
+                # prevent opposites
+                check_variable = { which = giga_candle_rotation value = @[ $rotation$ + 180 ] }
+                check_variable = { which = giga_candle_rotation value = @[ $rotation$ - 180 ] }
+            }
+        }
+
+        factor = 0
+    }
+
+    # limit distance to the range set before this is called
+    modifier = {
+        or = {
+            check_variable = { which = giga_candle_min_distance value > $distance$ }
+            check_variable = { which = giga_candle_max_distance value < $distance$ }
+        }
+
+        factor = 0
+    }
+
+    #log = "system test: rotation = $rotation$, distance = $distance$"
+
+    no_scope = {
+        spawn_system = {
+            initializer = giga_interstellar_system
+
+            min_distance = $distance$
+            max_distance = $distance$
+
+            min_orientation_angle = $rotation$
+            max_orientation_angle = $rotation$
+
+            authorize_spawn_on_galactic_core = yes
+            hyperlane = no
+
+            effect = {
+                set_variable = { which = giga_candle_rotation value = $rotation$ }
+                set_variable = { which = giga_candle_distance value = $distance$ }
+
+                giga_dist_rot_to_xy = {
+                    rotation = giga_candle_rotation
+                    distance = giga_candle_distance
+                    x_variable = giga_candle_x
+                    y_variable = giga_candle_y
+                }
+                # inline_script = {
+                #     script = generic_parts/math/giga_dist_rot_to_xy
+                #     rotation = giga_candle_rotation
+                #     distance = giga_candle_distance
+                #     x_variable = giga_candle_x
+                #     y_variable = giga_candle_y
+                # }
+
+                if = {
+                    limit = {
+                        exists = event_target:giga_candle_1
+                    }
+
+                    save_global_event_target_as = giga_candle_2
+                    set_star_flag = giga_candle_2
+
+                    # set up variables relying on both candles
+                    giga_standard_candle_set_shared_variables = yes
+                }
+                else = {
+                    save_global_event_target_as = giga_candle_1
+                    set_star_flag = giga_candle_1
+                }
+            }
+        }
+    }
+}

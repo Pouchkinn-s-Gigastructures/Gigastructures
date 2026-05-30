@@ -17,6 +17,7 @@ terraform_link = {
 	duration = 3600
 	ai_weight = { weight = 5 }
 	potential = {
+		has_infernals = no
 		from = { has_modifier = megastructure_terraforming_candidate }
 	}
 	effect = {
@@ -63,6 +64,72 @@ terraform_link = {
 		}
 	}
 }
+
+terraform_link = {
+	from = "pc_molten"
+	to = "pc_volcanic"
+	resources = {
+		category = terraforming
+
+		inline_script = {
+			script = terraform/triggered_costs
+			ENERGY_COST = 12500
+			BIOMASS_COST = 6250
+		}
+	}
+	inline_script = {
+		script = terraform/wilderness_biomass
+	}
+	duration = 3600
+	ai_weight = { weight = 5 }
+	potential = {
+		has_infernals = yes
+		from = { has_modifier = megastructure_terraforming_candidate }
+	}
+	effect = {
+		from = {
+			save_event_target_as = giga_planet
+			if = {
+				limit = { has_modifier = megastructure_terraforming_candidate }
+				remove_modifier = megastructure_terraforming_candidate
+			}
+			add_modifier = { modifier = lifeless_torrid_tectonics days = 1800 }
+			planet_event = { id = giga_mega.8601 days = 1 }
+			set_planet_flag = used_to_be_molten
+			solar_system = {
+				random_system_megastructure = {
+					limit = {
+						OR = {
+							is_megastructure_type = terraform_barren_1
+							is_megastructure_type = terraform_toxic_1
+							is_megastructure_type = terraform_molten_1
+						}
+						planet = { is_same_value = PREVPREVPREV }
+					}
+					remove_megastructure = THIS
+				}
+				save_event_target_as = giga_system
+				space_owner = {
+					country_event = { id = giga_dialog.4004 }				# Notification
+					if = {
+						limit = {
+							NOR = {
+								has_global_flag = giga_achievements_disabled
+								has_country_flag = giga_achievement_57
+							}
+						}
+						set_country_flag = giga_achievement_57
+						set_timed_country_flag = { flag = giga_achievement_57_notification days = 30 }
+						giga_achievement_sound = yes
+					}
+				}
+			}
+			remove_planet_flag = giga_terraforming_megastructure
+			remove_planet_flag = has_megastructure
+		}
+	}
+}
+
 
 terraform_link = {
 	from = "pc_toxic"
@@ -1000,7 +1067,7 @@ terraform_link = {
 	potential = { from = { NOT = { has_modifier = red_toxic } } }
 	condition = { has_ascension_perk = ap_world_shaper }
 	effect = { from = { remove_modifier = ehof_red_toxic_world } }
-	ai_weight = { weight = 2 modifier = { factor = 0 resource_stockpile_compare = { resource = energy value < 40000 } } modifier = { factor = 0	OR = { is_mechanical_empire = yes is_cyborg_empire = yes has_authority = auth_machine_intelligence } } }
+	ai_weight = { weight = 2 modifier = { factor = 0 resource_stockpile_compare = { resource = energy value < 40000 } } modifier = { factor = 0	OR = { is_mechanical_empire = yes is_cyborg_empire = yes is_machine_empire = yes } } }
 }
 terraform_link = {
 	from = pc_red_toxic
@@ -1019,7 +1086,7 @@ terraform_link = {
 		script = terraform/wilderness_biomass
 	}
 	duration = @terraforming_duration_level_2
-	potential = { from = { NOT = { has_modifier = red_toxic } } has_authority = auth_machine_intelligence }
+	potential = { from = { NOT = { has_modifier = red_toxic } } is_machine_empire = yes }
 	condition = { has_ascension_perk = ap_machine_worlds }
 	effect = { from = { remove_modifier = ehof_red_toxic_world } }
 	ai_weight = { weight = 20 modifier = { factor = 0 from = { any_owned_species = { NOR = { has_trait = trait_machine_unit	has_trait = trait_mechanical } is_sapient = yes	} } } }
@@ -1252,7 +1319,7 @@ terraform_link = {
 		script = terraform/wilderness_biomass
 	}
 	duration = @terraforming_duration_level_4
-	potential = { has_authority = auth_machine_intelligence }
+	potential = { is_machine_empire = yes }
 	condition = { has_ascension_perk = ap_machine_worlds }
 	effect = { from = { remove_modifier = lifeless_torrid } }
 	ai_weight = { weight = 20 modifier = { factor = 0 from = { any_owned_species = { NOR = { has_trait = trait_machine_unit	has_trait = trait_mechanical } is_sapient = yes	} } } }
@@ -1467,7 +1534,7 @@ terraform_link = {
 		script = terraform/wilderness_biomass
 	}
 	duration = @terraforming_duration_level_4
-	potential = { has_authority = auth_machine_intelligence }
+	potential = { is_machine_empire = yes }
 	condition = { has_ascension_perk = ap_machine_worlds }
 	effect = { from = { remove_modifier = lifeless_foggy } }
 	ai_weight = { weight = 20 modifier = { factor = 0 from = { any_owned_species = { NOR = { has_trait = trait_machine_unit	has_trait = trait_mechanical } is_sapient = yes	} } } }
@@ -1686,7 +1753,7 @@ terraform_link = {
 	# potential = { has_global_flag = planetarydiversity }
 	condition = { has_ascension_perk = ap_world_shaper }
 	effect = { from = { remove_modifier = lifeless_temperate } }
-	ai_weight = { weight = 2 modifier = { factor = 0 resource_stockpile_compare = { resource = energy value < 40000 } } modifier = { factor = 0	OR = { is_mechanical_empire = yes is_cyborg_empire = yes has_authority = auth_machine_intelligence } } }
+	ai_weight = { weight = 2 modifier = { factor = 0 resource_stockpile_compare = { resource = energy value < 40000 } } modifier = { factor = 0	OR = { is_mechanical_empire = yes is_cyborg_empire = yes is_machine_empire = yes } } }
 }
 terraform_link = {
 	from = pc_ll_temperate
@@ -1697,7 +1764,7 @@ terraform_link = {
 		script = terraform/wilderness_biomass
 	}
 	duration = @terraforming_duration_level_4
-	potential = { has_authority = auth_machine_intelligence }
+	potential = { is_machine_empire = yes }
 	condition = { has_ascension_perk = ap_machine_worlds }
 	effect = { from = { remove_modifier = lifeless_temperate } }
 	ai_weight = { weight = 20 modifier = { factor = 0 from = { any_owned_species = { NOR = { has_trait = trait_machine_unit	has_trait = trait_mechanical } is_sapient = yes	} } } }
