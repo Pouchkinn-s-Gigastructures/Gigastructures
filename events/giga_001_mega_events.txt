@@ -1056,7 +1056,7 @@ event = {
 	}
 }
 
-# Give Special Project for Galactic core
+# Give Situation for Galactic core
 country_event = {
 	id = giga_mega.402
 	title = "giga_mega.402.name"
@@ -1071,12 +1071,9 @@ country_event = {
 
 	option = {
 		name = "giga_mega.402.a"
-		enable_special_project = {
-			name = "INVESTIGATE_GALACTIC_CORE"
-			owner = root
-		}
-		capital_scope = {
-			set_planet_flag = giga_core_sp_here@root
+		start_situation = {
+			type = giga_discover_galactic_core_situation
+			target = capital_scope
 		}
 	}
 }
@@ -1085,11 +1082,133 @@ country_event = {
 country_event = {
 	id = giga_mega.403
 	title = "giga_mega.403.name"
-	desc = "giga_mega.403.desc"
 	picture = GFX_evt_black_hole
 	show_sound = event_sensor_ping
 	is_triggered_only = yes
-	option = { name = "giga_mega.403.a" }
+
+	desc = {
+		trigger = {
+			from = {
+				current_situation_approach = giga_discover_galactic_core_situation_approach_hands_off
+			}
+		}
+		text = "giga_mega.403.desc.handsoff"
+	}
+	desc = {
+		trigger = {
+			from = {
+				current_situation_approach = giga_discover_galactic_core_situation_approach_hands_on
+			}
+		}
+		text = "giga_mega.403.desc.handson"
+	}
+	desc = {
+		trigger = {
+			from = {
+				current_situation_approach = giga_discover_galactic_core_situation_approach_delay
+			}
+		}
+		text = "giga_mega.403.desc.delay"
+	}
+
+	option = {
+		name = "giga_mega.403.a"
+		custom_tooltip = giga_mega.403.a.tooltip
+		trigger = {
+			from = {
+				current_situation_approach = giga_discover_galactic_core_situation_approach_hands_off
+			}
+		}
+		destroy_situation = from
+		# Less physics since you didn't want to experiment, but more unity as you got to watch nature do its thing
+		add_monthly_resource_mult = {
+			resource = physics_research
+			value = @tier3researchreward
+			min = @tier3researchmin
+			max	= @tier3researchmax
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = @tier3unityreward
+			min = @tier3unitymin
+			max = @tier3unitymax
+		}
+	}
+
+	option = {
+		name = "giga_mega.403.a"
+		custom_tooltip = giga_mega.403.a.tooltip
+		trigger = {
+			from = {
+				current_situation_approach = giga_discover_galactic_core_situation_approach_hands_on
+			}
+		}
+		destroy_situation = from
+		# If you can research jump drives, you have a 1/10 chance of getting the tech
+		if = {
+			limit = {
+				NOR = {
+					has_technology = tech_jump_drive_1
+					NOT = { can_research_technology = tech_jump_drive_1 }
+				}
+			}
+			random_list = {
+				1 = {
+					add_tech_progress = {
+						tech = tech_jump_drive_1
+						progress = 0.1
+					}
+				}
+				9 = {
+					add_monthly_resource_mult = {
+						resource = physics_research
+						value = @tier5researchreward
+						min = @tier5researchmin
+						max	= @tier5researchmax
+					}
+					add_monthly_resource_mult = {
+						resource = unity
+						value = @tier2unityreward
+						min = @tier2unitymin
+						max = @tier2unitymax
+					}
+				}
+			}
+		}
+		else = {
+			# More physics since you experimented, but less unity since you didn't get to watch nature do its thing
+			add_monthly_resource_mult = {
+				resource = physics_research
+				value = @tier5researchreward
+				min = @tier5researchmin
+				max	= @tier5researchmax
+			}
+			add_monthly_resource_mult = {
+				resource = unity
+				value = @tier2unityreward
+				min = @tier2unitymin
+				max = @tier2unitymax
+			}
+		}
+	}
+
+	option = {
+		name = "DISCONCERTING"
+		custom_tooltip = giga_mega.403.a.tooltip
+		trigger = {
+			from = {
+				current_situation_approach = giga_discover_galactic_core_situation_approach_delay
+			}
+		}
+		destroy_situation = from
+		# Only unity since you wanted to delay not study
+		add_monthly_resource_mult = {
+			resource = unity
+			value = @tier4unityreward
+			min = @tier4unitymin
+			max = @tier4unitymax
+		}
+	}
 
 	immediate = {
 		set_global_flag = giga_galactic_core_spawned
@@ -2177,60 +2296,61 @@ planet_event = {
 ####################################
 ### Galactic Core SP Check #########
 ####################################
-country_event = {
-	id = giga_mega.1001
-	hide_window = yes
-	is_triggered_only = yes
-
-	trigger = {
-		OR = {
-			has_special_project = INVESTIGATE_GALACTIC_CORE
-			has_special_project = INVESTIGATE_GALACTIC_CORE_LINK
-			is_researching_special_project = INVESTIGATE_GALACTIC_CORE
-			is_researching_special_project = INVESTIGATE_GALACTIC_CORE_LINK
-		}
-		capital_scope = { NOT = { has_planet_flag = giga_core_sp_here@root } }
-	}
-
-	immediate = {
-		random_galaxy_planet = {
-			limit = { has_planet_flag = giga_core_sp_here@root }
-			remove_planet_flag = giga_core_sp_here@root
-			root = {
-				if = {
-					limit = { has_special_project = INVESTIGATE_GALACTIC_CORE }
-					abort_special_project = {
-						type = "INVESTIGATE_GALACTIC_CORE"
-						location = prev
-					}
-					capital_scope = {
-						set_planet_flag = giga_core_sp_here@root
-						enable_special_project = {
-							name = "INVESTIGATE_GALACTIC_CORE"
-							location = this
-							owner = root
-						}
-					}
-				}
-				if = {
-					limit = { has_special_project = INVESTIGATE_GALACTIC_CORE_LINK }
-					abort_special_project = {
-						type = "INVESTIGATE_GALACTIC_CORE_LINK"
-						location = prev
-					}
-					capital_scope = {
-						set_planet_flag = giga_core_sp_here@root
-						enable_special_project = {
-							name = "INVESTIGATE_GALACTIC_CORE_LINK"
-							location = this
-							owner = root
-						}
-					}
-				}
-			}
-		}
-	}
-}
+# Seemingly unnecessary now?
+# country_event = {
+# 	id = giga_mega.1001
+# 	hide_window = yes
+# 	is_triggered_only = yes
+#
+# 	trigger = {
+# 		OR = {
+# 			has_special_project = INVESTIGATE_GALACTIC_CORE
+# 			has_special_project = INVESTIGATE_GALACTIC_CORE_LINK
+# 			is_researching_special_project = INVESTIGATE_GALACTIC_CORE
+# 			is_researching_special_project = INVESTIGATE_GALACTIC_CORE_LINK
+# 		}
+# 		capital_scope = { NOT = { has_planet_flag = giga_core_sp_here@root } }
+# 	}
+#
+# 	immediate = {
+# 		random_galaxy_planet = {
+# 			limit = { has_planet_flag = giga_core_sp_here@root }
+# 			remove_planet_flag = giga_core_sp_here@root
+# 			root = {
+# 				if = {
+# 					limit = { has_special_project = INVESTIGATE_GALACTIC_CORE }
+# 					abort_special_project = {
+# 						type = "INVESTIGATE_GALACTIC_CORE"
+# 						location = prev
+# 					}
+# 					capital_scope = {
+# 						set_planet_flag = giga_core_sp_here@root
+# 						enable_special_project = {
+# 							name = "INVESTIGATE_GALACTIC_CORE"
+# 							location = this
+# 							owner = root
+# 						}
+# 					}
+# 				}
+# 				if = {
+# 					limit = { has_special_project = INVESTIGATE_GALACTIC_CORE_LINK }
+# 					abort_special_project = {
+# 						type = "INVESTIGATE_GALACTIC_CORE_LINK"
+# 						location = prev
+# 					}
+# 					capital_scope = {
+# 						set_planet_flag = giga_core_sp_here@root
+# 						enable_special_project = {
+# 							name = "INVESTIGATE_GALACTIC_CORE_LINK"
+# 							location = this
+# 							owner = root
+# 						}
+# 					}
+# 				}
+# 			}
+# 		}
+# 	}
+# }
 
 ####################################
 ### Shipyard Uplink ################
