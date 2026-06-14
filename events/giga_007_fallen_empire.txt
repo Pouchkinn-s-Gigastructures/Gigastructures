@@ -2746,16 +2746,6 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		random = {
-			chance = 50
-			every_galaxy_planet = {
-				limit = {
-					is_holy_world = yes
-				}
-				set_planet_flag = dormant_war_planet
-			}
-		}
-
 		every_country = {
 			limit = { is_country_type = fallen_empire }
 
@@ -3134,6 +3124,7 @@ country_event = {
 
 	immediate = {
 		set_country_flag = fe_war_moons_activated
+		save_event_target_as = giga_fe_activating_celestials #used for events that inform players of FE celestial activation
 
 		# Inform the player of how screwed they might be
 		if = {
@@ -3142,6 +3133,11 @@ country_event = {
 					OR = {
 						has_planet_flag = dormant_war_moon
 						has_planet_flag = dormant_war_planet
+					}
+					NOR = {
+						is_planet_class = pc_broken
+						is_planet_class = pc_shattered
+						is_planet_class = pc_shattered_2
 					}
 				}
 			}
@@ -3153,34 +3149,51 @@ country_event = {
 
 		# Activate war moons
 		every_planet_within_border = {
-			limit = { has_planet_flag = dormant_war_moon }
+			limit = {
+				has_planet_flag = dormant_war_moon
+				NOR = {
+					is_planet_class = pc_broken
+					is_planet_class = pc_shattered
+					is_planet_class = pc_shattered_2
+				}
+			}
 			root = {
 				if = {
 					limit = { is_fallen_empire_spiritualist = yes }
 					create_spiritualist_fe_moon = yes
 				}
-				if = {
+				else_if = {
 					limit = { is_fallen_empire_materialist = yes }
 					create_materialist_fe_moon = yes
 				}
-				if = {
+				else_if = {
 					limit = { is_fallen_empire_xenophile = yes }
 					create_xenophile_fe_moon = yes
 				}
-				if = {
-					limit = { is_fallen_empire_xenophobe = yes }
+				else_if = {
+					limit = {
+						is_fallen_empire_xenophobe = yes
+						has_country_flag = giga_meopa_fe #Mad Meopa gets his special nukehappy moons
+					}
+					create_meopa_fe_moon = yes
+				}
+				else_if = {
+					limit = {
+						is_fallen_empire_xenophobe = yes
+						NOT = { has_country_flag = giga_meopa_fe }
+					}
 					create_xenophobe_fe_moon = yes
 				}
-				if = {
+				else_if = {
 					limit = { is_fallen_empire_machine = yes }
 					create_machine_fe_moon = yes
 				}
-				if = {
+				else_if = {
 					limit = { is_fallen_empire_hive = yes }
 					create_hive_fe_moon = yes
 				}
 				# Fall back to the Materialist design for FEs without the typical ethics
-				if = {
+				else_if = {
 					limit = {
 						NOR = {
 							is_fallen_empire_spiritualist = yes
@@ -3209,24 +3222,13 @@ country_event = {
 			}
 
 			# Activate war planets (holy world)
-			random_galaxy_planet = {
-				limit = {
-					is_colony = no
-					is_holy_world = yes
-				}
-				root = {
-					create_spiritualist_fe_planet = yes
-					last_created_fleet = { set_location = prevprev }
-				}
-				remove_planet = yes
-			}
-
 			random = {
 				chance = 50
 				random_galaxy_planet = {
 					limit = {
 						is_colony = no
 						is_holy_world = yes
+						is_planet_class = pc_gaia #check if it's been fundamentally altered
 					}
 					root = {
 						create_spiritualist_fe_planet = yes
@@ -3239,7 +3241,14 @@ country_event = {
 		else = {
 			# Activate war planets
 			every_planet_within_border = {
-				limit = { has_planet_flag = dormant_war_planet }
+				limit = {
+					has_planet_flag = dormant_war_planet
+					NOR = {
+						is_planet_class = pc_broken
+						is_planet_class = pc_shattered
+						is_planet_class = pc_shattered_2
+					}
+				}
 				root = {
 					# Spiritualist FE Is handled above
 					if = {
@@ -3250,8 +3259,18 @@ country_event = {
 						limit = { is_fallen_empire_xenophile = yes }
 						create_xenophile_fe_planet = yes
 					}
-					if = {
-						limit = { is_fallen_empire_xenophobe = yes }
+					else_if = {
+						limit = {
+							is_fallen_empire_xenophobe = yes
+							has_country_flag = giga_meopa_fe #Mad Meopa gets his special nukehappy planets
+						}
+						create_meopa_fe_planet = yes
+					}
+					else_if = {
+						limit = {
+							is_fallen_empire_xenophobe = yes
+							NOT = { has_country_flag = giga_meopa_fe }
+						}
 						create_xenophobe_fe_planet = yes
 					}
 					if = {
@@ -3287,23 +3306,25 @@ country_event = {
 #popup about war moons
 country_event = {
 	id = giga_fallen_empire_moons.101
-	title = "giga_fallen_empire.101.name"
-	desc = "giga_fallen_empire.101.desc"
+	title = "giga_fallen_empire_moons.101.name"
+	desc = "giga_fallen_empire_moons.101.desc"
+	location = event_target:giga_fe_activating_celestials.capital_star
 	is_triggered_only = yes
 	picture = GFX_evt_cold_barren
 	show_sound = event_air_raid_siren
-	option = { name = "giga_fallen_empire.101.a" }
+	option = { name = "giga_fallen_empire_moons.101.a" }
 }
 
 #popup about war gaia world
 country_event = {
 	id = giga_fallen_empire_moons.102
-	title = "giga_fallen_empire.102.name"
-	desc = "giga_fallen_empire.102.desc"
+	title = "giga_fallen_empire_moons.102.name"
+	desc = "giga_fallen_empire_moons.102.desc"
+	location = event_target:giga_fe_activating_celestials.capital_star
 	is_triggered_only = yes
 	picture = GFX_evt_automated_dreadnought
 	show_sound = event_air_raid_siren
-	option = { name = "giga_fallen_empire.102.a" }
+	option = { name = "giga_fallen_empire_moons.102.a" }
 }
 
 #Give Repeatables & mining stations to FEs
@@ -3346,10 +3367,6 @@ country_event = {
 					giga_set_has_mega_flag = yes
 				}
 			}
-		}
-		if = {
-			limit = { has_global_flag = upgrading_orbital_arcology }
-			remove_global_flag = upgrading_orbital_arcology
 		}
 	}
 }
@@ -4044,6 +4061,51 @@ country_event = {
 		set_name = "Meopian Continuum"
 		
 		#every_owned_fleet = { delete_fleet = THIS }
+
+		#replace starting normal Xenophobe celestials with Evil Meopa's own design
+		every_owned_fleet = {
+			limit = {
+				any_owned_ship = {
+					is_ship_size = giga_war_moon
+				}
+			}
+			set_variable = {
+				which = giga_war_moon_to_replace
+				value = value:count_giga_war_moon_in_fleet
+			}
+			every_owned_ship = {
+				limit = {
+					is_ship_size = giga_war_moon
+				}
+				delete_ship = this
+			}
+			while = {
+				count = giga_war_moon_to_replace
+				create_meopa_fe_moon = yes
+			}
+		}
+		every_owned_fleet = {
+			limit = {
+				any_owned_ship = {
+					is_ship_size = giga_planet_behemoth
+				}
+			}
+			set_variable = {
+				which = giga_war_planet_to_replace
+				value = value:count_giga_war_moon_in_fleet
+			}
+			every_owned_ship = {
+				limit = {
+					is_ship_size = giga_planet_behemoth
+				}
+				delete_ship = this
+			}
+			while = {
+				count = giga_war_planet_to_replace
+				create_meopa_fe_planet = yes
+			}
+		}
+
 		create_species = {
 			name = "Zuspri"
 			plural = "Zuspris"
@@ -5151,6 +5213,8 @@ country_event = {
 				civic = civic_bogged_down_researchers
 			}
 		}
+		set_male_ruler_title = "Director"
+		set_female_ruler_title = "Director"
 	}
 }
 
