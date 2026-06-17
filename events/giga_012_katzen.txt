@@ -1185,32 +1185,50 @@ country_event = {
 		every_country = {
 			limit = {
 				ehof_default_country = yes
+				NOT = { is_same_value = event_target:flusion_muno_system_owner }
 			}
 			if = {
 				limit = { is_homicidal = no }
-				set_country_flag = kaiser_neutral
+				set_variable = {
+					which = kaiser_opinion
+					value = 0 #indifferent
+				}
+				# set_country_flag = kaiser_neutral
 			}
 			else = {
-				set_country_flag = kaiser_angry_1 #Pissed if genocidal
+				set_variable = {
+					which = kaiser_opinion
+					value = -30 #Pissed if genocidal
+				}
+				# set_country_flag = kaiser_angry_1
 			}
 		}
 		if = {
 			limit = { exists = event_target:flusion_muno_system_owner }
 			event_target:flusion_muno_system_owner = {
-				remove_country_flag = kaiser_neutral
 				if = {
 					limit = { has_country_flag = contributed_muno_project_1 }
-					set_country_flag = kaiser_happy_1 #The Kaiser remembers your good deeds
+					set_variable = {
+						which = kaiser_opinion
+						value = 30 #Cordial. The Kaiser remembers your good deeds
+					}
+					# set_country_flag = kaiser_happy_1
 				}
 				if = {
 					limit = { has_country_flag = contributed_muno_project_2 }
-					set_country_flag = kaiser_happy_2 #The Kaiser remembers your good deeds
+					set_variable = {
+						which = kaiser_opinion
+						value = 50 #Friendly. The Kaiser remembers your good deeds
+					}
+					# set_country_flag = kaiser_happy_2
 				}
 				if = {
-					limit = {
-						has_country_flag = hostile_to_flusion
+					limit = { has_country_flag = hostile_to_flusion }
+					set_variable = {
+						which = kaiser_opinion
+						value = -50 #Displeased. The Kaiser remembers your bad deeds
 					}
-					set_country_flag = kaiser_angry_2 #The Kaiser remembers your bad deeds
+					# set_country_flag = kaiser_angry_2
 				}
 				if = {
 					limit = {
@@ -1226,7 +1244,11 @@ country_event = {
 							}
 						}
 					}
-					set_country_flag = kaiser_neutral #The Kaiser remembers nothing
+					set_variable = {
+						which = kaiser_opinion
+						value = 0 #Indifferent. The Kaiser remembers nothing
+					}
+					# set_country_flag = kaiser_neutral
 				}
 				if = {
 					limit = {
@@ -1235,7 +1257,11 @@ country_event = {
 							has_country_flag = hostile_to_flusion
 						}
 					}
-					set_country_flag = kaiser_angry_1 #The Kaiser doesn't like genocide
+					set_variable = {
+						which = kaiser_opinion
+						value = -30 #Terse. The Kaiser doesn't like genocide
+					}
+					# set_country_flag = kaiser_angry_1
 				}
 				remove_country_flag = contributed_muno_project_1
 				remove_country_flag = contributed_muno_project_2
@@ -1817,10 +1843,7 @@ country_event = { #Inform player that Flusion has reached space age
 	desc = {
 		text = "giga_katzen.012.c.desc" #Kaiser is pissed
 		trigger = {
-			OR = {
-				has_country_flag = kaiser_angry_1
-				has_country_flag = kaiser_angry_2
-			}
+			kaiser_is_angry = yes
 		}
 	}
 
@@ -1866,9 +1889,17 @@ country_event = { #Inform player that Flusion has reached space age
 		custom_tooltip = "giga_katzen.012.a.tooltip"
 		response_text = "giga_katzen.012.b.response"
 		trigger = {
-			OR = {
-				has_country_flag = kaiser_neutral
-				has_country_flag = kaiser_angry_1
+			# OR = {
+			# 	has_country_flag = kaiser_neutral
+			# 	has_country_flag = kaiser_angry_1
+			# }
+			check_variable = {
+				which = kaiser_opinion
+				value >= -40
+			}
+			check_variable = {
+				which = kaiser_opinion
+				value < 20
 			}
 		}
 		add_resource = {
@@ -2533,10 +2564,14 @@ country_event = { #hello
 		allow = {
 			custom_tooltip = {
 				fail_text = cant_kaiser_opinion_too_low_talk
-				NOR = {
-					has_country_flag = kaiser_angry_1
-					has_country_flag = kaiser_angry_2
-					has_country_flag = kaiser_angry_3
+				# NOR = {
+				# 	has_country_flag = kaiser_angry_1
+				# 	has_country_flag = kaiser_angry_2
+				# 	has_country_flag = kaiser_angry_3
+				# }
+				check_variable = {
+					which = kaiser_opinion
+					value >= -20
 				}
 			}
 		}
@@ -5772,35 +5807,46 @@ country_event = { #Manage war forges and the Kaiser's eco
 		}
 		every_country = { #add kaiser neutral flag to all countries that dont have it
 			limit = {
-				NOR = {
-					has_country_flag = kaiser_angry_3
-					has_country_flag = kaiser_angry_2
-					has_country_flag = kaiser_angry_1
-					has_country_flag = kaiser_neutral
-					has_country_flag = kaiser_happy_1
-					has_country_flag = kaiser_happy_2
-					has_country_flag = kaiser_happy_3
-					has_country_flag = kaiser_happy_4
-					is_homicidal = yes
+				NOT = {
+					# has_country_flag = kaiser_angry_3
+					# has_country_flag = kaiser_angry_2
+					# has_country_flag = kaiser_angry_1
+					# has_country_flag = kaiser_neutral
+					# has_country_flag = kaiser_happy_1
+					# has_country_flag = kaiser_happy_2
+					# has_country_flag = kaiser_happy_3
+					# has_country_flag = kaiser_happy_4
+					is_variable_set = kaiser_opinion
 				}
+				is_homicidal = no
 			}
-			set_country_flag = kaiser_neutral
+			set_variable = {
+				which = kaiser_opinion
+				value = 0 #Indifferent
+			}
+			# set_country_flag = kaiser_neutral
+
 		}
 		every_country = { #add kaiser neutral flag to all countries that dont have it
 			limit = {
-				NOR = {
-					has_country_flag = kaiser_angry_3
-					has_country_flag = kaiser_angry_2
-					has_country_flag = kaiser_angry_1
-					has_country_flag = kaiser_neutral
-					has_country_flag = kaiser_happy_1
-					has_country_flag = kaiser_happy_2
-					has_country_flag = kaiser_happy_3
-					has_country_flag = kaiser_happy_4
+				NOT = {
+					# has_country_flag = kaiser_angry_3
+					# has_country_flag = kaiser_angry_2
+					# has_country_flag = kaiser_angry_1
+					# has_country_flag = kaiser_neutral
+					# has_country_flag = kaiser_happy_1
+					# has_country_flag = kaiser_happy_2
+					# has_country_flag = kaiser_happy_3
+					# has_country_flag = kaiser_happy_4
+					is_variable_set = kaiser_opinion
 				}
 				is_homicidal = yes
 			}
-			set_country_flag = kaiser_angry_1
+			set_variable = {
+				which = kaiser_opinion
+				value = -30 #Terse
+			}
+			# set_country_flag = kaiser_angry_1
 		}
 		random_owned_planet = { #Check if can construct a war forge
 			limit = {
