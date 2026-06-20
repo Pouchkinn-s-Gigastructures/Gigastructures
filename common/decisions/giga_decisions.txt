@@ -431,10 +431,7 @@ decision_psionic_sublimation = {
 	potential = {
 		exists = owner
 		owner = {
-			OR = {
-				has_tradition = tr_psionics_adopt
-				has_tradition = tr_psionics_shroud_adopt
-			}
+			has_adopted_psionic_tradition = yes
 			has_technology = giga_tech_psychic_beacon
 			OR = {
 				has_megastructure = psychic_beacon_3
@@ -479,6 +476,10 @@ decision_psionic_sublimation = {
 				job = telepath_drone
 				value > 0
 			}
+            num_assigned_jobs = {
+                job = dystopian_telepath
+                value > 0
+            }
 		}
 		
 	}
@@ -493,6 +494,20 @@ decision_psionic_sublimation = {
 				}
 				prev.owner = { add_resource = { giga_sr_psionic_sublimate = 10 } }
 			}
+            every_owned_pop_job = {
+                limit = { has_job_type = telepath_drone }
+                kill_assigned_pop_amount = {
+                    percentage = 1
+                }
+                prev.owner = { add_resource = { giga_sr_psionic_sublimate = 10 } }
+            }
+            every_owned_pop_job = {
+                limit = { has_job_type = dystopian_telepath }
+                kill_assigned_pop_amount = {
+                    percentage = 1
+                }
+                prev.owner = { add_resource = { giga_sr_psionic_sublimate = 10 } }
+            }
 		}
 	}
 }
@@ -552,9 +567,7 @@ decision_systemcraft_crew = {
 # 	potential = {
 # 		NOR = {
 # 			is_planet_class = pc_ringworld_city
-# 			has_modifier = resort_colony
-# 			has_modifier = penal_colony
-# 			has_modifier = slave_colony
+# 			is_special_colony_type = yes
 # 			ag_is_ancient_ringworld = yes
 # 			has_global_flag = cityring_disabled
 # 		}
@@ -762,11 +775,7 @@ decision_ringworld_upgrade = {
 
 # 	potential = {
 # 		has_global_flag = giga_virtual_industry
-# 		NOR = {
-# 			has_modifier = resort_colony
-# 			has_modifier = penal_colony
-# 			has_modifier = slave_colony
-# 		}
+# 		is_special_colony_type = no
 # 		is_planet_class = pc_virtual_reality
 # 	}
 
@@ -789,11 +798,7 @@ decision_ringworld_upgrade = {
 
 # 	potential = {
 # 		always = no
-# 		NOR = {
-# 			has_modifier = resort_colony
-# 			has_modifier = penal_colony
-# 			has_modifier = slave_colony
-# 		}
+# 		is_special_colony_type = no
 # 		is_planet_class = pc_virtual_reality
 # 	}
 
@@ -1363,7 +1368,7 @@ decision_give_flusion_to_solakia = {
 				}
 			}
 			every_country = {
-				limit = { OR = { is_country_type = default is_ai = no } }
+				limit = { OR = { giga_is_standard_country_type = yes is_ai = no } }
 				country_event = { id = giga_katzen.8021 }
 			}
 			event_target:solakia = {
@@ -1554,7 +1559,7 @@ decision_giga_flood_habitat = {
 			is_planet_class = pc_flat_world
 		}
 		# but the rest of the gigas habitat types are fair game
-		# yes that includes the frameworld, though you can't do that with the origin as you can't take aquatic
+		# yes that includes the frameworld
 		giga_is_habitat = yes		
 
 		exists = owner
@@ -1823,5 +1828,288 @@ decision_giga_flood_atmosphere = {
 
 	effect = {
 		add_modifier = { modifier = giga_gas_giant_hab_colony }
+	}
+}
+
+decision_compound_cleanse_planet = {
+	icon = decision_consecrated_worlds #TODO make a unique icon - could use this one as a base though
+
+	potential = {
+		exists = from
+		exists = space_owner
+		space_owner = { is_same_value = from }
+		is_planet_class = pc_ehof_planet
+		has_global_flag = compound_destroyed
+	}
+
+	resources = {
+		category = decisions
+		cost = { #bigger challenge = more expensive to cleanse worlds into a habitable state
+			trigger = { has_modifier = pc_ehof_terraforming_candidate }
+			giga_sr_negative_mass = 500
+		}
+		cost = {
+			trigger = { NOT = { has_modifier = pc_ehof_terraforming_candidate } }
+			giga_sr_negative_mass = 150
+		}
+	}
+
+	effect = {
+		custom_tooltip = decision_compound_cleanse_planet_tooltip
+		hidden_effect = {
+			if = {
+				limit = { has_orbital_station = yes }
+				orbital_station = { dismantle = yes }
+			}
+			clear_deposits = yes
+			if = { #if previously habitable, turn habitable
+				limit = { has_modifier = pc_ehof_terraforming_candidate }
+				remove_modifier = pc_ehof_terraforming_candidate
+				change_pc = pc_nuked
+				reroll_deposits = yes
+				set_planet_flag = nuked_planet_anomalies_disabled
+				set_planet_flag = suppress_archaeological_sites
+				while = { #roll 0-2 different blockers, weighted towards 1
+					count = 2
+					random_list = {
+						1 = {
+							add_deposit = d_compound_blocker_1
+							modifier = {
+								factor = 0
+								has_deposit = d_compound_blocker_1
+							}
+						}
+						1 = {
+							add_deposit = d_compound_blocker_2
+							modifier = {
+								factor = 0
+								has_deposit = d_compound_blocker_2
+							}
+						}
+						1 = {
+							add_deposit = d_compound_blocker_3
+							modifier = {
+								factor = 0
+								has_deposit = d_compound_blocker_3
+							}
+						}
+						1 = {
+							add_deposit = d_compound_blocker_4
+							modifier = {
+								factor = 0
+								has_deposit = d_compound_blocker_4
+							}
+						}
+						1 = {
+							add_deposit = d_compound_blocker_5
+							modifier = {
+								factor = 0
+								has_deposit = d_compound_blocker_5
+							}
+						}
+						5 = {
+							#nothing
+							modifier = {
+								factor = 0.5
+								NOR = {
+									has_deposit = d_compound_blocker_1
+									has_deposit = d_compound_blocker_2
+									has_deposit = d_compound_blocker_3
+									has_deposit = d_compound_blocker_4
+									has_deposit = d_compound_blocker_5
+								}
+							}
+							modifier = {
+								factor = 2
+								OR = {
+									has_deposit = d_compound_blocker_1
+									has_deposit = d_compound_blocker_2
+									has_deposit = d_compound_blocker_3
+									has_deposit = d_compound_blocker_4
+									has_deposit = d_compound_blocker_5
+								}
+							}
+						}
+					}
+				}
+				while = { #roll 1 deposit with a 50% chance of a second
+					count = 2
+					random_list = {
+						1 = {
+							add_deposit = d_compound_boon_1
+							modifier = {
+								factor = 0
+								has_deposit = d_compound_boon_1
+							}
+						}
+						1 = {
+							add_deposit = d_compound_boon_2
+							modifier = {
+								factor = 0
+								has_deposit = d_compound_boon_2
+							}
+						}
+						1 = {
+							add_deposit = d_compound_boon_3
+							modifier = {
+								factor = 0
+								has_deposit = d_compound_boon_3
+							}
+						}
+						1 = {
+							add_deposit = d_compound_boon_4
+							modifier = {
+								factor = 0
+								has_deposit = d_compound_boon_4
+							}
+						}
+						1 = {
+							add_deposit = d_compound_boon_5
+							modifier = {
+								factor = 0
+								has_deposit = d_compound_boon_5
+							}
+						}
+						1 = {
+							add_deposit = d_compound_boon_6
+							modifier = {
+								factor = 0
+								has_deposit = d_compound_boon_6
+							}
+						}
+						1 = {
+							add_deposit = d_compound_boon_7
+							modifier = {
+								factor = 0
+								has_deposit = d_compound_boon_7
+							}
+						}
+						1 = {
+							add_deposit = d_compound_boon_8
+							modifier = {
+								factor = 0
+								has_deposit = d_compound_boon_8
+							}
+						}
+						# 1 = {
+						# 	add_deposit = d_compound_boon_9
+						# 	modifier = {
+						# 		factor = 0
+						# 		has_deposit = d_compound_boon_9
+						# 	}
+						# }
+						1 = {
+							add_deposit = d_compound_boon_10
+							modifier = {
+								factor = 0
+								has_deposit = d_compound_boon_10
+							}
+						}
+						#10 = { #since d_compound_boon_9 is unused
+						9 = {
+							#nothing
+							modifier = {
+								factor = 0
+								NOR = {
+									has_deposit = d_compound_boon_1
+									has_deposit = d_compound_boon_2
+									has_deposit = d_compound_boon_3
+									has_deposit = d_compound_boon_4
+									has_deposit = d_compound_boon_5
+									has_deposit = d_compound_boon_6
+									has_deposit = d_compound_boon_7
+									has_deposit = d_compound_boon_8
+									#has_deposit = d_compound_boon_9
+									has_deposit = d_compound_boon_10
+								}
+							}
+						}
+					}
+				}
+			}
+			else = { #otherwise, roll uninhabitable
+				random_list = { #weights are roughly based on spawn_odds and planet/moon_sizes defined in the planet class
+					6 = {
+						#large planets become gas giants
+						modifier = { factor = 0 is_moon = yes }
+						modifier = { factor = 0 planet_size < 20 }
+						modifier = { factor = 2 planet_size > 25 }
+						modifier = { factor = 4 planet_size > 30 }
+						modifier = { factor = 4 planet_size > 35 }
+						#gas giants don't spawn around black holes in vanilla but that's too absolute here since most are black holes
+						modifier = { factor = 0.5 star = { giga_is_black_hole = yes } }
+						change_pc = pc_gas_giant
+						if = { #make it a helioforming candidate if appropriate
+							limit = {
+								giga_is_gas_giant = yes
+								planet_size >= 35
+								NOR = {
+									has_planet_flag = crisis_vital_planet
+									has_global_flag = suppressor_disabled
+								}
+							}
+							add_modifier = { modifier = "helioforming_candidate" days = -1 }
+						}
+					}
+					20 = { #double likelihood since the planet was literally transmuted then smooshed back together
+						modifier = { factor = 0.1 is_moon = yes planet_size > 12 }
+						modifier = { factor = 0 is_moon = yes planet_size > 14 }
+						modifier = { factor = 0.1 is_moon = no planet_size > 30 }
+						modifier = { factor = 0 is_moon = no planet_size > 35 }
+						change_pc = pc_molten
+					}
+					10 = {
+						modifier = { factor = 0.1 is_moon = yes planet_size > 10 }
+						modifier = { factor = 0 is_moon = yes planet_size > 12 }
+						modifier = { factor = 0.1 is_moon = no planet_size > 30 }
+						modifier = { factor = 0 is_moon = no planet_size > 35 }
+						change_pc = pc_barren
+					}
+					10 = {
+						modifier = { factor = 0.1 is_moon = yes planet_size > 10 }
+						modifier = { factor = 0 is_moon = yes planet_size > 12 }
+						modifier = { factor = 0.1 is_moon = no planet_size > 30 }
+						modifier = { factor = 0 is_moon = no planet_size > 35 }
+						change_pc = pc_barren_cold
+					}
+					10 = {
+						modifier = { factor = 0.1 is_moon = yes planet_size > 10 }
+						modifier = { factor = 0 is_moon = yes planet_size > 12 }
+						modifier = { factor = 0.1 is_moon = no planet_size > 25 }
+						modifier = { factor = 0 is_moon = no planet_size > 30 }
+						change_pc = pc_toxic
+						if = { #roll for toxic terraforming candidate
+							limit = {
+								host_has_dlc = "Toxoids Species Pack"
+								planet_size > 9
+								planet_size < 31
+							}
+							random_list = {
+								100 = {}
+								10 = { #10 instead of 15 like on game start
+									add_modifier = { modifier = toxic_terraforming_candidate }
+									set_planet_flag = toxic_terraforming_candidate
+									complex_trigger_modifier = {
+										trigger = check_galaxy_setup_value
+										parameters = {
+											setting = habitable_worlds_scale
+										}
+										mode = factor
+									}
+								}
+							}
+						}
+					}
+					10 = {
+						modifier = { factor = 0.1 is_moon = yes planet_size > 10 }
+						modifier = { factor = 0 is_moon = yes planet_size > 12 }
+						modifier = { factor = 0.1 is_moon = no planet_size > 25 }
+						modifier = { factor = 0 is_moon = no planet_size > 30 }
+						change_pc = pc_barren_cold
+					}
+				}
+				reroll_deposits = yes
+			}
+		}
 	}
 }

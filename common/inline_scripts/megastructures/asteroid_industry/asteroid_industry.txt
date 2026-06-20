@@ -2,7 +2,7 @@ entity = asteroid_cw_02_entity
 construction_entity = asteroid_cw_02_entity
 portrait = "GFX_megastructure_asteroid_manufactory"
 construction_blocks_and_blocked_by = none
-show_in_outliner = no
+show_in_outliner = yes
 
 upgrade_from = {
     $upgrades_from$
@@ -46,6 +46,9 @@ ai_weight = {
 }
 
 on_build_complete = {
+    fromfrom = {
+        set_megastructure_flag = giga_outliner_hidden_by_@owner
+    }
     save_event_target_as = giga_system
     if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
     from = {
@@ -67,6 +70,70 @@ on_build_complete = {
             set_country_flag = giga_achievement_54
             set_timed_country_flag = { flag = giga_achievement_54_notification days = 30 }
             giga_achievement_sound = yes
+        }
+    }
+}
+
+dismantle_time = 360
+
+dismantle_potential = {
+    always = yes
+}
+
+dismantle_possible = {
+    can_dismantle_megastructure = {
+        TECH = giga_tech_asteroid_manufactory
+    }
+    custom_tooltip = {
+        fail_text = requires_not_at_$building$_cap
+        NOT = {
+            owner = {
+                OR = {
+                    # One planet origin building check
+                    AND = {
+                        is_giga_one_planet_origin = yes
+                        num_buildings = {
+                            type = $building$_one_planet
+                            value >= modifier:$building$_country_max
+                        }
+                    }
+
+                    # Regular origin building check
+                    num_buildings = {
+                        type = $building$
+                        value >= modifier:$building$_country_max
+                    }
+                }
+            }
+        }
+    }
+}
+
+on_dismantle_start = {
+    fromfrom.planet = { set_planet_flag = giga_dismantle_not_cancelled planet_event = { id = giga_dismantle.004 days = 361 } }
+}
+
+on_dismantle_cancel = {
+    fromfrom.planet = { remove_planet_flag = giga_dismantle_not_cancelled }
+}
+
+on_dismantle_complete = {
+    from = {
+        add_resource = {
+            alloys = 750
+            mult = modifier:megastructure_dismantle_refund_mult
+        }
+        if = {
+            limit = {
+                check_variable = {
+                    which = giga_current_asteroid_manufactory
+                    value >= 1
+                }
+            }
+            change_variable = {
+                which = giga_current_asteroid_manufactory
+                value = -1
+            }
         }
     }
 }
