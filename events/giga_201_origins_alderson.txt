@@ -130,8 +130,8 @@ country_event = {
 			set_planet_flag = forbid_guillis_planet_modifiers
 			set_planet_flag = gpm_has_planet_rings
 			set_planet_flag = hot_zone				# Real Space (Prevents Rings)
-			set_planet_flag = megastructure
-			set_planet_flag = colony_event			# Vanilla uses to prevent unwanted events on planets
+			set_carrier_flag = megastructure
+			set_carrier_flag = colony_event			# Vanilla uses to prevent unwanted events on planets
 			#set_planet_flag = giga_alderson_gaia
 			change_pc = pc_alderson_slice_gaia_shattered
 			set_planet_size = 90
@@ -151,6 +151,17 @@ country_event = {
 			else_if = {
 				limit = { owner = { is_lithoid_empire = yes has_valid_civic = civic_hive_devouring_swarm } }
 				while = { count = 1 add_deposit = d_hibernating_lithoids }
+			}
+
+			#exotic gas deposit for exotic metabolism empires
+			generate_home_planet_final_pass = yes
+
+			if = { #Galvanic civic game start compat due to deposits being wiped
+				limit = { owner = { is_galvanic_empire = yes } }
+				if = {
+					limit = { NOT = { has_deposit = d_galvanic_living_metal } }
+					add_deposit = d_galvanic_living_metal
+				}
 			}
 
 			#remove_all_districts = yes
@@ -340,12 +351,6 @@ country_event = {
 			check_planet_employment = yes
 		}
 
-		if = { #Galvanic civic game start compat
-			limit = { is_galvanic_empire = yes }
-			give_technology = { tech = tech_mine_living_metal message = no }
-			capital_scope = { add_deposit = d_galvanic_living_metal }
-		}
-
 		country_event = { id = giga_alderson.002 days = 690 random = 60 } #start situation to annex other two habitable sections
 
 		#Already aware of alien and primitive life
@@ -364,6 +369,13 @@ country_event = {
 	picture = GFX_evt_alderson
 	title = giga_alderson.002.name
 	desc = giga_alderson.002.desc
+
+	trigger = { #don't trigger the event if both primitives have already been removed somehow
+		OR = {
+			exists = event_target:excognitor_primitives
+			exists = event_target:dominion_primitives
+		}
+	}
 
 	option = {
 		name = giga_alderson.002.a.worker_coop
@@ -535,10 +547,10 @@ country_event = {
 		}
 		ai_chance = {
 			base = 0 #stupid to pick this
-			modifier = {
-				add = 5 #unless there's no excuse to stop them
-				has_valid_civic = civic_inwards_perfection
-			}
+			# modifier = {
+			# 	add = 5 #unless there's no excuse to stop them #nah they need it :pensive:
+			# 	has_valid_civic = civic_inwards_perfection
+			# }
 		}
 	}
 }
@@ -600,10 +612,9 @@ country_event = {
 	option = {
 		name = giga_alderson.004.a
 		capital_scope.solar_system = {
-			every_system_colony = {
+			every_system_planet_colony = {
 				limit = {
-					exists = owner
-					owner = {
+					owner? = {
 						is_primitive = yes
 						OR = {
 							has_country_flag = excognitor_primitives
@@ -769,7 +780,7 @@ country_event = {
 				}
 			}
 		}
-		#flag removal must occur after both every_system_colony's have run
+		#flag removal must occur after both every_system_planet_colony's have run
 		root = {
 			switch = {
 				trigger = has_country_flag

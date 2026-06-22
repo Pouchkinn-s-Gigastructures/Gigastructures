@@ -93,13 +93,7 @@ dyson_swarm_1 = {
 	}
 
 	possible = {
-		hidden_trigger = {
-			exists = starbase
-		}
-		custom_tooltip = {
-			fail_text = "requires_inside_border"
-			is_inside_border = from
-		}
+		inline_script = megastructures/system_ownership_or_waystation_check
 		custom_tooltip = {
 			fail_text = "requires_surveyed_system"
 			NOT = {
@@ -127,7 +121,7 @@ dyson_swarm_1 = {
 
 	placement_rules = {
 		planet_possible = {
-			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	NOR = { has_planet_flag = megastructure has_planet_flag = has_megastructure } }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	NOR = { has_carrier_flag = megastructure has_carrier_flag = has_megastructure } }
 			custom_tooltip = { fail_text = "must_build_around_star"					is_star = yes }
 			custom_tooltip = { fail_text = "requires_no_anomaly"					has_anomaly = no }
 			custom_tooltip = { fail_text = "requires_further_stars" 				NOR = { AND = { giga_is_close_pair_star = yes is_primary_star = no } giga_is_close_pair_primary = yes } }
@@ -183,6 +177,40 @@ dyson_swarm_1 = {
 		mult = value:giga_ai_value_deposits # :3
 
 		mult = value:giga_ai_prevent_spam|MEGA|dyson_swarm|
+
+		# Should probably incorporate these into one of the above script values, something for someone smarter than me to do properly
+		modifier = {
+			factor = 0
+			from = {
+				is_nomadic = yes
+			}
+			NOT = {
+				any_fleet_in_system = {
+					OR = {
+						is_ship_size = starbase_waystation_2
+						is_ship_size = starbase_waystation_3
+					}
+					owner? = {
+						is_same_value = from
+					}
+				}
+			}
+		}
+
+		modifier = {
+			factor = 0.1
+			from = {
+				is_nomadic = yes
+			}
+			owner? = {
+				NOT = {
+					benefits_from_waystation_network = {
+						NOMAD = from
+						SYSTEM_OWNER = this
+					}
+				}
+			}
+		}
 	}
 
 	on_build_start = {
@@ -198,7 +226,7 @@ dyson_swarm_1 = {
 	on_build_complete = {
         set_star_flag = conduit_excluded
 		fromfrom.planet = {
-			set_planet_flag = has_megastructure
+			set_carrier_flag = has_megastructure
 			add_modifier = {
 				modifier = dyson_swarm_1_mod
 				days = -1
