@@ -675,6 +675,7 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		ehof_default_country = yes
+		is_nomadic = no
 		NOR = {
 			has_country_flag = ehof_activated
 			has_country_flag = ehof_activating
@@ -1790,21 +1791,22 @@ country_event = {
 				}
 			}
 
-			# Nomadic empire EHOF
-			any_system_within_border = {
-				giga_nomad_ehof_eligible_system = yes
-				any_fleet_in_system = {
-					is_mobile = yes
-					is_disabled = no
-					starbase = {
-						has_starbase_module = arkship_ehof
-					}
-					controller? = {
-						is_same_value = root
-						has_country_flag = ehof_spinal_mount_possessed
-					}
-				}
-			}
+			# # Nomadic empire EHOF
+			# any_system = {
+			# 	giga_nomad_ehof_eligible_system = yes
+			# 	any_fleet_in_system = {
+			# 		is_mobile = yes
+			# 		is_disabled = no
+			# 		is_arkship_fleet = yes
+			# 		starbase = {
+			# 			has_starbase_module = giga_arkship_ehof
+			# 		}
+			# 		controller? = {
+			# 			is_same_value = root
+			# 			has_country_flag = ehof_spinal_mount_possessed
+			# 		}
+			# 	}
+			# }
 		}
 
 		NOR = {
@@ -1817,6 +1819,30 @@ country_event = {
 		}
 	}
 	immediate = {
+		# if = { #make sure it recognises the system in question if you're a nomad
+		# 	limit = {
+		# 		is_nomadic = yes
+		# 	}
+		# 	random_system = {
+		# 		limit = {
+		# 			giga_nomad_ehof_eligible_system = yes
+		# 			any_fleet_in_system = {
+		# 				is_mobile = yes
+		# 				is_disabled = no
+		# 				is_arkship_fleet = yes
+		# 				starbase = {
+		# 					has_starbase_module = giga_arkship_ehof
+		# 				}
+		# 				controller? = {
+		# 					is_same_value = root
+		# 					has_country_flag = ehof_spinal_mount_possessed
+		# 				}
+		# 			}
+		# 		}
+		# 		set_star_flag = ehof_megastructure_system@root
+		# 		save_event_target_as = ehof_megastructure_system
+		# 	}
+		# }
 		ehof_recount_ships = yes
 		set_country_flag = ehof_can_activate
 		if = {
@@ -1842,8 +1868,8 @@ country_event = {
 	hide_window = yes
 	is_triggered_only = yes
 	trigger = {
-		NOR = {
-			# Settled empire EHOF
+		NOT = {
+			is_nomadic = no
 			any_system_within_border = {
 				has_star_flag = ehof_megastructure_system@root
 				any_fleet_in_system = {
@@ -1854,27 +1880,95 @@ country_event = {
 					}
 				}
 			}
-
-			# Nomadic empire EHOF
-			any_system_within_border = {
-				giga_nomad_ehof_eligible_system = yes
-				any_fleet_in_system = {
-					is_mobile = yes
-					is_disabled = no
-					starbase = {
-						has_starbase_module = arkship_ehof
-					}
-					controller? = {
-						is_same_value = root
-						has_country_flag = ehof_spinal_mount_possessed
-					}
-				}
-			}
 		}
 		has_country_flag = ehof_can_activate
 	}
 	immediate = {
 		remove_country_flag = ehof_can_activate
+		every_system = {
+			limit = {
+				has_star_flag = ehof_megastructure_system@root
+			}
+			remove_star_flag = ehof_megastructure_system@root
+		}
+	}
+}
+
+# on_entering_system_fleet
+fleet_event = {
+	id = ehof_megastructure.0091
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		# owner? = {
+		# 	NOR = {
+		# 		has_country_flag = ehof_can_activate
+		# 		has_country_flag = ehof_can_deactivate
+		# 		has_country_flag = ehof_activating
+		# 		has_country_flag = ehof_activated
+		# 		has_country_flag = ehof_on_cooldown
+		# 		has_country_flag = ehof_is_upgrading
+		# 	}
+		# }
+		is_arkship_fleet = yes
+		starbase = {
+			has_starbase_module = giga_arkship_ehof
+		}
+		from = { #from = system entered
+			giga_nomad_ehof_eligible_system = yes
+		}
+	}
+
+	immediate = {
+		from = {
+			set_star_flag = ehof_megastructure_system@root
+			save_global_event_target_as = ehof_megastructure_system
+		}
+		owner = {
+			set_country_flag = ehof_can_activate
+			ehof_recount_ships = yes #this needs to be on the country scope whenever called
+		}
+		if = {
+			limit = {
+				owner = { is_ai = no }
+				is_multiplayer = no
+			}
+			random_list = {
+				1 = {
+					play_sound = sfx_ehof_activate_01
+				}
+				1 = {
+					play_sound = sfx_ehof_activate_02
+				}
+			}
+		}
+	}
+}
+
+# on_leaving_system_fleet
+fleet_event = {
+	id = ehof_megastructure.0101
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_arkship_fleet = yes
+		starbase = {
+			has_starbase_module = giga_arkship_ehof
+		}
+		from = {
+			giga_nomad_ehof_eligible_system = yes
+		}
+	}
+
+	immediate = {
+		owner = {
+			remove_country_flag = ehof_can_activate
+		}
+		from = { #from = system departed
+			remove_star_flag = ehof_megastructure_system@root
+		}
 	}
 }
 
@@ -2167,8 +2261,10 @@ country_event = {
 				giga_ehof_set_activating = yes
 			}
 		}
+
 		# save megastructure system
 		ehof_mega_system = yes
+
 		if = {
 			# if user selected system to open wormhole
 			limit = {
@@ -2471,8 +2567,10 @@ country_event = {
 			which = ehof_travel_fleet_count
 			value = 0
 		}
+
 		# save megastructure system
 		ehof_mega_system = yes
+
 		event_target:ehof_megastructure_system = {
 			#limit = { has_an_active_ehof = yes } # limit makes no sense here, probably used to be an "any" type clause
 			every_fleet_in_system = {
