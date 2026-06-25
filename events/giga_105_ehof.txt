@@ -1778,37 +1778,16 @@ country_event = {
 			which = ehof_phase
 			value > 0
 		}
-		OR = {
-			# Settled empire EHOF
-			any_system_within_border = {
-				has_star_flag = ehof_megastructure_system@root
-				any_fleet_in_system = {
-					can_use_ehof = yes
-					is_mobile = yes
-					controller? = {
-						is_same_value = root
-					}
+		any_system_within_border = {
+			has_star_flag = ehof_megastructure_system@root
+			any_fleet_in_system = {
+				can_use_ehof = yes
+				is_mobile = yes
+				controller? = {
+					is_same_value = root
 				}
 			}
-
-			# # Nomadic empire EHOF
-			# any_system = {
-			# 	giga_nomad_ehof_eligible_system = yes
-			# 	any_fleet_in_system = {
-			# 		is_mobile = yes
-			# 		is_disabled = no
-			# 		is_arkship_fleet = yes
-			# 		starbase = {
-			# 			has_starbase_module = giga_arkship_ehof
-			# 		}
-			# 		controller? = {
-			# 			is_same_value = root
-			# 			has_country_flag = ehof_spinal_mount_possessed
-			# 		}
-			# 	}
-			# }
 		}
-
 		NOR = {
 			has_country_flag = ehof_can_activate
 			has_country_flag = ehof_can_deactivate
@@ -1819,30 +1798,6 @@ country_event = {
 		}
 	}
 	immediate = {
-		# if = { #make sure it recognises the system in question if you're a nomad
-		# 	limit = {
-		# 		is_nomadic = yes
-		# 	}
-		# 	random_system = {
-		# 		limit = {
-		# 			giga_nomad_ehof_eligible_system = yes
-		# 			any_fleet_in_system = {
-		# 				is_mobile = yes
-		# 				is_disabled = no
-		# 				is_arkship_fleet = yes
-		# 				starbase = {
-		# 					has_starbase_module = giga_arkship_ehof
-		# 				}
-		# 				controller? = {
-		# 					is_same_value = root
-		# 					has_country_flag = ehof_spinal_mount_possessed
-		# 				}
-		# 			}
-		# 		}
-		# 		set_star_flag = ehof_megastructure_system@root
-		# 		save_event_target_as = ehof_megastructure_system
-		# 	}
-		# }
 		ehof_recount_ships = yes
 		set_country_flag = ehof_can_activate
 		if = {
@@ -1869,7 +1824,6 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
-			is_nomadic = no
 			any_system_within_border = {
 				has_star_flag = ehof_megastructure_system@root
 				any_fleet_in_system = {
@@ -1881,6 +1835,7 @@ country_event = {
 				}
 			}
 		}
+		is_nomadic = no
 		has_country_flag = ehof_can_activate
 	}
 	immediate = {
@@ -1894,7 +1849,7 @@ country_event = {
 	}
 }
 
-# on_entering_system_fleet
+# check if activation eligible - called via on_entering_system_fleet
 fleet_event = {
 	id = ehof_megastructure.0091
 	hide_window = yes
@@ -1915,22 +1870,61 @@ fleet_event = {
 		starbase = {
 			has_starbase_module = giga_arkship_ehof
 		}
-		OR = {
-			from? = { #from = system entered. For calling via on_action
-				giga_nomad_ehof_eligible_system = yes
-			}
-			solar_system? = { #for when called manually
-				giga_nomad_ehof_eligible_system = yes
-			}
+		from = { #from = system entered. For calling via on_entering_system_fleet
+			giga_nomad_ehof_eligible_system = yes
 		}
 	}
 
 	immediate = {
-		from? = {
+		from = {
 			set_star_flag = ehof_megastructure_system@root
 			save_global_event_target_as = ehof_megastructure_system
 		}
-		solar_system? = {
+		owner = {
+			set_country_flag = ehof_can_activate
+			ehof_recount_ships = yes #this needs to be on the country scope whenever called
+		}
+		if = {
+			limit = {
+				owner = { is_ai = no }
+				is_multiplayer = no
+			}
+			random_list = {
+				1 = {
+					play_sound = sfx_ehof_activate_01
+				}
+				1 = {
+					play_sound = sfx_ehof_activate_02
+				}
+			}
+		}
+	}
+}
+
+# check if activation eligible - called manually
+fleet_event = {
+	id = ehof_megastructure.0092
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		# owner? = {
+		# 	NOR = {
+		# 		has_country_flag = ehof_can_activate
+		# 		has_country_flag = ehof_can_deactivate
+		# 		has_country_flag = ehof_activating
+		# 		has_country_flag = ehof_activated
+		# 		has_country_flag = ehof_on_cooldown
+		# 		has_country_flag = ehof_is_upgrading
+		# 	}
+		# }
+		solar_system? = { #technically this could trigger in a hyperlane so it gets an "exists" check
+			giga_nomad_ehof_eligible_system = yes
+		}
+	}
+
+	immediate = {
+		solar_system = {
 			set_star_flag = ehof_megastructure_system@root
 			save_global_event_target_as = ehof_megastructure_system
 		}
@@ -2617,7 +2611,7 @@ country_event = {
 				}
 			}
 			fleet_event = { # Check EHOF state
-				id = ehof_megastructure.0091
+				id = ehof_megastructure.0092
 				days = 2
 			}
 		}
