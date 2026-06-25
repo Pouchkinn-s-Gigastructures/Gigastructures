@@ -1915,8 +1915,13 @@ fleet_event = {
 		starbase = {
 			has_starbase_module = giga_arkship_ehof
 		}
-		from = { #from = system entered
-			giga_nomad_ehof_eligible_system = yes
+		OR = {
+			from? = { #from = system entered. For calling via on_action
+				giga_nomad_ehof_eligible_system = yes
+			}
+			solar_system? = { #for when called manually
+				giga_nomad_ehof_eligible_system = yes
+			}
 		}
 	}
 
@@ -1957,7 +1962,7 @@ fleet_event = {
 		starbase = {
 			has_starbase_module = giga_arkship_ehof
 		}
-		from = {
+		from = { #from = system departed
 			giga_nomad_ehof_eligible_system = yes
 		}
 	}
@@ -2466,6 +2471,15 @@ country_event = {
 				days = @ehof_phase4_cooldown_days
 			}
 		}
+		else_if = {
+			limit = {
+				is_nomadic = yes
+			}
+			country_event = {
+				id = ehof_megastructure.202 #set EHOF to idle
+				days = @ehof_phase2_cooldown_days
+			}
+		}
 		# set cooldown variable for tooltip
 		if = {
 			limit = {
@@ -2515,13 +2529,22 @@ country_event = {
 				value = @ehof_phase4_cooldown_days
 			}
 		}
+		else_if = {
+			limit = {
+				is_nomadic = yes
+			}
+			set_variable = {
+				which = ehof_cooldown_days
+				value = @ehof_phase2_cooldown_days
+			}
+		}
 	}
 }
 
 ########################################################################################################
 ########################################## EHOF State Changes ##########################################
 ########################################################################################################
-# Set to Idle
+# Set to Idle - settled empires
 country_event = {
 	id = ehof_megastructure.201
 	hide_window = yes
@@ -2550,6 +2573,31 @@ country_event = {
 			id = ehof_megastructure.009
 			days = 2
 		}		# Check EHOF state
+	}
+}
+
+# Set to Idle - nomadic empires
+country_event = {
+	id = ehof_megastructure.202
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		log = idle
+		ehof_recount_ships = yes
+		remove_country_flag = ehof_on_cooldown
+		every_owned_fleet = {
+			limit = {
+				is_arkship_fleet = yes
+				starbase = {
+					has_starbase_module = giga_arkship_ehof
+				}
+			}
+			fleet_event = { # Check EHOF state
+				id = ehof_megastructure.0091
+				days = 2
+			}
+		}
 	}
 }
 
