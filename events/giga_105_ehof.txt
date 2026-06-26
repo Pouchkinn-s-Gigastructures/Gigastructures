@@ -1751,7 +1751,7 @@ ship_event = {
 	hide_window = yes
 	is_triggered_only = yes
 	trigger = {
-		controller ?= { ehof_default_country = yes }
+		controller? = { ehof_default_country = yes }
 		from? = {
 			NOR = {
 				has_star_flag = empire_has_visited_anyone
@@ -1760,6 +1760,7 @@ ship_event = {
 			cohesive_system = no
 		}
 	}
+
 	immediate = {
 		from = {
 			set_star_flag = empire_has_visited_anyone
@@ -1951,7 +1952,7 @@ fleet_event = {
 
 # on_leaving_system_fleet
 fleet_event = {
-	id = ehof_megastructure.0101
+	id = ehof_megastructure.0102
 	hide_window = yes
 	is_triggered_only = yes
 
@@ -2442,6 +2443,7 @@ country_event = {
 		# set back to can activate
 		if = {
 			limit = {
+				#nomads can use the normal mega at stage one with the origin
 				check_variable = {
 					which = ehof_phase
 					value = 1
@@ -2454,6 +2456,7 @@ country_event = {
 		}
 		else_if = {
 			limit = {
+				is_nomadic = no
 				check_variable = {
 					which = ehof_phase
 					value = 2
@@ -2466,6 +2469,7 @@ country_event = {
 		}
 		else_if = {
 			limit = {
+				is_nomadic = no
 				check_variable = {
 					which = ehof_phase
 					value = 3
@@ -2478,6 +2482,7 @@ country_event = {
 		}
 		else_if = {
 			limit = {
+				is_nomadic = no
 				check_variable = {
 					which = ehof_phase
 					value = 4
@@ -2491,10 +2496,48 @@ country_event = {
 		else_if = {
 			limit = {
 				is_nomadic = yes
+				NOR = {
+					has_technology = tech_ehof_phase_03
+					has_technology = tech_ehof_phase_04
+				}
+				# check_variable = {
+				# 	which = ehof_phase
+				# 	value = 2
+				# }
 			}
 			country_event = {
 				id = ehof_megastructure.202 #set EHOF to idle
 				days = @ehof_phase2_cooldown_days
+			}
+		}
+		else_if = {
+			limit = {
+				is_nomadic = yes
+				has_technology = tech_ehof_phase_03
+				NOT = { has_technology = tech_ehof_phase_04 }
+				# check_variable = {
+				# 	which = ehof_phase
+				# 	value = 3
+				# }
+			}
+			country_event = {
+				id = ehof_megastructure.202 #set EHOF to idle
+				days = @ehof_phase3_cooldown_days
+			}
+		}
+		else_if = {
+			limit = {
+				is_nomadic = yes
+				has_technology = tech_ehof_phase_03
+				has_technology = tech_ehof_phase_04
+				# check_variable = {
+				# 	which = ehof_phase
+				# 	value = 4
+				# }
+			}
+			country_event = {
+				id = ehof_megastructure.202 #set EHOF to idle
+				days = @ehof_phase4_cooldown_days
 			}
 		}
 		# set cooldown variable for tooltip
@@ -2512,9 +2555,18 @@ country_event = {
 		}
 		else_if = {
 			limit = {
-				check_variable = {
-					which = ehof_phase
-					value = 2
+				OR = {
+					AND = {
+						is_nomadic = yes
+						NOR = {
+							has_technology = tech_ehof_phase_03
+							has_technology = tech_ehof_phase_04
+						}
+					}
+					check_variable = {
+						which = ehof_phase
+						value = 2
+					}
 				}
 			}
 			set_variable = {
@@ -2524,9 +2576,16 @@ country_event = {
 		}
 		else_if = {
 			limit = {
-				check_variable = {
-					which = ehof_phase
-					value = 3
+				OR = {
+					AND = {
+						is_nomadic = yes
+						has_technology = tech_ehof_phase_03
+						NOT = { has_technology = tech_ehof_phase_04 }
+					}
+					check_variable = {
+						which = ehof_phase
+						value = 3
+					}
 				}
 			}
 			set_variable = {
@@ -2536,9 +2595,16 @@ country_event = {
 		}
 		else_if = {
 			limit = {
-				check_variable = {
-					which = ehof_phase
-					value = 4
+				OR = {
+					AND = {
+						is_nomadic = yes
+						has_technology = tech_ehof_phase_03
+						has_technology = tech_ehof_phase_04
+					}
+					check_variable = {
+						which = ehof_phase
+						value = 4
+					}
 				}
 			}
 			set_variable = {
@@ -2546,15 +2612,41 @@ country_event = {
 				value = @ehof_phase4_cooldown_days
 			}
 		}
-		else_if = {
-			limit = {
-				is_nomadic = yes
-			}
-			set_variable = {
-				which = ehof_cooldown_days
-				value = @ehof_phase2_cooldown_days
-			}
-		}
+		# else_if = {
+		# 	limit = {
+		# 		is_nomadic = yes
+		# 		NOR = {
+		# 			has_technology = tech_ehof_phase_03
+		# 			has_technology = tech_ehof_phase_04
+		# 		}
+		# 	}
+		# 	set_variable = {
+		# 		which = ehof_cooldown_days
+		# 		value = @ehof_phase2_cooldown_days
+		# 	}
+		# }
+		# else_if = {
+		# 	limit = {
+		# 		is_nomadic = yes
+		# 		has_technology = tech_ehof_phase_03
+		# 		NOT = { has_technology = tech_ehof_phase_04 }
+		# 	}
+		# 	set_variable = {
+		# 		which = ehof_cooldown_days
+		# 		value = @ehof_phase3_cooldown_days
+		# 	}
+		# }
+		# else_if = {
+		# 	limit = {
+		# 		is_nomadic = yes
+		# 		has_technology = tech_ehof_phase_03
+		# 		has_technology = tech_ehof_phase_04
+		# 	}
+		# 	set_variable = {
+		# 		which = ehof_cooldown_days
+		# 		value = @ehof_phase4_cooldown_days
+		# 	}
+		# }
 	}
 }
 
@@ -4243,9 +4335,6 @@ ship_event = {
 
 	option = {
 		name = ehof_megastructure.018.a
-		allow = {
-			owner = { is_nomadic = no } #TODO give them an alternate route once they have alternate function for the system creation
-		}
 		#fromfrom = {
 		enable_special_project = {
 			name = "EXPLORE_RUINED_EHOF"
@@ -4386,3 +4475,35 @@ country_event = { 					# Is your EHOF cluster in need of some roiling subspace t
 		}
 	}
 }
+
+#set ehof_phase for nomads
+# country_event = {
+# 	id = ehof_megastructure.600
+# 	hide_window = yes
+# 	is_triggered_only = yes
+#
+# 	trigger = {
+# 		exists = root
+# 		is_nomadic = yes
+# 		OR = {
+# 			last_increased_tech = tech_ehof_phase_02
+# 			last_increased_tech = tech_ehof_phase_03
+# 			last_increased_tech = tech_ehof_phase_04
+# 		}
+# 	}
+#
+# 	immediate = {
+# 		switch = {
+# 			trigger = last_increased_tech
+# 			tech_ehof_phase_02 = {
+# 				set_variable = { which = ehof_phase value = 2 }
+# 			}
+# 			tech_ehof_phase_03 = {
+# 				set_variable = { which = ehof_phase value = 3 }
+# 			}
+# 			tech_ehof_phase_04 = {
+# 				set_variable = { which = ehof_phase value = 4 }
+# 			}
+# 		}
+# 	}
+# }
