@@ -1132,7 +1132,7 @@ country_event = {
 	}
 }
 
-# EHOF precursor
+# EHOF precursor digsite for settled empires
 country_event = {
 	id = ehof_megastructure.005
 	hide_window = yes
@@ -1141,6 +1141,7 @@ country_event = {
 		NOT = {
 			has_country_flag = ehof_precursor_spawned
 		}
+		is_nomadic = no
 		OR = {
 			is_ai = no
 			any_country = {
@@ -1229,6 +1230,259 @@ country_event = {
 			country_event = {
 				id = ehof_megastructure.005
 				days = 30
+			}
+		}
+	}
+}
+
+# EHOF precursor digsite for nomadic empires - call the arcsite spawn randomly after getting the prereq tech
+country_event = {
+	id = ehof_megastructure.601
+	hide_window = yes
+	is_triggered_only = yes
+	trigger = {
+		NOT = {
+			has_country_flag = ehof_precursor_spawned
+		}
+		is_nomadic = yes
+		last_increased_tech = tech_arkship_tier_3 #spinal mount needs a spinal mount slot so the nomad EHOF chain starts after that
+		OR = {
+			is_ai = no
+			any_country = {
+				is_country_type = global_event
+				check_variable = {
+					which = chk_precursor_cap
+					value < giga_ehof_ai_cap
+				}
+			}
+		}
+	}
+	immediate = {
+		country_event = {
+			id = ehof_megastructure.602
+			random = 1080
+		}
+	}
+}
+
+# EHOF precursor digsite for nomadic empires - spawn the arcsite
+country_event = {
+	id = ehof_megastructure.602
+	title = "ehof_megastructure.602.name"
+	desc = "ehof_megastructure.602.desc"
+	picture = GFX_evt_atmospheric_entry
+	show_sound = event_sensor_ping
+
+	is_triggered_only = yes
+	trigger = { #still check for AI EHOF cap
+		OR = {
+			is_ai = no
+			any_country = {
+				is_country_type = global_event
+				check_variable = {
+					which = chk_precursor_cap
+					value < giga_ehof_ai_cap
+				}
+			}
+		}
+	}
+
+	option = {
+		name = ehof_megastructure.602.a
+		save_event_target_as = rl_digsite_finder
+		if = {
+			limit = {
+				any_system = {
+					#spawn somewhere at least semi-accessible
+					has_special_star_flag_trigger = no
+					OR = {
+						NOT = { exists = owner }
+						owner? = {
+							giga_is_standard_country_type = yes
+						}
+					}
+					root = { #spawn it in a known system
+						intel_level = {
+							level > none
+							system = prev
+						}
+					}
+					any_system_planet = {
+						solar_system = {
+							is_capital_system = no
+							OR = {
+								has_special_star_flag_trigger = no
+								has_star_flag = neighbor_t1
+								has_star_flag = neighbor_t1_first_colony
+								has_star_flag = neighbor_t2
+								has_star_flag = neighbor_t2_second_colony
+								has_star_flag = empire_cluster
+							}
+						}
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+						is_surveyed = { who = root status = yes } #so arcsite is visible
+					}
+				}
+			}
+			random_system = {
+				limit = {
+					#spawn somewhere at least semi-accessible
+					has_special_star_flag_trigger = no
+					OR = {
+						NOT = { exists = owner }
+						owner? = {
+							giga_is_standard_country_type = yes
+						}
+					}
+					any_system_planet = {
+						solar_system = {
+							is_capital_system = no
+							OR = {
+								has_special_star_flag_trigger = no
+								has_star_flag = neighbor_t1
+								has_star_flag = neighbor_t1_first_colony
+								has_star_flag = neighbor_t2
+								has_star_flag = neighbor_t2_second_colony
+								has_star_flag = empire_cluster
+							}
+						}
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+						is_surveyed = { who = root status = yes } #so arcsite is visible
+					}
+				}
+				random_system_planet = {
+					limit = {
+						solar_system = {
+							is_capital_system = no
+							OR = {
+								has_special_star_flag_trigger = no
+								has_star_flag = neighbor_t1
+								has_star_flag = neighbor_t1_first_colony
+								has_star_flag = neighbor_t2
+								has_star_flag = neighbor_t2_second_colony
+								has_star_flag = empire_cluster
+							}
+						}
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+						is_surveyed = { who = root status = yes } #so arcsite is visible
+					}
+					ehof_giga_new_create_rl_digsite = {
+						digsite = ehof_precursor
+						digsite_flag = ehof_precursor
+						digsite_completion_flag = ehof_chain_begins_complete
+					}
+					# create_archaeological_site = ehof_precursor
+					# set_planet_flag = ehof_precursor@root
+					root = {
+						set_country_flag = ehof_precursor_spawned
+						if = {
+							limit = {
+								is_ai = yes
+							}
+							random_country = {
+								limit = {
+									is_country_type = global_event
+								}
+								change_variable = {
+									which = chk_precursor_cap
+									value = 1
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		else = { #try again ignoring some ownership checks in case the whole galaxy is owned by an FE or whatever nonsense
+			random_system = {
+				limit = {
+					#spawn somewhere at least semi-accessible
+					has_special_star_flag_trigger = no
+					any_system_planet = {
+						solar_system = {
+							is_capital_system = no
+							OR = { #people kept bug-reporting that it won't spawn when it doesn't spawn literally nextdoor so here you go, it can spawn nextdoor now
+								has_special_star_flag_trigger = no
+								has_star_flag = neighbor_t1
+								has_star_flag = neighbor_t1_first_colony
+								has_star_flag = neighbor_t2
+								has_star_flag = neighbor_t2_second_colony
+								has_star_flag = empire_cluster
+							}
+						}
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+					}
+				}
+				random_system_planet = {
+					limit = {
+						solar_system = {
+							is_capital_system = no
+							OR = { #people kept bug-reporting that it won't spawn when it doesn't spawn literally nextdoor so here you go, it can spawn nextdoor now
+								has_special_star_flag_trigger = no
+								has_star_flag = neighbor_t1
+								has_star_flag = neighbor_t1_first_colony
+								has_star_flag = neighbor_t2
+								has_star_flag = neighbor_t2_second_colony
+								has_star_flag = empire_cluster
+							}
+						}
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+					}
+					ehof_giga_new_create_rl_digsite = {
+						digsite = ehof_precursor
+						digsite_flag = ehof_precursor
+						digsite_completion_flag = ehof_chain_begins_complete
+					}
+					# create_archaeological_site = ehof_precursor
+					# set_planet_flag = ehof_precursor@root
+					root = {
+						set_country_flag = ehof_precursor_spawned
+						if = {
+							limit = {
+								is_ai = yes
+							}
+							random_country = {
+								limit = {
+									is_country_type = global_event
+								}
+								change_variable = {
+									which = chk_precursor_cap
+									value = 1
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -1337,14 +1591,26 @@ fleet_event = {
 		from = {
 			set_site_progress_locked = yes
 		}
-		fromfrom.planet = {
-			if = {
-				limit = { giga_is_uninhabitable = yes} #precaution if it somehow ends up where it shouldn't
-				change_pc = pc_broken
-			}
-		}
 		if = {
 			limit = {
+				OR = { #nomadic AI shouldn't inexplicably explode planets in player-owned systems
+					is_nomadic = no
+					NOT = { exists = space_owner }
+					space_owner? = { is_ai = yes }
+				}
+			}
+			fromfrom.planet = {
+				if = {
+					limit = { is_colonizable = no } #precaution if it somehow ends up where it shouldn't
+					change_pc = pc_broken
+				}
+			}
+		}
+
+		#spawn orange bolt system for settled empires
+		if = {
+			limit = {
+				is_nomadic = no
 				NOT = {
 					invoke_special_ehof_chain_beginning_spawning = {
 						flag = special_ehof_beginning_spawn_initializers
@@ -1529,6 +1795,7 @@ fleet_event = {
 		}
 		else_if = {
 			limit = {
+				is_nomadic = no
 				NOR = {
 					invoke_special_ehof_chain_beginning_spawning = {
 						flag = special_ehof_beginning_wormhole_spawn_initializers_forbidden
@@ -1599,6 +1866,49 @@ fleet_event = {
 				}
 			}
 		}
+
+		#spawn orange bolt system for nomadic empires
+		else_if = {
+			limit = {
+				is_nomadic = yes
+			}
+			root = { #spawns at more random distance from arcsite - let nomads travel
+				spawn_system = {
+					initializer = "special_init_01"
+					min_distance = 10
+					max_distance = 40
+					min_jumps = 5
+					max_jumps = 25
+				}
+				last_created_system = {
+					random_list = {
+						1 = {
+							while = {
+								count = 1
+								giga_generate_hyperlane = yes
+							}
+						}
+						1 = {
+							while = {
+								count = 2
+								giga_generate_hyperlane = yes
+							}
+						}
+					}
+					giga_field_system_debris = yes
+					set_star_flag = ehof_blackhole_@root.controller
+					root.controller = {
+						enable_special_project = {
+							name = "EXPLORE_EHOF_PRECURSOR_NO_RUINED"
+							location = prev.star
+							owner = this
+						}
+					}
+				}
+			}
+		}
+
+		#backup orange bolt system spawn - primarily for settled but theoretically should work for nomads
 		else = {
 			closest_system = {
 				limit = {
@@ -1868,10 +2178,10 @@ fleet_event = {
 		# 	}
 		# }
 		is_arkship_fleet = yes
-		starbase = {
+		starbase? = {
 			has_starbase_module = giga_arkship_ehof
 		}
-		from = { #from = system entered. For calling via on_entering_system_fleet
+		from = { #from = system entered
 			giga_nomad_ehof_eligible_system = yes
 		}
 	}
@@ -2496,10 +2806,7 @@ country_event = {
 		else_if = {
 			limit = {
 				is_nomadic = yes
-				NOR = {
-					has_technology = tech_ehof_phase_03
-					has_technology = tech_ehof_phase_04
-				}
+				NOT = { has_technology = tech_ehof_phase_03 }
 				# check_variable = {
 				# 	which = ehof_phase
 				# 	value = 2
@@ -2528,7 +2835,6 @@ country_event = {
 		else_if = {
 			limit = {
 				is_nomadic = yes
-				has_technology = tech_ehof_phase_03
 				has_technology = tech_ehof_phase_04
 				# check_variable = {
 				# 	which = ehof_phase
@@ -2558,10 +2864,7 @@ country_event = {
 				OR = {
 					AND = {
 						is_nomadic = yes
-						NOR = {
-							has_technology = tech_ehof_phase_03
-							has_technology = tech_ehof_phase_04
-						}
+						NOT = { has_technology = tech_ehof_phase_03 }
 					}
 					check_variable = {
 						which = ehof_phase
@@ -2598,7 +2901,6 @@ country_event = {
 				OR = {
 					AND = {
 						is_nomadic = yes
-						has_technology = tech_ehof_phase_03
 						has_technology = tech_ehof_phase_04
 					}
 					check_variable = {
@@ -2615,10 +2917,7 @@ country_event = {
 		# else_if = {
 		# 	limit = {
 		# 		is_nomadic = yes
-		# 		NOR = {
-		# 			has_technology = tech_ehof_phase_03
-		# 			has_technology = tech_ehof_phase_04
-		# 		}
+		# 		NOT = { has_technology = tech_ehof_phase_03 }
 		# 	}
 		# 	set_variable = {
 		# 		which = ehof_cooldown_days
@@ -2639,7 +2938,6 @@ country_event = {
 		# else_if = {
 		# 	limit = {
 		# 		is_nomadic = yes
-		# 		has_technology = tech_ehof_phase_03
 		# 		has_technology = tech_ehof_phase_04
 		# 	}
 		# 	set_variable = {
