@@ -81,6 +81,17 @@ ship_event = {
 					}
 				}
 			}
+			if = {
+				limit = {
+					is_arkship_ship = yes
+				}
+				controller = {
+					change_variable = {
+						which = ehof_pre_flight_arkship
+						value = 1
+					}
+				}
+			}
 			set_ship_flag = ehof_already_counted
 		}
 		if = {
@@ -114,6 +125,10 @@ ship_event = {
 						}
 						check_variable = {
 							which = ehof_pre_flight_juggernaut
+							value > 0
+						}
+						check_variable = {
+							which = ehof_pre_flight_arkship
 							value > 0
 						}
 					}
@@ -227,6 +242,17 @@ fleet_event = {
 					}
 				}
 			}
+			if = {
+				limit = {
+					is_arkship_ship = yes
+				}
+				controller = {
+					change_variable = {
+						which = ehof_pre_flight_arkship
+						value = 1
+					}
+				}
+			}
 		}
 		if = {
 			limit = {
@@ -257,6 +283,10 @@ fleet_event = {
 						}
 						check_variable = {
 							which = ehof_pre_flight_juggernaut
+							value > 0
+						}
+						check_variable = {
+							which = ehof_pre_flight_arkship
 							value > 0
 						}
 					}
@@ -368,6 +398,17 @@ fleet_event = {
 					}
 				}
 			}
+			if = {
+				limit = {
+					is_arkship_ship = yes
+				}
+				controller = {
+					subtract_variable = {
+						which = ehof_pre_flight_arkship
+						value = 1
+					}
+				}
+			}
 		}
 		controller = {
 			if = {
@@ -390,6 +431,10 @@ fleet_event = {
 					}
 					check_variable = {
 						which = ehof_pre_flight_juggernaut
+						value = 0
+					}
+					check_variable = {
+						which = ehof_pre_flight_arkship
 						value = 0
 					}
 				}
@@ -630,6 +675,7 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		ehof_default_country = yes
+		is_nomadic = no
 		NOR = {
 			has_country_flag = ehof_activated
 			has_country_flag = ehof_activating
@@ -1086,7 +1132,7 @@ country_event = {
 	}
 }
 
-# EHOF precursor
+# EHOF precursor digsite for settled empires
 country_event = {
 	id = ehof_megastructure.005
 	hide_window = yes
@@ -1095,6 +1141,7 @@ country_event = {
 		NOT = {
 			has_country_flag = ehof_precursor_spawned
 		}
+		is_nomadic = no
 		OR = {
 			is_ai = no
 			any_country = {
@@ -1183,6 +1230,249 @@ country_event = {
 			country_event = {
 				id = ehof_megastructure.005
 				days = 30
+			}
+		}
+	}
+}
+
+# EHOF precursor digsite for nomadic empires - call the arcsite spawn randomly after getting the prereq tech
+country_event = {
+	id = ehof_megastructure.601
+	hide_window = yes
+	is_triggered_only = yes
+	trigger = {
+		NOT = {
+			has_country_flag = ehof_precursor_spawned
+		}
+		is_nomadic = yes
+		last_increased_tech = tech_arkship_tier_3 #spinal mount needs a spinal mount slot so the nomad EHOF chain starts after that
+		OR = {
+			is_ai = no
+			any_country = {
+				is_country_type = global_event
+				check_variable = {
+					which = chk_precursor_cap
+					value < giga_ehof_ai_cap
+				}
+			}
+		}
+	}
+	immediate = {
+		country_event = {
+			id = ehof_megastructure.602 #spawn the arcsite
+			days = 360
+			random = 1080
+		}
+	}
+}
+
+# EHOF precursor digsite for nomadic empires - spawn the arcsite
+country_event = {
+	id = ehof_megastructure.602
+	title = "ehof_megastructure.602.name"
+	desc = "ehof_megastructure.602.desc"
+	picture = GFX_evt_atmospheric_entry
+	show_sound = event_sensor_ping
+
+	is_triggered_only = yes
+	trigger = { #still check for AI EHOF cap
+		OR = {
+			is_ai = no
+			any_country = {
+				is_country_type = global_event
+				check_variable = {
+					which = chk_precursor_cap
+					value < giga_ehof_ai_cap
+				}
+			}
+		}
+	}
+
+	option = {
+		name = ehof_megastructure.602.a
+		save_event_target_as = rl_digsite_finder
+		if = {
+			limit = {
+				any_system = {
+					#spawn somewhere at least semi-accessible
+					OR = {
+						has_special_star_flag_trigger = no
+						has_star_flag = neighbor_t1
+						has_star_flag = neighbor_t1_first_colony
+						has_star_flag = neighbor_t2
+						has_star_flag = neighbor_t2_second_colony
+						has_star_flag = empire_cluster
+					}
+					is_capital_system = no
+					OR = {
+						NOT = { exists = owner }
+						owner? = {
+							giga_is_standard_country_type = yes
+						}
+					}
+					root = { #spawn it in a known system
+						intel_level = {
+							level > none
+							system = prev
+						}
+					}
+					any_system_planet = {
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+						is_surveyed = { who = root status = yes } #so arcsite is visible
+					}
+				}
+			}
+			random_system = {
+				limit = {
+					#spawn somewhere at least semi-accessible
+					OR = {
+						has_special_star_flag_trigger = no
+						has_star_flag = neighbor_t1
+						has_star_flag = neighbor_t1_first_colony
+						has_star_flag = neighbor_t2
+						has_star_flag = neighbor_t2_second_colony
+						has_star_flag = empire_cluster
+					}
+					is_capital_system = no
+					OR = {
+						NOT = { exists = owner }
+						owner? = {
+							giga_is_standard_country_type = yes
+						}
+					}
+					root = { #spawn it in a known system
+						intel_level = {
+							level > none
+							system = prev
+						}
+					}
+					any_system_planet = {
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+						is_surveyed = { who = root status = yes } #so arcsite is visible
+					}
+				}
+				random_system_planet = {
+					limit = {
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+						is_surveyed = { who = root status = yes } #so arcsite is visible
+					}
+					ehof_giga_new_create_rl_digsite = {
+						digsite = ehof_precursor
+						digsite_flag = ehof_precursor
+						digsite_completion_flag = ehof_chain_begins_complete
+					}
+					# create_archaeological_site = ehof_precursor
+					# set_planet_flag = ehof_precursor@root
+					root = {
+						set_country_flag = ehof_precursor_spawned
+						if = {
+							limit = {
+								is_ai = yes
+							}
+							random_country = {
+								limit = {
+									is_country_type = global_event
+								}
+								change_variable = {
+									which = chk_precursor_cap
+									value = 1
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		else = { #try again ignoring some ownership checks in case the whole galaxy is owned by an FE or whatever nonsense
+			random_system = {
+				limit = {
+					#spawn somewhere at least semi-accessible
+					has_special_star_flag_trigger = no
+					any_system_planet = {
+						solar_system = {
+							is_capital_system = no
+							OR = { #people kept bug-reporting that it won't spawn when it doesn't spawn literally nextdoor so here you go, it can spawn nextdoor now
+								has_special_star_flag_trigger = no
+								has_star_flag = neighbor_t1
+								has_star_flag = neighbor_t1_first_colony
+								has_star_flag = neighbor_t2
+								has_star_flag = neighbor_t2_second_colony
+								has_star_flag = empire_cluster
+							}
+						}
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+					}
+				}
+				random_system_planet = {
+					limit = {
+						solar_system = {
+							is_capital_system = no
+							OR = { #people kept bug-reporting that it won't spawn when it doesn't spawn literally nextdoor so here you go, it can spawn nextdoor now
+								has_special_star_flag_trigger = no
+								has_star_flag = neighbor_t1
+								has_star_flag = neighbor_t1_first_colony
+								has_star_flag = neighbor_t2
+								has_star_flag = neighbor_t2_second_colony
+								has_star_flag = empire_cluster
+							}
+						}
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+					}
+					ehof_giga_new_create_rl_digsite = {
+						digsite = ehof_precursor
+						digsite_flag = ehof_precursor
+						digsite_completion_flag = ehof_chain_begins_complete
+					}
+					# create_archaeological_site = ehof_precursor
+					# set_planet_flag = ehof_precursor@root
+					root = {
+						set_country_flag = ehof_precursor_spawned
+						if = {
+							limit = {
+								is_ai = yes
+							}
+							random_country = {
+								limit = {
+									is_country_type = global_event
+								}
+								change_variable = {
+									which = chk_precursor_cap
+									value = 1
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -1291,14 +1581,26 @@ fleet_event = {
 		from = {
 			set_site_progress_locked = yes
 		}
-		fromfrom.planet = {
-			if = {
-				limit = { giga_is_uninhabitable = yes} #precaution if it somehow ends up where it shouldn't
-				change_pc = pc_broken
-			}
-		}
 		if = {
 			limit = {
+				OR = { #nomadic AI shouldn't inexplicably explode planets in player-owned systems
+					is_nomadic = no
+					NOT = { exists = space_owner }
+					space_owner? = { is_ai = yes }
+				}
+			}
+			fromfrom.planet = {
+				if = {
+					limit = { is_colonizable = no } #precaution if it somehow ends up where it shouldn't
+					change_pc = pc_broken
+				}
+			}
+		}
+
+		#spawn orange bolt system for settled empires
+		if = {
+			limit = {
+				is_nomadic = no
 				NOT = {
 					invoke_special_ehof_chain_beginning_spawning = {
 						flag = special_ehof_beginning_spawn_initializers
@@ -1483,6 +1785,7 @@ fleet_event = {
 		}
 		else_if = {
 			limit = {
+				is_nomadic = no
 				NOR = {
 					invoke_special_ehof_chain_beginning_spawning = {
 						flag = special_ehof_beginning_wormhole_spawn_initializers_forbidden
@@ -1553,6 +1856,49 @@ fleet_event = {
 				}
 			}
 		}
+
+		#spawn orange bolt system for nomadic empires
+		else_if = {
+			limit = {
+				is_nomadic = yes
+			}
+			root = { #spawns at more random distance from arcsite - let nomads travel
+				spawn_system = {
+					initializer = "special_init_01"
+					min_distance = 10
+					max_distance = 40
+					min_jumps = 5
+					max_jumps = 25
+				}
+				last_created_system = {
+					random_list = {
+						1 = {
+							while = {
+								count = 1
+								giga_generate_hyperlane = yes
+							}
+						}
+						1 = {
+							while = {
+								count = 2
+								giga_generate_hyperlane = yes
+							}
+						}
+					}
+					giga_field_system_debris = yes
+					set_star_flag = ehof_blackhole_@root.controller
+					root.controller = {
+						enable_special_project = {
+							name = "EXPLORE_EHOF_PRECURSOR_NO_RUINED"
+							location = prev.star
+							owner = this
+						}
+					}
+				}
+			}
+		}
+
+		#backup orange bolt system spawn - primarily for settled but theoretically should work for nomads
 		else = {
 			closest_system = {
 				limit = {
@@ -1705,7 +2051,7 @@ ship_event = {
 	hide_window = yes
 	is_triggered_only = yes
 	trigger = {
-		controller ?= { ehof_default_country = yes }
+		controller? = { ehof_default_country = yes }
 		from? = {
 			NOR = {
 				has_star_flag = empire_has_visited_anyone
@@ -1714,6 +2060,7 @@ ship_event = {
 			cohesive_system = no
 		}
 	}
+
 	immediate = {
 		from = {
 			set_star_flag = empire_has_visited_anyone
@@ -1722,7 +2069,7 @@ ship_event = {
 	}
 }
 
-# Should it activate? [Monthly Pulse]
+# Should it activate? [Monthly Pulse]. Settled empires
 country_event = {
 	id = ehof_megastructure.009
 	hide_window = yes
@@ -1777,9 +2124,9 @@ country_event = {
 	hide_window = yes
 	is_triggered_only = yes
 	trigger = {
-		any_system_within_border = {
-			has_star_flag = ehof_megastructure_system@root
-			NOT = {
+		NOT = {
+			any_system_within_border = {
+				has_star_flag = ehof_megastructure_system@root
 				any_fleet_in_system = {
 					can_use_ehof = yes
 					is_mobile = yes
@@ -1789,10 +2136,153 @@ country_event = {
 				}
 			}
 		}
+		is_nomadic = no
 		has_country_flag = ehof_can_activate
 	}
 	immediate = {
 		remove_country_flag = ehof_can_activate
+		every_system = {
+			limit = {
+				has_star_flag = ehof_megastructure_system@root
+			}
+			remove_star_flag = ehof_megastructure_system@root
+		}
+	}
+}
+
+# check if activation eligible - called via on_entering_system_fleet
+fleet_event = {
+	id = ehof_megastructure.0091
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		# owner? = {
+		# 	NOR = {
+		# 		has_country_flag = ehof_can_activate
+		# 		has_country_flag = ehof_can_deactivate
+		# 		has_country_flag = ehof_activating
+		# 		has_country_flag = ehof_activated
+		# 		has_country_flag = ehof_on_cooldown
+		# 		has_country_flag = ehof_is_upgrading
+		# 	}
+		# }
+		owner = {
+			NOT = {
+				has_country_flag = ehof_activated
+			}
+		}
+		is_arkship_fleet = yes
+		starbase? = {
+			has_starbase_module = giga_arkship_ehof
+		}
+		from = { #from = system entered
+			giga_nomad_ehof_eligible_system = yes
+		}
+	}
+
+	immediate = {
+		from = {
+			set_star_flag = ehof_megastructure_system@root
+			save_global_event_target_as = ehof_megastructure_system
+		}
+		owner = {
+			set_country_flag = ehof_can_activate
+			ehof_recount_ships = yes #this needs to be on the country scope whenever called
+		}
+		if = {
+			limit = {
+				owner = { is_ai = no }
+				is_multiplayer = no
+			}
+			random_list = {
+				1 = {
+					play_sound = sfx_ehof_activate_01
+				}
+				1 = {
+					play_sound = sfx_ehof_activate_02
+				}
+			}
+		}
+	}
+}
+
+# check if activation eligible - called manually
+fleet_event = {
+	id = ehof_megastructure.0092
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		# owner? = {
+		# 	NOR = {
+		# 		has_country_flag = ehof_can_activate
+		# 		has_country_flag = ehof_can_deactivate
+		# 		has_country_flag = ehof_activating
+		# 		has_country_flag = ehof_activated
+		# 		has_country_flag = ehof_on_cooldown
+		# 		has_country_flag = ehof_is_upgrading
+		# 	}
+		# }
+		owner = {
+			NOT = {
+				has_country_flag = ehof_activated
+			}
+		}
+		solar_system? = { #technically this could trigger in a hyperlane so it gets an "exists" check
+			giga_nomad_ehof_eligible_system = yes
+		}
+	}
+
+	immediate = {
+		solar_system = {
+			set_star_flag = ehof_megastructure_system@root
+			save_global_event_target_as = ehof_megastructure_system
+		}
+		owner = {
+			set_country_flag = ehof_can_activate
+			ehof_recount_ships = yes #this needs to be on the country scope whenever called
+		}
+		if = {
+			limit = {
+				owner = { is_ai = no }
+				is_multiplayer = no
+			}
+			random_list = {
+				1 = {
+					play_sound = sfx_ehof_activate_01
+				}
+				1 = {
+					play_sound = sfx_ehof_activate_02
+				}
+			}
+		}
+	}
+}
+
+# on_leaving_system_fleet
+fleet_event = {
+	id = ehof_megastructure.0102
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_arkship_fleet = yes
+		starbase? = {
+			has_starbase_module = giga_arkship_ehof
+		}
+		from = { #from = system departed
+			giga_nomad_ehof_eligible_system = yes
+		}
+	}
+
+	immediate = {
+		owner = {
+			remove_country_flag = ehof_can_activate
+		}
+		from = { #from = system departed
+			remove_star_flag = ehof_megastructure_system@root
+		}
 	}
 }
 
@@ -2025,6 +2515,10 @@ country_event = {
 				which = ehof_pre_flight_juggernaut
 				value = 0
 			}
+			set_variable = {
+				which = ehof_pre_flight_arkship
+				value = 0
+			}
 		}
 		# Set globals for localization
 		if = {
@@ -2081,8 +2575,10 @@ country_event = {
 				giga_ehof_set_activating = yes
 			}
 		}
+
 		# save megastructure system
 		ehof_mega_system = yes
+
 		if = {
 			# if user selected system to open wormhole
 			limit = {
@@ -2126,12 +2622,31 @@ country_event = {
 		remove_state_flags = yes
 		# set new state
 		set_country_flag = ehof_activated
-		random_owned_megastructure = {
+		if = {
 			limit = {
-				has_megastructure_flag = giga_ehof_activating
+				is_nomadic = no
 			}
-			solar_system = {
-				giga_ehof_set_active = yes
+			random_owned_megastructure = {
+				limit = {
+					has_megastructure_flag = giga_ehof_activating
+				}
+				solar_system = {
+					giga_ehof_set_active = yes
+				}
+			}
+		}
+		else = {
+			event_target:ehof_megastructure_system = {
+				spawn_megastructure = {
+					type = "ehof_megastructure_wormhole_destination"
+					owner = from
+					orbit_angle = 240
+					orbit_distance = 37
+					init_effect = {
+						set_megastructure_flag = ehof_wormhole_opened_by_@root
+						set_megastructure_flag = ehof_wormhole_node
+					}
+				}
 			}
 		}
 		# open wormhole
@@ -2238,6 +2753,7 @@ country_event = {
 		# set back to can activate
 		if = {
 			limit = {
+				#nomads can use the normal mega at stage one with the origin
 				check_variable = {
 					which = ehof_phase
 					value = 1
@@ -2250,6 +2766,7 @@ country_event = {
 		}
 		else_if = {
 			limit = {
+				is_nomadic = no
 				check_variable = {
 					which = ehof_phase
 					value = 2
@@ -2262,6 +2779,7 @@ country_event = {
 		}
 		else_if = {
 			limit = {
+				is_nomadic = no
 				check_variable = {
 					which = ehof_phase
 					value = 3
@@ -2274,6 +2792,7 @@ country_event = {
 		}
 		else_if = {
 			limit = {
+				is_nomadic = no
 				check_variable = {
 					which = ehof_phase
 					value = 4
@@ -2281,6 +2800,49 @@ country_event = {
 			}
 			country_event = {
 				id = ehof_megastructure.201 #set EHOF to idle
+				days = @ehof_phase4_cooldown_days
+			}
+		}
+		else_if = {
+			limit = {
+				is_nomadic = yes
+				NOT = { has_technology = tech_ehof_phase_03 }
+				# check_variable = {
+				# 	which = ehof_phase
+				# 	value = 2
+				# }
+			}
+			country_event = {
+				id = ehof_megastructure.202 #set EHOF to idle
+				days = @ehof_phase2_cooldown_days
+			}
+		}
+		else_if = {
+			limit = {
+				is_nomadic = yes
+				has_technology = tech_ehof_phase_03
+				NOT = { has_technology = tech_ehof_phase_04 }
+				# check_variable = {
+				# 	which = ehof_phase
+				# 	value = 3
+				# }
+			}
+			country_event = {
+				id = ehof_megastructure.202 #set EHOF to idle
+				days = @ehof_phase3_cooldown_days
+			}
+		}
+		else_if = {
+			limit = {
+				is_nomadic = yes
+				has_technology = tech_ehof_phase_04
+				# check_variable = {
+				# 	which = ehof_phase
+				# 	value = 4
+				# }
+			}
+			country_event = {
+				id = ehof_megastructure.202 #set EHOF to idle
 				days = @ehof_phase4_cooldown_days
 			}
 		}
@@ -2299,9 +2861,15 @@ country_event = {
 		}
 		else_if = {
 			limit = {
-				check_variable = {
-					which = ehof_phase
-					value = 2
+				OR = {
+					AND = {
+						is_nomadic = yes
+						NOT = { has_technology = tech_ehof_phase_03 }
+					}
+					check_variable = {
+						which = ehof_phase
+						value = 2
+					}
 				}
 			}
 			set_variable = {
@@ -2311,9 +2879,16 @@ country_event = {
 		}
 		else_if = {
 			limit = {
-				check_variable = {
-					which = ehof_phase
-					value = 3
+				OR = {
+					AND = {
+						is_nomadic = yes
+						has_technology = tech_ehof_phase_03
+						NOT = { has_technology = tech_ehof_phase_04 }
+					}
+					check_variable = {
+						which = ehof_phase
+						value = 3
+					}
 				}
 			}
 			set_variable = {
@@ -2323,9 +2898,15 @@ country_event = {
 		}
 		else_if = {
 			limit = {
-				check_variable = {
-					which = ehof_phase
-					value = 4
+				OR = {
+					AND = {
+						is_nomadic = yes
+						has_technology = tech_ehof_phase_04
+					}
+					check_variable = {
+						which = ehof_phase
+						value = 4
+					}
 				}
 			}
 			set_variable = {
@@ -2333,13 +2914,44 @@ country_event = {
 				value = @ehof_phase4_cooldown_days
 			}
 		}
+		# else_if = {
+		# 	limit = {
+		# 		is_nomadic = yes
+		# 		NOT = { has_technology = tech_ehof_phase_03 }
+		# 	}
+		# 	set_variable = {
+		# 		which = ehof_cooldown_days
+		# 		value = @ehof_phase2_cooldown_days
+		# 	}
+		# }
+		# else_if = {
+		# 	limit = {
+		# 		is_nomadic = yes
+		# 		has_technology = tech_ehof_phase_03
+		# 		NOT = { has_technology = tech_ehof_phase_04 }
+		# 	}
+		# 	set_variable = {
+		# 		which = ehof_cooldown_days
+		# 		value = @ehof_phase3_cooldown_days
+		# 	}
+		# }
+		# else_if = {
+		# 	limit = {
+		# 		is_nomadic = yes
+		# 		has_technology = tech_ehof_phase_04
+		# 	}
+		# 	set_variable = {
+		# 		which = ehof_cooldown_days
+		# 		value = @ehof_phase4_cooldown_days
+		# 	}
+		# }
 	}
 }
 
 ########################################################################################################
 ########################################## EHOF State Changes ##########################################
 ########################################################################################################
-# Set to Idle
+# Set to Idle - settled empires
 country_event = {
 	id = ehof_megastructure.201
 	hide_window = yes
@@ -2371,6 +2983,31 @@ country_event = {
 	}
 }
 
+# Set to Idle - nomadic empires
+country_event = {
+	id = ehof_megastructure.202
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		log = idle
+		ehof_recount_ships = yes
+		remove_country_flag = ehof_on_cooldown
+		every_owned_fleet = {
+			limit = {
+				is_arkship_fleet = yes
+				starbase = {
+					has_starbase_module = giga_arkship_ehof
+				}
+			}
+			fleet_event = { # Check EHOF state
+				id = ehof_megastructure.0092
+				days = 2
+			}
+		}
+	}
+}
+
 ########################################################################################################
 ######################################### Send Fleets Through ##########################################
 ########################################################################################################
@@ -2385,8 +3022,10 @@ country_event = {
 			which = ehof_travel_fleet_count
 			value = 0
 		}
+
 		# save megastructure system
 		ehof_mega_system = yes
+
 		event_target:ehof_megastructure_system = {
 			#limit = { has_an_active_ehof = yes } # limit makes no sense here, probably used to be an "any" type clause
 			every_fleet_in_system = {
@@ -2467,6 +3106,17 @@ country_event = {
 						controller = {
 							subtract_variable = {
 								which = ehof_pre_flight_juggernaut
+								value = 1
+							}
+						}
+					}
+					if = {
+						limit = {
+							is_arkship_ship = yes
+						}
+						controller = {
+							subtract_variable = {
+								which = ehof_pre_flight_arkship
 								value = 1
 							}
 						}
@@ -2563,9 +3213,15 @@ fleet_event = {
 				if = {
 					# if country has level 4 ehof and permanent wormhole don't close it
 					limit = {
-						check_variable = {
-							which = ehof_phase
-							value = 4
+						OR = {
+							AND = {
+								is_nomadic = yes
+								has_technology = tech_ehof_phase_04
+							}
+							check_variable = {
+								which = ehof_phase
+								value = 4
+							}
 						}
 						root.controller = {
 							has_country_flag = ehof_permanent
@@ -3983,16 +4639,11 @@ ship_event = {
 
 	option = {
 		name = ehof_megastructure.018.a
-		allow = {
-			owner = { is_nomadic = no } #TODO give them an alternate route once they have alternate function for the system creation
-		}
-		#fromfrom = {
 		enable_special_project = {
 			name = "EXPLORE_RUINED_EHOF"
 			location = from #this
 			owner = root.owner
 		}
-		#}
 		hidden_effect = {
 			owner = {
 				set_country_flag = explored_ruined_ehof
@@ -4000,39 +4651,10 @@ ship_event = {
 		}
 		default_hide_option = yes
 	}
-
-	option = {
-		name = ehof_megastructure.018.b
-		custom_tooltip = ehof_megastructure.018.b.tooltip
-		owner = {
-			add_monthly_resource_mult = {
-				resource = physics_research
-				value = @tier5researchreward
-				min = @tier5researchmin
-				max = @tier5researchmax
-			}
-			add_monthly_resource_mult = {
-				resource = engineering_research
-				value = @tier5researchreward
-				min = @tier5researchmin
-				max = @tier5researchmax
-			}
-		}
-		hidden_effect = {
-			owner = {
-				set_country_flag = explored_ruined_ehof
-			}
-		}
-		allow = {
-			owner = {
-				is_ai = no
-			}
-		}
-	}
 }
 
 # this = country
-country_event = { 					# Is your EHOF cluster in need of some roiling subspace tides?
+country_event = { # Is your EHOF cluster in need of some roiling subspace tides?
 	id = ehof_megastructure.019 	# Does your EHOF cluster connect to the main galaxy?
 	hide_window = yes				# Its time for some hyperlane begone! now only 99.99 EC!
 	is_triggered_only = yes			# Converts normal systems that are trapped by the lanes of the EHOF into cohesive systems
@@ -4126,3 +4748,35 @@ country_event = { 					# Is your EHOF cluster in need of some roiling subspace t
 		}
 	}
 }
+
+#set ehof_phase for nomads
+# country_event = {
+# 	id = ehof_megastructure.600
+# 	hide_window = yes
+# 	is_triggered_only = yes
+#
+# 	trigger = {
+# 		exists = root
+# 		is_nomadic = yes
+# 		OR = {
+# 			last_increased_tech = tech_ehof_phase_02
+# 			last_increased_tech = tech_ehof_phase_03
+# 			last_increased_tech = tech_ehof_phase_04
+# 		}
+# 	}
+#
+# 	immediate = {
+# 		switch = {
+# 			trigger = last_increased_tech
+# 			tech_ehof_phase_02 = {
+# 				set_variable = { which = ehof_phase value = 2 }
+# 			}
+# 			tech_ehof_phase_03 = {
+# 				set_variable = { which = ehof_phase value = 3 }
+# 			}
+# 			tech_ehof_phase_04 = {
+# 				set_variable = { which = ehof_phase value = 4 }
+# 			}
+# 		}
+# 	}
+# }
