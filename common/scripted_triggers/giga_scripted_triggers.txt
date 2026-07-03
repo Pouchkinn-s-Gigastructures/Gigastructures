@@ -14,23 +14,6 @@ has_gigastructural_constructs = {
 	}
 }
 
-has_any_megastructure_dlc = {
-	OR = {
-		has_utopia = yes			# big megas dlc
-		has_megacorp = yes			# gives galactic wonders
-		has_overlord_dlc = yes		# quantum catapult, relay, orbital ring
-		has_federations_dlc = yes	# mega shipyard
-		has_machine_age_dlc = yes	# vanilla kilostructures
-	}
-}
-
-has_any_galactic_wonders_dlc = {
-	OR = {
-		has_utopia = yes	# original megas dlc
-		has_megacorp = yes	# also gives galactic wonders
-	}
-}
-
 giga_has_orbital_arcology_tech = {
 	# custom_tooltip = {
 	# 	text = giga_has_orbital_arcology_tech
@@ -262,12 +245,12 @@ giga_is_valid_o_star_location = {
 		is_star_class = sc_giga_o_star
 		is_star_class = sc_dn
 		any_system_planet = { has_planet_flag = paluushia }
-		any_system_planet = { has_planet_flag = gigaflusion }
+		any_system_planet = { has_carrier_flag = gigaflusion }
 		any_system_planet = { is_colony = yes }
 		any_system_planet = { is_artificial = yes }
 		any_system_planet = { is_colonizable = yes }
-		any_system_planet = { has_planet_flag = has_megastructure }
-		any_system_planet = { has_planet_flag = megastructure }
+		any_system_planet = { has_carrier_flag = has_megastructure }
+		any_system_planet = { has_carrier_flag = megastructure }
 		any_system_planet = { is_planet_class = pc_ice_asteroid }
 		any_system_planet = { is_astral_scar = yes } # In theory this should never happen but just as a precaution
 		any_ship_in_system = { exists = THIS }
@@ -527,7 +510,7 @@ giga_has_ringworld_output_boost_exclusions = {
 	OR = {
 		and = {
 			giga_is_frame_world = yes
-			not = { has_planet_flag = frameworld_orbital_ring }
+			not = { has_carrier_flag = frameworld_orbital_ring }
 		}
 	}
 }
@@ -540,6 +523,7 @@ giga_has_artificial_preference_trait = {
 		has_trait = trait_pc_habitat_preference
 		has_trait = trait_pc_shattered_ring_habitable_preference
 		has_trait = trait_pc_ringworld_habitable_preference # you can break the vanilla event with this...
+		has_trait = trait_pc_ark_preference
 		# gigas
 		has_trait = trait_pc_giga_frameworld_preference
 		has_trait = trait_pc_flusion_gaia_ecu_preference
@@ -551,18 +535,11 @@ giga_has_artificial_preference_trait = {
 		has_trait = trait_pc_interstellar_habitat_preference
 		has_trait = trait_pc_interstellar_ringworld_habitable_preference
 		has_trait = trait_pc_flat_world_preference
-		# has_trait = trait_pc_ringworld_city_preference
-		# has_trait = trait_pc_ringworld_machine_preference
-		# has_trait = trait_pc_ringworld_hive_preference
 		has_trait = trait_pc_birch_preference
 		has_trait = trait_pc_origin_birch_preference
 		has_trait = trait_pc_equatorial_shipyard_preference
 		has_trait = trait_pc_giga_planetary_computer_preference
 		has_trait = trait_pc_habitable_gas_giant_preference
-		# has_trait = trait_pc_alderson_slice_pc_preference
-		# has_trait = trait_pc_alderson_slice_ecu_preference
-		# has_trait = trait_pc_alderson_slice_hive_preference
-		# has_trait = trait_pc_alderson_slice_machine_preference
 		has_trait = trait_pc_alderson_slice_gaia_preference
 		has_trait = trait_pc_ehof_habitat_preference
 		has_trait = trait_pc_void_birch_preference
@@ -904,7 +881,7 @@ giga_can_colonize_with_species = {
 }
 
 # This = Planet
-giga_can_resettle_planet = {
+giga_can_resettle_colony = {
 	if = {
 		limit = {
 			exists = owner
@@ -913,7 +890,7 @@ giga_can_resettle_planet = {
 			}
 			nor = {
 				is_planet_class = pc_cosmogenesis_world
-				has_planet_flag = giga_frameworld@owner
+				has_carrier_flag = giga_frameworld@owner
 			}
 		}
 		always = no
@@ -1072,8 +1049,8 @@ can_dismantle_planet_for_bm = {
 		is_planet_class = pc_ehof_planet #it's not normal matter
 		is_planet_class = pc_ehof_cplanet #lazy fix to prevent this causing issues like having a tech option for a mega with no valid spot
 		has_planet_flag = getting_harvested_for_printing
-		has_planet_flag = megastructure
-		has_planet_flag = has_megastructure
+		has_carrier_flag = megastructure
+		has_carrier_flag = has_megastructure
 		is_holy_world = yes
 		has_planet_flag = machine_world_1
 		has_planet_flag = machine_world_2
@@ -1081,12 +1058,12 @@ can_dismantle_planet_for_bm = {
 		has_planet_flag = machine_world_4
 		has_planet_flag = paluushia
 		has_planet_flag = corrona
-		has_planet_flag = gigaflusion
+		has_carrier_flag = gigaflusion
 		is_planet_class = pc_ai
 		is_planet_class = pc_shrouded
 		giga_is_birch_world = yes
 	}
-	NOT = { has_planet_flag = has_megastructure } # This is gonna make people mad but you shouldn't be taking apart a planet that's anchoring a mega
+	NOT = { has_carrier_flag = has_megastructure } # This is gonna make people mad but you shouldn't be taking apart a planet that's anchoring a mega
 }
 
 giga_has_consumer_goods_civic_or_individualist = {
@@ -1101,8 +1078,7 @@ giga_has_consumer_goods_civic_or_individualist = {
 # extra conditions for whether the angler job swaps should happen
 giga_angler_jobs_trigger = {
     hidden_trigger = {
-        exists = owner
-        owner = {
+        owner? = {
             is_anglers_empire = yes
         }
     }
@@ -1117,4 +1093,28 @@ giga_angler_jobs_trigger = {
         has_active_building = building_giga_asteroid_factory_food
         has_active_building = building_giga_asteroid_factory_food_one_planet
     }
+}
+
+giga_ship_uses_war_moon_components = {
+	OR = {
+		is_ship_size = giga_war_moon
+		# is_ship_size = giga_kaiser_moon_flusion
+		# is_ship_size = giga_war_moon_flusion
+		# Not sure if the two above should be used in a generic attack moon check, leaving commented for now
+	}
+}
+
+giga_ship_uses_war_planet_components = {
+	OR = {
+		is_ship_size = giga_planet_behemoth
+		# is_ship_size = giga_aeternum_planetcraft
+		# Not sure if the above ship should be used in a generic planetcraft check, leaving commented for now
+	}
+}
+
+giga_ship_uses_war_system_components = {
+	OR = {
+		is_ship_size = giga_systemcraft
+		is_ship_size = giga_o_systemcraft
+	}
 }

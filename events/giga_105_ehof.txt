@@ -8,12 +8,10 @@ ship_event = {
 	hide_window = yes
 	is_triggered_only = yes
 	trigger = {
-		exists = controller
-		exists = solar_system
-		controller = {
+		controller? = {
 			is_same_value = solar_system.starbase.controller
 		}
-		solar_system = {
+		solar_system? = {
 			has_star_flag = ehof_megastructure_system@root.controller
 		}
 		fleet = {
@@ -83,6 +81,17 @@ ship_event = {
 					}
 				}
 			}
+			if = {
+				limit = {
+					is_arkship_ship = yes
+				}
+				controller = {
+					change_variable = {
+						which = ehof_pre_flight_arkship
+						value = 1
+					}
+				}
+			}
 			set_ship_flag = ehof_already_counted
 		}
 		if = {
@@ -118,20 +127,27 @@ ship_event = {
 							which = ehof_pre_flight_juggernaut
 							value > 0
 						}
+						check_variable = {
+							which = ehof_pre_flight_arkship
+							value > 0
+						}
 					}
 				}
 			}
 			fleet = {
+				# stop triggering ehof twice
 				set_timed_fleet_flag = {
 					flag = recently_triggered_ehof
 					days = 1
-				}				# stop triggering ehof twice
+				}
+
+				# Check EHOF state
 				controller = {
 					country_event = {
 						id = ehof_megastructure.009
 						days = 2
 					}
-				}				# Check EHOF state
+				}
 			}
 		}
 	}
@@ -143,12 +159,10 @@ fleet_event = {
 	hide_window = yes
 	is_triggered_only = yes
 	trigger = {
-		exists = controller
-		exists = solar_system
-		controller = {
+		controller? = {
 			is_same_value = solar_system.starbase.controller
 		}
-		solar_system = {
+		solar_system? = {
 			has_star_flag = ehof_megastructure_system@root.controller
 		}
 		can_use_ehof = yes
@@ -228,6 +242,17 @@ fleet_event = {
 					}
 				}
 			}
+			if = {
+				limit = {
+					is_arkship_ship = yes
+				}
+				controller = {
+					change_variable = {
+						which = ehof_pre_flight_arkship
+						value = 1
+					}
+				}
+			}
 		}
 		if = {
 			limit = {
@@ -260,19 +285,27 @@ fleet_event = {
 							which = ehof_pre_flight_juggernaut
 							value > 0
 						}
+						check_variable = {
+							which = ehof_pre_flight_arkship
+							value > 0
+						}
 					}
 				}
 			}
+
+			# stop triggering ehof twice
 			set_timed_fleet_flag = {
 				flag = recently_triggered_ehof
 				days = 1
-			}			# stop triggering ehof twice
+			}
+
+			# Check EHOF state
 			controller = {
 				country_event = {
 					id = ehof_megastructure.009
 					days = 2
 				}
-			}			# Check EHOF state
+			}
 		}
 	}
 }
@@ -287,8 +320,7 @@ fleet_event = {
 		any_owned_ship = {
 			has_ship_flag = ehof_already_counted
 		}
-		exists = solar_system
-		solar_system = {
+		solar_system? = {
 			NOT = {
 				has_star_flag = ehof_megastructure_system@root.controller
 			}
@@ -366,6 +398,17 @@ fleet_event = {
 					}
 				}
 			}
+			if = {
+				limit = {
+					is_arkship_ship = yes
+				}
+				controller = {
+					subtract_variable = {
+						which = ehof_pre_flight_arkship
+						value = 1
+					}
+				}
+			}
 		}
 		controller = {
 			if = {
@@ -390,11 +433,17 @@ fleet_event = {
 						which = ehof_pre_flight_juggernaut
 						value = 0
 					}
+					check_variable = {
+						which = ehof_pre_flight_arkship
+						value = 0
+					}
 				}
+
+				# Check EHOF state
 				country_event = {
 					id = ehof_megastructure.010
 					days = 2
-				}				# Check EHOF state
+				}
 			}
 		}
 	}
@@ -438,6 +487,9 @@ country_event = {
 							which = ehof_phase
 							value = 1
 						}
+						NOT = {
+							has_technology = tech_ehof_phase_01
+						}
 					}
 					give_technology = {
 						tech = "tech_ehof_phase_01"
@@ -450,6 +502,9 @@ country_event = {
 						check_variable = {
 							which = ehof_phase
 							value = 2
+						}
+						NOT = {
+							has_technology = tech_ehof_phase_02
 						}
 					}
 					give_technology = {
@@ -464,6 +519,9 @@ country_event = {
 							which = ehof_phase
 							value = 3
 						}
+						NOT = {
+							has_technology = tech_ehof_phase_03
+						}
 					}
 					give_technology = {
 						tech = "tech_ehof_phase_03"
@@ -477,6 +535,9 @@ country_event = {
 							which = ehof_phase
 							value = 4
 						}
+						NOT = {
+							has_technology = tech_ehof_phase_04
+						}
 					}
 					give_technology = {
 						tech = "tech_ehof_phase_04"
@@ -485,7 +546,7 @@ country_event = {
 					log = tech4
 				}
 				country_event = {
-					id = ehof_megastructure.201
+					id = ehof_megastructure.201 #set EHOF to idle
 					days = 10
 				}
 			}
@@ -531,9 +592,14 @@ country_event = {
 								which = ehof_phase
 								value = 1
 							}
-							give_technology = {
-								tech = "tech_ehof_phase_01"
-								message = yes
+							if = {
+								limit = {
+									NOT = { has_technology = tech_ehof_phase_01 }
+								}
+								give_technology = {
+									tech = "tech_ehof_phase_01"
+									message = yes
+								}
 							}
 							log = tech1
 						}
@@ -544,9 +610,14 @@ country_event = {
 								which = ehof_phase
 								value = 2
 							}
-							give_technology = {
-								tech = "tech_ehof_phase_02"
-								message = yes
+							if = {
+								limit = {
+									NOT = { has_technology = tech_ehof_phase_02 }
+								}
+								give_technology = {
+									tech = "tech_ehof_phase_02"
+									message = yes
+								}
 							}
 							log = tech2
 						}
@@ -558,9 +629,14 @@ country_event = {
 								which = ehof_phase
 								value = 3
 							}
-							give_technology = {
-								tech = "tech_ehof_phase_03"
-								message = yes
+							if = {
+								limit = {
+									NOT = { has_technology = tech_ehof_phase_03 }
+								}
+								give_technology = {
+									tech = "tech_ehof_phase_03"
+									message = yes
+								}
 							}
 							log = tech3
 						}
@@ -571,9 +647,14 @@ country_event = {
 								which = ehof_phase
 								value = 4
 							}
-							give_technology = {
-								tech = "tech_ehof_phase_04"
-								message = yes
+							if = {
+								limit = {
+									NOT = { has_technology = tech_ehof_phase_04 }
+								}
+								give_technology = {
+									tech = "tech_ehof_phase_04"
+									message = yes
+								}
 							}
 							log = tech4
 						}
@@ -582,7 +663,7 @@ country_event = {
 			}
 		}
 		country_event = {
-			id = ehof_megastructure.201
+			id = ehof_megastructure.201 #set EHOF to idle
 			days = 10
 		}
 	}
@@ -594,6 +675,7 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		ehof_default_country = yes
+		is_nomadic = no
 		NOR = {
 			has_country_flag = ehof_activated
 			has_country_flag = ehof_activating
@@ -909,7 +991,7 @@ country_event = {
 					}
 				}
 				country_event = {
-					id = ehof_megastructure.008
+					id = ehof_megastructure.008 #adopt a new EHOF
 				}
 			}
 			# There is not any ehof that we own that is better than our active ehof
@@ -939,8 +1021,8 @@ country_event = {
 			}
 		}
 		country_event = {
-			id = ehof_megastructure.009
-		}		# Check EHOF State.
+			id = ehof_megastructure.009 # Check EHOF State.
+		}
 	}
 }
 
@@ -1050,7 +1132,7 @@ country_event = {
 	}
 }
 
-# EHOF precursor
+# EHOF precursor digsite for settled empires
 country_event = {
 	id = ehof_megastructure.005
 	hide_window = yes
@@ -1059,6 +1141,7 @@ country_event = {
 		NOT = {
 			has_country_flag = ehof_precursor_spawned
 		}
+		is_nomadic = no
 		OR = {
 			is_ai = no
 			any_country = {
@@ -1076,43 +1159,46 @@ country_event = {
 			limit = {
 				any_planet_within_border = {
 					solar_system = {
-						NOR = {
-							has_star_flag = empire_home_system
-							is_capital_system = yes
+						is_capital_system = no
+						OR = { #people kept bug-reporting that it won't spawn when it doesn't spawn literally nextdoor so here you go, it can spawn nextdoor now
 							has_special_star_flag_trigger = no
+							has_star_flag = neighbor_t1
+							has_star_flag = neighbor_t1_first_colony
+							has_star_flag = neighbor_t2
+							has_star_flag = neighbor_t2_second_colony
+							has_star_flag = empire_cluster
 						}
 					}
 					is_artificial = no
-					habitable_planet = no
-					is_colony = no
+					is_colonizable = no
 					is_star = no
 					is_asteroid = no
 					has_anomaly = no
-					NOR = {
-						exists = archaeological_site
-						giga_is_gas_giant = yes
-					}
+					giga_is_gas_giant = no
+					NOT = { exists = archaeological_site }
 				}
 			}
 			random_planet_within_border = {
 				limit = {
 					solar_system = {
-						NOR = {
-							has_star_flag = empire_home_system
-							is_capital_system = yes
+						is_capital_system = no
+						OR = { #people kept bug-reporting that it won't spawn when it doesn't spawn literally nextdoor so here you go, it can spawn nextdoor now
 							has_special_star_flag_trigger = no
+							has_star_flag = neighbor_t1
+							has_star_flag = neighbor_t1_first_colony
+							has_star_flag = neighbor_t2
+							has_star_flag = neighbor_t2_second_colony
+							has_star_flag = empire_cluster
 						}
 					}
 					is_artificial = no
-					habitable_planet = no
+					is_colonizable = no
 					is_colony = no
 					is_star = no
 					is_asteroid = no
 					has_anomaly = no
-					NOR = {
-						exists = archaeological_site
-						giga_is_gas_giant = yes
-					}
+					giga_is_gas_giant = no
+					NOT = { exists = archaeological_site }
 				}
 				ehof_giga_new_create_rl_digsite = {
 					digsite = ehof_precursor
@@ -1140,12 +1226,255 @@ country_event = {
 				}
 			}
 		}
-		else = {
+		else = { # Try again in a month
 			country_event = {
 				id = ehof_megastructure.005
 				days = 30
 			}
-		}		# Try again in a month
+		}
+	}
+}
+
+# EHOF precursor digsite for nomadic empires - call the arcsite spawn randomly after getting the prereq tech
+country_event = {
+	id = ehof_megastructure.601
+	hide_window = yes
+	is_triggered_only = yes
+	trigger = {
+		NOT = {
+			has_country_flag = ehof_precursor_spawned
+		}
+		is_nomadic = yes
+		last_increased_tech = tech_arkship_tier_3 #spinal mount needs a spinal mount slot so the nomad EHOF chain starts after that
+		OR = {
+			is_ai = no
+			any_country = {
+				is_country_type = global_event
+				check_variable = {
+					which = chk_precursor_cap
+					value < giga_ehof_ai_cap
+				}
+			}
+		}
+	}
+	immediate = {
+		country_event = {
+			id = ehof_megastructure.602 #spawn the arcsite
+			days = 360
+			random = 1080
+		}
+	}
+}
+
+# EHOF precursor digsite for nomadic empires - spawn the arcsite
+country_event = {
+	id = ehof_megastructure.602
+	title = "ehof_megastructure.602.name"
+	desc = "ehof_megastructure.602.desc"
+	picture = GFX_evt_atmospheric_entry
+	show_sound = event_sensor_ping
+
+	is_triggered_only = yes
+	trigger = { #still check for AI EHOF cap
+		OR = {
+			is_ai = no
+			any_country = {
+				is_country_type = global_event
+				check_variable = {
+					which = chk_precursor_cap
+					value < giga_ehof_ai_cap
+				}
+			}
+		}
+	}
+
+	option = {
+		name = ehof_megastructure.602.a
+		save_event_target_as = rl_digsite_finder
+		if = {
+			limit = {
+				any_system = {
+					#spawn somewhere at least semi-accessible
+					OR = {
+						has_special_star_flag_trigger = no
+						has_star_flag = neighbor_t1
+						has_star_flag = neighbor_t1_first_colony
+						has_star_flag = neighbor_t2
+						has_star_flag = neighbor_t2_second_colony
+						has_star_flag = empire_cluster
+					}
+					is_capital_system = no
+					OR = {
+						NOT = { exists = owner }
+						owner? = {
+							giga_is_standard_country_type = yes
+						}
+					}
+					root = { #spawn it in a known system
+						intel_level = {
+							level > none
+							system = prev
+						}
+					}
+					any_system_planet = {
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+						is_surveyed = { who = root status = yes } #so arcsite is visible
+					}
+				}
+			}
+			random_system = {
+				limit = {
+					#spawn somewhere at least semi-accessible
+					OR = {
+						has_special_star_flag_trigger = no
+						has_star_flag = neighbor_t1
+						has_star_flag = neighbor_t1_first_colony
+						has_star_flag = neighbor_t2
+						has_star_flag = neighbor_t2_second_colony
+						has_star_flag = empire_cluster
+					}
+					is_capital_system = no
+					OR = {
+						NOT = { exists = owner }
+						owner? = {
+							giga_is_standard_country_type = yes
+						}
+					}
+					root = { #spawn it in a known system
+						intel_level = {
+							level > none
+							system = prev
+						}
+					}
+					any_system_planet = {
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+						is_surveyed = { who = root status = yes } #so arcsite is visible
+					}
+				}
+				random_system_planet = {
+					limit = {
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+						is_surveyed = { who = root status = yes } #so arcsite is visible
+					}
+					ehof_giga_new_create_rl_digsite = {
+						digsite = ehof_precursor
+						digsite_flag = ehof_precursor
+						digsite_completion_flag = ehof_chain_begins_complete
+					}
+					# create_archaeological_site = ehof_precursor
+					# set_planet_flag = ehof_precursor@root
+					root = {
+						set_country_flag = ehof_precursor_spawned
+						if = {
+							limit = {
+								is_ai = yes
+							}
+							random_country = {
+								limit = {
+									is_country_type = global_event
+								}
+								change_variable = {
+									which = chk_precursor_cap
+									value = 1
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		else = { #try again ignoring some ownership checks in case the whole galaxy is owned by an FE or whatever nonsense
+			random_system = {
+				limit = {
+					#spawn somewhere at least semi-accessible
+					has_special_star_flag_trigger = no
+					any_system_planet = {
+						solar_system = {
+							is_capital_system = no
+							OR = { #people kept bug-reporting that it won't spawn when it doesn't spawn literally nextdoor so here you go, it can spawn nextdoor now
+								has_special_star_flag_trigger = no
+								has_star_flag = neighbor_t1
+								has_star_flag = neighbor_t1_first_colony
+								has_star_flag = neighbor_t2
+								has_star_flag = neighbor_t2_second_colony
+								has_star_flag = empire_cluster
+							}
+						}
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+					}
+				}
+				random_system_planet = {
+					limit = {
+						solar_system = {
+							is_capital_system = no
+							OR = { #people kept bug-reporting that it won't spawn when it doesn't spawn literally nextdoor so here you go, it can spawn nextdoor now
+								has_special_star_flag_trigger = no
+								has_star_flag = neighbor_t1
+								has_star_flag = neighbor_t1_first_colony
+								has_star_flag = neighbor_t2
+								has_star_flag = neighbor_t2_second_colony
+								has_star_flag = empire_cluster
+							}
+						}
+						is_artificial = no
+						is_colonizable = no
+						is_star = no
+						is_asteroid = no
+						has_anomaly = no
+						giga_is_gas_giant = no
+						NOT = { exists = archaeological_site }
+					}
+					ehof_giga_new_create_rl_digsite = {
+						digsite = ehof_precursor
+						digsite_flag = ehof_precursor
+						digsite_completion_flag = ehof_chain_begins_complete
+					}
+					# create_archaeological_site = ehof_precursor
+					# set_planet_flag = ehof_precursor@root
+					root = {
+						set_country_flag = ehof_precursor_spawned
+						if = {
+							limit = {
+								is_ai = yes
+							}
+							random_country = {
+								limit = {
+									is_country_type = global_event
+								}
+								change_variable = {
+									which = chk_precursor_cap
+									value = 1
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -1252,14 +1581,26 @@ fleet_event = {
 		from = {
 			set_site_progress_locked = yes
 		}
-		fromfrom.planet = {
-			if = {
-				limit = { giga_is_uninhabitable = yes} #precaution if it somehow ends up where it shouldn't
-				change_pc = pc_broken
-			}
-		}
 		if = {
 			limit = {
+				OR = { #nomadic AI shouldn't inexplicably explode planets in player-owned systems
+					is_nomadic = no
+					NOT = { exists = space_owner }
+					space_owner? = { is_ai = yes }
+				}
+			}
+			fromfrom.planet = {
+				if = {
+					limit = { is_colonizable = no } #precaution if it somehow ends up where it shouldn't
+					change_pc = pc_broken
+				}
+			}
+		}
+
+		#spawn orange bolt system for settled empires
+		if = {
+			limit = {
+				is_nomadic = no
 				NOT = {
 					invoke_special_ehof_chain_beginning_spawning = {
 						flag = special_ehof_beginning_spawn_initializers
@@ -1276,8 +1617,7 @@ fleet_event = {
 							max_jumps = 0
 						}
 						last_created_system = {
-							# Add extra hyperlanes
-							# to core if core origin
+							# Add extra hyperlanes to core if core origin
 							if = {
 								limit = {
 									root.owner.capital_scope.solar_system = {
@@ -1311,8 +1651,8 @@ fleet_event = {
 										while = {
 											count = 1
 											random_neighbor_system_euclidean = {
-												limit = {has_star_flag = lcluster }
-												add_hyperlane_safe = { from = prev to = this } 
+												limit = { has_star_flag = lcluster }
+												add_hyperlane_safe = { from = prev to = this }
 											}
 										}
 									}
@@ -1320,7 +1660,7 @@ fleet_event = {
 										while = {
 											count = 2
 											random_neighbor_system_euclidean = {
-												limit = {has_star_flag = lcluster }
+												limit = { has_star_flag = lcluster }
 												add_hyperlane_safe = { from = prev to = this } 
 											}
 										}
@@ -1363,8 +1703,7 @@ fleet_event = {
 							max_jumps = 0
 						}
 						last_created_system = {
-							# Add extra hyperlanes
-							# to core if core origin
+							# Add extra hyperlanes to core if core origin
 							if = {
 								limit = {
 									root.owner.capital_scope.solar_system = {
@@ -1398,7 +1737,7 @@ fleet_event = {
 										while = {
 											count = 1
 											random_neighbor_system_euclidean = {
-												limit = {has_star_flag = lcluster }
+												limit = { has_star_flag = lcluster }
 												add_hyperlane_safe = { from = prev to = this } 
 											}
 										}
@@ -1407,7 +1746,7 @@ fleet_event = {
 										while = {
 											count = 2
 											random_neighbor_system_euclidean = {
-												limit = {has_star_flag = lcluster }
+												limit = { has_star_flag = lcluster }
 												add_hyperlane_safe = { from = prev to = this } 
 											}
 										}
@@ -1446,6 +1785,7 @@ fleet_event = {
 		}
 		else_if = {
 			limit = {
+				is_nomadic = no
 				NOR = {
 					invoke_special_ehof_chain_beginning_spawning = {
 						flag = special_ehof_beginning_wormhole_spawn_initializers_forbidden
@@ -1516,6 +1856,49 @@ fleet_event = {
 				}
 			}
 		}
+
+		#spawn orange bolt system for nomadic empires
+		else_if = {
+			limit = {
+				is_nomadic = yes
+			}
+			root = { #spawns at more random distance from arcsite - let nomads travel
+				spawn_system = {
+					initializer = "special_init_01"
+					min_distance = 10
+					max_distance = 40
+					min_jumps = 5
+					max_jumps = 25
+				}
+				last_created_system = {
+					random_list = {
+						1 = {
+							while = {
+								count = 1
+								giga_generate_hyperlane = yes
+							}
+						}
+						1 = {
+							while = {
+								count = 2
+								giga_generate_hyperlane = yes
+							}
+						}
+					}
+					giga_field_system_debris = yes
+					set_star_flag = ehof_blackhole_@root.controller
+					root.controller = {
+						enable_special_project = {
+							name = "EXPLORE_EHOF_PRECURSOR_NO_RUINED"
+							location = prev.star
+							owner = this
+						}
+					}
+				}
+			}
+		}
+
+		#backup orange bolt system spawn - primarily for settled but theoretically should work for nomads
 		else = {
 			closest_system = {
 				limit = {
@@ -1668,10 +2051,8 @@ ship_event = {
 	hide_window = yes
 	is_triggered_only = yes
 	trigger = {
-		exists = controller
-		controller = { ehof_default_country = yes }
-		exists = from
-		from = {
+		controller? = { ehof_default_country = yes }
+		from? = {
 			NOR = {
 				has_star_flag = empire_has_visited_anyone
 				has_star_flag = empire_has_visited@root.controller
@@ -1679,6 +2060,7 @@ ship_event = {
 			cohesive_system = no
 		}
 	}
+
 	immediate = {
 		from = {
 			set_star_flag = empire_has_visited_anyone
@@ -1687,7 +2069,7 @@ ship_event = {
 	}
 }
 
-# Should it activate? [Monthly Pulse]
+# Should it activate? [Monthly Pulse]. Settled empires
 country_event = {
 	id = ehof_megastructure.009
 	hide_window = yes
@@ -1702,8 +2084,7 @@ country_event = {
 			any_fleet_in_system = {
 				can_use_ehof = yes
 				is_mobile = yes
-				exists = controller
-				controller = {
+				controller? = {
 					is_same_value = root
 				}
 			}
@@ -1743,23 +2124,165 @@ country_event = {
 	hide_window = yes
 	is_triggered_only = yes
 	trigger = {
-		any_system_within_border = {
-			has_star_flag = ehof_megastructure_system@root
-			NOT = {
+		NOT = {
+			any_system_within_border = {
+				has_star_flag = ehof_megastructure_system@root
 				any_fleet_in_system = {
 					can_use_ehof = yes
 					is_mobile = yes
-					exists = controller
-					controller = {
+					controller? = {
 						is_same_value = root
 					}
 				}
 			}
 		}
+		is_nomadic = no
 		has_country_flag = ehof_can_activate
 	}
 	immediate = {
 		remove_country_flag = ehof_can_activate
+		every_system = {
+			limit = {
+				has_star_flag = ehof_megastructure_system@root
+			}
+			remove_star_flag = ehof_megastructure_system@root
+		}
+	}
+}
+
+# check if activation eligible - called via on_entering_system_fleet
+fleet_event = {
+	id = ehof_megastructure.0091
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		# owner? = {
+		# 	NOR = {
+		# 		has_country_flag = ehof_can_activate
+		# 		has_country_flag = ehof_can_deactivate
+		# 		has_country_flag = ehof_activating
+		# 		has_country_flag = ehof_activated
+		# 		has_country_flag = ehof_on_cooldown
+		# 		has_country_flag = ehof_is_upgrading
+		# 	}
+		# }
+		owner = {
+			NOT = {
+				has_country_flag = ehof_activated
+			}
+		}
+		is_arkship_fleet = yes
+		starbase? = {
+			has_starbase_module = giga_arkship_ehof
+		}
+		from = { #from = system entered
+			giga_nomad_ehof_eligible_system = yes
+		}
+	}
+
+	immediate = {
+		from = {
+			set_star_flag = ehof_megastructure_system@root
+			save_global_event_target_as = ehof_megastructure_system
+		}
+		owner = {
+			set_country_flag = ehof_can_activate
+			ehof_recount_ships = yes #this needs to be on the country scope whenever called
+		}
+		if = {
+			limit = {
+				owner = { is_ai = no }
+				is_multiplayer = no
+			}
+			random_list = {
+				1 = {
+					play_sound = sfx_ehof_activate_01
+				}
+				1 = {
+					play_sound = sfx_ehof_activate_02
+				}
+			}
+		}
+	}
+}
+
+# check if activation eligible - called manually
+fleet_event = {
+	id = ehof_megastructure.0092
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		# owner? = {
+		# 	NOR = {
+		# 		has_country_flag = ehof_can_activate
+		# 		has_country_flag = ehof_can_deactivate
+		# 		has_country_flag = ehof_activating
+		# 		has_country_flag = ehof_activated
+		# 		has_country_flag = ehof_on_cooldown
+		# 		has_country_flag = ehof_is_upgrading
+		# 	}
+		# }
+		owner = {
+			NOT = {
+				has_country_flag = ehof_activated
+			}
+		}
+		solar_system? = { #technically this could trigger in a hyperlane so it gets an "exists" check
+			giga_nomad_ehof_eligible_system = yes
+		}
+	}
+
+	immediate = {
+		solar_system = {
+			set_star_flag = ehof_megastructure_system@root
+			save_global_event_target_as = ehof_megastructure_system
+		}
+		owner = {
+			set_country_flag = ehof_can_activate
+			ehof_recount_ships = yes #this needs to be on the country scope whenever called
+		}
+		if = {
+			limit = {
+				owner = { is_ai = no }
+				is_multiplayer = no
+			}
+			random_list = {
+				1 = {
+					play_sound = sfx_ehof_activate_01
+				}
+				1 = {
+					play_sound = sfx_ehof_activate_02
+				}
+			}
+		}
+	}
+}
+
+# on_leaving_system_fleet
+fleet_event = {
+	id = ehof_megastructure.0102
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_arkship_fleet = yes
+		starbase? = {
+			has_starbase_module = giga_arkship_ehof
+		}
+		from = { #from = system departed
+			giga_nomad_ehof_eligible_system = yes
+		}
+	}
+
+	immediate = {
+		owner = {
+			remove_country_flag = ehof_can_activate
+		}
+		from = { #from = system departed
+			remove_star_flag = ehof_megastructure_system@root
+		}
 	}
 }
 
@@ -1783,7 +2306,7 @@ country_event = {
 	}
 	immediate = {
 		country_event = {
-			id = ehof_megastructure.307
+			id = ehof_megastructure.307 #close wormhole
 		}
 	}
 }
@@ -1992,6 +2515,10 @@ country_event = {
 				which = ehof_pre_flight_juggernaut
 				value = 0
 			}
+			set_variable = {
+				which = ehof_pre_flight_arkship
+				value = 0
+			}
 		}
 		# Set globals for localization
 		if = {
@@ -2007,9 +2534,9 @@ country_event = {
 			save_global_event_target_as = ehof_recently_built_system
 		}
 		country_event = {
-			id = ehof_megastructure.009
+			id = ehof_megastructure.009 # Check EHOF state
 			days = 2
-		}		# Check EHOF state
+		}
 	}
 	option = {
 		name = GOOD
@@ -2048,8 +2575,10 @@ country_event = {
 				giga_ehof_set_activating = yes
 			}
 		}
+
 		# save megastructure system
 		ehof_mega_system = yes
+
 		if = {
 			# if user selected system to open wormhole
 			limit = {
@@ -2058,7 +2587,7 @@ country_event = {
 				}
 			}
 			country_event = {
-				id = ehof_megastructure.501
+				id = ehof_megastructure.501 #Activate State
 				days = 5
 			}
 		}
@@ -2093,12 +2622,31 @@ country_event = {
 		remove_state_flags = yes
 		# set new state
 		set_country_flag = ehof_activated
-		random_owned_megastructure = {
+		if = {
 			limit = {
-				has_megastructure_flag = giga_ehof_activating
+				is_nomadic = no
 			}
-			solar_system = {
-				giga_ehof_set_active = yes
+			random_owned_megastructure = {
+				limit = {
+					has_megastructure_flag = giga_ehof_activating
+				}
+				solar_system = {
+					giga_ehof_set_active = yes
+				}
+			}
+		}
+		else = {
+			event_target:ehof_megastructure_system = {
+				spawn_megastructure = {
+					type = "ehof_megastructure_wormhole_destination"
+					owner = from
+					orbit_angle = 240
+					orbit_distance = 37
+					init_effect = {
+						set_megastructure_flag = ehof_wormhole_opened_by_@root
+						set_megastructure_flag = ehof_wormhole_node
+					}
+				}
 			}
 		}
 		# open wormhole
@@ -2156,7 +2704,7 @@ country_event = {
 						}
 					}
 					country_event = {
-						id = ehof_mega_trader.100
+						id = ehof_mega_trader.100 #create Urmazin Traders
 					}
 				}
 			}
@@ -2174,7 +2722,7 @@ country_event = {
 		}
 		else = {
 			country_event = {
-				id = ehof_megastructure.3072
+				id = ehof_megastructure.3072 #close wormhole
 				days = 30
 			}
 		}
@@ -2205,49 +2753,96 @@ country_event = {
 		# set back to can activate
 		if = {
 			limit = {
+				#nomads can use the normal mega at stage one with the origin
 				check_variable = {
 					which = ehof_phase
 					value = 1
 				}
 			}
 			country_event = {
-				id = ehof_megastructure.201
+				id = ehof_megastructure.201 #set EHOF to idle
 				days = @ehof_phase1_cooldown_days
 			}
 		}
 		else_if = {
 			limit = {
+				is_nomadic = no
 				check_variable = {
 					which = ehof_phase
 					value = 2
 				}
 			}
 			country_event = {
-				id = ehof_megastructure.201
+				id = ehof_megastructure.201 #set EHOF to idle
 				days = @ehof_phase2_cooldown_days
 			}
 		}
 		else_if = {
 			limit = {
+				is_nomadic = no
 				check_variable = {
 					which = ehof_phase
 					value = 3
 				}
 			}
 			country_event = {
-				id = ehof_megastructure.201
+				id = ehof_megastructure.201 #set EHOF to idle
 				days = @ehof_phase3_cooldown_days
 			}
 		}
 		else_if = {
 			limit = {
+				is_nomadic = no
 				check_variable = {
 					which = ehof_phase
 					value = 4
 				}
 			}
 			country_event = {
-				id = ehof_megastructure.201
+				id = ehof_megastructure.201 #set EHOF to idle
+				days = @ehof_phase4_cooldown_days
+			}
+		}
+		else_if = {
+			limit = {
+				is_nomadic = yes
+				NOT = { has_technology = tech_ehof_phase_03 }
+				# check_variable = {
+				# 	which = ehof_phase
+				# 	value = 2
+				# }
+			}
+			country_event = {
+				id = ehof_megastructure.202 #set EHOF to idle
+				days = @ehof_phase2_cooldown_days
+			}
+		}
+		else_if = {
+			limit = {
+				is_nomadic = yes
+				has_technology = tech_ehof_phase_03
+				NOT = { has_technology = tech_ehof_phase_04 }
+				# check_variable = {
+				# 	which = ehof_phase
+				# 	value = 3
+				# }
+			}
+			country_event = {
+				id = ehof_megastructure.202 #set EHOF to idle
+				days = @ehof_phase3_cooldown_days
+			}
+		}
+		else_if = {
+			limit = {
+				is_nomadic = yes
+				has_technology = tech_ehof_phase_04
+				# check_variable = {
+				# 	which = ehof_phase
+				# 	value = 4
+				# }
+			}
+			country_event = {
+				id = ehof_megastructure.202 #set EHOF to idle
 				days = @ehof_phase4_cooldown_days
 			}
 		}
@@ -2266,9 +2861,15 @@ country_event = {
 		}
 		else_if = {
 			limit = {
-				check_variable = {
-					which = ehof_phase
-					value = 2
+				OR = {
+					AND = {
+						is_nomadic = yes
+						NOT = { has_technology = tech_ehof_phase_03 }
+					}
+					check_variable = {
+						which = ehof_phase
+						value = 2
+					}
 				}
 			}
 			set_variable = {
@@ -2278,9 +2879,16 @@ country_event = {
 		}
 		else_if = {
 			limit = {
-				check_variable = {
-					which = ehof_phase
-					value = 3
+				OR = {
+					AND = {
+						is_nomadic = yes
+						has_technology = tech_ehof_phase_03
+						NOT = { has_technology = tech_ehof_phase_04 }
+					}
+					check_variable = {
+						which = ehof_phase
+						value = 3
+					}
 				}
 			}
 			set_variable = {
@@ -2290,9 +2898,15 @@ country_event = {
 		}
 		else_if = {
 			limit = {
-				check_variable = {
-					which = ehof_phase
-					value = 4
+				OR = {
+					AND = {
+						is_nomadic = yes
+						has_technology = tech_ehof_phase_04
+					}
+					check_variable = {
+						which = ehof_phase
+						value = 4
+					}
 				}
 			}
 			set_variable = {
@@ -2300,13 +2914,44 @@ country_event = {
 				value = @ehof_phase4_cooldown_days
 			}
 		}
+		# else_if = {
+		# 	limit = {
+		# 		is_nomadic = yes
+		# 		NOT = { has_technology = tech_ehof_phase_03 }
+		# 	}
+		# 	set_variable = {
+		# 		which = ehof_cooldown_days
+		# 		value = @ehof_phase2_cooldown_days
+		# 	}
+		# }
+		# else_if = {
+		# 	limit = {
+		# 		is_nomadic = yes
+		# 		has_technology = tech_ehof_phase_03
+		# 		NOT = { has_technology = tech_ehof_phase_04 }
+		# 	}
+		# 	set_variable = {
+		# 		which = ehof_cooldown_days
+		# 		value = @ehof_phase3_cooldown_days
+		# 	}
+		# }
+		# else_if = {
+		# 	limit = {
+		# 		is_nomadic = yes
+		# 		has_technology = tech_ehof_phase_04
+		# 	}
+		# 	set_variable = {
+		# 		which = ehof_cooldown_days
+		# 		value = @ehof_phase4_cooldown_days
+		# 	}
+		# }
 	}
 }
 
 ########################################################################################################
 ########################################## EHOF State Changes ##########################################
 ########################################################################################################
-# Set to Idle
+# Set to Idle - settled empires
 country_event = {
 	id = ehof_megastructure.201
 	hide_window = yes
@@ -2338,6 +2983,31 @@ country_event = {
 	}
 }
 
+# Set to Idle - nomadic empires
+country_event = {
+	id = ehof_megastructure.202
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		log = idle
+		ehof_recount_ships = yes
+		remove_country_flag = ehof_on_cooldown
+		every_owned_fleet = {
+			limit = {
+				is_arkship_fleet = yes
+				starbase = {
+					has_starbase_module = giga_arkship_ehof
+				}
+			}
+			fleet_event = { # Check EHOF state
+				id = ehof_megastructure.0092
+				days = 2
+			}
+		}
+	}
+}
+
 ########################################################################################################
 ######################################### Send Fleets Through ##########################################
 ########################################################################################################
@@ -2352,8 +3022,10 @@ country_event = {
 			which = ehof_travel_fleet_count
 			value = 0
 		}
+
 		# save megastructure system
 		ehof_mega_system = yes
+
 		event_target:ehof_megastructure_system = {
 			#limit = { has_an_active_ehof = yes } # limit makes no sense here, probably used to be an "any" type clause
 			every_fleet_in_system = {
@@ -2434,6 +3106,17 @@ country_event = {
 						controller = {
 							subtract_variable = {
 								which = ehof_pre_flight_juggernaut
+								value = 1
+							}
+						}
+					}
+					if = {
+						limit = {
+							is_arkship_ship = yes
+						}
+						controller = {
+							subtract_variable = {
+								which = ehof_pre_flight_arkship
 								value = 1
 							}
 						}
@@ -2530,9 +3213,15 @@ fleet_event = {
 				if = {
 					# if country has level 4 ehof and permanent wormhole don't close it
 					limit = {
-						check_variable = {
-							which = ehof_phase
-							value = 4
+						OR = {
+							AND = {
+								is_nomadic = yes
+								has_technology = tech_ehof_phase_04
+							}
+							check_variable = {
+								which = ehof_phase
+								value = 4
+							}
 						}
 						root.controller = {
 							has_country_flag = ehof_permanent
@@ -2550,7 +3239,7 @@ fleet_event = {
 						}
 					}
 					country_event = {
-						id = ehof_megastructure.307
+						id = ehof_megastructure.307 #close wormhole
 						days = 2
 					}
 				}
@@ -2640,7 +3329,7 @@ country_event = {
 			remove_country_flag = wormhole_should_close@root
 			log = close_event_1
 			country_event = {
-				id = ehof_megastructure.307
+				id = ehof_megastructure.307 #close wormhole
 			}
 		}
 		else_if = {
@@ -2651,7 +3340,7 @@ country_event = {
 			remove_country_flag = wormhole_should_close@root
 			log = close_event_2
 			country_event = {
-				id = ehof_megastructure.307
+				id = ehof_megastructure.307 #close wormhole
 			}
 		}
 		else = {
@@ -2689,7 +3378,7 @@ country_event = {
 			remove_country_flag = ehof_on_cooldown
 			remove_country_flag = ehof_is_upgrading
 			country_event = {
-				id = ehof_megastructure.307
+				id = ehof_megastructure.307 #close wormhole
 			}
 		}
 	}
@@ -2784,15 +3473,11 @@ country_event = {
 					if = {
 						limit = {
 							root = {
-								OR = {
-									is_machine_empire = yes
-									any_owned_pop_group = {
-										is_organic_species = yes
-										prevprev = {
-											habitability = {
-												who = prev
-												value >= 0.7
-											}
+								any_owned_pop_group = {
+									prevprev = {
+										habitability = {
+											who = prev
+											value >= 0.7
 										}
 									}
 								}
@@ -2809,7 +3494,6 @@ country_event = {
 						limit = {
 							root = {
 								any_owned_pop_group = {
-									is_organic_species = yes
 									prevprev = {
 										habitability = {
 											who = prev
@@ -3522,94 +4206,6 @@ country_event = {
 						}
 					}
 				}
-				# if = { limit = { has_deposit = d_minerals_1 }				prev = { change_variable = { which = ehof_minerals value = 1 } } }
-				# if = { limit = { has_deposit = d_minerals_2 }				prev = { change_variable = { which = ehof_minerals value = 2 } } }
-				# if = { limit = { has_deposit = d_minerals_3 }				prev = { change_variable = { which = ehof_minerals value = 3 } } }
-				# if = { limit = { has_deposit = d_minerals_4 }				prev = { change_variable = { which = ehof_minerals value = 4 } } }
-				# if = { limit = { has_deposit = d_minerals_5 }				prev = { change_variable = { which = ehof_minerals value = 5 } } }
-				# if = { limit = { has_deposit = d_minerals_6 }				prev = { change_variable = { which = ehof_minerals value = 6 } } }
-				# if = { limit = { has_deposit = d_minerals_7 }				prev = { change_variable = { which = ehof_minerals value = 7 } } }
-				# if = { limit = { has_deposit = d_minerals_8 }				prev = { change_variable = { which = ehof_minerals value = 8 } } }
-				# if = { limit = { has_deposit = d_minerals_9 }				prev = { change_variable = { which = ehof_minerals value = 9 } } }
-				# if = { limit = { has_deposit = d_minerals_10 }				prev = { change_variable = { which = ehof_minerals value = 10 } } }
-				# if = { limit = { has_deposit = d_energy_1 }					prev = { change_variable = { which = ehof_energy value = 1 } } }
-				# if = { limit = { has_deposit = d_energy_2 }					prev = { change_variable = { which = ehof_energy value = 2 } } }
-				# if = { limit = { has_deposit = d_energy_3 }					prev = { change_variable = { which = ehof_energy value = 3 } } }
-				# if = { limit = { has_deposit = d_energy_4 }					prev = { change_variable = { which = ehof_energy value = 4 } } }
-				# if = { limit = { has_deposit = d_energy_5 }					prev = { change_variable = { which = ehof_energy value = 5 } } }
-				# if = { limit = { has_deposit = d_energy_6 }					prev = { change_variable = { which = ehof_energy value = 6 } } }
-				# if = { limit = { has_deposit = d_energy_7 }					prev = { change_variable = { which = ehof_energy value = 7 } } }
-				# if = { limit = { has_deposit = d_energy_8 }					prev = { change_variable = { which = ehof_energy value = 8 } } }
-				# if = { limit = { has_deposit = d_energy_9 }					prev = { change_variable = { which = ehof_energy value = 9 } } }
-				# if = { limit = { has_deposit = d_energy_10 }				prev = { change_variable = { which = ehof_energy value = 10 } } }
-				# if = { limit = { has_deposit = d_physics_1 }				prev = { change_variable = { which = ehof_physics value = 1 } } }
-				# if = { limit = { has_deposit = d_physics_2 }				prev = { change_variable = { which = ehof_physics value = 2 } } }
-				# if = { limit = { has_deposit = d_physics_3 }				prev = { change_variable = { which = ehof_physics value = 3 } } }
-				# if = { limit = { has_deposit = d_physics_4 }				prev = { change_variable = { which = ehof_physics value = 4 } } }
-				# if = { limit = { has_deposit = d_physics_5 }				prev = { change_variable = { which = ehof_physics value = 5 } } }
-				# if = { limit = { has_deposit = d_physics_6 }				prev = { change_variable = { which = ehof_physics value = 6 } } }
-				# if = { limit = { has_deposit = d_physics_7 }				prev = { change_variable = { which = ehof_physics value = 7 } } }
-				# if = { limit = { has_deposit = d_physics_8 }				prev = { change_variable = { which = ehof_physics value = 8 } } }
-				# if = { limit = { has_deposit = d_physics_9 }				prev = { change_variable = { which = ehof_physics value = 9 } } }
-				# if = { limit = { has_deposit = d_physics_10 }				prev = { change_variable = { which = ehof_physics value = 10 } } }
-				# if = { limit = { has_deposit = d_society_1 }				prev = { change_variable = { which = ehof_society value = 1 } } }
-				# if = { limit = { has_deposit = d_society_2 }				prev = { change_variable = { which = ehof_society value = 2 } } }
-				# if = { limit = { has_deposit = d_society_3 }				prev = { change_variable = { which = ehof_society value = 3 } } }
-				# if = { limit = { has_deposit = d_society_4 }				prev = { change_variable = { which = ehof_society value = 4 } } }
-				# if = { limit = { has_deposit = d_society_5 }				prev = { change_variable = { which = ehof_society value = 5 } } }
-				# if = { limit = { has_deposit = d_society_6 }				prev = { change_variable = { which = ehof_society value = 6 } } }
-				# if = { limit = { has_deposit = d_society_7 }				prev = { change_variable = { which = ehof_society value = 7 } } }
-				# if = { limit = { has_deposit = d_society_8 }				prev = { change_variable = { which = ehof_society value = 8 } } }
-				# if = { limit = { has_deposit = d_society_9 }				prev = { change_variable = { which = ehof_society value = 9 } } }
-				# if = { limit = { has_deposit = d_society_10 }				prev = { change_variable = { which = ehof_society value = 10 } } }
-				# if = { limit = { has_deposit = d_engineering_1 }			prev = { change_variable = { which = ehof_engineering value = 1 } } }
-				# if = { limit = { has_deposit = d_engineering_2 }			prev = { change_variable = { which = ehof_engineering value = 2 } } }
-				# if = { limit = { has_deposit = d_engineering_3 }			prev = { change_variable = { which = ehof_engineering value = 3 } } }
-				# if = { limit = { has_deposit = d_engineering_4 }			prev = { change_variable = { which = ehof_engineering value = 4 } } }
-				# if = { limit = { has_deposit = d_engineering_5 }			prev = { change_variable = { which = ehof_engineering value = 5 } } }
-				# if = { limit = { has_deposit = d_engineering_6 }			prev = { change_variable = { which = ehof_engineering value = 6 } } }
-				# if = { limit = { has_deposit = d_engineering_7 }			prev = { change_variable = { which = ehof_engineering value = 7 } } }
-				# if = { limit = { has_deposit = d_engineering_8 }			prev = { change_variable = { which = ehof_engineering value = 8 } } }
-				# if = { limit = { has_deposit = d_engineering_9 }			prev = { change_variable = { which = ehof_engineering value = 9 } } }
-				# if = { limit = { has_deposit = d_engineering_10 }			prev = { change_variable = { which = ehof_engineering value = 10 } } }
-				# if = { limit = { has_deposit = d_alloys_1 }					prev = { change_variable = { which = ehof_alloys value = 1 } } }
-				# if = { limit = { has_deposit = d_alloys_2 }					prev = { change_variable = { which = ehof_alloys value = 2 } } }
-				# if = { limit = { has_deposit = d_alloys_3 }					prev = { change_variable = { which = ehof_alloys value = 3 } } }
-				# if = { limit = { has_deposit = d_alloys_4 }					prev = { change_variable = { which = ehof_alloys value = 4 } } }
-				# if = { limit = { has_deposit = d_alloys_5 }					prev = { change_variable = { which = ehof_alloys value = 5 } } }
-				# if = { limit = { has_deposit = d_exotic_gases_1 }			prev = { change_variable = { which = ehof_exotic_gases value = 1 } } }
-				# if = { limit = { has_deposit = d_exotic_gases_2 }			prev = { change_variable = { which = ehof_exotic_gases value = 2 } } }
-				# if = { limit = { has_deposit = d_exotic_gases_3 }			prev = { change_variable = { which = ehof_exotic_gases value = 3 } } }
-				# if = { limit = { has_deposit = d_exotic_gases_4 }			prev = { change_variable = { which = ehof_exotic_gases value = 4 } } }
-				# if = { limit = { has_deposit = d_exotic_gases_5 }			prev = { change_variable = { which = ehof_exotic_gases value = 5 } } }
-				# if = { limit = { has_deposit = d_volatile_motes_1 }			prev = { change_variable = { which = ehof_volatile_motes value = 1 } } }
-				# if = { limit = { has_deposit = d_volatile_motes_2 }			prev = { change_variable = { which = ehof_volatile_motes value = 2 } } }
-				# if = { limit = { has_deposit = d_volatile_motes_3 }			prev = { change_variable = { which = ehof_volatile_motes value = 3 } } }
-				# if = { limit = { has_deposit = d_volatile_motes_4 }			prev = { change_variable = { which = ehof_volatile_motes value = 4 } } }
-				# if = { limit = { has_deposit = d_volatile_motes_5 }			prev = { change_variable = { which = ehof_volatile_motes value = 5 } } }
-				# if = { limit = { has_deposit = d_rare_crystals_1 }			prev = { change_variable = { which = ehof_rare_crystals value = 1 } } }
-				# if = { limit = { has_deposit = d_rare_crystals_2 }			prev = { change_variable = { which = ehof_rare_crystals value = 2 } } }
-				# if = { limit = { has_deposit = d_rare_crystals_3 }			prev = { change_variable = { which = ehof_rare_crystals value = 3 } } }
-				# if = { limit = { has_deposit = d_rare_crystals_4 }			prev = { change_variable = { which = ehof_rare_crystals value = 4 } } }
-				# if = { limit = { has_deposit = d_rare_crystals_5 }			prev = { change_variable = { which = ehof_rare_crystals value = 5 } } }
-				# if = { limit = { has_deposit = d_dark_matter_deposit_1 }	prev = { change_variable = { which = ehof_dark_matter value = 1 } } }
-				# if = { limit = { has_deposit = d_dark_matter_deposit_2 }	prev = { change_variable = { which = ehof_dark_matter value = 2 } } }
-				# if = { limit = { has_deposit = d_dark_matter_deposit_3 }	prev = { change_variable = { which = ehof_dark_matter value = 3 } } }
-				# if = { limit = { has_deposit = d_dark_matter_deposit_4 }	prev = { change_variable = { which = ehof_dark_matter value = 4 } } }
-				# if = { limit = { has_deposit = d_dark_matter_deposit_5 }	prev = { change_variable = { which = ehof_dark_matter value = 5 } } }
-				# #if = { limit = { has_deposit = d_negative_mass_deposit_1 }	prev = { change_variable = { which = ehof_negative_mass value = 1 } } }
-				# #if = { limit = { has_deposit = d_negative_mass_deposit_2 }	prev = { change_variable = { which = ehof_negative_mass value = 2 } } }
-				# #if = { limit = { has_deposit = d_negative_mass_deposit_3 }	prev = { change_variable = { which = ehof_negative_mass value = 3 } } }
-				# #if = { limit = { has_deposit = d_negative_mass_deposit_4 }	prev = { change_variable = { which = ehof_negative_mass value = 4 } } }
-				# #if = { limit = { has_deposit = d_negative_mass_deposit_5 }	prev = { change_variable = { which = ehof_negative_mass value = 5 } } }
-				# if = { limit = { has_deposit = d_negative_mass_deposit }	prev = { change_variable = { which = ehof_negative_mass value = 5 } } }
-				# if = { limit = { has_deposit = d_zro_deposit_1 }			prev = { change_variable = { which = ehof_zro value = 1 } } }
-				# if = { limit = { has_deposit = d_zro_deposit_2 }			prev = { change_variable = { which = ehof_zro value = 2 } } }
-				# if = { limit = { has_deposit = d_zro_deposit_3 }			prev = { change_variable = { which = ehof_zro value = 3 } } }
-				# if = { limit = { has_deposit = d_zro_deposit_4 }			prev = { change_variable = { which = ehof_zro value = 4 } } }
-				# if = { limit = { has_deposit = d_zro_deposit_5 }			prev = { change_variable = { which = ehof_zro value = 5 } } }
-				# if = { limit = { has_deposit = d_living_metal_deposit }		prev = { change_variable = { which = ehof_living_metal value = 1 } } }
-				# if = { limit = { has_deposit = d_living_metal_deposit_2 }	prev = { change_variable = { which = ehof_living_metal value = 2 } } }
 			}
 			# Count Megastructures
 			every_system_megastructure = {
@@ -3988,9 +4584,12 @@ fleet_event = {
     immediate = { controller = { set_country_flag = primordial_pillar_encountered } }
 
     trigger = {
-		exists = controller
-		controller = { NOT = { has_country_flag = primordial_pillar_encountered } }
-		controller = { NOT = { has_origin = origin_incohesive } }
+		controller? = {
+			NOR = {
+				has_country_flag = primordial_pillar_encountered
+				has_origin = origin_incohesive
+			}
+		}
         solar_system = { has_megastructure = ehof_pgate_unknown }
 	}
 
@@ -4011,9 +4610,12 @@ fleet_event = {
     immediate = { controller = { set_country_flag = primordial_pillar_encountered } }
 
     trigger = {
-		exists = controller
-		controller = { NOT = { has_country_flag = primordial_pillar_encountered } }
-		controller = { NOT = { has_origin = origin_incohesive } }
+		controller? = {
+			NOR = {
+				has_country_flag = primordial_pillar_encountered
+				has_origin = origin_incohesive
+			}
+		}
         solar_system = { has_megastructure = ehof_pgate_gateway }
 	}
 
@@ -4031,20 +4633,17 @@ ship_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		exists = owner
-		owner = { NOT = { has_country_flag = explored_ruined_ehof } }
+		owner? = { NOT = { has_country_flag = explored_ruined_ehof } }
 		solar_system = { has_megastructure = ehof_megastructure_ruined_origin }
 	}
 
 	option = {
 		name = ehof_megastructure.018.a
-		#fromfrom = {
 		enable_special_project = {
 			name = "EXPLORE_RUINED_EHOF"
 			location = from #this
 			owner = root.owner
 		}
-		#}
 		hidden_effect = {
 			owner = {
 				set_country_flag = explored_ruined_ehof
@@ -4055,7 +4654,7 @@ ship_event = {
 }
 
 # this = country
-country_event = { 					# Is your EHOF cluster in need of some roiling subspace tides?
+country_event = { # Is your EHOF cluster in need of some roiling subspace tides?
 	id = ehof_megastructure.019 	# Does your EHOF cluster connect to the main galaxy?
 	hide_window = yes				# Its time for some hyperlane begone! now only 99.99 EC!
 	is_triggered_only = yes			# Converts normal systems that are trapped by the lanes of the EHOF into cohesive systems
@@ -4095,7 +4694,7 @@ country_event = { 					# Is your EHOF cluster in need of some roiling subspace t
 					}
 					if = { # ONE OF US! ONE OF US! ONE OF US!
 						limit = {
-							NOT = { any_neighbor_system = { cohesive_system = no } }
+							any_neighbor_system = { cohesive_system = yes }
 						}
 						every_system_planet = {
 							set_planet_flag = cant_build_here
@@ -4149,3 +4748,35 @@ country_event = { 					# Is your EHOF cluster in need of some roiling subspace t
 		}
 	}
 }
+
+#set ehof_phase for nomads
+# country_event = {
+# 	id = ehof_megastructure.600
+# 	hide_window = yes
+# 	is_triggered_only = yes
+#
+# 	trigger = {
+# 		exists = root
+# 		is_nomadic = yes
+# 		OR = {
+# 			last_increased_tech = tech_ehof_phase_02
+# 			last_increased_tech = tech_ehof_phase_03
+# 			last_increased_tech = tech_ehof_phase_04
+# 		}
+# 	}
+#
+# 	immediate = {
+# 		switch = {
+# 			trigger = last_increased_tech
+# 			tech_ehof_phase_02 = {
+# 				set_variable = { which = ehof_phase value = 2 }
+# 			}
+# 			tech_ehof_phase_03 = {
+# 				set_variable = { which = ehof_phase value = 3 }
+# 			}
+# 			tech_ehof_phase_04 = {
+# 				set_variable = { which = ehof_phase value = 4 }
+# 			}
+# 		}
+# 	}
+# }
