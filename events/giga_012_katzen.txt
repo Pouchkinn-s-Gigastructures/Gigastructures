@@ -681,7 +681,7 @@ country_event = {
 				}
 			}
 		}
-		create_leader = { # TODO BACKGROUND
+		create_leader = {
 			class = official
 			species = event_target:loris_portrait
 			name = "Loris Von Kattensbach"
@@ -3231,6 +3231,7 @@ country_event = { #hello
 					has_country_flag = buying_katzen_panzers
 					has_country_flag = buying_katzen_bombers
 					has_country_flag = buying_katzen_cruisers
+					has_country_flag = buying_katzen_blimps
 				}
 			}
 		}
@@ -4401,7 +4402,7 @@ country_event = { #Trading with Kaiser
 	option = { #5 katzenpanzers
 		name = "giga_katzen.02011.a"
 		custom_tooltip = "giga_katzen.02011.a.tooltip"
-		response_text = "giga_katzen.02011.response"
+		response_text = "giga_katzen.02011.response.plural"
 		allow = {
 			resource_stockpile_compare = {
 				resource = trade
@@ -4432,7 +4433,7 @@ country_event = { #Trading with Kaiser
 				flag = recently_bought_kaiser_ships
 				days = 180
 			}
-			country_event = { id = giga_katzen.020111 days = 180 }
+			country_event = { id = giga_katzen.020111 days = 180 } #purchase cooldown notif
 			country_event = { id = giga_katzen.02012 days = 30 random = 5 }
 		}
 	}
@@ -4440,7 +4441,7 @@ country_event = { #Trading with Kaiser
 	option = { #3 katzenbombers
 		name = "giga_katzen.02011.b"
 		custom_tooltip = "giga_katzen.02011.b.tooltip"
-		response_text = "giga_katzen.02011.response"
+		response_text = "giga_katzen.02011.response.plural"
 		allow = {
 			resource_stockpile_compare = {
 				resource = trade
@@ -4471,7 +4472,7 @@ country_event = { #Trading with Kaiser
 				flag = recently_bought_kaiser_ships
 				days = 180
 			}
-			country_event = { id = giga_katzen.020111 days = 180 }
+			country_event = { id = giga_katzen.020111 days = 180 } #purchase cooldown notif
 			country_event = { id = giga_katzen.02012 days = 30 random = 5 }
 		}
 	}
@@ -4479,7 +4480,7 @@ country_event = { #Trading with Kaiser
 	option = { #1 katzencruiser
 		name = "giga_katzen.02011.c"
 		custom_tooltip = "giga_katzen.02011.c.tooltip"
-		response_text = "giga_katzen.02011.response"
+		response_text = "giga_katzen.02011.response.singular"
 		allow = {
 			resource_stockpile_compare = {
 				resource = trade
@@ -4510,7 +4511,55 @@ country_event = { #Trading with Kaiser
 				flag = recently_bought_kaiser_ships
 				days = 180
 			}
-			country_event = { id = giga_katzen.020111 days = 180 }
+			country_event = { id = giga_katzen.020111 days = 180 } #purchase cooldown notif
+			country_event = { id = giga_katzen.02012 days = 30 random = 5 }
+		}
+	}
+
+	option = { #1 blimpenshittenlongname
+		name = "giga_katzen.02011.d"
+		custom_tooltip = "giga_katzen.02011.d.tooltip"
+		response_text = "giga_katzen.02011.response.singular"
+		allow = {
+			resource_stockpile_compare = {
+				resource = trade
+				value >= 50000
+			}
+			custom_tooltip = {
+				fail_text = "katzen_reserved_for_allies"
+				hidden_trigger = { #Katzprotektorat or FTO member
+					OR = {
+						katzen_vassal = yes
+						has_country_flag = allied_to_kaiser
+					}
+				}
+			}
+		}
+		add_resource = {
+			trade = -50000
+		}
+		hidden_effect = {
+			set_country_flag = buying_katzen_blimps
+			random_list = {
+				30 = {
+					increase_kaiser_opinion = yes
+					modifier = {
+						add = 20
+						has_modifier = katzen_attache
+					}
+				}
+				70 = {
+					modifier = {
+						add = -20
+						has_modifier = katzen_attache
+					}
+				}
+			}
+			set_timed_country_flag = {
+				flag = recently_bought_kaiser_ships
+				days = 360 #twice as long for a chonky ship
+			}
+			country_event = { id = giga_katzen.020111 days = 360 } #purchase cooldown notif
 			country_event = { id = giga_katzen.02012 days = 30 random = 5 }
 		}
 	}
@@ -4518,8 +4567,6 @@ country_event = { #Trading with Kaiser
 	option = { #bye
 		default_hide_option = yes
 		name = "giga_katzen.02011.bye"
-		hidden_effect = {
-		}
 	}
 }
 
@@ -4540,7 +4587,14 @@ country_event = {
 country_event = { #Trading with Kaiser
 	id = giga_katzen.02012
 	title = "giga_katzen.02012.name"
-	desc = "giga_katzen.02012.desc"
+	desc = {
+		trigger = { NOT = { has_country_flag = buying_katzen_blimps } }
+		text = "giga_katzen.02012.desc"
+	}
+	desc = {
+		trigger = { has_country_flag = buying_katzen_blimps }
+		text = "giga_katzen.02012.oneyear.desc" #12 month cooldown for the big ship
+	}
 
 	picture = GFX_evt_fleet_neutral
 	show_sound = event_ship_thrusters
@@ -4627,6 +4681,30 @@ country_event = { #Trading with Kaiser
 				}
 			}
 		}
+		else_if = {
+			limit = { has_country_flag = buying_katzen_blimps }
+			create_fleet = { #Spawn a blimperchonk
+				name = "Weltraumträger Force"
+				settings = {
+					spawn_debris = no
+					can_upgrade = no
+					uses_naval_capacity = yes
+				}
+				effect = {
+					set_owner = ROOT
+					create_ship = {
+						name = random
+						design = "Pawris"
+						prefix = no
+					}
+					set_location = {
+						target = ROOT.capital_scope
+						distance = 15
+						angle = random
+					}
+				}
+			}
+		}
 	}
 
 	option = { #cool
@@ -4635,6 +4713,7 @@ country_event = { #Trading with Kaiser
 			remove_country_flag = buying_katzen_panzers
 			remove_country_flag = buying_katzen_bombers
 			remove_country_flag = buying_katzen_cruisers
+			remove_country_flag = buying_katzen_blimps
 		}
 	}
 }
@@ -5557,7 +5636,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 
 		multiply_variable = {
 			which = kaiser_rare_resource_income
-			value = 0.2
+			value = 0.5
 		}
 
 		multiply_variable = {
@@ -5615,7 +5694,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 
 		change_variable = {
 			which = kaiser_resource_income
-			value = 15
+			value = 20
 		}
 
 		change_variable = {
@@ -5656,7 +5735,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 			limit = {
 				check_variable = {
 					which = kaiser_resource_balance
-					value < 1
+					value < 0
 				}
 				check_variable = {
 					which = kaiser_resource_stockpile
