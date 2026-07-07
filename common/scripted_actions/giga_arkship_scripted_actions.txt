@@ -1,0 +1,114 @@
+giga_arkship_harvest_neutronium = {
+    user_scope = fleet
+    scope = planet
+
+    on_completed = on_giga_arkship_harvest_neutronium
+    tooltip = giga_arkship_harvest_neutronium_ship_button
+    icon = GFX_fleet_action_button_arkship_reprocess_planet
+    icon_selected = GFX_fleet_action_button_arkship_reprocess_planet
+
+    possible = {
+        custom_tooltip = {
+            fail_text = has_giga_arkship_neutronium_harvester_tt
+            success_text = has_giga_arkship_neutronium_harvester_tt
+            from.starbase? = {
+                has_starbase_module = giga_arkship_neutronium_harvester
+            }
+        }
+        giga_is_neutron_type_star = yes
+        if = {
+            limit = {
+                is_surveyed = {
+                    who = from
+                    status = no
+                }
+            }
+            custom_tooltip = {
+                fail_text = arkship_target_not_surveyed_fail_tt
+                always = no
+            }
+        }
+        else = {
+            NOT = {
+                has_modifier = "giga_arkship_neutronium_harvested"
+            }
+            if = {
+                limit = {
+                    has_anomaly = yes
+                }
+                custom_tooltip = {
+                    fail_text = arkship_target_has_anomaly_fail_tt
+                    always = no
+                }
+            }
+        }
+    }
+
+    button_visible = {
+        custom_tooltip = {
+            fail_text = has_giga_arkship_neutronium_harvester_tt
+            success_text = has_giga_arkship_neutronium_harvester_tt
+            starbase? = {
+                has_starbase_module = giga_arkship_neutronium_harvester
+            }
+        }
+    }
+
+    button_clickable = {
+        custom_tooltip = {
+            fail_text = has_giga_arkship_neutronium_harvester_tt
+            success_text = has_giga_arkship_neutronium_harvester_tt
+            starbase? = {
+                has_starbase_module = giga_arkship_neutronium_harvester
+            }
+        }
+    }
+
+    activity_key = giga_arkship_harvest_neutronium_activity_key
+    context_menu_name = giga_arkship_harvest_neutronium
+    required_progress = value:giga_arkship_harvest_neutronium_required_progress_value
+    progress_activity_key = giga_arkship_harvest_neutronium_progress_activity_key
+    required_progress_key = giga_arkship_harvest_neutronium_required_progress_key
+    cooldown = 9000 # :clueless:
+    category = harvest_resources # should this have its own category?
+    category_limit = 1
+    category_limit_fail_text = arkship_harvesting_in_progress_tt
+
+    uses_vfx_type = harvest_effect
+
+    cost = {
+        energy = @arkship_subspace_image_cost
+    }
+
+    slot = 5
+
+    ai = {
+        #This - Target Planet
+        #From - Acting Fleet
+        weight = {
+            base = @ai_action_weight_15
+            modifier = {
+                factor = 0 #only reprocess in unowned systems
+                exists = space_owner
+            }
+            modifier = {
+                factor = 0 #cannot afford
+                FROM.controller = {
+                    resource_stockpile_compare = {
+                        resource = energy
+                        value < @arkship_reprocess_planet_cost
+                        mult = 1.5
+                    }
+                }
+            }
+            inline_script = {
+                script = scripted_actions/ai_distance_modifiers
+                LOCAL_SYSTEM_CHECK = "any_system_planet = { is_same_value = ROOT }"
+            }
+            inline_script = scripted_actions/ai_harvest_resources_modifiers
+        }
+        max_jumps = @ai_action_weight_5
+        good_enough_weight = @ai_action_weight_30
+        ai_minister = interior
+    }
+}
