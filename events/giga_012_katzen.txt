@@ -1404,19 +1404,19 @@ country_event = {
 		country_event = { id = giga_katzen.070 days = 180 random = 30 } #Warforges
 		country_event = { id = giga_katzen.030 days = 30 } #Manage warforges and eco
 		country_event = { id = giga_katzen.036 days = 30 } # Leader management
-		country_event = { id = giga_katzen.080 days = 360 } #Flusion expansion
+		country_event = { id = giga_katzen.080 days = 360 random = 60 } #Flusion expansion
 		# country_event = { id = giga_katzen.082 days = 7200 } #Second flusion expansion
 		# country_event = { id = giga_katzen.083 days = 10800 } #Third flusion expansion
 		country_event = { id = giga_katzen.9999 days = 5 } #Crisis counter
 		country_event = { id = giga_katzenai.010 days = 60 } #Give the AI a little kick to ensure they actually move troops
-		country_event = { id = giga_katzen.04003 days = 3600 } #Declare war on random nations
+		country_event = { id = giga_katzen.04003 days = 2880 random = 1440 } #Declare war on random nations
 		country_event = { id = giga_katehof.001 days = 1800 } #EHOF
 		country_event = { id = giga_katehof.010 days = 2700 } #Wormholes
 		if = {
 			limit = { NOT = { has_global_flag = giga_jupitwo_disabled } }
 			country_event = { id = giga_corrona.004 days = 10800 random = 1800 } #Corrona
 		}
-		country_event = { id = giga_katzen.8502 days = 1800 } #Submarines are deployed
+		country_event = { id = giga_katzen.8502 days = 1800 random = 720 } #Submarines are deployed
 		every_country = {
 			limit = {
 				OR = {
@@ -5679,6 +5679,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 							is_ship_size = giga_katzen_panzer
 							is_ship_size = giga_katzen_bomber
 							is_ship_size = giga_katzen_cruiser
+							is_ship_size = giga_katzen_blimp
 							is_ship_size = giga_katzen_submarine
 						}
 					}
@@ -5689,6 +5690,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 							is_ship_size = giga_katzen_panzer
 							is_ship_size = giga_katzen_bomber
 							is_ship_size = giga_katzen_cruiser
+							is_ship_size = giga_katzen_blimp
 							is_ship_size = giga_katzen_submarine
 						}
 					}
@@ -5710,6 +5712,12 @@ country_event = { #Manage war forges and the Kaiser's eco
 							change_variable = {
 								which = kaiser_resource_stockpile
 								value = 375
+							}
+						}
+						giga_katzen_blimp = {
+							change_variable = {
+								which = kaiser_resource_stockpile
+								value = 800
 							}
 						}
 						giga_katzen_submarine = {
@@ -6262,7 +6270,7 @@ country_event = { #galactic
 }
 
 
-country_event = { #every 10 years, Kaiser randomly declares war on an AI
+country_event = { #every 8-12 years, Kaiser randomly declares war on an AI
 	id = giga_katzen.04003
 	hide_window = yes
 
@@ -6425,10 +6433,10 @@ country_event = { #every 10 years, Kaiser randomly declares war on an AI
 			limit = {
 				has_global_flag = katzenartig_stellarite
 			}
-			country_event = { id = giga_katzen.04003 days = 1800 }
+			country_event = { id = giga_katzen.04003 days = 1440 random = 720 } #4-6 years
 		}
 		else = {
-			country_event = { id = giga_katzen.04003 days = 3600 }
+			country_event = { id = giga_katzen.04003 days = 2880 random = 1440  } #8-12 years
 		}
 		random_neighbor_country = {
 			limit = {
@@ -7166,6 +7174,118 @@ country_event = { #improbable kaiser declares war on literally everyone
 	}
 }
 
+country_event = { #Kaiser rolls out his blimps after becoming theGroßkatzenartig Imperium
+	id = giga_katzen.04008
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	immediate = {
+		set_country_flag = katzen_blimps_deployed
+		create_fleet = { #free initial blimp fleet so that players can go to Jublio and see the ship
+			settings = {
+				spawn_debris = no
+				can_upgrade = no
+				uses_naval_capacity = yes
+			}
+			effect = {
+				set_owner = event_target:flusion_primitives_country
+				while = {
+					count = @kaiser_warforge_build_capacity
+					limit = { #so long as they can afford the upkeep on the flanking ships
+						event_target:flusion_primitives_country = {
+							check_variable = {
+								which = kaiser_resource_balance
+								value > value:katzen_upkeep #|UPKEEP|@min_kaiser_ship_upkeep|
+							}
+						}
+					}
+					random_list = {
+						16 = {
+							create_ship = {
+								name = random
+								design = "Katzchen"
+								prefix = no
+							}
+						}
+						8 = {
+							create_ship = {
+								name = random
+								design = "Douclaw"
+								prefix = no
+							}
+							modifier = {
+								factor = 0
+								event_target:flusion_primitives_country = {
+									check_variable = {
+										which = kaiser_resource_balance
+										value < value:katzen_upkeep #|UPKEEP|@kaiser_bomber_upkeep|
+									}
+								}
+							}
+						}
+						4 = {
+							create_ship = {
+								name = random
+								design = "Neu-Clermeowth"
+								prefix = no
+							}
+							modifier = {
+								factor = 0
+								event_target:flusion_primitives_country = {
+									check_variable = {
+										which = kaiser_resource_balance
+										value < value:katzen_upkeep #|UPKEEP|@kaiser_cruiser_upkeep|
+									}
+								}
+							}
+						}
+					}
+				}
+				create_ship = {
+					name = random
+					design = "Pawris" #le blimp in question
+					prefix = no
+				}
+				giga_assign_admiral = yes
+				assign_leader = event_target:admiral_assignee
+				set_location = {
+					target = event_target:gigaflusion #straight from the parade!
+					distance = 10
+					angle = random
+				}
+			}
+		}
+		every_country = {
+			limit = { is_ai = no }
+			country_event = { id = giga_katzen.04009 } #inform players
+		}
+	}
+}
+
+country_event = { #Inform countries of blimp rollout
+	id = giga_katzen.04009
+	title = "giga_katzen.04009.name"
+	desc = "giga_katzen.04009.desc"
+	picture = GFX_evt_hangar_bay
+	show_sound = event_construction_03
+
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_katzen.04009.a"
+		custom_tooltip = "giga_katzen.04009.tooltip"
+	}
+
+	option = {
+		trigger = {
+			katzen_vassal = yes
+		}
+		name = "giga_katzen.04009.a"
+		custom_tooltip = "giga_katzen.04009.tooltip"
+	}
+}
+
 country_event = { #Katzen expansion: Every year, all nearby unclaimed systems are automatically claimed + katzens build megas
 	id = giga_katzen.040
 	hide_window = yes
@@ -7243,6 +7363,7 @@ country_event = { #Katzen expansion: Every year, all nearby unclaimed systems ar
 				limit = { is_ai = no }
 				country_event = { id = giga_katzen.04001 }
 			}
+			country_event = { id = giga_katzen.04008 days = 180 random = 180 } #begin blimp rollout
 		}
 
 		if = {
@@ -12677,7 +12798,7 @@ country_event = {
 	is_triggered_only = yes
 	hide_window = yes
 
-	#5 years in the Katzens will deploy their submarines on a larger scale
+	#5-7 years in the Katzens will deploy their submarines on a larger scale
 
 	trigger = {
 		NOT = { has_global_flag = katzenartig_imperium_defeated }
