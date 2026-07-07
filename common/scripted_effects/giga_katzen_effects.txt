@@ -1,12 +1,3 @@
-#kaiser_angry_3 = war
-#kaiser_angry_2 = extremely displeased
-#kaiser_angry_1 = displeased
-#kaiser_neutral = indifferent
-#kaiser_happy_1 = cordial
-#kaiser_happy_2 = friendly
-#kaiser_happy_3 = very friendly
-#kaiser_happy_4 = extremely friendly
-#kaiser_happy_5 = elated
 decrease_kaiser_opinion = {
 	if = {
 		limit = { kaiser_opinion_range_very_friendly = yes }
@@ -736,6 +727,189 @@ calculate_system_value_kaiser = {
 				value = 600
 			}
 		}
+	}
+}
+
+calculate_system_trade_offer_to_kaiser = {
+	#Calculate how much payment Kaiser will give.
+	#Better deals if he's friendly, worse deals if he's pissed
+	event_target:flusion_primitives_country = {
+		if = {
+			limit = {
+				ROOT = {
+					kaiser_opinion_range_elated = yes
+				}
+			}
+			multiply_variable = {
+				which = "kaiser_trade_value"
+				value = 170
+			}
+		}
+		else_if = {
+			limit = {
+				ROOT = { kaiser_opinion_range_very_friendly = yes }
+			}
+			multiply_variable = {
+				which = "kaiser_trade_value"
+				value = 160
+			}
+		}
+		else_if = {
+			limit = {
+				ROOT = { kaiser_opinion_range_friendly = yes }
+			}
+			multiply_variable = {
+				which = "kaiser_trade_value"
+				value = 150
+			}
+		}
+		else_if = {
+			limit = {
+				ROOT = { kaiser_opinion_range_cordial = yes }
+			}
+			multiply_variable = {
+				which = "kaiser_trade_value"
+				value = 140
+			}
+		}
+		else_if = {
+			limit = {
+				ROOT = { kaiser_opinion_range_indifferent = yes }
+			}
+			multiply_variable = {
+				which = "kaiser_trade_value"
+				value = 130
+			}
+		}
+		else_if = {
+			limit = {
+				ROOT = { kaiser_opinion_range_terse = yes }
+			}
+			multiply_variable = {
+				which = "kaiser_trade_value"
+				value = 120
+			}
+		}
+		else_if = {
+			limit = {
+				ROOT = { kaiser_opinion_range_displeased = yes }
+			}
+			multiply_variable = {
+				which = "kaiser_trade_value"
+				value = 110
+			}
+		}
+		else = { #AKA kaiser_opinion_range_angered or levels that shouldn't happen
+			multiply_variable = {
+				which = "kaiser_trade_value"
+				value = 100
+			}
+		}
+		set_variable = {
+			which = "kaiser_trade_value_alloys"
+			value = "kaiser_trade_value"
+		}
+		divide_variable = {
+			which = "kaiser_trade_value_alloys"
+			value = 2
+		}
+	}
+}
+
+#same effect as above, different scoping - only stored here for easy comparison
+calculate_system_trade_offer_from_kaiser = {
+	#Calculate how much payment Kaiser will give.
+	#Better deals if he's friendly, worse deals if he's pissed
+	if = {
+		limit = {
+			event_target:kaiser_system_demand_target = {
+				kaiser_opinion_range_elated = yes
+			}
+		}
+		multiply_variable = {
+			which = "kaiser_trade_value"
+			value = 170
+		}
+	}
+	else_if = {
+		limit = {
+			event_target:kaiser_system_demand_target = {
+				kaiser_opinion_range_very_friendly = yes
+			}
+		}
+		multiply_variable = {
+			which = "kaiser_trade_value"
+			value = 160
+		}
+	}
+	else_if = {
+		limit = {
+			event_target:kaiser_system_demand_target = {
+				kaiser_opinion_range_friendly = yes
+			}
+		}
+		multiply_variable = {
+			which = "kaiser_trade_value"
+			value = 150
+		}
+	}
+	else_if = {
+		limit = {
+			event_target:kaiser_system_demand_target = {
+				kaiser_opinion_range_cordial = yes
+			}
+		}
+		multiply_variable = {
+			which = "kaiser_trade_value"
+			value = 140
+		}
+	}
+	else_if = {
+		limit = {
+			event_target:kaiser_system_demand_target = {
+				kaiser_opinion_range_indifferent = yes
+			}
+		}
+		multiply_variable = {
+			which = "kaiser_trade_value"
+			value = 130
+		}
+	}
+	else_if = {
+		limit = {
+			event_target:kaiser_system_demand_target = {
+				kaiser_opinion_range_terse = yes
+			}
+		}
+		multiply_variable = {
+			which = "kaiser_trade_value"
+			value = 120
+		}
+	}
+	else_if = {
+		limit = {
+			event_target:kaiser_system_demand_target = {
+				kaiser_opinion_range_displeased = yes
+			}
+		}
+		multiply_variable = {
+			which = "kaiser_trade_value"
+			value = 110
+		}
+	}
+	else = { #AKA kaiser_opinion_range_angered or levels that shouldn't happen
+		multiply_variable = {
+			which = "kaiser_trade_value"
+			value = 100
+		}
+	}
+	set_variable = {
+		which = "kaiser_trade_value_alloys"
+		value = "kaiser_trade_value"
+	}
+	divide_variable = {
+		which = "kaiser_trade_value_alloys"
+		value = 2
 	}
 }
 
@@ -2248,7 +2422,7 @@ spawn_katzen_warforge_fleet = {
 					}
 				}
 				random_list = {
-					4 = {
+					16 = {
 						create_ship = {
 							name = random
 							design = "Katzchen"
@@ -2261,7 +2435,7 @@ spawn_katzen_warforge_fleet = {
 							}
 						}
 					}
-					2 = {
+					8 = {
 						create_ship = {
 							name = random
 							design = "Douclaw"
@@ -2289,7 +2463,7 @@ spawn_katzen_warforge_fleet = {
 							}
 						}
 					}
-					1 = {
+					4 = {
 						create_ship = {
 							name = random
 							design = "Neu-Clermeowth"
@@ -2313,6 +2487,35 @@ spawn_katzen_warforge_fleet = {
 										which = kaiser_resource_balance
 										value < value:katzen_upkeep #|UPKEEP|@kaiser_cruiser_upkeep|
 									}
+								}
+							}
+						}
+					}
+					1 = {
+						create_ship = {
+							name = random
+							design = "Pawris"
+							prefix = no
+						}
+						event_target:flusion_primitives_country = {
+							subtract_variable = {
+								which = kaiser_resource_stockpile
+								value = value:katzen_cost|COST|@kaiser_blimp_cost|
+							}
+						}
+						modifier = {
+							factor = 0
+							event_target:flusion_primitives_country = {
+								OR = {
+									check_variable = {
+										which = kaiser_resource_stockpile
+										value < value:katzen_cost|COST|@kaiser_blimp_cost|
+									}
+									check_variable = {
+										which = kaiser_resource_balance
+										value < value:katzen_upkeep #|UPKEEP|@kaiser_blimp_upkeep|
+									}
+									NOT = { has_country_flag = katzen_blimps_deployed }
 								}
 							}
 						}
