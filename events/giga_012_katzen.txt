@@ -3363,7 +3363,7 @@ country_event = {
 
 	immediate = {
 		save_event_target_as = old_overlord
-		every_subject = { #Protektoratise and inform subjects
+		every_subject = { #Protektoratise and inform subjects (must trigger for AI too)
 			country_event = { id = giga_katzen.1032 }
 		}
 		set_name = {
@@ -3404,11 +3404,11 @@ country_event = {
 	show_sound = event_celebration
 
 	immediate = {
-		katzen_set_protectorate = yes
 		set_name = {
 			key = "katzen_protektorat_name" #this should be but refuses to work with GetStarName
 			variable_string = "[this.Capital.GetName]"
 		}
+		katzen_set_protectorate = yes
 	}
 
 	option = {
@@ -5345,7 +5345,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 					has_carrier_flag = gigaflusion
 				}
 			}
-			carrier_event = { id = giga_katzen.110 days = 30 } #katzenize all non katzen planets
+			carrier_event = { id = giga_katzen.110 random = 30 } #katzenize all non katzen planets
 		}
 		every_planet_within_border = {
 			limit = {
@@ -5537,7 +5537,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 
 		change_variable = {
 			which = kaiser_resource_income
-			value = 20
+			value = 20 #base income
 		}
 
 		change_variable = {
@@ -5550,7 +5550,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 			value = kaiser_resource_spending
 		}
 
-		if = {
+		if = { #if stockpile is negative, set to zero
 			limit = {
 				check_variable = {
 					which = kaiser_resource_stockpile
@@ -5573,7 +5573,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 			value = kaiser_resource_spending
 		}
 
-		#If the balance is negative (oh no!!!), disband ships until no longer negative
+		#If the balance is negative and stockpile is empty (oh no!!!), disband ships until no longer negative
 		if = {
 			limit = {
 				check_variable = {
@@ -5588,6 +5588,8 @@ country_event = { #Manage war forges and the Kaiser's eco
 					any_owned_ship = { is_ship_size = giga_katzen_panzer }
 					any_owned_ship = { is_ship_size = giga_katzen_bomber }
 					any_owned_ship = { is_ship_size = giga_katzen_cruiser }
+					any_owned_ship = { is_ship_size = giga_katzen_blimp }
+					any_owned_ship = { is_ship_size = giga_katzen_submarine }
 				}
 			}
 			while = {
@@ -5738,6 +5740,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 					}
 				}
 				has_country_flag = kaiser_moon_destroyed
+				NOT = { has_country_flag = kaiser_moon_destroyed_events_done }
 			}
 			every_country = {
 				limit = { has_country_flag = allied_to_kaiser }
@@ -5749,14 +5752,14 @@ country_event = { #Manage war forges and the Kaiser's eco
 			}
 			every_playable_country = {
 				limit = { is_ai = no }
-				country_event = { id = giga_katzen.089 }
+				country_event = { id = giga_katzen.089 } #informative event
 			}
-			set_country_flag = kaiser_moon_destroyed
 			add_modifier = {
 				modifier = katzenartig_disarray
 				days = -1
 			}
-			country_event = { id = giga_katmoons.001 days = 3600 } #make a new one CHANGE TO 10 YEARS
+			country_event = { id = giga_katmoons.001 days = 3600 } #make a new one
+			set_country_flag = kaiser_moon_destroyed
 		}
 		country_event = { id = giga_katzen.030 days = 30 }
 		set_variable = {
@@ -6215,43 +6218,37 @@ country_event = { #galactic
 }
 
 
-country_event = { #every 8-12 years, Kaiser randomly declares war on an AI
+country_event = { #every 8-12 years, Kaiser randomly declares war on an AI and rolls for vassalisation
 	id = giga_katzen.04003
 	hide_window = yes
 
 	is_triggered_only = yes
 
 	trigger = {
-		any_country = {
-			is_country_type = katzenartig_imperium #Only occurs if katzens are around
-		}
 		event_target:flusion_primitives_country = { NOT = { has_country_flag = kaiser_moon_destroyed } }
 		OR = {
 			AND = {
 				is_at_war = yes
 				any_neighbor_country = {
 					NOR = {
-						is_country_type = katzenartig_imperium
 						has_country_flag = katzenartig_war_declaration_forbidden #for ACE
+						any_subject = { is_ai = no } #not overlord of player
+						is_at_war_with = root #is already at war
 					}
 					is_ai = yes
-					NAND = {
+					NAND = { #not in fed with player
 						exists = federation
 						federation = {
 							any_member = {
 								is_ai = no
 							}
 						}
-					} #not in fed with player
-					NOT = { any_subject = { is_ai = no } } #not overlord of player
-					NAND = {
-						exists = overlord
-						overlord = {
+					}
+					NAND = { #Not subject of player
+						overlord? = {
 							is_ai = no
 						}
-					} #Not subject of player
-					NOT = { is_at_war_with = event_target:flusion_primitives_country }
-
+					}
 					OR = {
 						AND = {
 							NOT = { exists = federation }
@@ -6276,27 +6273,24 @@ country_event = { #every 8-12 years, Kaiser randomly declares war on an AI
 				is_at_war = no
 				any_neighbor_country = {
 					NOR = {
-						is_country_type = katzenartig_imperium
 						has_country_flag = katzenartig_war_declaration_forbidden #for ACE
+						any_subject = { is_ai = no } #not overlord of player
+						is_at_war_with = root #is already at war
 					}
 					is_ai = yes
-					NAND = {
+					NAND = { #not in fed with player
 						exists = federation
 						federation = {
 							any_member = {
 								is_ai = no
 							}
 						}
-					} #not in fed with player
-					NOT = { any_subject = { is_ai = no } } #not overlord of player
-					NAND = {
-						exists = overlord
-						overlord = {
+					}
+					NAND = { #Not subject of player
+						overlord? = {
 							is_ai = no
 						}
-					} #Not subject of player
-					NOT = { is_at_war_with = event_target:flusion_primitives_country }
-
+					}
 					OR = {
 						AND = {
 							NOT = { exists = federation }
@@ -6378,10 +6372,10 @@ country_event = { #every 8-12 years, Kaiser randomly declares war on an AI
 			limit = {
 				has_global_flag = katzenartig_stellarite
 			}
-			country_event = { id = giga_katzen.04003 days = 1440 random = 720 } #4-6 years
+			country_event = { id = giga_katzen.04003 days = 1440 random = 720 } #run event again in 4-6 years
 		}
 		else = {
-			country_event = { id = giga_katzen.04003 days = 2880 random = 1440  } #8-12 years
+			country_event = { id = giga_katzen.04003 days = 2880 random = 1440  } #run event again in 8-12 years
 		}
 		random_neighbor_country = {
 			limit = {
@@ -6398,8 +6392,7 @@ country_event = { #every 8-12 years, Kaiser randomly declares war on an AI
 					}
 				}
 				NAND = { #Not subject of player
-					exists = overlord
-					overlord = {
+					overlord? = {
 						is_ai = no
 					}
 				}
@@ -6476,40 +6469,106 @@ country_event = { #every 8-12 years, Kaiser randomly declares war on an AI
 				}
 			}
 			save_global_event_target_as = kaiser_attack_target
-			event_target:flusion_primitives_country = {
-				declare_war = {
-					target = event_target:kaiser_attack_target
-					attacker_war_goal = "wg_katzen_conquest"
-					name = "Katzenkrieg"
+			random_list = { #roll whether the target fights or surrenders to vassalisation
+				80 = { #FIGHT
+					event_target:flusion_primitives_country = {
+						declare_war = {
+							target = event_target:kaiser_attack_target
+							attacker_war_goal = "wg_katzen_conquest"
+							name = "Katzenkrieg"
+						}
+					}
+					every_country = {
+						limit = { has_country_flag = allied_to_kaiser }
+						join_war = event_target:flusion_primitives_country
+					}
+					set_kaiser_war_opinion = yes
+					every_country = {
+						limit = { is_in_federation_with = event_target:kaiser_random_war_target }
+						join_war = event_target:kaiser_attack_target
+						set_kaiser_war_opinion = yes
+						set_timed_country_flag = {
+							flag = recent_katzenartig_war
+							days = 900
+						}
+					}
+					every_subject = {
+						join_war = event_target:kaiser_attack_target
+						set_kaiser_war_opinion = yes
+						set_timed_country_flag = {
+							flag = recent_katzenartig_war
+							days = 900
+						}
+					}
+					every_country = { #inform others
+						limit = { is_ai = no }
+						country_event = { id = giga_katzen.051 }
+					}
 				}
-			}
-			every_country = {
-				limit = { has_country_flag = allied_to_kaiser }
-				join_war = event_target:flusion_primitives_country
-			}
-			set_kaiser_war_opinion = yes
-			every_country = {
-				limit = { is_in_federation_with = event_target:kaiser_random_war_target }
-				join_war = event_target:kaiser_attack_target
-				set_kaiser_war_opinion = yes
-				set_timed_country_flag = {
-					flag = recent_katzenartig_war
-					days = 900
+				20000 = { #surrender. Diplomacy-leaning and Katzenartig-culturally-aligned empires generally more likely.
+					modifier = { factor = 0.25 has_ethic = ethic_fanatic_xenophobe } #xenophobes really don't want to be forcibly culturally assimilated in a xeno society
+					modifier = { factor = 0.5 has_ethic = ethic_xenophobe }
+					modifier = { factor = 1.5 has_ethic = ethic_xenophile }
+					modifier = { factor = 2 has_ethic = ethic_fanatic_xenophile }
+
+					modifier = { factor = 0.25 has_ethic = ethic_fanatic_pacifist } #pacifists despise the idea of joining a rampant war machine
+					modifier = { factor = 0.5 has_ethic = ethic_pacifist }
+					modifier = { factor = 1.5 has_ethic = ethic_militarist }
+					modifier = { factor = 2 has_ethic = ethic_fanatic_militarist }
+
+					modifier = { factor = 0.5 is_egalitarian = yes } #ideologically oppose losing sovereignty
+
+					modifier = { #things that need blocking for mechanical or lore reasons
+						factor = 0
+						OR = {
+							has_valid_civic = civic_pompous_purists
+							has_valid_civic = civic_inwards_perfection
+							has_valid_civic = civic_shared_burden
+							NOT = { is_country_type = default } #ZOFE ascended empires wouldn't submit honestly
+							has_origin = origin_fear_of_the_dark
+							has_origin = origin_heirs_of_the_khan
+							has_origin = origin_endbringers
+							has_origin = origin_nomadic_purger
+							is_homicidal = yes
+							is_player_crisis = yes
+							is_galactic_custodian = yes
+							is_galactic_emperor = yes
+						}
+					}
+
+					modifier = { factor = 0.75 has_valid_civic = civic_agrarian_idyll } #pls don't military-industrial my happy ways
+					modifier = { factor = 0.75 has_valid_civic = civic_beacon_of_liberty } #betray our role as protectors? Never
+					modifier = { factor = 1.25 has_valid_civic = civic_aristocratic_elite } #sellouts who want to be the new Katzen elites
+					modifier = { factor = 1.25 has_valid_civic = civic_citizen_service } #militarism for citizenship sounds cool, let's join the Katzens
+					modifier = { factor = 1.25 OR = { has_valid_civic = civic_feudal_realm has_valid_civic = civic_franchising } } #culturally compatible with autonomous vassals
+					modifier = { factor = 0.75 has_valid_civic = civic_environmentalist } #save the trees from rampant industry
+					modifier = { factor = 0.25 has_valid_civic = civic_nationalistic_zeal } #save the trees from rampant industry
+					modifier = { factor = 1.25 has_valid_civic = civic_warrior_culture } #likes Katzen ways
+					modifier = { factor = 1.25 has_valid_civic = civic_police_state } #Katzen surveillance machine sounds  good
+					modifier = { factor = 1.25 has_valid_civic = civic_police_state } #sellouts who want to be the new Katzen elites
+					modifier = { factor = 2 OR = { has_civic = civic_diplomatic_corps has_civic = civic_public_relations_specialists has_civic = civic_hive_empath has_civic = civic_hive_familiar_face } } #wants to work together nicely
+					modifier = { factor = 1.25 is_relentless_industrialist_empire = yes } #more rampant industrialism yay
+					modifier = { factor = 1.25 is_twisted_experimenters_empire = yes } #the Katzens do that too
+					modifier = { factor = 1.25 is_hired_guns_empire = yes } #fight for the highest bidder
+					modifier = { factor = 0.5 OR = { is_sovereign_guardianship_empire = yes has_valid_civic = civic_machine_stalwart_network } } #ready to fight defensively
+					modifier = { factor = 0.75 is_secret_societies_empire = yes } #thinks they could manipulate from within just fine
+					modifier = { factor = 0.25 is_galactic_community_member = yes has_galactic_emperor = yes is_galactic_emperor = no } #loyalty to the Galactic Imperium
+					modifier = { factor = 0.75 has_origin = origin_legendary_leader } #we have our own leader
+					modifier = { factor = 0.75 is_gestalt = yes } #less compatible with following outside orders
+					modifier = { factor = 1.25 has_origin = origin_common_ground } #diplomatically inclined
+					modifier = { factor = 0.5 OR = { has_origin = origin_broken_shackles has_origin = origin_payback } } #not falling for xeno domination again
+					modifier = { factor = 0.5 has_valid_civic = civic_machine_servitor } #objects to Katzen warmongering
+					modifier = { factor = 1.5 has_valid_civic = civic_machine_tactical_algorithms } #mercs
+					modifier = { factor = 1.5 is_capitalist = yes } #submit for favourable Katzen market access
+					modifier = { factor = 1.25 has_valid_civic = civic_private_military_companies } #mercs
+					modifier = { factor = 0.5 has_valid_civic = civic_worker_coop } #they know Katzens wouldn't like worker organisation
+
+					country_event = { id = giga_katzen.1031 } #make them and their subjects Katzprotektorts
+					every_country = { #inform others
+						limit = { is_ai = no }
+						country_event = { id = giga_katzen.052 }
+					}
 				}
-			}
-			every_subject = {
-				join_war = event_target:kaiser_attack_target
-				set_kaiser_war_opinion = yes
-				set_timed_country_flag = {
-					flag = recent_katzenartig_war
-					days = 900
-				}
-			}
-			every_country = {
-				limit = {
-					is_ai = no
-				}
-				country_event = { id = giga_katzen.051 }
 			}
 		}
 	}
@@ -8759,6 +8818,42 @@ country_event = {
 			katzen_vassal = yes
 		}
 		name = "giga_katzen.051.c"
+	}
+}
+
+country_event = {
+	id = giga_katzen.052
+	title = "giga_katzen.052.name"
+	desc = "giga_katzen.052.desc"
+
+	is_triggered_only = yes
+
+	show_sound = event_factions
+	picture = GFX_evt_bribery
+
+	trigger = {
+		NOT = { event_target:kaiser_attack_target = { is_country_type = katzenartig_imperium } }
+	}
+
+	option = {
+		trigger = {
+			katzen_vassal = no
+		}
+		name = "giga_katzen.052.a"
+	}
+
+	option = {
+		trigger = {
+			is_pacifist = yes
+		}
+		name = "giga_katzen.052.b"
+	}
+
+	option = {
+		trigger = {
+			katzen_vassal = yes
+		}
+		name = "giga_katzen.052.c"
 	}
 }
 
