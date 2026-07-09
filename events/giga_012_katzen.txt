@@ -5853,6 +5853,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 		update_katzen_tech_level_buffs = yes
 		update_katzen_tech_level_display = yes
 
+		# set country flag, backup incase on action doesnt fire
 		if = {
 			limit = {
 				NOR = {
@@ -5866,21 +5867,48 @@ country_event = { #Manage war forges and the Kaiser's eco
 						}
 					}
 				}
-				has_country_flag = kaiser_moon_destroyed
+			}
 
+			set_country_flag = kaiser_moon_destroyed
+		}
+
+		# actual consequences of moon death
+		if = {
+			limit = {
+				has_country_flag = kaiser_moon_destroyed
 				NOT = { has_country_flag = kaiser_moon_destroyed_events_done }
 			}
+			# set modifier
+			add_modifier = {
+				modifier = katzenartig_disarray
+				days = -1
+			}
+			# notification
 			every_playable_country = {
 				limit = {
 					is_ai = no
 					NOT = { has_country_flag = kaiser_moon_slayer }
 					# killer already got giga_katzen.090 to tell them
+					# if no killer (on action isnt triggered) everyone gets it
 				}
 				country_event = { id = giga_katzen.089 }
 			}
-			## removed the call to giga_katzen.3003, giga_katzen.0033, and giga_katmoons.001 kaiser moon destruction already calls them
-			set_country_flag = kaiser_moon_destroyed_events_done #to avoid spamfiring these events every month
+			#FTO collapses
+			every_country = {
+				limit = { has_country_flag = allied_to_kaiser }
+				country_event = { id = giga_katzen.3003 days = 30 }
+			}
+			#Vassals rebel
+			every_country = {
+				limit = { katzen_vassal = yes }
+				country_event = { id = giga_katzen.0033 days = 30 }
+			}
+			#make a new one CHANGE TO 10 YEARS
+			country_event = { id = giga_katmoons.001 days = 3600 }
+			#to avoid spamfiring these events every month
+			set_country_flag = kaiser_moon_destroyed_events_done
 		}
+		# repeat pulse
 		country_event = { id = giga_katzen.030 days = 30 }
 		set_variable = {
 			which = "kaiser_ehof_count"
@@ -9570,15 +9598,6 @@ country_event = { #Kaiser Moon destroyed :(
 				leader = { unassign_leader = this } #So Douclaw doesn't die
 			}
 		}
-
-		every_country = {
-			limit = { has_country_flag = allied_to_kaiser }
-			country_event = { id = giga_katzen.3003 days = 30 } #FTO collapses
-		}
-		every_country = {
-			limit = { katzen_vassal = yes }
-			country_event = { id = giga_katzen.0033 days = 30 } #Vassals rebel
-		}
 		set_country_flag = kaiser_moon_slayer
 		save_global_event_target_as = kaiser_moon_slayer
 		every_country = {
@@ -9599,12 +9618,9 @@ country_event = { #Kaiser Moon destroyed :(
 		}
 		event_target:flusion_primitives_country = {
 			set_country_flag = kaiser_moon_destroyed
-			add_modifier = {
-				modifier = katzenartig_disarray
-				days = -1
-			}
-			country_event = { id = giga_katmoons.001 days = 3600 } #make a new one CHANGE TO 10 YEARS
 		}
+		# most events handled in the pulse event
+		## removed the call to giga_katzen.3003, giga_katzen.0033, and giga_katmoons.001, the pulse (giga_katzen.030) already calls them
 	}
 
 	option = { #RIP
