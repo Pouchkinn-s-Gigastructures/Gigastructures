@@ -34,18 +34,19 @@ decrease_kaiser_opinion = {
 			country_event = { id = giga_katzen.3002 days = 10 random = 5 }
 		}
 	}
+
+	#this must run after the preceding effects, which check for the opinion range being departed
+	change_variable = {
+		which = kaiser_opinion
+		value = -20 #1 attitude range (roughly - indifferent is a double-span range)
+	}
+
 	else_if = {
 		limit = { kaiser_opinion_range_enraged = yes }
 		if = {
 			limit = { NOT = { has_country_flag = katzenartig_war_declaration_forbidden } } #flag is for ACE
 			country_event = { id = giga_katzen.050 days = 30 random = 5 } #Kaiser declares war
 		}
-	}
-
-	#this must run after the preceding effects, which check for the opinion range being departed
-	change_variable = {
-		which = kaiser_opinion
-		value = -20 #1 attitude range (roughly - indifferent is a double-span range)
 	}
 }
 
@@ -2421,7 +2422,7 @@ spawn_katzen_warforge_fleet = {
 					}
 				}
 				random_list = {
-					4 = {
+					16 = {
 						create_ship = {
 							name = random
 							design = "Katzchen"
@@ -2434,7 +2435,7 @@ spawn_katzen_warforge_fleet = {
 							}
 						}
 					}
-					2 = {
+					8 = {
 						create_ship = {
 							name = random
 							design = "Douclaw"
@@ -2462,7 +2463,7 @@ spawn_katzen_warforge_fleet = {
 							}
 						}
 					}
-					1 = {
+					4 = {
 						create_ship = {
 							name = random
 							design = "Neu-Clermeowth"
@@ -2486,6 +2487,35 @@ spawn_katzen_warforge_fleet = {
 										which = kaiser_resource_balance
 										value < value:katzen_upkeep #|UPKEEP|@kaiser_cruiser_upkeep|
 									}
+								}
+							}
+						}
+					}
+					1 = {
+						create_ship = {
+							name = random
+							design = "Pawris"
+							prefix = no
+						}
+						event_target:flusion_primitives_country = {
+							subtract_variable = {
+								which = kaiser_resource_stockpile
+								value = value:katzen_cost|COST|@kaiser_blimp_cost|
+							}
+						}
+						modifier = {
+							factor = 0
+							event_target:flusion_primitives_country = {
+								OR = {
+									check_variable = {
+										which = kaiser_resource_stockpile
+										value < value:katzen_cost|COST|@kaiser_blimp_cost|
+									}
+									check_variable = {
+										which = kaiser_resource_balance
+										value < value:katzen_upkeep #|UPKEEP|@kaiser_blimp_upkeep|
+									}
+									NOT = { has_global_flag = katzen_blimps_deployed }
 								}
 							}
 						}
@@ -2676,4 +2706,105 @@ giga_make_flusio_arcology = {
     }
     add_building = building_katzen_science
     add_building = building_giga_flusion_fusion_power_plant
+}
+
+katzen_set_protectorate = {
+	if = {
+		limit = { has_modifier = galcom_mobilizes_against_kaiser }
+		remove_modifier = galcom_mobilizes_against_kaiser
+	}
+	if = {
+		limit = { has_modifier = katzen_attache }
+		remove_modifier = katzen_attache
+		remove_country_flag = katzen_attache
+	}
+	clear_contribute_ezic_modifiers = yes
+	country_event = { id = giga_katzen.0032 days = 30 } #monthly event to replace the governor if they got yeeted
+	every_war = {
+		limit = {
+			any_war_participant = {
+				is_country_type = katzenartig_imperium
+			}
+			any_war_participant = {
+				is_country = THIS
+			}
+		}
+		end_war_effect = yes
+	}
+	change_country_flag = {
+		icon = {
+			category="flusionian"
+			file="katzen_flag.dds"
+		}
+		background = {
+			category="backgrounds"
+			file="circle.dds"
+		}
+		colors = {
+			"blue"
+			"indigo"
+			"null"
+			"null"
+		}
+	}
+	set_subject_of = {
+		who = event_target:flusion_primitives_country
+		preset = preset_giga_katzen_protectorate
+	}
+	if = {
+		limit = {
+			check_variable = {
+				which = kaiser_opinion
+				value < 50
+			}
+		}
+		set_variable = {
+			which = kaiser_opinion
+			value = 50 #middle of Friendly
+		}
+	}
+	if = {
+		limit = { is_gestalt = no }
+		set_ruler_title_male = "katzen_protektorat_ruler_title"
+		set_ruler_title_female = "katzen_protektorat_ruler_title"
+		create_katzen_governor = yes
+	}
+	if = { #nope
+		limit = { has_special_project = STUDY_KAISER_PROJECT }
+		abort_special_project = {
+			type = STUDY_KAISER_PROJECT
+		}
+	}
+	if = { #nope
+		limit = { has_special_project = CONTACT_EZIC_REBELS_PROJECT }
+		abort_special_project = {
+			type = CONTACT_EZIC_REBELS_PROJECT
+		}
+	}
+	if = { #nope
+		limit = { has_special_project = CONTACT_SOLAK_REBELS_PROJECT }
+		abort_special_project = {
+			type = CONTACT_SOLAK_REBELS_PROJECT
+		}
+	}
+	if = { #nope
+		limit = { has_special_project = ANALYSE_KATZEN_SUB_PROJECT }
+		abort_special_project = {
+			type = ANALYSE_KATZEN_SUB_PROJECT
+		}
+	}
+}
+
+katzen_free_protectorate = {
+	if = {
+		limit = {
+			leader = { has_leader_flag = katzen_governor }
+		}
+		country_event = { id = giga_katzen.0034 days = 15 random = 5 }
+	}
+	set_subject_of = { who = none }
+	set_name = {
+		key = "katzen_ex_protektorat_name" #this should be but refuses to work with GetStarName
+		variable_string = "[this.Capital.GetName]"
+	}
 }
