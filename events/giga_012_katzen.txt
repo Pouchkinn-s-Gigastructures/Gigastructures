@@ -1326,8 +1326,8 @@ country_event = {
 		country_event = { id = giga_katzen.041 days = 540 random = 60 } #Kaiser demands stuff, runs every 1.5 years
 		country_event = { id = giga_katzen.070 days = 180 random = 30 } #Warforges
 		country_event = { id = giga_katzen.030 days = 30 } #Manage warforges and eco
-		country_event = { id = giga_katzen.036 days = 30 } # Leader management
-		country_event = { id = giga_katzen.080 days = 360 random = 60 } #Flusion expansion
+		# country_event = { id = giga_katzen.036 days = 30 } # Leader management
+		country_event = { id = giga_katzen.080 days = 360 } #Flusion expansion
 		# country_event = { id = giga_katzen.082 days = 7200 } #Second flusion expansion
 		# country_event = { id = giga_katzen.083 days = 10800 } #Third flusion expansion
 		country_event = { id = giga_katzen.9999 days = 5 } #Crisis counter
@@ -3112,7 +3112,7 @@ country_event = { #hello
 			}
 			random_system_within_border = {
 				limit = {
-					any_neighbor_system = { owner = { is_country_type = katzenartig_imperium } }
+					any_neighbor_system = { owner? = { is_country_type = katzenartig_imperium } }
 					NOR = {
 						has_star_flag = kaiser_sell_1
 						has_star_flag = kaiser_sell_2
@@ -5738,6 +5738,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 		update_katzen_tech_level_buffs = yes
 		update_katzen_tech_level_display = yes
 
+		# set country flag, backup incase on action doesnt fire
 		if = {
 			limit = {
 				NOR = {
@@ -5751,27 +5752,51 @@ country_event = { #Manage war forges and the Kaiser's eco
 						}
 					}
 				}
-				has_country_flag = kaiser_moon_destroyed
 			}
+
+			set_country_flag = kaiser_moon_destroyed
+		}
+
+		# actual consequences of moon death
+		if = {
+			limit = {
+				has_country_flag = kaiser_moon_destroyed
+				NOT = { has_country_flag = kaiser_moon_destroyed_events_done }
+			}
+			# set modifier
+			add_modifier = {
+				modifier = katzenartig_disarray
+				days = -1
+			}
+			# notification
+			every_playable_country = {
+				limit = {
+					is_ai = no
+					NOT = { has_country_flag = kaiser_moon_slayer }
+					# killer already got giga_katzen.090 to tell them
+					# if no killer (on action isnt triggered) everyone gets it
+				}
+				country_event = { id = giga_katzen.089 }
+			}
+			#FTO collapses
 			every_country = {
 				limit = { has_country_flag = allied_to_kaiser }
-				country_event = { id = giga_katzen.3003 days = 15 random = 15 } #FTO collapses
+				country_event = { id = giga_katzen.3003 days = 30 }
 			}
+			#Vassals rebel
 			every_country = {
 				limit = { katzen_vassal = yes }
-				country_event = { id = giga_katzen.0033 days = 15 random = 15 } #Vassals rebel
-			}
-			every_playable_country = {
-				limit = { is_ai = no }
-				country_event = { id = giga_katzen.089 } #informative event
+				country_event = { id = giga_katzen.0033 days = 30 }
 			}
 			add_modifier = {
 				modifier = katzenartig_disarray
 				days = -1
 			}
-			country_event = { id = giga_katmoons.001 days = 3600 } #make a new one
+      #make a new one
+			country_event = { id = giga_katmoons.001 days = 3600 }
 			set_country_flag = kaiser_moon_destroyed
 		}
+		# repeat pulse
 		country_event = { id = giga_katzen.030 days = 30 }
 		set_variable = {
 			which = "kaiser_ehof_count"
@@ -6119,62 +6144,62 @@ country_event = { #Warforge destroyed
 	}
 }
 
-country_event = { # Leader and moon management
-	id = giga_katzen.036
-	hide_window = yes
-
-	is_triggered_only = yes
-
-	trigger = {
-		any_country = {
-			is_country_type = katzenartig_imperium #Only occurs if katzens are around
-		}
-		NOT = { has_global_flag = katzenartig_imperium_defeated }
-	}
-
-	immediate = {
-		#long form fleet merging is no more Now its left to the AI
-		if = {
-			limit = {
-				exists = event_target:target_kaiser_moon_ship
-			}
-			event_target:target_kaiser_moon_ship = {
-				fleet = {
-					assign_leader = event_target:flusion_douclaw
-					set_fleet_flag = kaiser_moon_fleet
-					save_global_event_target_as = target_kaiser_moon_fleet
-					set_name = "Kaiservorherrschaft"
-					set_fleet_settings = {
-						can_change_leader = no
-					}
-				}
-			}
-		}
-		# while = {
-		# 	count = 2
-		# 	ordered_owned_leader = { #Cull admirals down to 10 unemployed
-		# 		limit = {
-		# 			is_idle = yes
-		# 			leader_class = commander
-		# 			NOT = { has_leader_flag = flusiondouclaw } # Never cull Douclaw
-		# 			NOT = { has_trait = katzen_trait_elite } # Don't cull elites
-		# 		}
-		# 		position >= 10
-		# 		order_by = trigger:has_base_skill
-		# 		if = {
-		# 			limit = {
-		# 				is_owned_by = root
-		# 			}
-		# 			kill_leader = {
-		# 				fire = yes
-		# 				show_notification = no
-		# 			}
-		# 		}
-		# 	}
-		# }
-		country_event = { id = giga_katzen.036 days = 30 } # Leader management
-	}
-}
+# country_event = { # Leader and moon management
+# 	id = giga_katzen.036
+# 	hide_window = yes
+#
+# 	is_triggered_only = yes
+#
+# 	trigger = {
+# 		any_country = {
+# 			is_country_type = katzenartig_imperium #Only occurs if katzens are around
+# 		}
+# 		NOT = { has_global_flag = katzenartig_imperium_defeated }
+# 	}
+#
+# 	immediate = {
+# 		#long form fleet merging is no more Now its left to the AI
+# 		if = {
+# 			limit = {
+# 				exists = event_target:target_kaiser_moon_ship
+# 			}
+# 			event_target:target_kaiser_moon_ship = {
+# 				fleet = {
+# 					assign_leader = event_target:flusion_douclaw
+# 					set_fleet_flag = kaiser_moon_fleet
+# 					save_global_event_target_as = target_kaiser_moon_fleet
+# 					set_name = "Kaiservorherrschaft"
+# 					set_fleet_settings = {
+# 						can_change_leader = no
+# 					}
+# 				}
+# 			}
+# 		}
+# 		# while = {
+# 		# 	count = 2
+# 		# 	ordered_owned_leader = { #Cull admirals down to 10 unemployed
+# 		# 		limit = {
+# 		# 			is_idle = yes
+# 		# 			leader_class = commander
+# 		# 			NOT = { has_leader_flag = flusiondouclaw } # Never cull Douclaw
+# 		# 			NOT = { has_trait = katzen_trait_elite } # Don't cull elites
+# 		# 		}
+# 		# 		position >= 10
+# 		# 		order_by = trigger:has_base_skill
+# 		# 		if = {
+# 		# 			limit = {
+# 		# 				is_owned_by = root
+# 		# 			}
+# 		# 			kill_leader = {
+# 		# 				fire = yes
+# 		# 				show_notification = no
+# 		# 			}
+# 		# 		}
+# 		# 	}
+# 		# }
+# 		country_event = { id = giga_katzen.036 days = 30 } # Leader management
+# 	}
+# }
 country_event = { #big
 	id = giga_katzen.04001
 	title = "giga_katzen.04001.name"
@@ -9392,6 +9417,8 @@ country_event = {
 
 
 ###END EVENTS###
+# this one is triggered by the on action when the moon goes boom
+# triggered onm the killer
 country_event = { #Kaiser Moon destroyed :(
 	id = giga_katzen.090
 	title = "giga_flusion.090.name"
@@ -9413,26 +9440,20 @@ country_event = { #Kaiser Moon destroyed :(
 		}
 	}
 
-	immediate = {
-		random_owned_fleet = {
-			limit = {
-				any_owned_ship = {
-					OR = {
-						is_ship_size = giga_war_moon
-						is_ship_size = giga_kaiser_moon_flusion
+	immediate = { # KILLER SCOPE
+		from = { # KAISER SCOPE
+			random_owned_fleet = {
+				limit = {
+					any_owned_ship = {
+						OR = {
+							is_ship_size = giga_war_moon
+							is_ship_size = giga_kaiser_moon_flusion
+						}
+						has_ship_flag = kaiser_moon_ship
 					}
-					has_ship_flag = kaiser_moon_ship
 				}
+				leader = { unassign_leader = this } #So Douclaw doesn't die
 			}
-			leader = { unassign_leader = this } #So Douclaw doesn't die
-		}
-		every_country = {
-			limit = { has_country_flag = allied_to_kaiser }
-			country_event = { id = giga_katzen.3003 days = 15 } #FTO collapses
-		}
-		every_country = {
-			limit = { katzen_vassal = yes }
-			country_event = { id = giga_katzen.0033 days = 15 } #Vassals rebel
 		}
 		set_country_flag = kaiser_moon_slayer
 		save_global_event_target_as = kaiser_moon_slayer
@@ -9454,12 +9475,9 @@ country_event = { #Kaiser Moon destroyed :(
 		}
 		event_target:flusion_primitives_country = {
 			set_country_flag = kaiser_moon_destroyed
-			add_modifier = {
-				modifier = katzenartig_disarray
-				days = -1
-			}
-			country_event = { id = giga_katmoons.001 days = 3600 } #make a new one CHANGE TO 10 YEARS
 		}
+		# most events handled in the pulse event
+		## removed the call to giga_katzen.3003, giga_katzen.0033, and giga_katmoons.001, the pulse (giga_katzen.030) already calls them
 	}
 
 	option = { #RIP
