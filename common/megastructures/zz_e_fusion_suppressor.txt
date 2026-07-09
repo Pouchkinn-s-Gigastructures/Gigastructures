@@ -352,15 +352,16 @@ fusion_suppressor_5 = {
 			solar_system = { set_star_class = sc_neutron_star }
 		}
 		save_event_target_as = giga_system
-		from = { country_event = { id = giga_dialog.3406 } }	# Notification
+		save_event_target_as = fusion_suppressor_@root
+		from = { country_event = { id = giga_dialog.3406 scopes = { from = prev.fromfrom } } }	# Notification
 	}
 }
 
-fusion_suppressor_6b = { # put above the collapse just for ordering purposes
+fusion_suppressor_6a = { # put above the collapse just for ordering purposes
 	entity = "fusion_suppressor_03_entity"
 	portrait = "GFX_megastructure_black_hole"
 	upgrade_from = { fusion_suppressor_5 }
-	
+
 	build_time = 360
 	resources = {
 		category = giga_megastructures
@@ -370,8 +371,15 @@ fusion_suppressor_6b = { # put above the collapse just for ordering purposes
 		}
 	}
 
-	potential = { NOT = { has_global_flag = suppressor_disabled } }
+	potential = {
+		from = { NOT = { has_megastructure_flag = black_hole  } }
+		NOT = { has_global_flag = suppressor_disabled }
+	}
 	possible = { from = { has_technology = giga_tech_fusion_suppressor } }
+
+	on_build_start = {
+		from = { set_country_flag = fusion_exploded_@prev }
+	}
 
 	on_build_complete = {
 		fromfrom.planet = {
@@ -397,7 +405,7 @@ fusion_suppressor_6b = { # put above the collapse just for ordering purposes
 	}
 }
 
-fusion_suppressor_6 = {
+fusion_suppressor_6b = {
 	entity = "fusion_suppressor_03_entity"
 	portrait = "GFX_megastructure_black_hole"
 	upgrade_from = { fusion_suppressor_5 }
@@ -406,7 +414,7 @@ fusion_suppressor_6 = {
 		exists = owner
 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
 	}
-	
+
 	build_time = 360
 	resources = {
 		category = giga_megastructures
@@ -421,7 +429,10 @@ fusion_suppressor_6 = {
 		}
 	}
 
-	potential = { NOT = { has_global_flag = suppressor_disabled } }
+	potential = {
+		from = { has_megastructure_flag = black_hole  }
+		NOT = { has_global_flag = suppressor_disabled }
+	}
 	possible = { from = { has_technology = giga_tech_fusion_suppressor } }
 
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
@@ -450,32 +461,37 @@ fusion_suppressor_6 = {
 			country_event = { id = giga_dialog.3410 } #Notification / Effect
 		}
 	}
-}
 
-fusion_suppressor_7 = {
-	entity = ""
-	portrait = "GFX_megastructure_black_hole"
-	upgrade_from = { fusion_suppressor_6 }
-
-	build_time = 360
-	resources = {
+	dismantle_cost = {
 		category = giga_megastructures
 		cost = {
 			energy = 1000
 		}
-		inline_script = {
-			script = megastructures/generic_parts/giga_mega_alloy_cost
-			alloys = -7500
+	}
+
+	dismantle_time = 360
+
+	dismantle_potential = {
+		from = { is_ai = no }
+	}
+
+	dismantle_possible = {
+		can_dismantle_megastructure = {
+			TECH = giga_tech_fusion_suppressor
 		}
 	}
 
-	potential = {
-		NOT = { has_global_flag = suppressor_disabled }
-		is_ai = no
-	}
-	possible = { from = { has_technology = giga_tech_fusion_suppressor } }
+	on_dismantle_start = {  }
 
-	on_build_complete = {
+	on_dismantle_cancel = {  }
+
+	on_dismantle_complete = {
+		from = {
+			add_resource = {
+				alloys = 7500
+				mult = modifier:megastructure_dismantle_refund_mult
+			}
+		}
 		fromfrom.planet = {
 			save_event_target_as = giga_planet
 			change_pc = pc_black_hole
@@ -486,3 +502,38 @@ fusion_suppressor_7 = {
 		remove_megastructure = fromfrom
 	}
 }
+
+# fusion_suppressor_8 = {
+# 	entity = ""
+# 	portrait = "GFX_megastructure_black_hole"
+# 	upgrade_from = { fusion_suppressor_6 }
+#
+# 	build_time = 360
+# 	resources = {
+# 		category = giga_megastructures
+# 		cost = {
+# 			energy = 1000
+# 		}
+# 		inline_script = {
+# 			script = megastructures/generic_parts/giga_mega_alloy_cost
+# 			alloys = -7500
+# 		}
+# 	}
+#
+# 	potential = {
+# 		NOT = { has_global_flag = suppressor_disabled }
+# 		is_ai = no
+# 	}
+# 	possible = { from = { has_technology = giga_tech_fusion_suppressor } }
+#
+# 	on_build_complete = {
+# 		fromfrom.planet = {
+# 			save_event_target_as = giga_planet
+# 			change_pc = pc_black_hole
+# 			solar_system = { set_star_class = sc_black_hole }
+# 		}
+# 		save_event_target_as = giga_system
+# 		from = { country_event = { id = giga_dialog.3407 } }	# Notification
+# 		remove_megastructure = fromfrom
+# 	}
+# }
