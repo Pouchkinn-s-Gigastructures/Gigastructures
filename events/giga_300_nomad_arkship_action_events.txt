@@ -1,0 +1,94 @@
+namespace = giga_nomad_actions
+
+###################################################
+## giga_arkship_harvest_neutronium
+###################################################
+# called by on_giga_arkship_harvest_neutronium
+# technically a ship event i think
+carrier_event = {
+    id = giga_nomad_actions.001
+    hide_window = yes
+    is_triggered_only = yes
+
+    immediate = {
+        from = {
+            random_owned_ship = {
+                save_event_target_as = arkship
+            }
+        }
+        event_target:arkship = {
+            colony = {
+                add_modifier = {
+                    modifier = giga_arkship_neutronium_deposit
+                }
+				set_variable = {
+					which = giga_arkship_neutronium_alloys_remaining
+					value = @giga_nomad_actions_neutronium_initial
+				}
+            }
+			fleet = {
+				# this tags the fleet, easier to reference than the ship or the colony
+				set_timed_fleet_flag = {
+					flag = giga_arkship_harvest_neutronium_cooldown
+					days = @giga_nomad_actions_neutronium_cooldown
+				}
+			}
+        }
+        add_modifier = {
+            modifier = giga_arkship_neutronium_harvested
+            days = 9000
+        }
+
+		owner = { country_event = { id = giga_nomad_actions.003 days = @giga_nomad_actions_neutronium_cooldown } }
+    }
+}
+# called by monthly on action, ticks it down
+country_event = {
+	id = giga_nomad_actions.002
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		any_owned_colony = {
+			has_modifier = 	giga_arkship_neutronium_deposit
+		}
+	}
+
+	immediate = {
+		every_owned_colony = {
+			limit = {
+				has_modifier = 	giga_arkship_neutronium_deposit
+			}
+
+			# subtract the number of (alloy workforce / 100 ) * @giga_nomad_actions_neutronium_per_forge_job
+			change_variable = {
+				which = giga_arkship_neutronium_alloys_remaining
+				value = value:giga_count_stored_alloys_deplete_planet
+			}
+			if = {
+				limit = {
+					check_variable_arithmetic = {
+						which = giga_arkship_neutronium_alloys_remaining
+						value <= 0
+					}
+				}
+				remove_modifier = giga_arkship_neutronium_deposit
+				clear_variable = giga_arkship_neutronium_alloys_remaining
+			}
+		}
+	}
+}
+# fired by giga_nomad_actions.001, notifies player of cooldown ending
+country_event = {
+	id = giga_nomad_actions.003
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		create_message = {
+			type = GIGA_NOMAD_NEUTRONIUM_HARVEST_READY
+			days = 30
+			target = event_target:arkship.colony
+		}
+	}
+}
