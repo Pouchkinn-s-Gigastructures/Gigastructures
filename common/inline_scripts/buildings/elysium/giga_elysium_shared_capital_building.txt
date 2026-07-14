@@ -1,0 +1,85 @@
+capital = yes
+can_build = no
+can_demolish = no
+can_be_ruined = no
+can_be_disabled = no
+position_priority = 0
+
+# only shuts up when capital is there with it in the actual definition
+capital_tier = $level_plus_one$
+
+category = government
+
+show_tech_unlock_if = {
+    always = no
+}
+
+potential = {
+    has_carrier_flag = has_orbital_elysium
+    $potential$
+}
+
+# stuff only at level 2+
+inline_script = {
+    script = generic_parts/giga_toggled_code
+    code = "
+        base_buildtime = @b$level$_time
+
+        allow = {
+            or = {
+                and = {
+                    owner? = {
+                        has_origin = origin_elysium
+                    }
+                    sapient_pop_amount >= 2500 #@upgrade_count_origin
+                }
+                sapient_pop_amount >= 4000 #@upgrade_count
+            }
+        }
+    "
+    toggle = @[ $level$ - 1 ]
+}
+
+resources = {
+    category = planet_buildings
+    upkeep = {
+        energy = @b$level$_upkeep
+    }
+
+    # cost, only at level 2+
+    inline_script = {
+        script = generic_parts/giga_toggled_code
+        code = "
+            inline_script = {
+                script = buildings/nomadic_cost_switcher
+                REGULAR_RESOURCE = minerals
+                NOMADIC_RESOURCE = alloys
+                COST = @b$level_plus_one$_minerals
+                NOMADIC_COST_MULT = @nomadic_minerals_to_strategic_ratio
+            }
+        "
+        toggle = @[ $level$ - 1 ]
+    }
+}
+
+inline_script = buildings/on_all_capital_buildings
+
+######################################################
+# Stability and output
+
+triggered_planet_modifier = {
+    potential = {
+        is_variable_set = giga_elysium_stability
+    }
+    key = giga_elysium_from_station
+    planet_stability_add = 0.5
+    multiplier = giga_elysium_stability
+}
+triggered_planet_modifier = {
+    potential = {
+        is_variable_set = giga_elysium_output
+    }
+    key = giga_elysium_from_station
+    planet_jobs_productive_produces_mult = 1
+    multiplier = giga_elysium_output
+}
