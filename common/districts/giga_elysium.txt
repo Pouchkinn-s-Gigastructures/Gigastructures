@@ -12,6 +12,8 @@ district_giga_elysium_housing = {
 	is_uncapped = { always = yes }
 	exempt_from_ai_planet_specialization = yes
 	icon = district_hab_housing
+	overlay_icon = GFX_district_government
+	gridbox = district_hab_housing
 
 	show_on_uncolonized = {
 		uses_district_set = giga_elysium
@@ -79,6 +81,8 @@ district_giga_elysium_housing = {
 district_giga_elysium_control = {
 	base_buildtime = 240
 	is_uncapped = { always = yes }
+	overlay_icon = GFX_giga_district_stability
+	district_background = district_arcology_housing_secondary
 
 	show_on_uncolonized = {
 		uses_district_set = giga_elysium
@@ -133,14 +137,15 @@ district_giga_elysium_control = {
 
 ###############################################################################################################
 ###############################################################################################################
-#          ADMIN
+#          RESEARCH / UNITY
 ###############################################################################################################
 ###############################################################################################################
 
-district_giga_elysium_admin = {
+district_giga_elysium_archive = {
 	base_buildtime = 240
 	is_uncapped = { always = yes }
 	icon = district_arcology_administrative
+	overlay_icon = GFX_giga_district_research_unity
 
 	show_on_uncolonized = {
 		uses_district_set = giga_elysium
@@ -160,7 +165,8 @@ district_giga_elysium_admin = {
 		}
 	}
 
-	zone_slots = { slot_gigas_unity }
+	zone_slots = { slot_giga_elysium_archive }
+	#zone_slots = { slot_giga_elysium_urban_01 }
 
 	planet_modifier = {
 		planet_housing_add = 200
@@ -168,52 +174,12 @@ district_giga_elysium_admin = {
 
 	inline_script = {
 		script = planet/unity/giga_unity_job_swap
-		jobs = 300
+		jobs = 150
 		district = @yes
 	}
-}
-
-###############################################################################################################
-###############################################################################################################
-#          RESEARCH
-###############################################################################################################
-###############################################################################################################
-
-district_giga_elysium_science = {
-	base_buildtime = 240
-	is_uncapped = { always = yes }
-	icon = district_hab_science
-
-	show_on_uncolonized = {
-		uses_district_set = giga_elysium
-	}
-
-	potential = {
-		uses_district_set = giga_elysium
-	}
-
-	prerequisites = { tech_basic_science_lab_1 }
-	show_tech_unlock_if = { always = no }
-
-	resources = {
-		category = planet_districts
-		cost = {
-			alloys = @elysium_cost
-		}
-		upkeep = {
-			energy = @elysium_maintenance
-		}
-	}
-
-	zone_slots = { slot_habitat_research }
-
-	planet_modifier = {
-		planet_housing_add = 200
-	}
-
 	inline_script = {
 		script = planet/research/giga_researcher_job_swap
-		jobs = 300
+		jobs = 150
 		district = @yes
 	}
 }
@@ -229,30 +195,40 @@ district_giga_elysium_entertainment = {
 	is_uncapped = { always = yes }
 	exempt_from_ai_planet_specialization = yes
 	icon = district_hab_cultural
+	district_background = district_resort_secondary
+	overlay_icon = GFX_district_amenities
+	gridbox = district_arcology_leisure
 
 	show_on_uncolonized = {
 		uses_district_set = giga_elysium
-
-		exists = from
-		from = {
-			is_gestalt = no
-			NOT = { has_valid_civic = civic_dystopian_society }
+		from? = {
+			or = {
+				and = {
+					is_gestalt = no
+					NOT = { has_valid_civic = civic_dystopian_society }
+				}
+				has_valid_civic = civic_machine_servitor
+			}
 		}
 	}
 
 	potential = {
 		uses_district_set = giga_elysium
-
-		exists = owner
-		owner = {
-			is_gestalt = no
-			NOT = { has_valid_civic = civic_dystopian_society }
+		owner? = {
+			or = {
+				and = {
+					is_gestalt = no
+					NOT = { has_valid_civic = civic_dystopian_society }
+				}
+				has_valid_civic = civic_machine_servitor
+			}
 		}
 	}
 
 	conversion_ratio = 0.5
 	convert_to = {
-		district_giga_elysium_admin
+		district_giga_elysium_maintenance
+		district_giga_elysium_archive
 	}
 
 	zone_slots = { slot_giga_entertainment }
@@ -269,7 +245,75 @@ district_giga_elysium_entertainment = {
 
 	planet_modifier = {
 		planet_housing_add = 200
+	}
+
+	triggered_planet_modifier = {
+		potential = {
+			owner? = {
+				not = {
+					has_valid_civic = civic_machine_servitor
+				}
+			}
+		}
 		job_giga_media_coordinator_add = 100
 		job_entertainer_add = 200
+	}
+	triggered_planet_modifier = {
+		potential = {
+			owner? = {
+				has_valid_civic = civic_machine_servitor
+			}
+		}
+		job_giga_media_coordination_drone_add = 100
+		job_logistics_drone_add = 200
+	}
+}
+
+district_giga_elysium_maintenance = {
+	base_buildtime = 240
+	is_uncapped = { always = yes }
+	exempt_from_ai_planet_specialization = yes
+	icon = district_ark_military
+	gridbox = district_arcology_leisure
+	overlay_icon = GFX_giga_district_gestalt_amenities
+
+	show_on_uncolonized = {
+		uses_district_set = giga_elysium
+		from? = {
+			is_gestalt = yes
+			NOT = { has_valid_civic = civic_machine_servitor }
+		}
+	}
+
+	potential = {
+		uses_district_set = giga_elysium
+		owner? = {
+			is_gestalt = yes
+			NOT = { has_valid_civic = civic_machine_servitor }
+		}
+	}
+
+	conversion_ratio = 0.5
+	convert_to = {
+		district_giga_elysium_entertainment
+		district_giga_elysium_archive
+	}
+
+	zone_slots = { slot_giga_entertainment }
+
+	resources = {
+		category = planet_districts
+		cost = {
+			alloys = @elysium_cost
+		}
+		upkeep = {
+			energy = @elysium_maintenance
+		}
+	}
+
+	planet_modifier = {
+		planet_housing_add = 200
+		job_frame_maintenance_overseer_add = 100
+		job_logistics_drone_add = 200
 	}
 }
