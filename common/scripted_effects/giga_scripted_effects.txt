@@ -4740,6 +4740,88 @@ start_dismantling_planet_for_bm = {
 	}
 }
 
+giga_resettle_pops = {
+	save_event_target_as = giga_resettle_pops_source
+	set_variable = {
+		which = giga_resettle_pops_amount
+		value = $amount$
+	}
+	# set_variable = {
+	# 	which = giga_resettle_pops_debug
+	# 	value = $amount$
+	# }
+
+	while = {
+		limit = {
+			check_variable = {
+				which = giga_resettle_pops_amount
+				value > 0
+			}
+			any_owned_pop_group = {
+				pop_group_size > 0
+				[[pop_group_predicate]
+					$pop_group_predicate$ = yes
+				]
+			}
+		}
+
+		weighted_random_owned_pop_group = {
+			limit = {
+				always = yes
+				[[pop_group_predicate]
+					$pop_group_predicate$ = yes
+				]
+			}
+
+			if = {
+				limit = {
+					pop_group_size >= event_target:giga_resettle_pops_source.giga_resettle_pops_amount
+				}
+				resettle_pop_group = {
+					POP_GROUP = this
+					PLANET = $target$
+					AMOUNT = event_target:giga_resettle_pops_source.giga_resettle_pops_amount
+				}
+				event_target:giga_resettle_pops_source = {
+					set_variable = {
+						which = giga_resettle_pops_amount
+						value = 0
+					}
+				}
+			}
+			else = {
+				event_target:giga_resettle_pops_source = {
+					subtract_variable = {
+						which = giga_resettle_pops_amount
+						value = prev.trigger:pop_group_size
+					}
+				}
+				resettle_pop_group = {
+					POP_GROUP = this
+					PLANET = $target$
+					PERCENTAGE = 1
+				}
+			}
+		}
+	}
+
+	clear_variable = giga_resettle_pops_amount
+}
+
+giga_prune_district = {
+	while = {
+		limit = { num_districts = { type = $district$ value > $at_most$ } }
+		remove_district = $district$
+	}
+}
+
+giga_prune_building = {
+	while = {
+		limit = { num_buildings = { type = $building$ value > $at_most$ } }
+		remove_building = $building$
+	}
+}
+
 #################################
 ### Create Ship Effects #########
 #################################
