@@ -1,353 +1,382 @@
 galactic_crucible_0 = {
-    entity = "infernal_01_galactic_crucible_phase_01_entity"
-    construction_entity = "infernal_01_galactic_crucible_construction_frame_entity"
-    portrait = "GFX_megastructure_crucible_background"
-    build_time = 720
+	entity = "infernal_01_galactic_crucible_phase_01_entity"
+	construction_entity = "infernal_01_galactic_crucible_construction_frame_entity"
+	portrait = "GFX_megastructure_crucible_background"
+	build_time = 720
 
     outliner_trigger = {
         exists = owner
         NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
     }
 
-    resources = {
-        category = megastructures
-        cost = {
-            entropy_crystals = 500
-            alloys = 2500
-        }
-    }
-    potential = {
-        has_crisis_level = crisis_hyperthermia_level_1
-        NOT = { has_country_flag = built_galactic_crucible }
-    }
-    possible = {
-        hidden_trigger = {
-            exists = starbase
-        }
-        custom_tooltip = {
-            fail_text = "requires_inside_border"
-            is_inside_border = from
-        }
-        custom_tooltip = {
-            fail_text = "requires_surveyed_system"
-            NOT = {
-                any_system_planet = {
-                    is_surveyed = {
-                        who = prev.from
-                        status = no
-                    }
-                }
-            }
-        }
-        custom_tooltip = {
-            fail_text = "requires_no_arc_furnace"
-            system_has_arc_furnace = no
-        }
-        custom_tooltip = {
-            fail_text = "requires_no_arc_furnace_construction"
-            if = {
-                limit = { system_has_arc_furnace = no }
-                NOT = { solar_system = { has_star_flag = arc_furnace_construction } }
-            }
-        }
-        custom_tooltip = {
-            fail_text = "requires_no_black_hole_neutron_star_pulsar"
-            NOT = {
-                is_star_class = sc_black_hole
-                is_star_class = sc_neutron_star
-                is_star_class = sc_pulsar
-            }
-        }
-        custom_tooltip = {
-            fail_text = "requires_no_binary_trinary"
-            is_binary_star = no
-            is_trinary_star = no
-        }
-        custom_tooltip = {
-            fail_text = "requires_no_existing_megastructure"
-            has_no_non_gate_megastructure = yes
-            NOR = {
-                any_system_planet = { is_planet_class = pc_cosmogenesis_world }
-                has_star_flag = ring_world_built
-            }
-        }
-        custom_tooltip = {
-            fail_text = "requires_no_colonies"
-            NOT = {
-                any_system_planet = {
-                    is_colony = yes
-                    is_artificial = no
-                    exists = owner
-                    owner = { is_primitive = no }
-                }
-            }
-        }
-    }
+	resources = {
+		category = megastructures
+		cost = {
+			entropy_crystals = 500
+			alloys = 2500
+		}
+	}
+	potential = {
+		has_crisis_level = crisis_hyperthermia_level_1
+		NOT = {
+			has_country_flag = built_galactic_crucible
+		}
+	}
+	possible = {
+		inline_script = megastructures/system_ownership_or_waystation_check
+		inline_script = megastructures/system_surveyed_or_waystation_check
+		custom_tooltip = {
+			fail_text = "requires_no_arc_furnace"
+			system_has_arc_furnace = no
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_arc_furnace_construction"
+			if = {
+				limit = {
+					system_has_arc_furnace = no
+				}
+				NOT = {
+					solar_system = {
+						has_star_flag = arc_furnace_construction
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_black_hole_neutron_star_pulsar"
+			NOT = {
+				is_star_class = sc_black_hole
+				is_star_class = sc_neutron_star
+				is_star_class = sc_pulsar
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_binary_trinary"
+			is_binary_star = no
+			is_trinary_star = no
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_existing_megastructure"
+			has_no_non_gate_megastructure = yes
+			NOR = {
+				any_system_planet = {
+					is_planet_class = pc_cosmogenesis_world
+				}
+				has_star_flag = ring_world_built
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_colonies"
+			NOT = {
+				any_system_planet = {
+					is_colony = yes
+					is_artificial = no
+					owner? = {
+						is_primitive = no
+					}
+				}
+			}
+		}
+	}
 
-    placement_rules = {
-        planet_possible = {
-            custom_tooltip = {
-                fail_text = "must_build_around_star"
-                is_star = yes
-            }
-            custom_tooltip = {
-                fail_text = "requires_no_anomaly"
-                NOT = { has_anomaly = yes }
-            }
-        }
-    }
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = {
+				fail_text = "requires_no_protostar"
+				NOT = {
+					is_planet_class = pc_protostar
+				}
+			}
+			custom_tooltip = {
+				fail_text = "must_build_around_star"
+				is_star = yes
+			}
+			custom_tooltip = {
+				fail_text = "requires_no_anomaly"
+				NOT = {
+					has_anomaly = yes
+				}
+			}
+		}
+	}
 
-    on_build_complete = {
-        fromfrom.planet = {
-            set_carrier_flag = megastructure
-            set_carrier_flag = has_megastructure
-        }
-        every_system_planet = {
-            limit = {
-                is_star = no
-                distance = {
-                    source = solar_system.star
-                    min_distance >= 10
-                    max_distance <= 75
-                    same_solar_system = yes
-                }
-            }
-            every_moon = { remove_planet = yes }
-            remove_planet = yes
-        }
-        from = { set_country_flag = built_galactic_crucible }
-        fromfrom = {
-            set_megastructure_flag = galactic_crucible
-            set_megastructure_flag = galactic_crucible@owner
-        }
-    }
+	on_build_complete = {
+		fromfrom.planet = {
+			set_carrier_flag = megastructure
+			set_carrier_flag = has_megastructure
+		}
+		every_system_planet = {
+			limit = {
+				is_star = no
+				distance = {
+					source = solar_system.star
+					min_distance >= 10
+					max_distance <= 75
+					same_solar_system = yes
+				}
+			}
+			every_moon = {
+				remove_planet = yes
+			}
+			remove_planet = yes
+		}
+		from = {
+			set_country_flag = built_galactic_crucible
+		}
+		fromfrom = {
+			set_megastructure_flag = galactic_crucible
+			set_megastructure_flag = galactic_crucible@owner
+		}
+	}
 
-    ai_weight = {
-        factor = 3
-        modifier = {
-            factor = 3
-            exists = sector
-            sector = { has_sector_type = core_sector }
-        }
-        modifier = {
-            factor = 0.1
-            starbase = { NOT = { has_starbase_size >= starbase_starfortress } }
-        }
-        modifier = {
-            factor = 0
-            any_neighbor_system = {
-                exists = owner
-                NOT = { owner = { is_same_value = from } }
-            }
-        }
-    }
+	ai_weight = {
+		factor = 3
+		modifier = {
+			factor = 3
+			from = {
+				is_nomadic = no
+			}
+			sector? = {
+				has_sector_type = core_sector
+			}
+		}
+		modifier = {
+			factor = 0.1
+			from = {
+				is_nomadic = no
+			}
+			starbase = {
+				NOT = {
+					has_starbase_size >= starbase_starfortress
+				}
+			}
+		}
+	}
 }
 
 galactic_crucible_1 = {
-    entity = "infernal_01_galactic_crucible_phase_02_entity"
-    construction_entity = "infernal_01_galactic_crucible_part_1_entity"
-    portrait = "GFX_megastructure_crucible_background"
-    build_time = 3600
-    victory_score = 1000
+	entity = "infernal_01_galactic_crucible_phase_02_entity"
+	construction_entity = "infernal_01_galactic_crucible_part_1_entity"
+	portrait = "GFX_megastructure_crucible_background"
+	build_time = 3600
+	victory_score = 1000
 
     outliner_trigger = {
         exists = owner
         NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
     }
 
-    resources = {
-        category = megastructures
-        cost = { entropy_crystals = 5000 }
-    }
-    country_modifier = {
-        country_naval_cap_add = 150
-    }
-    upgrade_from = { galactic_crucible_0 }
-    potential = { has_crisis_level = crisis_hyperthermia_level_1 }
-    on_build_complete = {
-        from = { set_country_flag = Hyperthermia_Lv2_unlocked }
-        fromfrom = {
-            set_megastructure_flag = galactic_crucible
-            set_megastructure_flag = galactic_crucible@owner
-        }
-    }
-    overclock_types = { overclock_gc_default overclock_gc_high overclock_gc_eco overclock_gc_war }
-    cycle_length_in_days = value:gh_conduit_interval_value
-    cycle_title = SPAWN_CONDUITS
-    cycle_desc = SPAWN_CONDUITS_DESC
-    cycle_icon = GFX_ship_class_conduit
-    on_cycle_complete = {
-        fromfrom.owner = {
-            country_event = { id = infernals.2004 }
-        }
-    }
+	resources = {
+		category = megastructures
+		cost = { entropy_crystals = 5000 }
+	}
+	country_modifier = {
+		country_naval_cap_add = 150
+	}
+	upgrade_from = { galactic_crucible_0 }
+	potential = { has_crisis_level = crisis_hyperthermia_level_1 }
+	on_build_complete = {
+		from = {
+			set_country_flag = Hyperthermia_Lv2_unlocked
+		}
+		fromfrom = {
+			set_megastructure_flag = galactic_crucible
+			set_megastructure_flag = galactic_crucible@owner
+		}
+	}
+	overclock_types = { overclock_gc_default overclock_gc_high overclock_gc_eco overclock_gc_war }
+	cycle_length_in_days = value:gh_conduit_interval_value
+	cycle_title = SPAWN_CONDUITS
+	cycle_desc = SPAWN_CONDUITS_DESC
+	cycle_icon = GFX_ship_class_conduit
+	on_cycle_complete = {
+		fromfrom.owner = {
+			country_event = {
+				id = infernals.2004
+			}
+		}
+	}
 }
 
 galactic_crucible_2 = {
-    entity = "infernal_01_galactic_crucible_phase_03_entity"
-    construction_entity = "infernal_01_galactic_crucible_part_2_entity"
-    portrait = "GFX_megastructure_crucible_background"
-    build_time = 3600
-    victory_score = 2500
+	entity = "infernal_01_galactic_crucible_phase_03_entity"
+	construction_entity = "infernal_01_galactic_crucible_part_2_entity"
+	portrait = "GFX_megastructure_crucible_background"
+	build_time = 3600
+	victory_score = 2500
 
     outliner_trigger = {
         exists = owner
         NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
     }
 
-    resources = {
-        category = megastructures
-        cost = { entropy_crystals = 7500 }
-    }
-    country_modifier = {
-        country_naval_cap_add = 225
-    }
-    upgrade_from = { galactic_crucible_1 }
-    potential = { has_crisis_level = crisis_hyperthermia_level_2 }
-    on_build_complete = {
-        from = { set_country_flag = Hyperthermia_Lv3_unlocked }
-        fromfrom = {
-            set_megastructure_flag = galactic_crucible
-            set_megastructure_flag = galactic_crucible@owner
-        }
-    }
-    overclock_types = { overclock_gc_default overclock_gc_high overclock_gc_eco overclock_gc_war }
-    cycle_length_in_days = value:gh_conduit_interval_value
-    cycle_title = SPAWN_CONDUITS
-    cycle_desc = SPAWN_CONDUITS_DESC
-    cycle_icon = GFX_ship_class_conduit
-    on_cycle_complete = {
-        fromfrom.owner = {
-            country_event = { id = infernals.2004 }
-        }
-    }
+	resources = {
+		category = megastructures
+		cost = { entropy_crystals = 7500 }
+	}
+	country_modifier = {
+		country_naval_cap_add = 225
+	}
+	upgrade_from = { galactic_crucible_1 }
+	potential = { has_crisis_level = crisis_hyperthermia_level_2 }
+	on_build_complete = {
+		from = {
+			set_country_flag = Hyperthermia_Lv3_unlocked
+		}
+		fromfrom = {
+			set_megastructure_flag = galactic_crucible
+			set_megastructure_flag = galactic_crucible@owner
+		}
+	}
+	overclock_types = { overclock_gc_default overclock_gc_high overclock_gc_eco overclock_gc_war }
+	cycle_length_in_days = value:gh_conduit_interval_value
+	cycle_title = SPAWN_CONDUITS
+	cycle_desc = SPAWN_CONDUITS_DESC
+	cycle_icon = GFX_ship_class_conduit
+	on_cycle_complete = {
+		fromfrom.owner = {
+			country_event = {
+				id = infernals.2004
+			}
+		}
+	}
 }
 
 galactic_crucible_3 = {
-    entity = "infernal_01_galactic_crucible_phase_04_entity"
-    construction_entity = "infernal_01_galactic_crucible_part_3_entity"
-    portrait = "GFX_megastructure_crucible_background"
-    build_time = 3600
-    victory_score = 5000
+	entity = "infernal_01_galactic_crucible_phase_04_entity"
+	construction_entity = "infernal_01_galactic_crucible_part_3_entity"
+	portrait = "GFX_megastructure_crucible_background"
+	build_time = 3600
+	victory_score = 5000
 
     outliner_trigger = {
         exists = owner
         NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
     }
 
-    resources = {
-        category = megastructures
-        cost = { entropy_crystals = 12500 }
-    }
-    country_modifier = {
-        country_naval_cap_add = 300
-    }
-    upgrade_from = { galactic_crucible_2 }
-    potential = { has_country_flag = Hyperthermia_Lv4_project }
-    on_build_complete = {
-        from = { set_country_flag = Hyperthermia_Lv4_unlocked }
-        fromfrom = {
-            set_megastructure_flag = galactic_crucible
-            set_megastructure_flag = galactic_crucible@owner
-        }
-    }
-    overclock_types = { overclock_gc_default overclock_gc_high overclock_gc_eco overclock_gc_war }
-    cycle_length_in_days = value:gh_conduit_interval_value
-    cycle_title = SPAWN_CONDUITS
-    cycle_desc = SPAWN_CONDUITS_DESC
-    cycle_icon = GFX_ship_class_conduit
-    on_cycle_complete = {
-        fromfrom.owner = {
-            country_event = { id = infernals.2004 }
-        }
-    }
+	resources = {
+		category = megastructures
+		cost = { entropy_crystals = 12500 }
+	}
+	country_modifier = {
+		country_naval_cap_add = 300
+	}
+	upgrade_from = { galactic_crucible_2 }
+	potential = { has_country_flag = Hyperthermia_Lv4_project }
+	on_build_complete = {
+		from = {
+			set_country_flag = Hyperthermia_Lv4_unlocked
+		}
+		fromfrom = {
+			set_megastructure_flag = galactic_crucible
+			set_megastructure_flag = galactic_crucible@owner
+		}
+	}
+	overclock_types = { overclock_gc_default overclock_gc_high overclock_gc_eco overclock_gc_war }
+	cycle_length_in_days = value:gh_conduit_interval_value
+	cycle_title = SPAWN_CONDUITS
+	cycle_desc = SPAWN_CONDUITS_DESC
+	cycle_icon = GFX_ship_class_conduit
+	on_cycle_complete = {
+		fromfrom.owner = {
+			country_event = {
+				id = infernals.2004
+			}
+		}
+	}
 }
 
 galactic_crucible_4 = {
-    entity = "infernal_01_galactic_crucible_phase_05_entity"
-    construction_entity = "infernal_01_galactic_crucible_part_4_entity"
-    portrait = "GFX_megastructure_crucible_complete_background"
-    build_time = 3600
-    victory_score = 10000
+	entity = "infernal_01_galactic_crucible_phase_05_entity"
+	construction_entity = "infernal_01_galactic_crucible_part_4_entity"
+	portrait = "GFX_megastructure_crucible_complete_background"
+	build_time = 3600
+	victory_score = 10000
 
     outliner_trigger = {
         exists = owner
         NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
     }
 
-    resources = {
-        category = megastructures
-        cost = { entropy_crystals = 15000 }
-    }
-    country_modifier = {
-        country_naval_cap_add = 375
-    }
-    potential = { has_country_flag = Hyperthermia_Lv4_unlocked }
-    upgrade_from = { galactic_crucible_3 }
-    on_build_complete = {
-        from = { set_country_flag = Hyperthermia_Lv5_unlocked }
-        fromfrom = {
-            set_megastructure_flag = galactic_crucible
-            set_megastructure_flag = galactic_crucible@owner
-        }
-    }
-    overclock_types = { overclock_gc_default overclock_gc_high overclock_gc_eco overclock_gc_war }
-    cycle_length_in_days = value:gh_conduit_interval_value
-    cycle_title = SPAWN_CONDUITS
-    cycle_desc = SPAWN_CONDUITS_DESC
-    cycle_icon = GFX_ship_class_conduit
-    on_cycle_complete = {
-        fromfrom.owner = {
-            country_event = { id = infernals.2004 }
-        }
-    }
+	resources = {
+		category = megastructures
+		cost = { entropy_crystals = 15000 }
+	}
+	country_modifier = {
+		country_naval_cap_add = 375
+	}
+	potential = { has_country_flag = Hyperthermia_Lv4_unlocked }
+	upgrade_from = { galactic_crucible_3 }
+	on_build_complete = {
+		from = {
+			set_country_flag = Hyperthermia_Lv5_unlocked
+		}
+		fromfrom = {
+			set_megastructure_flag = galactic_crucible
+			set_megastructure_flag = galactic_crucible@owner
+		}
+	}
+	overclock_types = { overclock_gc_default overclock_gc_high overclock_gc_eco overclock_gc_war }
+	cycle_length_in_days = value:gh_conduit_interval_value
+	cycle_title = SPAWN_CONDUITS
+	cycle_desc = SPAWN_CONDUITS_DESC
+	cycle_icon = GFX_ship_class_conduit
+	on_cycle_complete = {
+		fromfrom.owner = {
+			country_event = {
+				id = infernals.2004
+			}
+		}
+	}
 }
 
 # Peaceful stage, unlocked by special project
 # Does NOT unlock the next crisis stage
 galactic_crucible_5 = {
-    entity = "infernal_01_galactic_crucible_phase_05_entity"
-    construction_entity = "infernal_01_galactic_crucible_part_4_entity"
-    portrait = "GFX_megastructure_crucible_complete_background"
-    build_time = 3600
+	entity = "infernal_01_galactic_crucible_phase_05_entity"
+	construction_entity = "infernal_01_galactic_crucible_part_4_entity"
+	portrait = "GFX_megastructure_crucible_complete_background"
+	build_time = 3600
 
     outliner_trigger = {
         exists = owner
         NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
     }
 
-    resources = {
-        category = megastructures
-        cost = { entropy_crystals = 15000 }
-        produces = { alloys = 350 }
-    }
-    potential = { has_country_flag = Hyperthermia_Peaceful }
-    upgrade_from = { galactic_crucible_2 }
-    on_build_complete = {
-        fromfrom = {
-            set_megastructure_flag = galactic_crucible
-            set_megastructure_flag = galactic_crucible@owner
-        }
-    }
-    overclock_types = { overclock_gc_default overclock_gc_high overclock_gc_eco overclock_gc_war }
-    cycle_length_in_days = value:gh_conduit_interval_value
-    cycle_title = SPAWN_CONDUITS
-    cycle_desc = SPAWN_CONDUITS_DESC
-    cycle_icon = GFX_ship_class_conduit
-    on_cycle_complete = {
-        fromfrom.owner = {
-            country_event = { id = infernals.2004 }
-        }
-    }
+	resources = {
+		category = megastructures
+		cost = { entropy_crystals = 15000 }
+		produces = { alloys = 350 }
+	}
+	potential = { has_country_flag = Hyperthermia_Peaceful }
+	upgrade_from = { galactic_crucible_2 }
+	on_build_complete = {
+		fromfrom = {
+			set_megastructure_flag = galactic_crucible
+			set_megastructure_flag = galactic_crucible@owner
+		}
+	}
+	overclock_types = { overclock_gc_default overclock_gc_high overclock_gc_eco overclock_gc_war }
+	cycle_length_in_days = value:gh_conduit_interval_value
+	cycle_title = SPAWN_CONDUITS
+	cycle_desc = SPAWN_CONDUITS_DESC
+	cycle_icon = GFX_ship_class_conduit
+	on_cycle_complete = {
+		fromfrom.owner = {
+			country_event = {
+				id = infernals.2004
+			}
+		}
+	}
 }
 
 # Ruined Crucible
 galactic_crucible_ruined = {
-    entity = "infernal_01_galactic_crucible_destroyed_entity"
-    portrait = "GFX_megastructure_construction_background"
-    potential = {
-        always = no
-    }
+	entity = "infernal_01_galactic_crucible_destroyed_entity"
+	portrait = "GFX_megastructure_construction_background"
+	potential = {
+		always = no
+	}
 
     outliner_trigger = {
         exists = owner
