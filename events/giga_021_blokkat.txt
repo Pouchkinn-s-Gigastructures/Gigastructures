@@ -1238,10 +1238,7 @@ country_event = {
 			limit = {
 				has_global_flag = giga_blokkats_deathmode
 				OR = {
-					any_country = { has_country_flag = oe_player }
-					any_country = { has_authority = auth_warshipgirls }
-					any_country = { has_authority = auth_shenhai }
-					any_country = { has_authority = auth_united_fleet }
+					any_country = { giga_has_extremely_overpowered_start = yes }
 				}
 				NOT = { has_global_flag = anime_blokkats }
 			}
@@ -14647,6 +14644,57 @@ country_event = {
 		}
 	}
 }
+
+## Blokkat combat anti-cheesing
+country_event = {
+	id = giga_blokkat.10000
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_blokkat_country_type = yes
+		OR = {
+			has_global_flag = giga_blokkats_endtech
+			has_global_flag = giga_blokkats_deathmode
+			has_global_flag = anime_blokkats
+		}
+		fromfrom = { NOT = { has_fleet_flag = giga_combat_modifying_active } }
+	}
+
+	immediate = {
+		# fleet scope
+		fromfrom = {
+			set_fleet_flag = giga_combat_modifying_active
+			fleet_event = { id = giga_blokkat.10001 }
+		}
+	}
+}
+
+
+fleet_event = {
+	id = giga_blokkat.10001
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+
+		## Loop if the fleet is still in combat
+		if = { limit = { is_in_combat = yes }
+			every_controlled_ship = {
+				giga_combat_prevent_cheesing = yes
+			}
+			fleet_event = { id = giga_blokkat.10001 days = 1 }
+		}
+		## Clear everything once combat ends
+		else = {
+			remove_fleet_flag = giga_combat_modifying_active
+			set_update_modifiers_batch = begin
+			giga_clean_combat_modifiers = yes
+			set_update_modifiers_batch = end
+		}
+	}
+}
+
 
 #DEBUG
 
