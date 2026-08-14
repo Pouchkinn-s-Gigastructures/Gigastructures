@@ -12,6 +12,7 @@ generate_corrona_primitives_on_planet = {
 		homeworld = THIS
 		traits = {
 			trait = trait_pc_continental_preference
+			trait = trait_organic
 			trait = trait_enduring
 			trait = trait_quarrelsome
 			trait = trait_strong
@@ -67,6 +68,7 @@ generate_corrona_primitives_on_planet = {
 		species = event_target:corronaskeletons
 		size = 2000
 	}
+	set_colony_type = col_giga_pre_ftl_corrona
 	while = { count = 10   create_army = { name = NAME_bone	   	  owner = last_created_country species = event_target:corronaskeletons type = "corrona_army" } }
 	while = { count = 1	   create_army = { name = NAME_madknight  owner = last_created_country species = event_target:corronaskeletons type = "corrona_army" } }
 	remove_building = building_colony_shelter
@@ -80,6 +82,20 @@ generate_corrona_primitives_on_planet = {
 
 # Flusion
 generate_flusion_primitives_on_planet = {
+
+	#first, determine if the Katzens and Zuspris are on Flusion
+	random_list = {
+		25 = { #minority chance since most of the interesting outcomes are with the Katzens
+			set_global_flag = flusion_no_katzens
+			modifier = {
+				factor = 0 #Katzen crisis needs Katzens
+				has_global_flag = katzenartig_always
+			}
+		}
+		75 = {
+		}
+	}
+
 	create_species = {
 		name = "Roqualian"
 		plural = "Roqualians"
@@ -88,6 +104,7 @@ generate_flusion_primitives_on_planet = {
 		homeworld = event_target:gigaflusion
 		traits = {
 			trait = trait_pc_continental_preference
+			trait = trait_organic
 			trait = trait_intelligent
 			trait = trait_charismatic
 			trait = trait_resilient
@@ -97,7 +114,7 @@ generate_flusion_primitives_on_planet = {
 			save_global_event_target_as = solakians
 		}
 	}
-	create_species = {
+	create_species = { #create Zuspri species even if flusion_no_katzens in case someone wants to force-spawn them later
 		name = "Zuspri"
 		plural = "Zuspris"
 		class = REP
@@ -105,6 +122,7 @@ generate_flusion_primitives_on_planet = {
 		homeworld = THIS
 		traits = {
 			trait = trait_pc_ocean_preference
+			trait = trait_organic
 			trait = trait_venerable
 			trait = trait_adaptive
 			trait = trait_slow_breeders
@@ -124,6 +142,7 @@ generate_flusion_primitives_on_planet = {
 		homeworld = THIS
 		traits = {
 			trait = trait_pc_tropical_preference
+			trait = trait_organic
 			trait = trait_rapid_breeders
 			trait = trait_industrious
 			trait = trait_sedentary
@@ -141,6 +160,7 @@ generate_flusion_primitives_on_planet = {
 		homeworld = THIS
 		traits = {
 			trait = trait_pc_continental_preference
+			trait = trait_organic
 			trait = trait_intelligent
 			trait = trait_wasteful
 			trait = trait_sedentary
@@ -149,7 +169,7 @@ generate_flusion_primitives_on_planet = {
 			save_global_event_target_as = flusionians
 		}
 	}
-	create_species = {
+	create_species = { #create Katzen species even if flusion_no_katzens in case someone wants to force-spawn them later
 		name = "Katzen"
 		plural = "Katzens"
 		class = POUCHKINN
@@ -158,6 +178,7 @@ generate_flusion_primitives_on_planet = {
 		namelist = MAM1
 		traits = {
 			trait = trait_pc_continental_preference
+			trait = trait_organic
 			trait = trait_adaptive
 			trait = trait_quick_learners
 			trait = trait_traditional
@@ -178,6 +199,7 @@ generate_flusion_primitives_on_planet = {
 		homeworld = THIS
 		traits = {
 			trait = trait_pc_continental_preference
+			trait = trait_organic
 			trait = trait_adaptive
 			trait = trait_quick_learners
 			trait = trait_traditional
@@ -199,6 +221,7 @@ generate_flusion_primitives_on_planet = {
 		homeworld = THIS
 		traits = {
 			trait = trait_pc_continental_preference
+			trait = trait_organic
 			trait = trait_adaptive
 			trait = trait_quick_learners
 			trait = trait_traditional
@@ -220,6 +243,7 @@ generate_flusion_primitives_on_planet = {
 		namelist = katzens
 		traits = {
 			trait = trait_pc_continental_preference
+			trait = trait_organic
 			trait = trait_adaptive
 			trait = trait_quick_learners
 			trait = trait_traditional
@@ -264,34 +288,108 @@ generate_flusion_primitives_on_planet = {
 	}
 	last_created_country = {
 		set_graphical_culture = industrial_01
-		set_country_flag = tech_frozen
-		set_country_flag = custom_preftl_diplomacy
-		set_country_flag = custom_preftl_espionage
-		set_country_flag = fusion_age
-		set_pre_ftl_age = giga_fusion_age
 		set_country_flag = flusion_primitives
 		save_global_event_target_as = flusion_primitives_country
-		create_leader = {
-			class = commander
-			species = event_target:douclaw_portrait
-			name = "Douclaw MacCathur"
-			skill = 4
-			gender = male
-			traits = {
-				trait = katzen_trait_elite
-				trait = katzen_trait_nukelad
-				trait = katzen_trait_blitzkrieg
-			}
-			effect = {
-				set_leader_flag = flusiondouclaw
-				save_global_event_target_as = flusion_douclaw
-			}
+	}
+
+	remove_all_buildings = yes
+
+	if = {
+		limit = { has_global_flag = flusion_no_katzens }
+
+		#2300 pops total if Katzens aren't present
+		create_pop_group = {
+			species = event_target:flusionians
+			size = 800
+		}
+		create_pop_group = {
+			species = event_target:solakians
+			size = 800
+		}
+		create_pop_group = {
+			species = event_target:kronks
+			size = 700
+		}
+
+		add_building = building_primitive_capital
+
+		last_created_country = {
+			set_pre_ftl_age_effect = { PRE_FTL_AGE = machine_age }
+
+			#change primary species from Katzens to Roqualians
+			change_species = event_target:solakians
+
+			#Roqualian ethics dominate instead of Katzen ones
+			clear_ethos = yes
+			country_add_ethic = ethic_xenophile
+			country_add_ethic = ethic_materialist
+			country_add_ethic = ethic_egalitarian
 		}
 	}
-	while = { count = 1 create_army = { name = NAME_katzenarmee	owner = last_created_country species = event_target:flusion_katzens type = "flusion_army" } }
-	while = { count = 1 create_army = { name = NAME_katzen_air		owner = last_created_country species = event_target:flusion_katzens type = "flusion_army" } }
-	while = { count = 1 create_army = { name = NAME_katzen_navy		owner = last_created_country species = event_target:flusion_katzens type = "flusion_army" } }
-	while = { count = 1 create_army = { name = NAME_katzen_panzers	owner = last_created_country species = event_target:flusion_katzens type = "riesigerkatzenpanzer_defence" } }
+
+	else = {
+		#2500 pops total if Katzens are present
+		create_pop_group = {
+			species = event_target:flusion_katzens
+			size = 600
+		}
+		create_pop_group = {
+			species = event_target:flusionians
+			size = 600
+		}
+		create_pop_group = {
+			species = event_target:solakians
+			size = 400
+		}
+		create_pop_group = {
+			species = event_target:arcticezics
+			size = 400
+		}
+		create_pop_group = {
+			species = event_target:kronks
+			size = 500
+		}
+
+		add_building = building_giga_flusion_fusion_power_plant
+		add_building = building_giga_flusion_capital
+
+		while = { count = 1 create_army = { name = NAME_katzenarmee	owner = last_created_country species = event_target:flusion_katzens type = "flusion_army" } }
+		while = { count = 1 create_army = { name = NAME_katzen_air		owner = last_created_country species = event_target:flusion_katzens type = "flusion_army" } }
+		while = { count = 1 create_army = { name = NAME_katzen_navy		owner = last_created_country species = event_target:flusion_katzens type = "flusion_army" } }
+		while = { count = 1 create_army = { name = NAME_katzen_panzers	owner = last_created_country species = event_target:flusion_katzens type = "riesigerkatzenpanzer_defence" } }
+		while = { count = 1 create_army = { name = NAME_ezicanian_army	owner = last_created_country species = event_target:arcticezics type = "flusion_early_army" } }
+
+		last_created_country = {
+			set_country_flag = tech_frozen
+			set_country_flag = custom_preftl_diplomacy
+			set_country_flag = custom_preftl_espionage
+			set_country_flag = fusion_age
+			set_pre_ftl_age = giga_fusion_age
+			create_leader = {
+				class = commander
+				species = event_target:douclaw_portrait
+				name = "Douclaw MacCathur"
+				skill = 4
+				gender = male
+				traits = {
+					trait = katzen_trait_elite
+					trait = katzen_trait_nukelad
+					trait = katzen_trait_blitzkrieg
+				}
+				effect = {
+					set_leader_flag = flusiondouclaw
+					save_global_event_target_as = flusion_douclaw
+				}
+			}
+		}
+
+		set_colony_type = col_giga_pre_ftl_fusion
+	}
+	add_building = building_giga_flusion_home
+	add_building = building_giga_flusion_home
+	add_building = building_giga_flusion_home
+	add_building = building_giga_flusion_home
+
 	while = { count = 1 create_army = { name = NAME_kronk_army		owner = last_created_country species = event_target:kronks 		type = "flusion_early_army" } }
 	while = { count = 1 create_army = { name = NAME_yinjite_army	owner = last_created_country species = event_target:flusionians type = "flusion_early_army" } }
 	while = { count = 1 create_army = { name = NAME_haranian_army	owner = last_created_country species = event_target:flusionians type = "flusion_early_army" } }
@@ -299,40 +397,12 @@ generate_flusion_primitives_on_planet = {
 	while = { count = 1 create_army = { name = NAME_solakian_air	owner = last_created_country species = event_target:flusionians type = "flusion_early_army" } }
 	while = { count = 1 create_army = { name = NAME_laurnaise_army	owner = last_created_country species = event_target:flusionians type = "flusion_army" } }
 	while = { count = 1 create_army = { name = NAME_laurnaise_navy	owner = last_created_country species = event_target:flusionians type = "flusion_early_army" } }
-	while = { count = 1 create_army = { name = NAME_ezicanian_army	owner = last_created_country species = event_target:arcticezics type = "flusion_early_army" } }
 	while = { count = 1 create_army = { name = NAME_axolinian_army	owner = last_created_country species = event_target:flusionians type = "flusion_early_army" } }
 	while = { count = 1 create_army = { name = NAME_zousanian_army	owner = last_created_country species = event_target:flusionians type = "flusion_army" } }
 	while = { count = 1 create_army = { name = NAME_mercurian_army	owner = last_created_country species = event_target:flusionians type = "flusion_early_army" } }
 	while = { count = 1 create_army = { name = NAME_altarian_army	owner = last_created_country species = event_target:flusionians type = "flusion_early_army" } }
 	while = { count = 1 create_army = { name = NAME_manglarian_army	owner = last_created_country species = event_target:flusionians type = "flusion_early_army" } }
 
-	create_pop_group = {
-		species = last_created
-		size = 600
-	}
-	create_pop_group = {
-		species = event_target:flusionians
-		size = 600
-	}
-	create_pop_group = {
-		species = event_target:solakians
-		size = 400
-	}
-	create_pop_group = {
-		species = event_target:arcticezics
-		size = 400
-	}
-	create_pop_group = {
-		species = event_target:kronks
-		size = 500
-	}
-	remove_all_buildings = yes
-	add_building = building_giga_flusion_home
-	add_building = building_giga_flusion_home
-	add_building = building_giga_flusion_home
-	add_building = building_giga_flusion_home
-	add_building = building_giga_flusion_fusion_power_plant
-	add_building = building_giga_flusion_capital
 	create_pre_ftl_blockers = yes
 }
 
@@ -357,13 +427,14 @@ create_paluush_primitive_empire = {
 		portrait = mam13
 		namelist = "MAM2"
 		traits = {
+			trait = "trait_pc_continental_preference"
+			trait = trait_organic
 			trait = "trait_fertile"
 			trait = "trait_charismatic"
 			trait = "trait_communal"
 			trait = "trait_sedentary"
 			trait = "trait_very_strong"
 			trait = "trait_psionic"
-			trait = "trait_pc_continental_preference"
 		}
 		homeworld = event_target:paluushia
 		effect = {
@@ -415,6 +486,7 @@ create_paluush_primitive_empire = {
 setup_paluush_primitive_planet = {
 	set_owner = last_created_country
 	set_capital = yes
+	set_colony_type = col_pre_ftl_machine
 	create_pop_group = { 
 		species = last_created 
 		size = 2500
@@ -564,15 +636,19 @@ create_eeloo = {
 
 generate_alderson_01_primitives_on_planet = {
 	create_species = {
-		name = "The Excognitor"
-		plural = "The Excognitors"
+		name = "Excognitor"
+		plural = "Excognitors"
+		adjective = "Excognitor"
 		class = random_non_machine
 		portrait = random
 		homeworld = this
-		traits = { trait = random_traits }
+		traits = {
+			trait = random_traits
+			ideal_planet_class = pc_alderson_slice_gaia
+		}
 	}
 	create_country = {
-		name = "The Excognitor Imperium"
+		name = "Excognitor Imperium"
 		authority = random
 		civics = {
 			civic = civic_landed_nobility
@@ -604,7 +680,9 @@ generate_alderson_01_primitives_on_planet = {
 		#set_country_flag = custom_preftl_diplomacy
 		#set_country_flag = custom_preftl_espionage
 		set_pre_ftl_age = machine_age
+		set_country_flag = machine_age
 		set_country_flag = excognitor_primitives
+		save_global_event_target_as = excognitor_primitives
 	}
 	set_owner = last_created_country
 	set_capital = yes
@@ -612,7 +690,7 @@ generate_alderson_01_primitives_on_planet = {
 		species = last_created 
 		size = 2400
 	}
-	add_building = building_primitive_farm
+	add_primitive_farm_or_mine = yes
 	add_building = building_primitive_factory
 	add_building = building_primitive_mine
 	add_building = building_primitive_power_plant
@@ -620,7 +698,7 @@ generate_alderson_01_primitives_on_planet = {
 	add_building = building_urban_dwellings
 	remove_building = building_colony_shelter
 	while = {
-		count = 5
+		count = 6
 		create_army = {
 			name = NAME_excognitor_army
 			owner = last_created_country
@@ -633,31 +711,25 @@ generate_alderson_01_primitives_on_planet = {
 	clear_planet_modifiers = yes
 	clear_deposits = yes
 	clear_blockers = yes
-	add_deposit = d_alderson_ruined_district
-	add_deposit = d_alderson_ruined_housing
-	add_deposit = d_alderson_ruined_miner
-	add_deposit = d_alderson_ruined_farmer
-	add_deposit = d_alderson_ruined_technician_hive
-	add_deposit = d_alderson_ruined_clerk
-	add_deposit = d_alderson_ruined_foundry
-	add_deposit = d_alderson_ruined_police
-	while = {
-		count = 30
-		check_planet_employment = yes
-	}
+	generate_alderson_origin_blockers = yes
+	check_planet_employment = yes
 }
 
 generate_alderson_02_primitives_on_planet = {
 	create_species = {
-		name = "The Dominion"
-		plural = "The Dominion"
+		name = "Dominionite"
+		plural = "Dominionites"
+		adjective = "Dominion"
 		class = random_non_machine
 		portrait = random
 		homeworld = this
-		traits = { trait = random_traits }
+		traits = {
+			trait = random_traits
+			ideal_planet_class = pc_alderson_slice_gaia
+		}
 	}
 	create_country = {
-		name = "The Dominion Horde"
+		name = "Dominion Horde"
 		authority = random
 		civics = {
 			civic = civic_landed_nobility
@@ -689,7 +761,9 @@ generate_alderson_02_primitives_on_planet = {
 		#set_country_flag = custom_preftl_diplomacy
 		#set_country_flag = custom_preftl_espionage
 		set_pre_ftl_age = machine_age
+		set_country_flag = machine_age
 		set_country_flag = dominion_primitives
+		save_global_event_target_as = dominion_primitives
 	}
 	set_owner = last_created_country
 	set_capital = yes
@@ -697,7 +771,7 @@ generate_alderson_02_primitives_on_planet = {
 		species = last_created 
 		size = 2400
 	}
-	add_building = building_primitive_farm
+	add_primitive_farm_or_mine = yes
 	add_building = building_primitive_factory
 	add_building = building_primitive_mine
 	add_building = building_primitive_power_plant
@@ -705,7 +779,7 @@ generate_alderson_02_primitives_on_planet = {
 	add_building = building_urban_dwellings
 	remove_building = building_colony_shelter
 	while = {
-		count = 75
+		count = 65
 		create_army = {
 			name = NAME_dominion_army
 			owner = last_created_country
@@ -718,17 +792,7 @@ generate_alderson_02_primitives_on_planet = {
 	clear_planet_modifiers = yes
 	clear_deposits = yes
 	clear_blockers = yes
-	add_deposit = d_alderson_ruined_district
-	add_deposit = d_alderson_ruined_housing
-	add_deposit = d_alderson_ruined_miner
-	add_deposit = d_alderson_ruined_farmer
-	add_deposit = d_alderson_ruined_technician_hive
-	add_deposit = d_alderson_ruined_clerk
-	add_deposit = d_alderson_ruined_foundry
-	add_deposit = d_alderson_ruined_police
-	while = {
-		count = 30
-		check_planet_employment = yes
-	}
+	generate_alderson_origin_blockers = yes
+	check_planet_employment = yes
 }
 

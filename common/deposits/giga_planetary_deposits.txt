@@ -85,14 +85,24 @@ d_giga_decrepit_tunnels_3 = {
 	}
 }
 
+@evopred_large_blocker_progress = 40 #from vanilla file
 d_everfree_forest = {
 	icon = d_dense_jungle
 	time = 1800
 	is_for_colonizable = yes
 
-	category = deposit_cat_blockers
+	category = deposit_cat_blockers_natural
 	potential = { always = no }
 	drop_weight = { weight = 0 }
+
+	can_be_cleared = {
+		custom_tooltip = {
+			fail_text = has_ranger_lodge
+			planet = {
+				NOT = { has_building = building_ranger_lodge }
+			}
+		}
+	}
 	
 	resources = {
 		category = deposit_blockers
@@ -105,7 +115,33 @@ d_everfree_forest = {
 	planet_modifier = {
 		planet_max_districts_add = -3
 		pop_environment_tolerance = -0.05
-		planet_jobs_society_research_produces_mult = 0.50
+		planet_jobs_society_research_produces_mult = 0.40
+	}
+
+	triggered_planet_modifier = {
+		potential = {
+			biologist_is_ranger_trigger = yes
+		}
+		planet_biologists_society_research_produces_add = @ranger_large_production
+	}
+
+	inline_script = deposits/environmental_architects_natural_blocker_modifier
+
+	on_cleared = {
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = owner
+					owner = {
+						has_civic = civic_hive_devouring_swarm
+					}
+				}
+				owner = { add_resource = { food = 200 } }
+			}
+			give_bio_repurposing_reward_on_organic_deposit_cleared = yes
+		}
+		planetscaper_pop_effect = yes
+		give_evolutionary_predator_situation_progress = { PROGRESS = @evopred_large_blocker_progress }
 	}
 }
 
@@ -161,7 +197,7 @@ d_small_natural_tunnel = {
 
 	planet_modifier = {
 		pop_ethic_spiritualist_attraction_mult = 0.20
-		planet_jobs_engineering_research_produces_mult = 0.10
+		planet_jobs_engineering_research_produces_mult = 0.05
 	}
 }
 
@@ -188,37 +224,19 @@ d_flusion_kaiser_rift = {
 	drop_weight = { weight = 0 }
 	potential = { always = no }
 
-	triggered_planet_modifier = {
-		potential = {
-			exists = owner
-			owner = { is_gestalt = no }
-		}
-		job_physicist_add = 5000
-		planet_researchers_produces_mult = 1
+	inline_script = {
+		script = jobs/physicists_add
+		AMOUNT = 5000
 	}
 
-	triggered_planet_modifier = {
-		potential = {
-			exists = owner
-			owner = { is_hive_empire = yes }
-		}
-		job_calculator_physicist_add = 5000
-		planet_researchers_produces_mult = 1
-	}
-
-	triggered_planet_modifier = {
-		potential = {
-			exists = owner
-			owner = { is_machine_empire = yes }
-		}
-		job_calculator_physicist_add = 5000
-		planet_researchers_produces_mult = 1
+	planet_modifier = {
+		researcher_jobs_bonus_workforce_mult = 0.5
 	}
 
 	resources = {
 		category = planet_deposits
 		produces = {
-			physics_research = 750
+			physics_research = 250
 			sr_dark_matter = 5
 		}
 	}
@@ -337,22 +355,22 @@ d_floaters = {
 	potential = { always = no }
 	drop_weight = { weight = 0 }
 	planet_modifier = {
-		planet_technician_society_research_produces_add = 0.25
+		planet_technician_society_research_produces_add = 0.1
 	}
 }
 
-d_giga_gas_giant_hab_core = {
-	icon = d_mining_tunnels
-	is_for_colonizable = yes
-	use_for_min_max_adjustments = yes
-	category = deposit_cat_minerals
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-	triggered_planet_modifier = {
-		district_giga_gas_giant_habitat_mining_max = 0.25
-		multiplier = trigger:planet_size
-	}
-}
+# d_giga_gas_giant_hab_core = {
+# 	icon = d_mining_tunnels
+# 	is_for_colonizable = yes
+# 	use_for_min_max_adjustments = yes
+# 	category = deposit_cat_minerals
+# 	potential = { always = no }
+# 	drop_weight = { weight = 0 }
+# 	triggered_planet_modifier = {
+# 		district_giga_gas_giant_habitat_mining_max = 0.25
+# 		multiplier = trigger:planet_size
+# 	}
+# }
 
 # # Birch World Start
 # d_birch_start = {
@@ -370,7 +388,7 @@ d_giga_gas_giant_hab_core = {
 # 	icon = d_birch_lost01
 # 	potential = { always = no }
 # 	drop_weight = { weight = 0 }
-# 	triggered_planet_modifier = { potential = { planet = { has_planet_flag = machine_empire_no  } } pop_growth_speed = 1 }
+# 	triggered_planet_modifier = { potential = { planet = { has_planet_flag = machine_empire_no  } } logistic_growth_mult = 1 }
 # 	triggered_planet_modifier = { potential = { planet = { has_planet_flag = machine_empire_yes } } planet_pop_assembly_add = 4 }
 
 # 	resources = {
@@ -469,38 +487,130 @@ d_decrepit_tunnels_squareworld = {
 }
 
 # Alderson Start Origin
-d_alderson_generator = {
-	is_for_colonizable = yes
-	icon = "d_station_reactor"
-	category = deposit_cat_rare
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-	resources = {
-		category = planet_deposits
-        #TODO: address this because elo didn't :(
-		#produces = { trigger = { planet = { has_district = district_giga_alderson_city } }			energy = @giga_alderson_maintenance	}
-		#produces = { trigger = { planet = { has_district = district_giga_alderson_hive } }			energy = @giga_alderson_maintenance	}
-		#produces = { trigger = { planet = { has_district = district_giga_alderson_nexus } }			energy = @giga_alderson_maintenance	}
-		#produces = { trigger = { planet = { has_district = district_giga_alderson_commercial } }	energy = @giga_alderson_maintenance	rare_crystals = @giga_alderson_maintenance_sr }
-		#produces = { trigger = { planet = { has_district = district_giga_alderson_generator } }		energy = @giga_alderson_maintenance	rare_crystals = @giga_alderson_maintenance_sr }
-		#produces = { trigger = { planet = { has_district = district_giga_alderson_mining } }		energy = @giga_alderson_maintenance	exotic_gases = @giga_alderson_maintenance_sr }
-		#produces = { trigger = { planet = { has_district = district_giga_alderson_farming } }		energy = @giga_alderson_maintenance	volatile_motes = @giga_alderson_maintenance_sr }
-		#produces = { trigger = { planet = { has_district = district_giga_alderson_industrial } }	energy = @giga_alderson_maintenance 	volatile_motes = @giga_alderson_maintenance_sr }
-	}
-}
+# d_alderson_generator = {
+# 	is_for_colonizable = yes
+# 	icon = "d_station_reactor"
+# 	category = deposit_cat_rare
+# 	potential = { always = no }
+# 	drop_weight = { weight = 0 }
+# 	resources = {
+# 		category = planet_deposits
+#         #TODO: address this because elo didn't :(
+# 		#produces = { trigger = { planet = { has_district = district_giga_alderson_city } }			energy = @giga_alderson_maintenance	}
+# 		#produces = { trigger = { planet = { has_district = district_giga_alderson_hive } }			energy = @giga_alderson_maintenance	}
+# 		#produces = { trigger = { planet = { has_district = district_giga_alderson_nexus } }			energy = @giga_alderson_maintenance	}
+# 		#produces = { trigger = { planet = { has_district = district_giga_alderson_commercial } }	energy = @giga_alderson_maintenance	rare_crystals = @giga_alderson_maintenance_sr }
+# 		#produces = { trigger = { planet = { has_district = district_giga_alderson_generator } }		energy = @giga_alderson_maintenance	rare_crystals = @giga_alderson_maintenance_sr }
+# 		#produces = { trigger = { planet = { has_district = district_giga_alderson_mining } }		energy = @giga_alderson_maintenance	exotic_gases = @giga_alderson_maintenance_sr }
+# 		#produces = { trigger = { planet = { has_district = district_giga_alderson_farming } }		energy = @giga_alderson_maintenance	volatile_motes = @giga_alderson_maintenance_sr }
+# 		#produces = { trigger = { planet = { has_district = district_giga_alderson_industrial } }	energy = @giga_alderson_maintenance 	volatile_motes = @giga_alderson_maintenance_sr }
+# 	}
+# }
 
-d_alderson_lost01 = {
+
+@alderson_blocker_t3_time = 2100
+@alderson_blocker_t3_cost = 7500
+@alderson_blocker_t3_districts = -15
+@alderson_blocker_t2_time = 1400
+@alderson_blocker_t2_cost = 5000
+@alderson_blocker_t2_districts = -10
+@alderson_blocker_t1_time = 700
+@alderson_blocker_t1_cost = 2500
+@alderson_blocker_t1_districts = -5
+
+d_alderson_ruined_transport = {
 	is_for_colonizable = yes
-	time = 120
-	icon = "d_birch_lost01"
+	time = @alderson_blocker_t3_time
+	icon = "d_mining_tunnels"
 	category = deposit_cat_blockers
 	potential = { always = no }
 	drop_weight = { weight = 0 }
+	resources = {
+		category = deposit_blockers
+		cost = {
+			energy = @alderson_blocker_t3_cost
+		}
+	}
+	planet_modifier = {
+		planet_max_districts_add = @alderson_blocker_t3_districts
+	}
 }
 
-d_alderson_ruined_district = {
+d_alderson_ruined_housing = {
 	is_for_colonizable = yes
-	time = 2400
+	time = @alderson_blocker_t3_time
+	icon = "d_city_ruins"
+	category = deposit_cat_blockers
+	potential = { always = no }
+	drop_weight = { weight = 0 }
+	resources = {
+		category = deposit_blockers
+		cost = {
+			energy = @alderson_blocker_t3_cost
+		}
+	}
+	planet_modifier = {
+		planet_max_districts_add = @alderson_blocker_t3_districts
+	}
+}
+
+d_alderson_ruined_spaceport = {
+	is_for_colonizable = yes
+	time = @alderson_blocker_t3_time
+	icon = "d_crashed_ship"
+	category = deposit_cat_blockers
+	potential = { always = no }
+	drop_weight = { weight = 0 }
+	resources = {
+		category = deposit_blockers
+		cost = {
+			energy = @alderson_blocker_t3_cost
+		}
+	}
+	planet_modifier = {
+		planet_max_districts_add = @alderson_blocker_t3_districts
+	}
+}
+
+d_alderson_ruined_shield = {
+	is_for_colonizable = yes
+	time = @alderson_blocker_t3_time
+	icon = "d_broken_spire"
+	category = deposit_cat_blockers
+	potential = { always = no }
+	drop_weight = { weight = 0 }
+	resources = {
+		category = deposit_blockers
+		cost = {
+			energy = @alderson_blocker_t3_cost
+		}
+	}
+	planet_modifier = {
+		planet_max_districts_add = @alderson_blocker_t3_districts
+	}
+}
+
+d_alderson_ruined_clerk = {
+	is_for_colonizable = yes
+	time = @alderson_blocker_t2_time
+	icon = "d_ruins_medium"
+	category = deposit_cat_blockers
+	potential = { always = no }
+	drop_weight = { weight = 0 }
+	resources = {
+		category = deposit_blockers
+		cost = {
+			energy = @alderson_blocker_t2_cost
+		}
+	}
+	planet_modifier = {
+		planet_max_districts_add = @alderson_blocker_t2_districts
+	}
+}
+
+d_alderson_ruined_foundry = {
+	is_for_colonizable = yes
+	time = @alderson_blocker_t2_time
 	icon = "d_organic_landfill"
 	category = deposit_cat_blockers
 	potential = { always = no }
@@ -508,17 +618,17 @@ d_alderson_ruined_district = {
 	resources = {
 		category = deposit_blockers
 		cost = {
-			energy = 7500
+			energy = @alderson_blocker_t2_cost
 		}
 	}
 	planet_modifier = {
-		planet_max_districts_add = -15
+		planet_max_districts_add = @alderson_blocker_t2_districts
 	}
 }
 
-d_alderson_ruined_housing = {
+d_alderson_ruined_artisan = {
 	is_for_colonizable = yes
-	time = 2400
+	time = @alderson_blocker_t2_time
 	icon = "d_city_ruins"
 	category = deposit_cat_blockers
 	potential = { always = no }
@@ -526,241 +636,122 @@ d_alderson_ruined_housing = {
 	resources = {
 		category = deposit_blockers
 		cost = {
-			energy = 7500
+			energy = @alderson_blocker_t2_cost
 		}
 	}
 	planet_modifier = {
-		planet_max_districts_add = -15
+		planet_max_districts_add = @alderson_blocker_t2_districts
+	}
+}
+
+d_alderson_ruined_merchant = {
+	is_for_colonizable = yes
+	time = @alderson_blocker_t2_time
+	icon = "d_station_junk"
+	category = deposit_cat_blockers
+	potential = { always = no }
+	drop_weight = { weight = 0 }
+	resources = {
+		category = deposit_blockers
+		cost = {
+			energy = @alderson_blocker_t2_cost
+		}
+	}
+	planet_modifier = {
+		planet_max_districts_add = @alderson_blocker_t2_districts
+	}
+}
+
+d_alderson_ruined_police = {
+	is_for_colonizable = yes
+	time = @alderson_blocker_t1_time
+	icon = "d_ancient_vault"
+	category = deposit_cat_blockers
+	potential = { always = no }
+	drop_weight = { weight = 0 }
+	resources = {
+		category = deposit_blockers
+		cost = {
+			energy = @alderson_blocker_t1_cost
+		}
+	}
+	planet_modifier = {
+		planet_max_districts_add = @alderson_blocker_t1_districts
+	}
+}
+d_alderson_ruined_technician = {
+	is_for_colonizable = yes
+	time = @alderson_blocker_t1_time
+	icon = "d_reactor"
+	category = deposit_cat_blockers
+	potential = { always = no }
+	drop_weight = { weight = 0 }
+	resources = {
+		category = deposit_blockers
+		cost = {
+			energy = @alderson_blocker_t1_cost
+		}
+	}
+	planet_modifier = {
+		planet_max_districts_add =  @alderson_blocker_t1_districts
 	}
 }
 
 d_alderson_ruined_miner = {
 	is_for_colonizable = yes
-	time = 900
-	icon = "d_mining_tunnels"
+	time = @alderson_blocker_t1_time
+	icon = "d_nanite_corpses"
 	category = deposit_cat_blockers
 	potential = { always = no }
 	drop_weight = { weight = 0 }
 	resources = {
 		category = deposit_blockers
 		cost = {
-			energy = 2500
+			energy = @alderson_blocker_t1_cost
 		}
 	}
 	planet_modifier = {
-		planet_max_districts_add = -5
+		planet_max_districts_add =  @alderson_blocker_t1_districts
 	}
 }
 
 d_alderson_ruined_farmer = {
 	is_for_colonizable = yes
-	time = 900
-	icon = "d_black_soil"
+	time = @alderson_blocker_t1_time
+	icon = "d_rotten_soil_blocker"
 	category = deposit_cat_blockers
 	potential = { always = no }
 	drop_weight = { weight = 0 }
 	resources = {
 		category = deposit_blockers
 		cost = {
-			energy = 2500
+			energy = @alderson_blocker_t1_cost
 		}
 	}
 	planet_modifier = {
-		planet_max_districts_add = -5
+		planet_max_districts_add =  @alderson_blocker_t1_districts
 	}
 }
 
-d_alderson_ruined_technician_hive = {
+d_alderson_ruined_logistics = {
 	is_for_colonizable = yes
-	time = 900
-	icon = "d_reactor"
+	time = @alderson_blocker_t1_time
+	icon = "d_ship_debris_blocker"
 	category = deposit_cat_blockers
 	potential = { always = no }
 	drop_weight = { weight = 0 }
 	resources = {
 		category = deposit_blockers
 		cost = {
-			energy = 2500
+			energy = @alderson_blocker_t1_cost
 		}
 	}
 	planet_modifier = {
-		planet_max_districts_add = -5
-	}
-}
-
-d_alderson_ruined_clerk = {
-	is_for_colonizable = yes
-	time = 2400
-	icon = "d_central_spire"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-	resources = {
-		category = deposit_blockers
-		cost = {
-			energy = 7500
-		}
-	}
-	planet_modifier = {
-		planet_max_districts_add = -15
-	}
-}
-
-d_alderson_ruined_foundry = {
-	is_for_colonizable = yes
-	time = 900
-	icon = "d_city_ruins"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-	resources = {
-		category = deposit_blockers
-		cost = {
-			energy = 2500
-		}
-	}
-	planet_modifier = {
-		planet_max_districts_add = -5
+		planet_max_districts_add =  @alderson_blocker_t1_districts
 	}
 }
 
 
-
-d_alderson_ruined_police = {
-	is_for_colonizable = yes
-	time = 1800
-	icon = "d_city_ruins"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-	resources = {
-		category = deposit_blockers
-		cost = {
-			energy = 5000
-		}
-	}
-	planet_modifier = {
-		planet_max_districts_add = -10
-	}
-}
-
-d_alderson_ruined_patrol_drone = {
-	is_for_colonizable = yes
-	time = 180
-	icon = "d_city_ruins"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-}
-
-d_alderson_ruined_mining_drone = {
-	is_for_colonizable = yes
-	time = 90
-	icon = "d_mining_tunnels"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-}
-
-d_alderson_ruined_mining_drone_hive = {
-	is_for_colonizable = yes
-	time = 90
-	icon = "d_mining_tunnels"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-}
-
-d_alderson_ruined_agri_drone = {
-	is_for_colonizable = yes
-	time = 90
-	icon = "d_black_soil"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-}
-
-d_alderson_ruined_agri_drone_hive = {
-	is_for_colonizable = yes
-	time = 90
-	icon = "d_black_soil"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-}
-
-
-d_alderson_ruined_technician_machine = {
-	is_for_colonizable = yes
-	time = 90
-	icon = "d_reactor"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-}
-
-d_alderson_ruined_maintenance_drone = {
-	is_for_colonizable = yes
-	time = 90
-	icon = "d_central_spire"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-}
-
-d_alderson_ruined_maintenance_drone_hive = {
-	is_for_colonizable = yes
-	time = 90
-	icon = "d_central_spire"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-}
-
-d_alderson_ruined_merchant = {
-	is_for_colonizable = yes
-	time = 90
-	icon = "d_tradestation_interior"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-}
-
-d_alderson_ruined_artisan = {
-	is_for_colonizable = yes
-	time = 90
-	icon = "d_city_ruins"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-}
-
-d_alderson_ruined_crafters = {
-	is_for_colonizable = yes
-	time = 90
-	icon = "d_city_ruins"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-}
-
-d_alderson_ruined_foundry_hive = {
-	is_for_colonizable = yes
-	time = 90
-	icon = "d_central_spire"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-}
-
-d_alderson_ruined_foundry_machine = {
-	is_for_colonizable = yes
-	time = 90
-	icon = "d_central_spire"
-	category = deposit_cat_blockers
-	potential = { always = no }
-	drop_weight = { weight = 0 }
-}
 
 # Ringworld capital : fixes negative amenities for gestalts and gives non-gestalts some amenities buffer
 d_ringworld_capital_city = {
@@ -855,10 +846,7 @@ d_arcane_mineral_generator = {
 # 		produces = {
 # 			trigger = {
 # 				planet = {
-# 					OR = {
-# 						is_planet_class = pc_giga_penrose_habitable
-# 						is_planet_class = pc_squareworld_habitable
-# 					}
+# 					is_planet_class = pc_squareworld_habitable
 # 				}
 # 			}
 # 			minerals = 20

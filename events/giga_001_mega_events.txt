@@ -26,19 +26,15 @@ event = {
 		}
 
 		#For crystal megabore, really
-		every_system = {
+		every_galaxy_planet = {
 			limit = {
-				any_system_planet = {
-					giga_is_frozen = yes
-				}
+				giga_is_frozen = yes
+				NOT = { has_deposit_for = shipclass_research_station }
 			}
-			random_system_planet = {
-				limit = { giga_is_frozen = yes }
-				random = {
-					chance = 5
-					add_modifier = { modifier = giga_subsurface_ocean days = -1 }
-					add_deposit = d_subsurface_ocean_deposit_1
-				}
+			random = {
+				chance = 5
+				add_modifier = { modifier = giga_subsurface_ocean days = -1 }
+				add_deposit = d_subsurface_ocean_deposit_1
 			}
 		}
 
@@ -212,8 +208,17 @@ country_event = {
 
 			generate_start_buildings_and_districts = yes
 			generate_start_pops = yes
+			generate_home_planet_final_pass = yes
 			set_planet_size = 25
 			add_modifier = { modifier = "flat_world_mod" }
+
+			if = { #Galvanic civic game start compat due to deposits being wiped
+				limit = { owner = { is_galvanic_empire = yes } }
+				if = {
+					limit = { NOT = { has_deposit = d_galvanic_living_metal } }
+					add_deposit = d_galvanic_living_metal
+				}
+			}
 		}
 	}
 }
@@ -223,7 +228,7 @@ country_event = {
 # this could be done in country_customization, but this is theoretically more compatible and not really expensive
 # *should* be reasonably stable given it's done before other events
 # also sets elysium planet buildings on colonise
-planet_event = {
+carrier_event = {
 	id = giga_mega.003
 	is_triggered_only = yes
 	hide_window = yes
@@ -235,7 +240,7 @@ planet_event = {
 	immediate = {
 		if = {
 			limit = {
-				has_planet_flag = has_orbital_elysium
+				has_carrier_flag = has_orbital_elysium
 			}
 
 			giga_set_elysium_buildings = yes
@@ -253,6 +258,139 @@ planet_event = {
 				}
 			}
 			validate_planet_buildings_and_districts = yes
+		}
+	}
+}
+
+country_event = {
+	id = giga_mega.004
+	is_triggered_only = yes
+	hide_window = yes
+	trigger = {
+		last_increased_tech = tech_dyson_sphere
+		NOT = { has_global_flag = vanilla_dyson_swarm_replace_disabled }
+	}
+
+	immediate = {
+		every_owned_megastructure = {
+			limit = {
+				OR = {
+					is_megastructure_type = dyson_swarm_3
+					is_megastructure_type = dyson_swarm_3_basic
+					is_megastructure_type = dyson_swarm_3_m_star
+					is_megastructure_type = dyson_swarm_3_k_star
+					is_megastructure_type = dyson_swarm_3_g_star
+					is_megastructure_type = dyson_swarm_3_f_star
+					is_megastructure_type = dyson_swarm_3_a_star
+					is_megastructure_type = dyson_swarm_3_m_giant_star
+					is_megastructure_type = dyson_swarm_3_b_star
+				}
+
+				### Copied from dyson_sphere_2 possible = {x} block to ensure only dyson swarms that can be upgraded are unhidden
+				system_has_arc_furnace = no
+				if = {
+					limit = {
+						system_has_arc_furnace = no
+					}
+					NOT = {
+						solar_system = {
+							has_star_flag = arc_furnace_construction
+						}
+					}
+				}
+				solar_system = {
+					NOT = {
+						any_system_planet = {
+							OR = {
+								is_under_colonization = yes
+								is_colony = yes
+							}
+							is_artificial = no
+							exists = owner
+							owner = {
+								is_primitive = no
+							}
+						}
+					}
+					if = {
+						limit = {
+							any_system_planet = {
+								exists = owner
+								owner = {
+									is_primitive = yes
+								}
+							}
+						}
+						root = {
+							has_policy_flag = interference_aggressive
+						}
+					}
+				}
+			}
+			remove_megastructure_flag = giga_outliner_hidden_by_@owner
+		}
+		# Pretty much a duplicate of the code above, here to make sure create_message only fires if a swarm was actually unhidden
+		if = {
+			limit = {
+				any_owned_megastructure = {
+					OR = {
+						is_megastructure_type = dyson_swarm_3
+						is_megastructure_type = dyson_swarm_3_basic
+						is_megastructure_type = dyson_swarm_3_m_star
+						is_megastructure_type = dyson_swarm_3_k_star
+						is_megastructure_type = dyson_swarm_3_g_star
+						is_megastructure_type = dyson_swarm_3_f_star
+						is_megastructure_type = dyson_swarm_3_a_star
+						is_megastructure_type = dyson_swarm_3_m_giant_star
+						is_megastructure_type = dyson_swarm_3_b_star
+					}
+					system_has_arc_furnace = no
+					if = {
+						limit = {
+							system_has_arc_furnace = no
+						}
+						NOT = {
+							solar_system = {
+								has_star_flag = arc_furnace_construction
+							}
+						}
+					}
+					solar_system = {
+						NOT = {
+							any_system_planet = {
+								OR = {
+									is_under_colonization = yes
+									is_colony = yes
+								}
+								is_artificial = no
+								exists = owner
+								owner = {
+									is_primitive = no
+								}
+							}
+						}
+						if = {
+							limit = {
+								any_system_planet = {
+									exists = owner
+									owner = {
+										is_primitive = yes
+									}
+								}
+							}
+							root = {
+								has_policy_flag = interference_aggressive
+							}
+						}
+					}
+				}
+			}
+			create_message = {
+				type = GIGA_HIDDEN_MEGAS_UNHIDDEN
+				localization = MESSAGE_GIGA_HIDDEN_MEGAS_UNHIDDEN_DESC
+				days = @toast_important_message_days
+			}
+
 		}
 	}
 }
@@ -967,10 +1105,7 @@ event = {
 			has_global_flag = giga_core_disabled
 			has_global_flag = giga_galactic_core_spawned
 		}
-		OR = {
-			mid_game_years_passed >= 1
-			years_passed >= 100
-		}
+		mid_game_years_passed >= 1
 	}
 
 	immediate = {
@@ -982,7 +1117,7 @@ event = {
 	}
 }
 
-# Give Special Project for Galactic core
+# Give Situation for Galactic core
 country_event = {
 	id = giga_mega.402
 	title = "giga_mega.402.name"
@@ -997,12 +1132,9 @@ country_event = {
 
 	option = {
 		name = "giga_mega.402.a"
-		enable_special_project = {
-			name = "INVESTIGATE_GALACTIC_CORE"
-			owner = root
-		}
-		capital_scope = {
-			set_planet_flag = giga_core_sp_here@root
+		start_situation = {
+			type = giga_discover_galactic_core_situation
+			target = capital_scope
 		}
 	}
 }
@@ -1011,11 +1143,122 @@ country_event = {
 country_event = {
 	id = giga_mega.403
 	title = "giga_mega.403.name"
-	desc = "giga_mega.403.desc"
 	picture = GFX_evt_black_hole
 	show_sound = event_sensor_ping
 	is_triggered_only = yes
-	option = { name = "giga_mega.403.a" }
+	fire_only_once = yes
+
+	desc = {
+		trigger = {
+			has_country_flag = giga_discover_galactic_core_situation_approach_hands_off
+		}
+		text = "giga_mega.403.desc.handsoff"
+	}
+	desc = {
+		trigger = {
+			has_country_flag = giga_discover_galactic_core_situation_approach_hands_on
+		}
+		text = "giga_mega.403.desc.handson"
+	}
+	desc = {
+		trigger = {
+			has_country_flag = giga_discover_galactic_core_situation_approach_delay
+		}
+		text = "giga_mega.403.desc.delay"
+	}
+
+	option = {
+		name = "giga_mega.403.a"
+		custom_tooltip = giga_mega.403.a.tooltip
+		trigger = {
+			has_country_flag = giga_discover_galactic_core_situation_approach_hands_off
+		}
+		
+		# Less physics since you didn't want to experiment, but more unity as you got to watch nature do its thing
+		add_monthly_resource_mult = {
+			resource = physics_research
+			value = @tier3researchreward
+			min = @tier3researchmin
+			max	= @tier3researchmax
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = @tier3unityreward
+			min = @tier3unitymin
+			max = @tier3unitymax
+		}
+	}
+
+	option = {
+		name = "giga_mega.403.a"
+		custom_tooltip = giga_mega.403.a.tooltip
+		trigger = {
+			has_country_flag = giga_discover_galactic_core_situation_approach_hands_on
+		}
+		
+		# If you can research jump drives, you have a 1/10 chance of getting the tech
+		if = {
+			limit = {
+				NOR = {
+					has_technology = tech_jump_drive_1
+					NOT = { can_research_technology = tech_jump_drive_1 }
+				}
+			}
+			random_list = {
+				1 = {
+					add_tech_progress = {
+						tech = tech_jump_drive_1
+						progress = 0.1
+					}
+				}
+				9 = {
+					add_monthly_resource_mult = {
+						resource = physics_research
+						value = @tier5researchreward
+						min = @tier5researchmin
+						max	= @tier5researchmax
+					}
+					add_monthly_resource_mult = {
+						resource = unity
+						value = @tier2unityreward
+						min = @tier2unitymin
+						max = @tier2unitymax
+					}
+				}
+			}
+		}
+		else = {
+			# More physics since you experimented, but less unity since you didn't get to watch nature do its thing
+			add_monthly_resource_mult = {
+				resource = physics_research
+				value = @tier5researchreward
+				min = @tier5researchmin
+				max	= @tier5researchmax
+			}
+			add_monthly_resource_mult = {
+				resource = unity
+				value = @tier2unityreward
+				min = @tier2unitymin
+				max = @tier2unitymax
+			}
+		}
+	}
+
+	option = {
+		name = "DISCONCERTING"
+		custom_tooltip = giga_mega.403.a.tooltip
+		trigger = {
+			has_country_flag = giga_discover_galactic_core_situation_approach_delay
+		}
+		
+		# Only unity since you wanted to delay not study
+		add_monthly_resource_mult = {
+			resource = unity
+			value = @tier4unityreward
+			min = @tier4unitymin
+			max = @tier4unitymax
+		}
+	}
 
 	immediate = {
 		set_global_flag = giga_galactic_core_spawned
@@ -1125,9 +1368,9 @@ country_event = {
 				add_hyperlane_safe = { from = event_target:giga_outer_1		to = event_target:giga_outer_2 }
 				add_hyperlane_safe = { from = event_target:giga_outer_2		to = event_target:giga_outer_3 }
 				add_hyperlane_safe = { from = event_target:giga_outer_3		to = event_target:giga_outer_1 }
-				event_target:birch_aeternum = { #Initialize stuff
-					country_event = { id = giga_aeternum.1000 days = 2 }
-				}
+				# event_target:birch_aeternum = { #Initialize stuff
+				# 	country_event = { id = giga_aeternum.1000 days = 2 }
+				# }
 			}
 			else_if = {
 				limit = { NOR = { has_global_flag = giga_core_aeternum has_global_flag = giga_core_shuffle_spawned_aeternum } }
@@ -1246,6 +1489,34 @@ country_event = {
 		set_spawn_system_batch = end
 	}
 }
+carrier_event = {
+	# need to delay by a day or removing the modifier makes the palace zone and thus the districts setup craps out
+	id = giga_mega.404
+	is_triggered_only = yes
+	fire_only_once = yes
+	hide_window = yes
+
+	immediate = {
+		# remove the bonus capacities now that everything is in place
+		remove_modifier = giga_birch_restoration_fix
+	}
+}
+
+#Inform of core opening if others complete the situation first
+country_event = {
+	id = giga_mega.404
+	title = "giga_mega.404.name"
+	desc = "giga_mega.404.desc"
+	picture = GFX_evt_black_hole
+	show_sound = event_sensor_ping
+	is_triggered_only = yes
+
+	option = {
+		name = giga_mega.403.a
+		custom_tooltip = giga_mega.403.a.tooltip
+	}
+}
+
 
 ####################################
 ### Penrose Sphere #################
@@ -1537,7 +1808,7 @@ country_event = {
 
 	trigger = {
 		fromfrom = {
-			is_ship_size = giga_massive_planet
+			is_ship_size = giga_war_moon
 			NOT = { has_ship_flag = kaiser_moon_ship }
 			NOT = { has_ship_flag = eelooship }
 		}
@@ -1616,7 +1887,6 @@ country_event = {
 		fromfrom = {
 			OR = {
 				is_ship_size = giga_planet_behemoth
-				is_ship_size = giga_planet_behemoth_fe
 			}
 		}
 	}
@@ -1780,7 +2050,7 @@ country_event = { #It splits lol
 								random_existing_design = giga_planet_behemoth
 								effect = {
 									set_ship_flag = giga_planet
-									reduce_hp = 3000000
+									reduce_hp = 1500000
 								}
 							}
 						}
@@ -1788,7 +2058,7 @@ country_event = { #It splits lol
 							count = 5
 							create_ship = { 
 								name = "Attack Moon" 
-								random_existing_design = giga_massive_planet
+								random_existing_design = giga_war_moon
 								effect = {
 									reduce_hp = 150000
 								}
@@ -2104,60 +2374,61 @@ planet_event = {
 ####################################
 ### Galactic Core SP Check #########
 ####################################
-country_event = {
-	id = giga_mega.1001
-	hide_window = yes
-	is_triggered_only = yes
-
-	trigger = {
-		OR = {
-			has_special_project = INVESTIGATE_GALACTIC_CORE
-			has_special_project = INVESTIGATE_GALACTIC_CORE_LINK
-			is_researching_special_project = INVESTIGATE_GALACTIC_CORE
-			is_researching_special_project = INVESTIGATE_GALACTIC_CORE_LINK
-		}
-		capital_scope = { NOT = { has_planet_flag = giga_core_sp_here@root } }
-	}
-
-	immediate = {
-		random_galaxy_planet = {
-			limit = { has_planet_flag = giga_core_sp_here@root }
-			remove_planet_flag = giga_core_sp_here@root
-			root = {
-				if = {
-					limit = { has_special_project = INVESTIGATE_GALACTIC_CORE }
-					abort_special_project = {
-						type = "INVESTIGATE_GALACTIC_CORE"
-						location = prev
-					}
-					capital_scope = {
-						set_planet_flag = giga_core_sp_here@root
-						enable_special_project = {
-							name = "INVESTIGATE_GALACTIC_CORE"
-							location = this
-							owner = root
-						}
-					}
-				}
-				if = {
-					limit = { has_special_project = INVESTIGATE_GALACTIC_CORE_LINK }
-					abort_special_project = {
-						type = "INVESTIGATE_GALACTIC_CORE_LINK"
-						location = prev
-					}
-					capital_scope = {
-						set_planet_flag = giga_core_sp_here@root
-						enable_special_project = {
-							name = "INVESTIGATE_GALACTIC_CORE_LINK"
-							location = this
-							owner = root
-						}
-					}
-				}
-			}
-		}
-	}
-}
+# Seemingly unnecessary now?
+# country_event = {
+# 	id = giga_mega.1001
+# 	hide_window = yes
+# 	is_triggered_only = yes
+#
+# 	trigger = {
+# 		OR = {
+# 			has_special_project = INVESTIGATE_GALACTIC_CORE
+# 			has_special_project = INVESTIGATE_GALACTIC_CORE_LINK
+# 			is_researching_special_project = INVESTIGATE_GALACTIC_CORE
+# 			is_researching_special_project = INVESTIGATE_GALACTIC_CORE_LINK
+# 		}
+# 		capital_scope = { NOT = { has_planet_flag = giga_core_sp_here@root } }
+# 	}
+#
+# 	immediate = {
+# 		random_galaxy_planet = {
+# 			limit = { has_planet_flag = giga_core_sp_here@root }
+# 			remove_planet_flag = giga_core_sp_here@root
+# 			root = {
+# 				if = {
+# 					limit = { has_special_project = INVESTIGATE_GALACTIC_CORE }
+# 					abort_special_project = {
+# 						type = "INVESTIGATE_GALACTIC_CORE"
+# 						location = prev
+# 					}
+# 					capital_scope = {
+# 						set_planet_flag = giga_core_sp_here@root
+# 						enable_special_project = {
+# 							name = "INVESTIGATE_GALACTIC_CORE"
+# 							location = this
+# 							owner = root
+# 						}
+# 					}
+# 				}
+# 				if = {
+# 					limit = { has_special_project = INVESTIGATE_GALACTIC_CORE_LINK }
+# 					abort_special_project = {
+# 						type = "INVESTIGATE_GALACTIC_CORE_LINK"
+# 						location = prev
+# 					}
+# 					capital_scope = {
+# 						set_planet_flag = giga_core_sp_here@root
+# 						enable_special_project = {
+# 							name = "INVESTIGATE_GALACTIC_CORE_LINK"
+# 							location = this
+# 							owner = root
+# 						}
+# 					}
+# 				}
+# 			}
+# 		}
+# 	}
+# }
 
 ####################################
 ### Shipyard Uplink ################
@@ -2869,7 +3140,7 @@ country_event = {
 					is_ship_size = giga_systemcraft
 					is_ship_size = giga_aeternum_planetcraft
 					is_ship_size = giga_planet_behemoth
-					is_ship_size = giga_massive_planet
+					is_ship_size = giga_war_moon
 				}
 			}
 		}
@@ -2893,7 +3164,7 @@ country_event = {
 		}
 		every_owned_fleet = {
 			limit = {
-				any_owned_ship = { is_ship_size = giga_massive_planet }
+				any_owned_ship = { is_ship_size = giga_war_moon }
 			}
 			set_formation_scale = 5
 		}
@@ -3213,9 +3484,8 @@ country_event = {
 		}
 		FROMFROMFROM = {
 			OR = {
-				any_owned_ship = { is_ship_size = giga_massive_planet }
+				any_owned_ship = { is_ship_size = giga_war_moon }
 				any_owned_ship = { is_ship_size = giga_planet_behemoth }
-				any_owned_ship = { is_ship_size = giga_planet_behemoth_fe }
 			}
 		}
 	}
@@ -3235,19 +3505,18 @@ country_event = {
 				limit = {
 					NOT = { has_modifier = giga_fe_vs_cetana_modifier }
 				}
-			}
-			add_modifier = {
-				modifier = giga_fe_vs_cetana_modifier
-				days = -1
+				add_modifier = {
+					modifier = giga_fe_vs_cetana_modifier
+					days = -1
+				}
 			}
 		}
 		FROMFROMFROM = {
 			every_owned_ship = {
 				limit = {
 					OR = {
-						is_ship_size = giga_massive_planet
+						is_ship_size = giga_war_moon
 						is_ship_size = giga_planet_behemoth
-						is_ship_size = giga_planet_behemoth_fe
 					}
 				}
 				destroy_ship = THIS
@@ -3260,7 +3529,7 @@ planet_event = {
     is_triggered_only = yes
     hide_window = yes
 	trigger = {
-		has_planet_flag = has_megastructure
+		has_carrier_flag = has_megastructure
 	}
 	immediate = {
 		if = {
@@ -3281,7 +3550,7 @@ planet_event = {
 					remove_megastructure = THIS
 				}
 			}
-			remove_planet_flag = has_megastructure
+			remove_carrier_flag = has_megastructure
 			remove_planet_flag = giga_terraforming_megastructure
 		}
 	}
@@ -3297,7 +3566,7 @@ planet_event = {
 }
 
 #Alderson texture
-planet_event = {
+carrier_event = {
     id = giga_mega.9001
     is_triggered_only = yes
     hide_window = yes
@@ -3441,7 +3710,7 @@ planet_event = {
 	}
 }
 
-planet_event = {
+carrier_event = {
 	id = giga_mega.9101
 	is_triggered_only = yes
 	hide_window = yes

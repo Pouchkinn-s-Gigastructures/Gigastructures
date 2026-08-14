@@ -8,7 +8,8 @@ planet_event = {
 
 	trigger = {
 		from = { NOT = { has_country_flag = found_cat_orbital_elysium } }
-		has_planet_flag = cat_orbital_elysium
+		NOT = { has_global_flag = pouchkinn_spawned_as_fe } #can't find two alternate Pouchkinns
+		has_carrier_flag = cat_orbital_elysium
 	}
 
 	immediate = {
@@ -33,23 +34,26 @@ country_event = {
 }
 
 #Sets timer for lab
-planet_event = {
+carrier_event = {
 	id = giga_pouchkinn.003
 	hide_window = yes
 	location = from
 	is_triggered_only = yes
 	trigger = {
-		has_planet_flag = cat_orbital_elysium
-		NOT = { has_planet_flag = pouchkinn_event_happened }
+		has_carrier_flag = cat_orbital_elysium
+		NOR = {
+			has_planet_flag = pouchkinn_event_happened
+			has_global_flag = pouchkinn_spawned_as_fe #can't find two alternate Pouchkinns
+		}
 	}
 	immediate = {
-		planet_event = { id = giga_pouchkinn.101 days = 100 random = 10 }
+		carrier_event = { id = giga_pouchkinn.101 days = 100 random = 10 }
 		set_planet_flag = pouchkinn_event_happened
 	}
 }
 
 #The Lab
-planet_event = {
+carrier_event = {
 	id = giga_pouchkinn.101
 	title = "giga_pouchkinn.101.name"
 	desc = "giga_pouchkinn.101.desc"
@@ -72,7 +76,7 @@ planet_event = {
 	option = {
 		name = "giga_pouchkinn.101.c"
 		custom_tooltip = "giga_pouchkinn.101.c.tooltip"
-		hidden_effect = { planet_event = { id = giga_pouchkinn.102 days = 10 random = 2 } }
+		hidden_effect = { carrier_event = { id = giga_pouchkinn.102 days = 10 random = 2 } }
 	}
 
 	# Leave it be
@@ -83,7 +87,7 @@ planet_event = {
 }
 
 # Nuke it
-planet_event = {
+carrier_event = {
 	id = giga_pouchkinn.102
 	title = "giga_pouchkinn.102.name"
 	desc = "giga_pouchkinn.102.desc"
@@ -127,7 +131,7 @@ planet_event = {
 
 # Special Project Result
 # Defense drones swarm out
-planet_event = {
+carrier_event = {
 	id = giga_pouchkinn.103
 	title = "giga_pouchkinn.103.name"
 	desc = "giga_pouchkinn.103.desc"
@@ -179,9 +183,23 @@ country_event = {
 		fromfrom = {
 			set_planet_flag = lab_drones_won
 			remove_planet_flag = lab_drones_invade_planet
+			create_pop_group = {
+				species = owner.species
+				category = purge
+				effect = {
+					save_event_target_as = purge_pop_group
+					set_pop_group_flag = event_purge
+				}
+			}
 			every_owned_pop_group = {
-				set_pop_group_flag = event_purge
-				unemploy_pop = yes
+				limit = {
+					NOT = { is_same_value = event_target:purge_pop_group }
+				}
+				transfer_pop_amount = {
+					source = this
+					target = event_target:purge_pop_group
+					percentage = 1
+				}
 			}
 		}
 	}
@@ -226,8 +244,8 @@ country_event = {
 		}
 		hidden_effect = {
 			random_planet_within_border = {
-				limit = { has_planet_flag = cat_orbital_elysium }
-				planet_event = { id = giga_pouchkinn.107 days = 5 }
+				limit = { has_carrier_flag = cat_orbital_elysium }
+				carrier_event = { id = giga_pouchkinn.107 days = 5 }
 			}
 		}
 	}
@@ -266,18 +284,29 @@ country_event = {
 		}
 		hidden_effect = {
 			random_planet_within_border = {
-				limit = { has_planet_flag = cat_orbital_elysium }
-				planet_event = { id = giga_pouchkinn.107 days = 5 }
+				limit = { has_carrier_flag = cat_orbital_elysium }
+				carrier_event = { id = giga_pouchkinn.107 days = 5 }
 			}
 		}
 	}
 }
 
 # Here we go again
-planet_event = {
+carrier_event = {
 	id = giga_pouchkinn.107
 	title = "giga_pouchkinn.107.name"
-	desc = "giga_pouchkinn.107.desc"
+	desc = {
+		trigger = {
+			is_gestalt = no
+		}
+		text = "giga_pouchkinn.107.desc"
+	}
+	desc = {
+		trigger = {
+			is_gestalt = yes
+		}
+		text = "giga_pouchkinn.107.gestalt.desc"
+	}
 	picture = GFX_evt_alien_ruins
 	show_sound = event_mystic_reveal
 	location = from
@@ -298,7 +327,7 @@ planet_event = {
 		hidden_effect = {
 			owner = {
 				random_planet_within_border = {
-					limit = { has_planet_flag = cat_orbital_elysium }
+					limit = { has_carrier_flag = cat_orbital_elysium }
 					planet_event = { id = giga_pouchkinn.102 days = 10 random = 2 }
 				}
 			}
@@ -307,7 +336,7 @@ planet_event = {
 }
 
 # Second expedition
-planet_event = {
+carrier_event = {
 	id = giga_pouchkinn.108
 	title = "giga_pouchkinn.108.name"
 	desc = "giga_pouchkinn.108.desc"
@@ -358,6 +387,7 @@ country_event = {
 			class = POUCHKINN
 			portrait = pouchkinn
 			traits = {
+				trait = trait_organic
 				trait = trait_industrious
 				trait = trait_natural_engineers
 			}
@@ -378,6 +408,9 @@ country_event = {
 					species = event_target:giga_neztak
 					name = "Weeny Pouchkinn"
 					skill = 5
+					background_planet = event_target:katzenland
+					background_ethic = ethic_materialist
+					background_job = head_researcher
 				}
 			}
 		}
@@ -440,6 +473,9 @@ country_event = {
 			species = event_target:pouchkinn_species
 			immortal = yes
 			name = "Weeny Pouchkinn"
+			background_planet = event_target:katzenland
+			background_ethic = ethic_materialist
+			background_job = head_researcher
 			skill = 8
 			traits = {
 				trait = pouchkinn_trait_modified
@@ -456,7 +492,7 @@ country_event = {
 		custom_tooltip = giga_pouchkinn.111.a.tooltip
 		hidden_effect = {
 			random_planet_within_border = {
-				limit = { has_planet_flag = cat_orbital_elysium }
+				limit = { has_carrier_flag = cat_orbital_elysium }
 				remove_modifier = strange_pouchkinn_lab
 			}
 		}
@@ -487,7 +523,7 @@ country_event = {
 		hidden_effect = {
 			random = { chance = 10 country_event = { id = giga_pouchkinn.113 days = 360 random = 160 } }
 			random_planet_within_border = {
-				limit = { has_planet_flag = cat_orbital_elysium }
+				limit = { has_carrier_flag = cat_orbital_elysium }
 				remove_modifier = strange_pouchkinn_lab
 				add_modifier = { modifier = "strange_pouchkinn_lab_activated" days = -1 }
 			}
@@ -507,9 +543,9 @@ country_event = {
 
 	immediate = {
 		random_planet_within_border = {
-			limit = { has_planet_flag = cat_orbital_elysium }
+			limit = { has_carrier_flag = cat_orbital_elysium }
 			remove_modifier = strange_pouchkinn_lab_activated
-			remove_planet_flag = cat_orbital_elysium
+			remove_carrier_flag = cat_orbital_elysium
 			change_pc = pc_pouchkinn_black_hole
 			add_deposit = d_pouchkinn_deposit
 		}
@@ -534,7 +570,7 @@ country_event = {
 	immediate = {
 		set_country_flag = encountered_ruined_orbital
 		random_planet_within_border = {
-			limit = { has_planet_flag = cat_orbital_elysium }
+			limit = { has_carrier_flag = cat_orbital_elysium }
 			create_ambient_object = {
 				type = "explosion_particle_object"
 				location = this
@@ -573,6 +609,9 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
+		trigger = {
+			is_natural_design_empire = no
+		}
 		name = "giga_pouchkinn.115.a"
 		add_monthly_resource_mult = {
 			resource = society_research
@@ -592,7 +631,35 @@ country_event = {
 		add_tech_progress = { tech = giga_tech_event_pouchkinn_lifespan progress = 0.15 }
 		hidden_effect = {
 			random_planet_within_border = {
-				limit = { has_planet_flag = cat_orbital_elysium }
+				limit = { has_carrier_flag = cat_orbital_elysium }
+				remove_modifier = strange_pouchkinn_lab
+			}
+		}
+	}
+
+	option = {
+		trigger = {
+			is_natural_design_empire = yes
+		}
+		name = "giga_pouchkinn.115.natural_design.a"
+		add_monthly_resource_mult = { #bonus society research since Natural Design doesn't get giga_tech_event_pouchkinn_lifespan
+			resource = society_research
+			value = @ehof_tier7researchreward
+			min = @ehof_tier7researchmin
+			max = @ehof_tier7researchmax
+		}
+		add_monthly_resource_mult = {
+			resource = physics_research
+			value = @ehof_tier8researchreward
+			min = @ehof_tier8researchmin
+			max = @ehof_tier8researchmax
+		}
+		add_research_option = giga_tech_event_exotic_lab_data
+		add_tech_progress = { tech = giga_tech_event_exotic_lab_data progress = 0.15 }
+		# Natural Design empires aren't going to study his implants to put in themselves
+		hidden_effect = {
+			random_planet_within_border = {
+				limit = { has_carrier_flag = cat_orbital_elysium }
 				remove_modifier = strange_pouchkinn_lab
 			}
 		}
@@ -621,7 +688,7 @@ country_event = {
 		add_tech_progress = { tech = giga_tech_event_exotic_lab_data progress = 0.15 }
 		hidden_effect = {
 			random_planet_within_border = {
-				limit = { has_planet_flag = cat_orbital_elysium }
+				limit = { has_carrier_flag = cat_orbital_elysium }
 				remove_modifier = strange_pouchkinn_lab
 			}
 		}

@@ -1,51 +1,3 @@
-# Overwritten to add isolated systems
-can_enter_system_by_jump = {
-	custom_tooltip = {
-		#success_text = "debug: can jump"
-		# is commented out in vanilla, doesn't seem to do anything either way
-		fail_text = cannot_jump_to_system
-
-		# Sealed system
-		OR = {
-			NOT = { has_star_flag = sealed_system }
-			AND = {
-				root = { has_country_flag = entered_sealed_system }
-				has_star_flag = sealed_system
-			}
-		}
-		
-		# L-Cluster/Compound_Cluster
-		OR = {
-			NOR = {
-				has_star_flag = lcluster
-				has_star_flag = ehof_compound_system
-				has_star_flag = giga_core_03
-				cohesive_system = yes
-				urmazin_system = yes
-				everchanging_system = yes
-				katzen_jump_blocked_system = yes
-				has_star_flag = maginot_anti_jump_star # Maginot World subspace disruption
-				has_star_flag = siegfried_anti_jump_star # Katzen version
-			}
-			#This is gonna be a bit annoying, BUT it needs to be done for eager explorers
-			AND = {
-				cohesive_system = yes
-				ROOT = { is_eager_explorer_empire = yes }
-				has_star_flag = ehof_system_created_by_@root
-			}
-			AND = {
-				root = { has_country_flag = entered_sealed_system }
-				has_star_flag = sealed_system
-			}
-		}
-
-        # Formless system
-        NOT = { has_star_flag = formless_system }
-
-        # Hyperthermia core system
-        NOT = { has_star_flag = hyperthermia_system }
-	}
-}
 
 # this = starbase, megastructure or planet
 can_orbitable_repair_ships = {
@@ -57,6 +9,10 @@ can_orbitable_repair_ships = {
 				has_starbase_size >= starbase_deep_space_citadel_1
 				has_starbase_size = juggernaut
 				has_starbase_size = enclave_mercenary_station
+                is_arkship_starbase = yes
+                has_starbase_module = waystation_repair_bay
+                # ACOT ADDED
+				ia_acot_advanced_starbase = yes
 			}
 			fleet = {
 				is_disabled = no
@@ -72,6 +28,21 @@ can_orbitable_repair_ships = {
 				is_megastructure_type = the_vat_2
 				is_megastructure_type = the_vat_3
 				is_megastructure_type = the_vat_4
+
+				### Ancient Cache of Technologies
+				inline_script = {
+					script = generic_parts/giga_toggled_code
+					code = "
+						is_megastructure_type = acot_precursor_colossus_base
+						is_megastructure_type = acot_precursor_colossus_stage_two
+						is_megastructure_type = acot_amerigo
+						is_megastructure_type = acot_amerigo_ae
+						is_megastructure_type = acot_amerigo_se
+						is_megastructure_type = acot_amerigo_oe
+						is_megastructure_type = acot_phanon_master_reactor_sphere
+					"
+					toggle = @has_ancient_caches
+				}
 			}
 		}
 	}
@@ -85,6 +56,24 @@ can_orbital_bombard = {
 			is_ship_size = colossus
 		}
 	}
+
+	### Ancient Cache of Technologies
+	NAND = {
+		owner = { is_progenitor_empires = no }
+		from = {
+			OR = {
+				inline_script = {
+					script = generic_parts/giga_toggled_code
+					code = "
+						is_planet_class = pc_acot_pmc_vault
+						is_planet_class = pc_acot_enigmopolis
+					"
+					toggle = @has_ancient_caches
+				}
+			}
+		}
+	}
+
 	OR = {
 		AND = {
 			ROOT.CONTROLLER = {
@@ -111,16 +100,23 @@ can_orbital_bombard = {
 				is_country_type = ai_empire
 				is_country_type = cybrex_empire
 				is_country_type = abandoned_hatchery
-				is_country_type = compound_empire
-				is_country_type = sbtg_stellarborne_empire
-				is_country_type = void_lifeforms_1
-				is_country_type = void_lifeforms_2
-				is_country_type = katzenartig_imperium
-				is_country_type = giga_eawaf_sirens
 				AND = {
 					is_country_type = awakened_marauders
 					ROOT.CONTROLLER = { is_hostile = prev }
 				}
+
+				### Gigas
+				is_country_type = compound_empire
+				is_country_type = katzenartig_imperium
+				is_country_type = giga_eawaf_sirens
+
+				### Ancient Cache of Technologies
+				is_country_type = sbtg_stellarborne_empire
+				is_country_type = void_lifeforms_1
+				is_country_type = void_lifeforms_2
+				is_country_type = acot_exterminatus_victim
+				is_country_type = acot_phanon_base
+				is_country_type = acot_phanon_retaliator
 			}
 		}
 		ROOT.CONTROLLER = {
@@ -139,14 +135,21 @@ can_orbital_bombard = {
 				is_country_type = vol
 				is_country_type = behemoth_hatchling
 				is_country_type = abandoned_hatchery
+
+				### Gigas
 				is_country_type = compound_empire
-				is_country_type = sbtg_stellarborne_empire
-				is_country_type = void_lifeforms_1
-				is_country_type = void_lifeforms_2
-				is_country_type = acot_crazed_stellarite
 				is_country_type = katzenartig_imperium
 				is_country_type = giga_hypersiphon_major_incursion
 				is_country_type = giga_eawaf_sirens
+
+				### Ancient Cache of Technologies
+				is_country_type = void_lifeforms_1
+				is_country_type = void_lifeforms_2
+				is_country_type = acot_exterminatus_victim
+				is_country_type = acot_crazed_stellarite
+				is_country_type = acot_phanon_base
+				is_country_type = acot_phanon_retaliator
+
 				AND = {
 					is_country_type = frenzied_voidworms
 					has_country_flag = can_bombard
@@ -184,65 +187,65 @@ can_orbital_bombard = {
 # this = system
 # root = country
 ai_should_restrict_system = {
-	OR = {
+    OR = {
 		giga_ai_should_restrict_system = yes
 
-		AND = {
+        AND = {
 			root = { is_country_type = fallen_empire }
-			exists = owner
-			owner = { is_country_type = awakened_marauders }
-		}
-		AND = {
-			root = { is_country_type = awakened_marauders }
-			exists = owner
-			owner = { is_country_type = fallen_empire }
-		}
-		AND = {
-			root = { is_country_type = voidworms }
-			exists = owner
-			owner = {
-				OR = {
-					is_country_type = dormant_marauders
-					is_country_type = awakened_marauders
-				}
-			}
-		}
-		AND = {
-			root = {
-				OR = {
-					is_country_type = fallen_empire
-					is_country_type = awakened_marauders
-					is_country_type = voidworms
-				}
-			}
-			has_star_flag = guardian
-			any_fleet_in_system = {
-				exists = owner
-				owner = {
-					is_guardian_country = yes
-				}
-			}
-		}
-		AND = {
-			root = {
-				OR = {
+            exists = owner
+            owner = { is_country_type = awakened_marauders }
+        }
+        AND = {
+            root = { is_country_type = awakened_marauders }
+            exists = owner
+            owner = { is_country_type = fallen_empire }
+        }
+        AND = {
+            root = { is_country_type = voidworms }
+            exists = owner
+            owner = {
+                OR = {
+                    is_country_type = dormant_marauders
+                    is_country_type = awakened_marauders
+                }
+            }
+        }
+        AND = {
+            root = {
+                OR = {
+                    is_country_type = fallen_empire
+                    is_country_type = awakened_marauders
+                    is_country_type = voidworms
+                }
+            }
+            has_star_flag = guardian
+            any_fleet_in_system = {
+                exists = owner
+                owner = {
+                    is_guardian_country = yes
+                }
+            }
+        }
+        AND = {
+            root = {
+                OR = {
 					AND = {
-						is_crisis_faction = yes
+                    is_crisis_faction = yes
 						# I don't know what happens if the blokkats restrict a system so lets not find out
 						is_blokkat_country_type = no
 					}
-					is_country_type = awakened_fallen_empire
-				}
-			}
-			has_star_flag = guardian
-			any_fleet_in_system = {
-				exists = owner
-				owner = {
-					is_country_type = guardian_fortress
-				}
-			}
-		}
-	}
+                    is_country_type = awakened_fallen_empire
+                }
+            }
+            has_star_flag = guardian
+            any_fleet_in_system = {
+                exists = owner
+                owner = {
+                    is_country_type = guardian_fortress
+                }
+            }
+        }
+    }
 }
 
 #Check if it is possible to build orbital stations on this planet
@@ -253,7 +256,7 @@ can_planet_support_orbital_station = {
 	custom_tooltip = {
 		fail_text = "ORBITAL_STATION_ALREADY_EXISTS"
 		has_any_megastructure = no
-		NOT = { has_planet_flag = has_megastructure }
+		NOT = { has_carrier_flag = has_megastructure }
 	}
 	custom_tooltip = {
 		fail_text = "paluushia_no_ai_observation"
@@ -279,6 +282,7 @@ can_get_external_leader_pool_candidate = {
 	}
 	# Both empires must be regular empires, machine intelligences or hive-minds.
 	OR = {
+		# flusion stuff
 		AND = {
 			exists = event_target:flusion_primitives_country
 			FROM = {
@@ -420,18 +424,18 @@ can_colonize_with_species = {
 	giga_can_colonize_with_species = yes
 }
 
-# This = Planet
-can_resettle_planet = {
-	is_controlled_by = owner
-	has_ground_combat = no
-	has_orbital_bombardment = no
-	custom_tooltip = {
-		text = "RESETTLE_PLANET_UNDER_COLONIZATION"
-		exists = this
-		is_under_colonization = no
-	}
+# This = Colony
+can_resettle_colony = {
+    is_controlled_by = owner
+    has_ground_combat = no
+    has_orbital_bombardment = no
+    custom_tooltip = {
+        text = "RESETTLE_PLANET_UNDER_COLONIZATION"
+        exists = this
+        is_under_colonization = no
+    }
 
-	giga_can_resettle_planet = yes
+    giga_can_resettle_colony = yes
 }
 
 # # overwrite for machine ringworld

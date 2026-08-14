@@ -1,0 +1,309 @@
+
+# added an else_if to stop changing quasar / smbh to normal black hole
+reckoning_consume_world = {
+    export_trigger_value_to_variable = {
+        trigger = pop_amount
+        variable = consumed_pops_planet
+    }
+    if = {
+        limit = {
+            check_variable = {
+                which = consumed_pops_planet
+                value > 0
+            }
+        }
+        event_target:the_end_of_the_cycle@$OWNER$ = {
+            change_variable = {
+                which = consumed_pops
+                value = prev.consumed_pops_planet
+            }
+            change_variable = {
+                which = end_power
+                value = prev.consumed_pops_planet
+            }
+        }
+    }
+    event_target:the_end_of_the_cycle@$OWNER$ = {
+        change_variable = {
+            which = consumed_worlds
+            value = 1
+        }
+    }
+
+    update_reckoning_event_chains = {
+        RECKONING = event_target:the_end_of_the_cycle@$OWNER$
+    }
+
+    remove_all_armies = yes
+    if = {
+        limit = {
+            is_planet_class = pc_habitat
+        }
+        destroy_colony = yes
+        remove_planet = yes
+    }
+    else_if = {
+        limit = {
+            is_ringworld = yes
+        }
+        change_pc = pc_ringworld_habitable_damaged
+        clear_planet_modifiers = yes
+        clear_deposits = yes
+    }
+    # GIGAS ADDED BEGIN
+    else_if = {
+        limit = {
+            OR = {
+                is_planet_class = pc_core_black_hole
+                is_planet_class = pc_core_quasar
+            }
+        }
+        # INTENTIONALLY EMPTY, CAUSES SMBH AND QUASAR TO NOT CHANGE
+    }
+    # GIGAS ADDED END
+    else_if = {
+        limit = {
+            is_star = yes
+        }
+        change_pc = pc_black_hole
+    }
+    else = {
+        change_pc = pc_shrouded
+        clear_planet_modifiers = yes
+        clear_deposits = yes
+    }
+
+    event_target:the_end_of_the_cycle@$OWNER$ = {
+        # Reckoning healing via pop consumption
+        set_variable = {
+            which = heal_percentage
+            value = prev.consumed_pops_planet
+        }
+        multiply_variable = {
+            which = heal_percentage
+            value = 0.00005
+        }
+        repair_percentage = heal_percentage
+        repair_shield_percentage = heal_percentage
+
+        # Reckoning intensification
+        if = {
+            limit = {
+                NOT = { has_modifier = absorbed_consciousness_intensification_1 }
+                check_variable = {
+                    which = end_power
+                    value >= @reckoning_intensification_devoured_pops_1
+                }
+            }
+            add_modifier = {
+                modifier = absorbed_consciousness_intensification_1
+            }
+            set_variable = {
+                which = next_intensification_cap
+                value = @reckoning_intensification_devoured_pops_2
+            }
+        }
+        if = {
+            limit = {
+                NOT = { has_modifier = absorbed_consciousness_intensification_2 }
+                check_variable = {
+                    which = end_power
+                    value >= @reckoning_intensification_devoured_pops_2
+                }
+            }
+            add_modifier = {
+                modifier = absorbed_consciousness_intensification_2
+            }
+            set_variable = {
+                which = next_intensification_cap
+                value = @reckoning_intensification_devoured_pops_3
+            }
+        }
+        if = {
+            limit = {
+                NOT = { has_modifier = absorbed_consciousness_intensification_3 }
+                check_variable = {
+                    which = end_power
+                    value >= @reckoning_intensification_devoured_pops_3
+                }
+            }
+            add_modifier = {
+                modifier = absorbed_consciousness_intensification_3
+            }
+            set_variable = {
+                which = next_intensification_cap
+                value = @reckoning_intensification_devoured_pops_4
+            }
+        }
+        if = {
+            limit = {
+                NOT = { has_modifier = absorbed_consciousness_intensification_4 }
+                check_variable = {
+                    which = end_power
+                    value >= @reckoning_intensification_devoured_pops_4
+                }
+            }
+            add_modifier = {
+                modifier = absorbed_consciousness_intensification_4
+            }
+            clear_variable = next_intensification_cap
+        }
+
+        clear_variable = remaining_pops_until_next_intensification
+        if = {
+            limit = {
+                is_variable_set = next_intensification_cap
+            }
+            set_variable = {
+                which = remaining_pops_until_next_intensification
+                value = next_intensification_cap
+            }
+            subtract_variable = {
+                which = remaining_pops_until_next_intensification
+                value = end_power
+            }
+        }
+    }
+
+    every_country = {
+        limit = {
+            has_event_chain = the_reckoning_chain
+            event_target:the_end_of_the_cycle@$OWNER$ = {
+                is_same_value = event_target:the_end_of_the_cycle@prev
+            }
+        }
+        country_event = { id = shroud.11230 } # recalculate reckoning stats
+
+        # Update next intensification stat
+        reset_event_chain_counter = {
+            event_chain = the_reckoning_chain
+            counter = reckoning_remaining_pops_until_next_intensification
+        }
+        if = {
+            limit = {
+                event_target:the_end_of_the_cycle@$OWNER$ = {
+                    is_variable_set = remaining_pops_until_next_intensification
+                }
+            }
+            add_event_chain_counter = {
+                event_chain = the_reckoning_chain
+                counter = reckoning_remaining_pops_until_next_intensification
+                amount = event_target:the_end_of_the_cycle@$OWNER$.remaining_pops_until_next_intensification
+            }
+        }
+    }
+    every_country = {
+        limit = {
+            has_event_chain = the_reckoning_observer_chain
+            OR = {
+                NOT = { exists = event_target:the_end_of_the_cycle@this }
+                AND = {
+                    exists = event_target:the_end_of_the_cycle@this
+                    event_target:the_end_of_the_cycle@$OWNER$ = {
+                        NOT = { is_same_value = event_target:the_end_of_the_cycle@prev }
+                    }
+                }
+            }
+        }
+
+        # Update next intensification stat
+        reset_event_chain_counter = {
+            event_chain = the_reckoning_observer_chain
+            counter = reckoning_remaining_pops_until_next_intensification
+        }
+        if = {
+            limit = {
+                event_target:the_end_of_the_cycle@$OWNER$ = {
+                    is_variable_set = remaining_pops_until_next_intensification
+                }
+            }
+            add_event_chain_counter = {
+                event_chain = the_reckoning_observer_chain
+                counter = reckoning_remaining_pops_until_next_intensification
+                amount = event_target:the_end_of_the_cycle@$OWNER$.remaining_pops_until_next_intensification
+            }
+        }
+    }
+
+    event_target:the_end_of_the_cycle@$OWNER$ = {
+        clear_variable = heal_percentage
+        clear_variable = remaining_pops_until_next_intensification
+    }
+}
+
+# added to NOR to stop changing quasar / smbh to M-star
+hyperthermia_galaxy_effect = {
+    optimize_memory
+    every_system_planet = {
+        limit = {
+            is_star = yes
+            NOR = {
+                is_planet_class = pc_black_hole
+                is_planet_class = pc_m_star
+                is_planet_class = pc_m_giant_star
+                # GIGAS ADDED BEGIN
+                is_planet_class = pc_core_black_hole
+                is_planet_class = pc_core_quasar
+                # GIGAS ADDED END
+            }
+        }
+        create_ambient_object = {
+            type = "red_giant_supernova"
+            play_animation_once = yes
+            location = this
+        }
+        last_created_ambient_object = {
+            set_location = {
+                target = prev
+                distance = 0
+                angle = random
+            }
+        }
+        change_pc = pc_m_giant_star
+        solar_system = { set_star_class = sc_m_giant }
+    }
+    # Handle Contingency Machine Worlds
+    every_system_planet = {
+        limit = {
+            is_planet_class = pc_ai
+            NOT = { has_carrier_flag = machine_lair }
+        }
+        destroy_machine_world = yes
+    }
+    random_system_planet = {
+        limit = {
+            is_planet_class = pc_ai
+            has_carrier_flag = machine_lair
+        }
+        from.owner = { save_event_target_as = final_machine_world_destroyer }
+        stop_crisis_sound = yes
+        carrier_event = { id = crisis.2046 }
+    }
+    every_system_planet = {
+        limit = {
+            OR = {
+                is_colonizable = yes
+                is_colony = yes
+            }
+            NOT = { is_planet_class = pc_city }
+            is_artificial = no
+        }
+        change_pc = pc_volcanic
+        reroll_planet_modifiers = yes
+        reroll_deposits = yes
+        add_deposit = d_volcanic_mineral_layers
+        add_deposit = d_volcanic_stable_plateaus
+    }
+    every_system_planet_colony = {
+        limit = {
+            owner = {
+                NOR = {
+                    is_infernal_empire = yes
+                    has_ascension_perk = ap_galactic_hyperthermia
+                }
+            }
+        }
+        remove_all_buildings = yes
+        destroy_colony = yes
+    }
+}

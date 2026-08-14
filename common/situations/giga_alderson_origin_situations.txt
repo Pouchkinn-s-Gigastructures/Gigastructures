@@ -1,0 +1,122 @@
+@giga_situation_alderson_primitives_limit = 50
+
+
+giga_situation_alderson_primitives = {
+    picture = GFX_evt_stairway_to_heavens
+    complete_icon_frame = GFX_situation_outcome_frame_green
+    complete_icon = GFX_situation_outcome_positive
+
+    stages = {
+        giga_situation_alderson_primitives_stage_1 = {
+            end = @giga_situation_alderson_primitives_limit
+            icon = GFX_situation_stage_1
+            icon_background = GFX_situation_stage_frame_green
+        }
+        giga_situation_alderson_primitives_stage_2 = {
+            end = 600
+            icon = GFX_situation_stage_2
+            icon_background = GFX_situation_stage_frame_green
+
+            on_first_enter = {
+                # if = { #once an invasion gets underway, piss them off #didn't get this working fully
+                #     limit = { owner = { has_country_flag = alderson_annexation_military } }
+                #     event_target:excognitor_primitives = {
+                #         set_country_flag = first_contact_completed@owner
+                #         set_awareness = 100
+                #         set_hostile = owner
+                #     }
+                #     event_target:dominion_primitives = {
+                #         set_country_flag = first_contact_completed@owner
+                #         set_awareness = 100
+                #         set_hostile = owner
+                #     }
+                #     owner = {
+                #         set_country_flag = first_contact_completed@event_target:excognitor_primitives
+                #         set_country_flag = first_contact_completed@event_target:dominion_primitives
+                #     }
+                # }
+            }
+        }
+    }
+
+    approach = {
+        name = giga_situation_alderson_primitives_approach_nothing
+        allow = {
+            situation_progress < @giga_situation_alderson_primitives_limit
+        }
+        icon = GFX_situation_approach_shrug
+        icon_background = GFX_situation_approach_bg_yellow
+        default = yes
+
+        on_select = {
+            custom_tooltip = giga_situation_alderson_primitives_approach_nothing_tooltip
+        }
+
+        ai_weight = { base = 0 }
+    }
+    approach = {
+        name = giga_situation_alderson_primitives_approach_annex
+        allow = {
+            custom_tooltip = {
+                fail_text = "operation_wrong_interference_policy"
+                owner = {
+                    AND = {
+                        NOR = { #disallowed for policies that disallow normal infiltration
+                            has_policy_flag = interference_not_allowed
+                            has_policy_flag = interference_subtle
+                            AND = { #can't invade militarily without an aggressive interference stance
+                                has_country_flag = alderson_annexation_military
+                                NOT = { has_policy_flag = interference_aggressive }
+                            }
+                        }
+                        is_ai = no #let's take the easy route and just let AI progress anyway
+                    }
+                }
+            }
+        }
+        icon = GFX_situation_approach_scales
+        icon_background = GFX_situation_approach_bg_green
+
+        resources = {
+            category = situations
+            cost = {
+                influence = 100
+            }
+        }
+
+        on_select = {
+            custom_tooltip = giga_situation_alderson_primitives_approach_annex_tooltip
+        }
+
+        ai_weight = { base = 1 }
+    }
+
+    monthly_progress = {
+        base = 0
+        modifier = {
+            add = 1 #~50 years till completion following an initial 2 before the situation starts, in comparison to 50/75 years of the anti-bombardment shield
+            desc = giga_situation_alderson_primitives_progress
+            not = {
+                current_situation_approach = giga_situation_alderson_primitives_approach_nothing
+            }
+        }
+    }
+
+    on_progress_complete = {
+        custom_tooltip = giga_situation_alderson_primitives_outcome
+        hidden_effect = {
+            set_situation_locked = yes
+            owner = { country_event = { id = giga_alderson.004 } } #annex other slices
+        }
+    }
+
+    #end the situation if both primitives have already been displaced or destroyed
+    abort_trigger = {
+        owner = {
+            NOR = {
+                exists = event_target:excognitor_primitives
+                exists = event_target:dominion_primitives
+            }
+        }
+    }
+}
