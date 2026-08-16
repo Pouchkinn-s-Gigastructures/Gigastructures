@@ -1,0 +1,79 @@
+
+
+##### Reserved for Endtekk Blokkat or higher but can be used for other stuffs
+### Prevent the ship from getting cheesed by random stuffs by upping some mandatory modifiers if needed
+giga_combat_prevent_cheesing = {
+    optimize_memory
+
+    ## Can't deal damage if either of them are below -100% obviously
+    giga_combat_fix_modifier = { MODIFIER = ship_weapon_damage					RELATION = "<"  FINAL_VALUE = -0.99 }
+    giga_combat_fix_modifier = { MODIFIER = ship_fire_rate_mult				RELATION = "<"  FINAL_VALUE = -0.99 }
+
+    ## Vanilla lensed paralyzer permastun lol
+    giga_combat_fix_modifier = { MODIFIER = ship_weapon_range_mult 			RELATION = "<"  FINAL_VALUE = -0.5  }
+    giga_combat_fix_modifier = { MODIFIER = ship_engagement_range_mult 		RELATION = "<"  FINAL_VALUE =  0    }
+
+    ## Can't deal damage if you miss every shot
+    giga_combat_fix_modifier = { MODIFIER = ship_tracking_mult					RELATION = "<"  FINAL_VALUE =  0    }
+    giga_combat_fix_modifier = { MODIFIER = ship_accuracy_mult				    RELATION = "<"  FINAL_VALUE =  0    }
+    giga_combat_fix_modifier = { MODIFIER = ship_tracking_add 			        RELATION = "<"  FINAL_VALUE =  0    }
+    giga_combat_fix_modifier = { MODIFIER = ship_accuracy_add 		            RELATION = "<"  FINAL_VALUE =  0    }
+
+    ### All weapons, internally, start at 1.0 (100%) penetration on armor and shield
+    ## Yes that's right, having 0 or below penetration means dealing no damage if the enemy still has that health type
+    giga_combat_fix_modifier = { MODIFIER = ship_shield_penetration_add		RELATION = "<"  FINAL_VALUE = 0     }
+    giga_combat_fix_modifier = { MODIFIER = ship_armor_penetration_add			RELATION = "<"  FINAL_VALUE = 0     }
+    giga_combat_fix_modifier = { MODIFIER = ship_shield_penetration_mult		RELATION = "<"  FINAL_VALUE = 0     }
+    giga_combat_fix_modifier = { MODIFIER = ship_armor_penetration_mult		RELATION = "<"  FINAL_VALUE = 0     }
+
+}
+
+
+## use in ship scope only
+giga_combat_fix_modifier = {
+    optimize_memory
+    if = {
+        ## First we check the current value to see how it compare to final value
+        limit = { check_modifier_value = { modifier = $MODIFIER$ value $RELATION$ $FINAL_VALUE$ } }
+
+        ## remove modifier if present
+        # This is put after the check as it already lost its effectiveness if the check is passed still, so we renew it with more accurate adjustments
+        while = { limit = { has_modifier = giga_combat_$MODIFIER$ } remove_modifier = giga_combat_$MODIFIER$ }
+
+        ## Set a variable to be the same value as the modifier the ship current has
+        set_variable = { which = giga_$MODIFIER$_temp_value value = modifier:$MODIFIER$ }
+
+        ## Obtain the gap between the current modifier value the ship has vs the desired modifier value
+        subtract_variable = { which = giga_$MODIFIER$_temp_value value = $FINAL_VALUE$ }
+
+        ## flip the value if it's higher/lower to get the accurate result
+        multiply_variable = { which = giga_$MODIFIER$_temp_value value = -1 }
+
+        ## Add modifier
+        add_modifier = { modifier = giga_combat_$MODIFIER$ multiplier = giga_$MODIFIER$_temp_value }
+
+        ## clear variable so it's clean
+        clear_variable = giga_$MODIFIER$_temp_value
+    }
+}
+
+## Clear combat modifiers that are meant to be temporary
+giga_clean_combat_modifiers = {
+    optimize_memory
+    every_owned_ship = {
+
+        if = { limit = { has_modifier = giga_combat_ship_weapon_damage } remove_modifier = giga_combat_ship_weapon_damage }
+        if = { limit = { has_modifier = giga_combat_ship_fire_rate_mult } remove_modifier = giga_combat_ship_fire_rate_mult }
+        if = { limit = { has_modifier = giga_combat_ship_weapon_range_mult } remove_modifier = giga_combat_ship_weapon_range_mult }
+        if = { limit = { has_modifier = giga_combat_ship_engagement_range_mult } remove_modifier = giga_combat_ship_engagement_range_mult }
+        if = { limit = { has_modifier = giga_combat_ship_tracking_mult } remove_modifier = giga_combat_ship_tracking_mult }
+        if = { limit = { has_modifier = giga_combat_ship_accuracy_mult } remove_modifier = giga_combat_ship_accuracy_mult }
+        if = { limit = { has_modifier = giga_combat_ship_tracking_add } remove_modifier = giga_combat_ship_tracking_add }
+        if = { limit = { has_modifier = giga_combat_ship_accuracy_add } remove_modifier = giga_combat_ship_accuracy_add }
+        if = { limit = { has_modifier = giga_combat_ship_shield_penetration_add } remove_modifier = giga_combat_ship_shield_penetration_add }
+        if = { limit = { has_modifier = giga_combat_ship_armor_penetration_add } remove_modifier = giga_combat_ship_armor_penetration_add }
+        if = { limit = { has_modifier = giga_combat_ship_shield_penetration_mult } remove_modifier = giga_combat_ship_shield_penetration_mult }
+        if = { limit = { has_modifier = giga_combat_ship_armor_penetration_mult } remove_modifier = giga_combat_ship_armor_penetration_mult }
+
+    }
+}
