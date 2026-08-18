@@ -409,6 +409,15 @@ giga_spawn_hypersiphon_incursion_fleet = {
                 which = current_spawn_budget
                 value = this.spawn_budget
             }
+
+            # Clamp the value if it's too high and convert it into fleet buffs (below)
+            # 20M is around 75-100 ships per fleet, combined with fleet_cache_recalc = no it shouldn't lag anymore
+            # check below for the buffs
+            if = {
+                limit = { check_variable = { which = current_spawn_budget value > 20000000 } }
+                set_variable = { which = current_spawn_budget value = 20000000 }
+            }
+
             log_error = "INCURSION SPAWN: \\[This.spawn_budget]"
 
             while = {
@@ -550,9 +559,26 @@ giga_spawn_hypersiphon_incursion_fleet = {
             set_aggro_range_measure_from = return_point
             set_aggro_range = 2000
             set_fleet_flag = hypersiphon_minor_incursion
+
+            ### Adding the excess budget buffs
+            ## has to be done after all ship has spawned cause otherwise the modifiers won't apply properly even on fleet scope
+            ## The goal is to obtain a linear scaling progression whereas the spawned fleets will be "effectively stronger"
+            ## Example: if spawn_budget is thrice that of the cutoff amount (say 60 mil), the spawned fleet will be "effectively" 3 times stronger
+            if = {
+                limit = { check_variable = { which = spawn_budget value > 20000000 } }
+                add_modifier = {
+                    modifier = giga_hypersiphon_excess_buff_hp
+                    multiplier = value:giga_hypersiphon_excess_hp_buff_value|budget|spawn_budget|
+                }
+                add_modifier = {
+                    modifier = giga_hypersiphon_excess_buff_damage
+                    multiplier = value:giga_hypersiphon_excess_damage_buff_value|budget|spawn_budget|
+                }
+            }
         }
     }
 }
+
 giga_spawn_hypersiphon_major_incursion_fleet = {
     giga_spawn_hypersiphon_incursion_fleet = {
         owner = $owner$
