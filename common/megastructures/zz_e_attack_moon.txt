@@ -250,13 +250,21 @@ war_moon_0_nomad = {
 				limit = {
 					root = { exists = space_owner }
 				}
-				from = {
+				from = { # the nomad
 					OR = {
+						# nomad has permit
 						has_country_flag = giga_has_war_moon_permit@root.space_owner
+						# the nomad is the overlord
 						is_overlord_to = root.space_owner
+						# if the overlord exists, see if has permit on the overlord
+						AND = {
+							exists = root.space_owner.overlord
+							has_country_flag = giga_has_war_moon_permit@root.space_owner.overlord
+						}
 					}
 				}
 			}
+			# if open space its free real estate
 			else = {
 				always = yes
 			}
@@ -377,7 +385,17 @@ war_moon_0_nomad = {
 
 	on_build_complete = {
 		from = {
-			giga_remove_war_moon_permit_poi = { SETTLE_ID = @root.space_owner }
+			# if the system owner has an overlord
+			if = {
+				limit = {
+					exists = root.space_owner.overlord
+				}
+				giga_remove_war_moon_permit_poi = { SETTLE_ID = @root.space_owner.overlord }
+			}
+			# else no overlord
+			else = {
+				giga_remove_war_moon_permit_poi = { SETTLE_ID = @root.space_owner }
+			}
 		}
 		fromfrom = {
 			upgrade_megastructure_to = war_moon_0
