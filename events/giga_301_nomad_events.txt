@@ -4,8 +4,8 @@ namespace = giga_nomad_events
 ## nomad permit related
 ###################################################
 # on_tech_increased
-# check if nomad, then check if we have the moon or planet net and dont have the event chain
-# make it then
+# check if nomad, then check if we have the moon or planet net and dont have the event chain, make it then
+# also add existing variables to the permit
 # CANT DO IT IN THE TRADEABLE ITEMS BECAUSE FOR SOME REASON IT DOESNT MAKE THE EVENT CHAIN
 country_event = {
 	id = giga_nomad_events.001
@@ -23,11 +23,21 @@ country_event = {
 
 	immediate = {
 		begin_event_chain = { event_chain = giga_nomad_permits_evt_chain }
+		every_subject = {
+			# every non nomadic subject, give the permanent permit
+			limit = {
+				is_nomadic = no
+			}
+			root = {
+				giga_add_vassal_celestial_permit_poi = { SETTLE_ID = @prev}
+			}
+		}
 	}
 }
 
 # PERMIT REVOKING EVENTS
 # note that these also work if the settled empire has a nomad overlord (NOT THE ONE WHICH IS BUILDING IT)
+# also handles vassal permit poi revocation
 
 # on_war_beginning
 # check if nomad, then check if we have a permit with any enemy, if so revoke
@@ -52,7 +62,6 @@ country_event = {
 		from = {
 			every_war_participant = {
 				limit = {
-					is_nomadic = no
 					is_at_war_with = root
 					ROOT = {
 						has_country_flag = giga_has_war_moon_permit@prev
@@ -66,12 +75,46 @@ country_event = {
 		}
 	}
 }
+country_event = {
+	id = giga_nomad_events.011
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_nomadic = yes
+		from = { # the war
+			any_war_participant = {
+				is_at_war_with = root
+				ROOT = {
+					has_point_of_interest = { poi = giga_celestial_vassal_permit_poi@prev }
+				}
+			}
+		}
+	}
+
+	immediate = {
+		from = {
+			every_war_participant = {
+				limit = {
+					is_at_war_with = root
+					ROOT = {
+						has_point_of_interest = { poi = giga_celestial_vassal_permit_poi@prev }
+					}
+				}
+				# if so remove our permit
+				ROOT = {
+					giga_remove_vassal_celestial_permit_poi = { SETTLE_ID = @prev }
+				}
+			}
+		}
+	}
+}
 
 # on_country_destroyed
 # check if NOT nomad, then check if any nomad has a permit with us, if so revoke
 # doesnt count integration
 country_event = {
-	id = giga_nomad_events.011
+	id = giga_nomad_events.012
 	hide_window = yes
 	is_triggered_only = yes
 
@@ -92,16 +135,38 @@ country_event = {
 		}
 	}
 }
-
-# on_subject_integrated
-# should never be called (because vassals cant have the permit flag) but as a failsafe
 country_event = {
-	id = giga_nomad_events.012
+	id = giga_nomad_events.013
 	hide_window = yes
 	is_triggered_only = yes
 
 	trigger = {
-		from = {
+		any_country = {
+			is_nomadic = yes
+			has_point_of_interest = { poi = giga_celestial_vassal_permit_poi@root }
+		}
+	}
+
+	immediate = {
+		every_country = {
+			limit = {
+				is_nomadic = yes
+				has_point_of_interest = { poi = giga_celestial_vassal_permit_poi@root }
+			}
+			giga_remove_vassal_celestial_permit_poi = { SETTLE_ID = @root }
+		}
+	}
+}
+
+# on_subject_integrated
+# should never be called (because vassals cant have the permit flag) but as a failsafe
+country_event = {
+	id = giga_nomad_events.014
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		from = { #subject
 			any_country = {
 				is_nomadic = yes
 				has_country_flag = giga_has_war_moon_permit@prev
@@ -109,7 +174,7 @@ country_event = {
 		}
 	}
 
-	immediate = {
+	immediate = { # integrator
 		every_country = {
 			limit = {
 				is_nomadic = yes
@@ -119,12 +184,36 @@ country_event = {
 		}
 	}
 }
+country_event = {
+	id = giga_nomad_events.015
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		from = {
+			any_country = {
+				is_nomadic = yes
+				has_point_of_interest = { poi = giga_celestial_vassal_permit_poi@prev }
+			}
+		}
+	}
+
+	immediate = {
+		every_country = {
+			limit = {
+				is_nomadic = yes
+				has_point_of_interest = { poi = giga_celestial_vassal_permit_poi@from }
+			}
+			giga_remove_vassal_celestial_permit_poi = { SETTLE_ID = @from }
+		}
+	}
+}
 
 # on_becoming_subject
 # check if anyone has permits, then revoke them
 # even the overlord loses permits since they get permanent rights
 country_event = {
-	id = giga_nomad_events.013
+	id = giga_nomad_events.016
 	hide_window = yes
 	is_triggered_only = yes
 
@@ -142,6 +231,120 @@ country_event = {
 				has_country_flag = giga_has_war_moon_permit@root
 			}
 			giga_remove_war_moon_permit_poi = { SETTLE_ID = @root }
+		}
+	}
+}
+country_event = {
+	id = giga_nomad_events.017
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		any_country = {
+			is_nomadic = yes
+			has_point_of_interest = { poi = giga_celestial_vassal_permit_poi@root }
+		}
+	}
+
+	immediate = {
+		every_country = {
+			limit = {
+				is_nomadic = yes
+				has_point_of_interest = { poi = giga_celestial_vassal_permit_poi@root }
+			}
+			giga_remove_vassal_celestial_permit_poi = { SETTLE_ID = @root }
+		}
+	}
+}
+
+
+# EVENTS SPECIFICALLY FOR VASSAL PERMIT (ALL FOR THE SITUATION LOG, NO GAMEPLAY EFFECT)
+
+# on_becoming_subject
+# check if our overlord is a nomad with the event chain, if so give them permanent rights poi
+# no country flag needed, just a visual thing
+country_event = {
+	id = giga_nomad_events.018
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_nomadic = no
+		from = { # overlord
+			is_nomadic = yes
+			has_event_chain = giga_nomad_permits_evt_chain
+		}
+	}
+
+	immediate = {
+		from = {
+			giga_add_vassal_celestial_permit_poi = { SETTLE_ID = @prev}
+		}
+	}
+}
+
+# on_monthly_pulse_country
+# scope: nomad
+# this is a permit cleanup event for stuff who arent your vassal, but hasnt triggered the other cases
+# aka left vassalage but still exists (there isnt an on action)
+country_event = {
+	id = giga_nomad_events.019
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_nomadic = yes
+		has_event_chain = giga_nomad_permits_evt_chain
+		any_country = {
+			has_any_overlord = no
+			root = {
+				has_point_of_interest = { poi = giga_celestial_vassal_permit_poi@prev }
+			}
+		}
+	}
+
+	immediate = {
+		every_country = {
+			limit = {
+				has_any_overlord = no
+				root = {
+					has_point_of_interest = { poi = giga_celestial_vassal_permit_poi@prev }
+				}
+			}
+			root = {
+				giga_remove_vassal_celestial_permit_poi = { SETTLE_ID = @prev }
+			}
+		}
+	}
+}
+# backup event to add permit poi if it doesnt exist
+country_event = {
+	id = giga_nomad_events.020
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_nomadic = yes
+		has_event_chain = giga_nomad_permits_evt_chain
+		any_subject = {
+			is_nomadic = no
+			root = {
+				NOT = { has_point_of_interest = { poi = giga_celestial_vassal_permit_poi@prev } }
+			}
+		}
+	}
+
+	immediate = {
+		every_subject = {
+			limit = {
+				is_nomadic = no
+				root = {
+					NOT = { has_point_of_interest = { poi = giga_celestial_vassal_permit_poi@prev } }
+				}
+			}
+			root = {
+				giga_add_vassal_celestial_permit_poi = { SETTLE_ID = @prev }
+			}
 		}
 	}
 }
