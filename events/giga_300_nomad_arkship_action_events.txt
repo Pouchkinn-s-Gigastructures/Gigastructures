@@ -92,3 +92,105 @@ country_event = {
 		}
 	}
 }
+
+
+###################################################
+## giga_nomad_war_planet on actions
+###################################################
+country_event = {
+    id = giga_nomad_actions.550
+    hide_window = yes
+    is_triggered_only = yes
+
+
+    trigger = {
+        fromfrom = {
+            OR = {
+                is_ship_size = giga_nomad_war_planet
+            }
+        }
+    }
+
+    immediate = {
+        subtract_variable = {
+            which = giga_current_warplanet
+            value = 1
+        }
+        create_message = {
+            type = GIGA_NOMAD_WAR_PLANET_DESTROYED
+            localization = MESSAGE_NOMAD_WAR_PLANET_DESTROYED_DESC
+            days = 30
+            target = fromfrom
+            variable = {
+                type = name
+                localization = ENEMY_NAME
+                scope = from
+            }
+            variable = {
+                type = name
+                localization = NOMAD_CELESTIAL_WARSHIP_NAME
+                scope = fromfrom
+            }
+            variable = {
+                type = name
+                localization = SYSTEM_NAME
+                scope = fromfrom.solar_system
+            }
+        }
+        fromfrom = {
+            solar_system = { save_event_target_as = giga_debris_system }
+            solar_system = {
+                set_timed_star_flag = { flag = giga_has_craft_debris days = 360 }
+                spawn_planet = {
+                    class = pc_giga_empty_space
+                    location = prev
+                    init_effect = { save_event_target_as = giga_temp_planet }
+                }
+                create_ambient_object = {
+                    type = planetcraft_death_explosion_effect
+                    location = ROOT.fromfrom
+                    duration = 30
+                    use_3d_location = yes
+                    entity_offset = 0
+                    scale = 1
+                }
+                spawn_megastructure = {
+                    type = "nomad_war_planet_debris"
+                    coords_from = event_target:giga_temp_planet
+                    owner = root
+                }
+            }
+            event_target:giga_temp_planet = { remove_planet = yes }
+        }
+    }
+}
+
+# Success
+country_event = {
+    id = giga_nomad_actions.551
+    title = "giga_nomad_actions.551.name"
+    desc = "giga_nomad_actions.551.desc"
+    picture = GFX_evt_debris
+    show_sound = event_ringworld_build_complete
+    is_triggered_only = yes
+    option = { name = "giga_nomad_actions.551.a" }
+}
+# scrap
+country_event = {
+    id = giga_nomad_actions.552
+    title = "giga_nomad_actions.552.name"
+    desc = "giga_nomad_actions.552.desc"
+    picture = GFX_evt_megastructure_construction
+    show_sound = event_machinery
+    location = from
+    is_triggered_only = yes
+
+    option = {
+        name = "giga_nomad_actions.552.a"
+        add_monthly_resource_mult = { resource = engineering_research value = 128 }
+        add_resource = {
+            alloys = 120000
+            mult = value:giga_megastructure_dismantle_refund_mult # Vanilla megastructure_dismantle_refund_mult not used as all empires should get a reward from dismantling ruined warships, scavengers just get more
+        }
+    }
+}
