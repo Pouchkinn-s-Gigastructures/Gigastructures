@@ -1,0 +1,295 @@
+nomad_war_moon_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	# construction_blocks_and_blocked_by = none # BLOCKING TEST
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	prerequisites = { giga_tech_nomad_war_moon }
+	build_type = inside_gravity_well
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	build_time = 1800
+	resources = {
+		category = giga_attack_moon
+		cost = {
+			unity = @giga_mega_unity_cost
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 5000
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|5000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+		upkeep = { energy = 5 }
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = alloys AMOUNT = 5000 }
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = unity  AMOUNT = @giga_mega_unity_cost }
+	}
+	on_build_cancel = {
+		giga_ai_savings_refund = { CATEGORY = military RESOURCE = alloys }
+		giga_ai_savings_refund = { CATEGORY = military RESOURCE = unity }
+	}
+
+	potential = {
+		has_technology = giga_tech_nomad_war_moon
+		NOT = { has_global_flag = warmoon_disabled }
+		OR = {
+			has_global_flag = warmoon_capped_u
+			check_variable = {
+				which = giga_current_warmoon
+				value < value:giga_warmoon_limit
+			}
+		}
+	}
+
+	possible = {
+		fromfrom = {
+			is_arkship_fleet = yes
+		}
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					has_global_flag = warmoon_capped_u
+					check_variable = {
+						which = giga_current_warmoon
+						value < value:giga_warmoon_limit
+					}
+				}
+			}
+		}
+	}
+
+	ai_weight = {
+		weight = value:giga_ai_base_mega
+		
+		mult = value:giga_ai_upkeep|RESOURCE|energy|AMOUNT|800|MIN|0.25|
+		mult = value:giga_ai_upkeep|RESOURCE|alloys|AMOUNT|250|MIN|0.1|
+		mult = value:giga_ai_unlocks_galwonders
+		mult = value:giga_ai_prevent_spam|MEGA|war_moon|
+		mult = value:giga_ai_build_low_priority
+		mult = value:giga_ai_cap_availability_boost
+		mult = value:giga_ai_weight_savings|CATEGORY|military|RESOURCE|alloys|AMOUNT|20000|
+		mult = value:giga_ai_militarist_plus
+
+		modifier = { factor = 10	from = { has_country_flag = pangalactic_defense_league } }
+		modifier = { factor = 2		from = { has_federation = yes federation = { has_federation_type = military_federation } } }
+		modifier = { factor = 1.5	from = { is_homicidal = yes } }
+		modifier = { factor = 2		from = { is_at_war = yes } }
+	}
+
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom = { save_event_target_as = giga_mega_targ }
+		from = {
+			set_timed_country_flag = { flag = has_recently_built_war_moon years = 10 }
+			country_event = { id = giga_nomad_dialog.000 }	# Notification
+			change_variable = { which = giga_current_warmoon value = 1 }
+		}
+	}
+}
+
+nomad_war_moon_1 = {
+	entity = "giga_nomad_war_moon_ship_entity"
+	construction_entity = "giga_nomad_war_moon_ship_entity"
+	portrait = "GFX_megastructure_dyson_gun_background"
+	upgrade_from = { nomad_war_moon_0 }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	build_time = 1800
+	resources = {
+		category = giga_megastructures
+		cost = {
+			unity = @giga_mega_unity_cost
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 21000
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|21000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+		upkeep = {
+			energy = 40
+			alloys = 15
+		}
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = alloys AMOUNT = 21000 }
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = unity  AMOUNT = @giga_mega_unity_cost }
+	}
+
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
+	possible = { from = { has_technology = giga_tech_nomad_war_moon } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom= { save_event_target_as = giga_mega_targ }
+		from = { country_event = { id = giga_nomad_dialog.002 } }	# Notification
+	}
+}
+
+nomad_war_moon_2 = {
+	entity = ""
+	construction_entity = "giga_nomad_war_moon_ship_entity"
+	portrait = "GFX_megastructure_dyson_gun_background"
+	upgrade_from = { nomad_war_moon_1 }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+	
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		cost = {
+			unity = @giga_mega_unity_cost
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 33000
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|33000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_mega_unity_cost| }
+		upkeep = {
+			energy = 40
+			alloys = 15
+		}
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = alloys AMOUNT = 33000 }
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = unity  AMOUNT = @giga_mega_unity_cost }
+	}
+
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
+	possible = { from = { has_technology = giga_tech_nomad_war_moon } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		fromfrom= { save_event_target_as = giga_mega_targ }
+		from = {
+			country_event = { id = giga_nomad_dialog.004 }    # Notification
+			create_fleet = {
+				settings = {
+					spawn_debris = no
+					can_change_composition = yes #no
+					#is_boss = no
+				}
+				effect = {
+					set_owner = prev
+					create_ship = {
+						name = random
+						graphical_culture = root.from
+						random_existing_design = giga_nomad_war_moon
+					}
+					set_formation_scale = 10
+					set_name = last_created_ship
+				}
+			}
+		}
+		last_created_fleet = { set_location = fromfrom }
+		remove_megastructure = fromfrom
+	}
+}
+
+## Tags: @ruined
+nomad_war_moon_debris = {
+	entity = "arkship_destroyed_01_entity"
+	portrait = "GFX_megastructure_dyson_gun_background"
+	place_entity_on_planet_plane = no
+	potential = { always = no }
+	resources = { category = giga_megastructures }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+}
+
+## Tags: @restored
+nomad_war_moon_restored = {
+	entity = ""
+	portrait = "GFX_megastructure_dyson_gun_background"
+	place_entity_on_planet_plane = no
+	upgrade_from = { nomad_war_moon_debris }
+
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		cost = {
+			unity = @giga_mega_repair_unity_cost
+		}
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 33000
+		}
+		cost = { alloys = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|alloys|AMOUNT|33000| }
+		cost = { unity = -1 multiplier = value:giga_ai_savings_cost|CATEGORY|military|RESOURCE|unity|AMOUNT|@giga_mega_repair_unity_cost| }
+		upkeep = {
+			energy = 40
+			alloys = 15
+		}
+	}
+
+	on_build_start = {
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = alloys AMOUNT = 33000 }
+		giga_ai_savings_withdraw = { CATEGORY = military RESOURCE = unity  AMOUNT = @giga_mega_repair_unity_cost }
+	}
+
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
+	possible = {
+		from? = {
+			has_technology = giga_tech_nomad_war_moon
+			if = {
+				limit = {
+					exists = root.space_owner
+				}
+				NOT = { is_at_war_with = root.space_owner }
+				opinion_level = {
+					who = root.space_owner
+					level >= neutral
+				}
+			}
+		}
+	}
+
+	ai_weight = { factor = value:giga_ai_base_repairs } # If we can build it, we will build it
+	on_build_complete = {
+		save_event_target_as = giga_system
+		from = {
+			country_event = { id = giga_nomad_actions.501 }	# Notification
+			create_fleet = {
+				settings = {
+					spawn_debris = no
+					can_change_composition = yes #no
+					#is_boss = no
+				}
+				effect = {
+					set_owner = prev
+					create_ship = {
+						name = random
+						graphical_culture = root.from
+						random_existing_design = giga_nomad_war_moon
+					}
+					set_formation_scale = 10
+				}
+			}
+		}
+		last_created_fleet = { set_location = fromfrom }
+		remove_megastructure = fromfrom
+	}
+}
