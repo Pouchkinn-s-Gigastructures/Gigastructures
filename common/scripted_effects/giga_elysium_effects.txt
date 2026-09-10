@@ -1,11 +1,18 @@
 # set buildings for elysium host planets
 giga_set_elysium_buildings = {
     # replace the government zone with the host zone
-    add_zone = {
-        district = 0
-        zone_slot = 0
-        zone = zone_giga_elysium_host
-        replace = yes
+    # add_zone = {
+    #     district = 0
+    #     zone_slot = 0
+    #     zone = zone_giga_elysium_host
+    #     replace = yes
+    # }
+    switch = {
+        trigger = has_district
+        inline_script = {
+            script = megastructures/elysium/giga_elysium_supported_districts
+            type = set
+        }
     }
 
     if = {
@@ -53,5 +60,103 @@ giga_set_elysium_buildings = {
         building = building_giga_elysium_trash_heap
     }
 
+    validate_planet_buildings_and_districts = yes
+}
+
+giga_clear_elysium_buildings = {
+    hidden_effect = {
+        # save capital level
+        set_variable = {
+            which = giga_elysium_capital_level
+            value = trigger:capital_tier
+        }
+
+        switch = {
+            trigger = has_district
+            inline_script = {
+                script = megastructures/elysium/giga_elysium_supported_districts
+                type = clear
+            }
+        }
+
+        # remove buildings
+        remove_building = building_giga_elysium_host_capital
+        remove_building = building_giga_elysium_host_major_capital
+        remove_building = building_giga_elysium_host_system_capital
+
+        remove_building = building_giga_elysium_host_hive_capital
+        remove_building = building_giga_elysium_host_hive_major_capital
+
+        remove_building = building_giga_elysium_host_machine_capital
+        remove_building = building_giga_elysium_host_machine_major_capital
+        remove_building = building_giga_elysium_host_machine_system_capital
+
+        remove_building = building_giga_elysium_host_jobs
+        remove_building = building_giga_elysium_host_hive_jobs
+        remove_building = building_giga_elysium_host_machine_jobs
+
+        remove_building = building_giga_elysium_trash_heap
+    }
+
+    # restore buildings
+    if = {
+        limit = {
+            or = {
+                check_variable = { which = giga_elysium_capital_level value >= 4 }
+                capital_tier >= 4
+            }
+        }
+        if = {
+            limit = { owner = { is_hive_empire = yes } }
+            add_building = building_hive_major_capital
+        }
+        else_if = {
+            limit = { owner = { is_machine_empire = yes } }
+            add_building = building_machine_system_capital
+        }
+        else = {
+            add_building = building_system_capital
+        }
+    }
+    else_if = {
+        limit = {
+            or = {
+                check_variable = { which = giga_elysium_capital_level value = 3 }
+                capital_tier = 3
+            }
+        }
+        if = {
+            limit = { owner = { is_hive_empire = yes } }
+            add_building = building_hive_major_capital
+        }
+        else_if = {
+            limit = { owner = { is_machine_empire = yes } }
+            add_building = building_machine_major_capital
+        }
+        else = {
+            add_building = building_major_capital
+        }
+    }
+    else_if = {
+        limit = {
+            or = {
+                check_variable = { which = giga_elysium_capital_level value <= 2 }
+                capital_tier <= 2
+            }
+        }
+        if = {
+            limit = { owner = { is_hive_empire = yes } }
+            add_building = building_hive_capital
+        }
+        else_if = {
+            limit = { owner = { is_machine_empire = yes } }
+            add_building = building_machine_capital
+        }
+        else = {
+            add_building = building_capital
+        }
+    }
+
+    # this will hopefully make the capitals switch if it's meant to be something other than these, and update the planet view
     validate_planet_buildings_and_districts = yes
 }
