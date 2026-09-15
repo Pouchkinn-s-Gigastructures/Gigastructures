@@ -5835,7 +5835,7 @@ country_event = { #Manage war forges and the Kaiser's eco
 		update_katzen_tech_level_buffs = yes
 		update_katzen_tech_level_display = yes
 
-		#manually update displays of variables in the sitlog because 4.4 broke this :(
+		#manually update displays of variables in the sitlog because 4.4 broke automatic updates :(
 		every_playable_country = {
 			limit = {
 				is_ai = no
@@ -5879,7 +5879,6 @@ country_event = { #Manage war forges and the Kaiser's eco
 					}
 				}
 			}
-
 			set_country_flag = kaiser_moon_destroyed
 		}
 
@@ -5920,8 +5919,10 @@ country_event = { #Manage war forges and the Kaiser's eco
 			#to avoid spamfiring these events every month
 			set_country_flag = kaiser_moon_destroyed_events_done
 		}
+
 		# repeat pulse
 		country_event = { id = giga_katzen.030 days = 30 }
+
 		set_variable = {
 			which = "kaiser_ehof_count"
 			value = 0
@@ -5944,54 +5945,56 @@ country_event = { #Manage war forges and the Kaiser's eco
 		if = { #Flusion being in ground combat will recall the kaiser moon
 			limit = {
 				NOR = {
-					has_country_flag = kaiser_moon_destroyed
-					has_global_flag = katzen_reformation_complete #TODO make the planet recall instead ig
+					has_global_flag = kaiser_moon_recall_cooldown
+					has_global_flag = kaiser_moon_thrusters_sabotaged
+					has_global_flag = katzen_reformation_complete
+				}
+				any_owned_ship = {
+					has_ship_flag = kaiser_moon_ship #kaiser moon is still around
+				}
+				event_target:giga_jublio_system = {
+					any_ship_in_system = {
+						OR = {
+							katzen_is_planetkiller = yes
+							owner = {
+								OR = {
+									is_country_type = awakened_corrona
+									is_blokkat_country_type = yes
+									is_hostile_to = event_target:flusion_primitives_country
+									is_hostile = event_target:flusion_primitives_country
+									is_at_war_with = event_target:flusion_primitives_country
+								}
+							}
+						}
+					}
 				}
 				event_target:gigaflusion = {
 					OR = {
 						has_ground_combat = yes
-						#has_orbital_bombardment = yes #this overlaps with the more time-responsive giga_katzenai.011
+						has_orbital_bombardment = yes #this overlaps with the more time-responsive giga_katzenai.011
+					}
+				}
+			}
+			every_playable_country = { #notify those fighting the Kaiser in the Jublio system
+				limit = {
+					is_ai = no
+					any_owned_fleet = {
 						solar_system = {
-							any_ship_in_system = {
-								owner = {
-									OR = {
-										is_hostile_to = event_target:flusion_primitives_country
-										is_hostile = event_target:flusion_primitives_country
-										is_at_war_with = event_target:flusion_primitives_country
-									}
-								}
-								OR = {
-									katzen_is_planetkiller = yes
-									owner = { is_country_type = awakened_corrona }
-								}
-							}
+							is_same_value = event_target:giga_jublio_system
 						}
 					}
-					NOT = { has_planet_flag = kaiser_moon_recall_cooldown }
-				}
-			}
-			event_target:giga_jublio_system = {
-				random_fleet_in_system = {
-					limit = {
-						controller = {
-							OR = {
-								is_hostile = event_target:flusion_primitives_country
-								is_hostile_to = event_target:flusion_primitives_country
-								is_at_war_with = event_target:flusion_primitives_country
-							}
-						}
-					}
-					controller = {
-						country_event = { id = giga_katzenai.0131 days = 6 }
-						country_event = { id = giga_katzenai.013 days = 20 }
+					OR = {
+						is_hostile_to = event_target:flusion_primitives_country
+						is_hostile = event_target:flusion_primitives_country
+						is_at_war_with = event_target:flusion_primitives_country
 					}
 				}
+				country_event = { id = giga_katzenai.0131 days = 6 }
+				country_event = { id = giga_katzenai.013 days = 20 }
 			}
-			event_target:gigaflusion = {
-				set_timed_planet_flag = {
-					flag = kaiser_moon_recall_cooldown
-					days = 720 #can only recall once a year
-				}
+			set_timed_global_flag = {
+				flag = kaiser_moon_recall_cooldown
+				days = 720 #can only recall once a year
 			}
 			random_owned_fleet = {
 				limit = {
@@ -6002,7 +6005,9 @@ country_event = { #Manage war forges and the Kaiser's eco
 				fleet_event = { id = giga_katzenai.012 days = 20 } #move Kaiser Moon to Jublio
 			}
 		}
-		every_country = { #if a country allied to kaiser somehow ends up at war with him, end the war
+
+		#if a country allied to kaiser somehow ends up at war with him, end the war
+		every_country = {
 			limit = {
 				has_country_flag = allied_to_kaiser
 				is_at_war_with = event_target:flusion_primitives_country
@@ -17391,11 +17396,23 @@ country_event = { #hello
 	}
 	option = { #Ask about the provisional state
 		trigger = {
-			NOT = { is_at_war_with = event_target:flusion_primitives_country }
+			NOR = {
+				is_at_war_with = event_target:flusion_primitives_country
+				has_country_flag = katzen_civil_war_faction
+			}
 		}
 		is_dialog_only = yes
 		name = "giga_katzen.7021.whoseside"
 		response_text = "giga_katzen.7021.whoseside.response"
+	}
+	option = { #Ask about the provisional state as a Succession candidate
+		trigger = {
+			NOT = { is_at_war_with = event_target:flusion_primitives_country }
+			has_country_flag = katzen_civil_war_faction
+		}
+		is_dialog_only = yes
+		name = "giga_katzen.7021.whoseside"
+		response_text = "giga_katzen.7021.whoseside.succession.response"
 	}
 
 	option = { #Time for war!
