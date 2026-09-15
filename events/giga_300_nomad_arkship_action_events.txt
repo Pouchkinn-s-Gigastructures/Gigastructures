@@ -92,3 +92,226 @@ country_event = {
 		}
 	}
 }
+
+
+
+###################################################
+## general nomad celestial stuff
+###################################################
+# if nomad is killed by another nomad, give the killer ownership of wrecks and other ship related megas
+country_event = {
+	id = giga_nomad_actions.400
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_nomadic = yes
+		from? = { is_nomadic = yes}
+	}
+
+	immediate = {
+		every_owned_megastructure = {
+			limit = {
+				gigas_is_nomad_only_mega = yes
+			}
+			set_owner = from
+		}
+	}
+}
+
+###################################################
+## giga_nomad_war_moon on actions
+###################################################
+country_event = {
+	id = giga_nomad_actions.500
+	hide_window = yes
+	is_triggered_only = yes
+
+
+	trigger = {
+		fromfrom = {
+			OR = {
+				is_ship_size = giga_nomad_war_moon
+			}
+		}
+	}
+
+	immediate = {
+		subtract_variable = {
+			which = giga_current_warmoon
+			value = 1
+		}
+		create_message = {
+			type = GIGA_NOMAD_WAR_MOON_DESTROYED
+			localization = MESSAGE_NOMAD_WAR_MOON_DESTROYED_DESC
+			days = 30
+			target = fromfrom
+			variable = {
+				type = name
+				localization = ENEMY_NAME
+				scope = from
+			}
+			variable = {
+				type = name
+				localization = NOMAD_CELESTIAL_WARSHIP_NAME
+				scope = fromfrom
+			}
+			variable = {
+				type = name
+				localization = SYSTEM_NAME
+				scope = fromfrom.solar_system
+			}
+		}
+		fromfrom = {
+			solar_system = { save_event_target_as = giga_debris_system }
+			solar_system = {
+				set_timed_star_flag = { flag = giga_has_craft_debris days = 360 }
+				spawn_planet = {
+					class = pc_giga_empty_space
+					location = prev
+					init_effect = { save_event_target_as = giga_temp_planet }
+				}
+				create_ambient_object = {
+					type = attack_moon_death_explosion_effect
+					location = ROOT.fromfrom
+					duration = 30
+					use_3d_location = yes
+					entity_offset = 0
+					scale = 1
+				}
+				spawn_megastructure = {
+					type = "nomad_war_moon_debris"
+					coords_from = event_target:giga_temp_planet
+					owner = root
+				}
+			}
+			event_target:giga_temp_planet = { remove_planet = yes }
+		}
+	}
+}
+
+# Success
+country_event = {
+	id = giga_nomad_actions.501
+	title = "giga_nomad_actions.501.name"
+	desc = "giga_nomad_actions.501.desc"
+	picture = GFX_evt_debris
+	show_sound = event_ringworld_build_complete
+	is_triggered_only = yes
+	option = { name = "giga_nomad_actions.501.a" }
+}
+
+
+
+###################################################
+## giga_nomad_war_planet on actions
+###################################################
+country_event = {
+    id = giga_nomad_actions.550
+    hide_window = yes
+    is_triggered_only = yes
+
+
+    trigger = {
+        fromfrom = {
+            OR = {
+                is_ship_size = giga_nomad_war_planet
+            }
+        }
+    }
+
+    immediate = {
+        subtract_variable = {
+            which = giga_current_warplanet
+            value = 1
+        }
+        create_message = {
+            type = GIGA_NOMAD_WAR_PLANET_DESTROYED
+            localization = MESSAGE_NOMAD_WAR_PLANET_DESTROYED_DESC
+            days = 30
+            target = fromfrom
+            variable = {
+                type = name
+                localization = ENEMY_NAME
+                scope = from
+            }
+            variable = {
+                type = name
+                localization = NOMAD_CELESTIAL_WARSHIP_NAME
+                scope = fromfrom
+            }
+            variable = {
+                type = name
+                localization = SYSTEM_NAME
+                scope = fromfrom.solar_system
+            }
+        }
+        fromfrom = {
+            solar_system = { save_event_target_as = giga_debris_system }
+            solar_system = {
+                set_timed_star_flag = { flag = giga_has_craft_debris days = 360 }
+                spawn_planet = {
+                    class = pc_giga_empty_space
+                    location = prev
+                    init_effect = { save_event_target_as = giga_temp_planet }
+                }
+                create_ambient_object = {
+                    type = planetcraft_death_explosion_effect
+                    location = ROOT.fromfrom
+                    duration = 30
+                    use_3d_location = yes
+                    entity_offset = 0
+                    scale = 1
+                }
+                spawn_megastructure = {
+                    type = "nomad_war_planet_debris"
+                    coords_from = event_target:giga_temp_planet
+                    owner = root
+                }
+            }
+            event_target:giga_temp_planet = { remove_planet = yes }
+        }
+    }
+}
+
+# Success
+country_event = {
+    id = giga_nomad_actions.551
+    title = "giga_nomad_actions.551.name"
+    desc = "giga_nomad_actions.551.desc"
+    picture = GFX_evt_debris
+    show_sound = event_ringworld_build_complete
+    is_triggered_only = yes
+    option = { name = "giga_nomad_actions.551.a" }
+}
+
+# disband
+fleet_event = {
+    id = giga_nomad_actions.560
+    title = "giga_nomad_actions.560.name"
+    desc = "giga_nomad_actions.560.desc"
+    picture = GFX_evt_nomad_war_planet
+    show_sound = event_ringworld_build_complete
+    is_triggered_only = yes
+    hide_window = no
+
+    option = {
+        trigger = {
+            always = yes
+        }
+        name = giga_nomad_actions.560.no
+    }
+    option = {
+        trigger = {
+            always = yes
+        }
+        name = giga_nomad_actions.560.yes
+        destroy_fleet = {
+            target = this
+            kill_leader = no
+            destroy_template = yes
+        }
+        custom_tooltip = giga_nomad_actions.560.yes.tt
+    }
+}
+
