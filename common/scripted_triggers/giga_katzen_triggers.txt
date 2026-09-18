@@ -224,14 +224,14 @@ is_allowed_for_kaiser_spawn = {
 	NOR = {
 		has_star_flag = empire_home_system
 		has_star_flag = empire_cluster
-
-		#MEM
-		has_star_flag = mem_severance_relic_system
-
+		space_owner? = { is_fallen_empire = yes } # is_fe_cluster = yes
 		has_star_flag = marauder_system #Kaiser doesn't aggro them so he can get stuck if surrounded
 
-		# is_fe_cluster = yes
-		space_owner? = { is_fallen_empire = yes }
+		#MEM
+		has_star_flag = mem_severance_relic_system #Severance
+		has_star_flag = mem_vestigial_wormhole_system #Scylla
+
+
 		any_system = {
 			distance = {
 				source = this
@@ -242,8 +242,8 @@ is_allowed_for_kaiser_spawn = {
 			OR = {
 				has_star_flag = empire_home_system
 				has_star_flag = empire_cluster
-				# is_fe_cluster = yes
-				space_owner? = { is_fallen_empire = yes }
+				space_owner? = { is_fallen_empire = yes } # is_fe_cluster = yes
+				has_star_flag = marauder_system
 			}
 		}
 	}
@@ -283,7 +283,7 @@ is_forbidden_for_kaiser_starbase = {
 			}
 		}
 
-		#no hostiles
+		# Can't expand into an unsafe system
 		any_fleet_in_system = {
 			controller = {
 				OR = {
@@ -293,12 +293,13 @@ is_forbidden_for_kaiser_starbase = {
 			}
 		}
 
-		# kaiser shouldn't anger the xenophobe fallen empire unless he's at war with them
+		# Kaiser shouldn't anger the xenophobe FE unless he's already at war with them or overwhelmingly stronger
 		any_neighbor_system = {
 			owner? = {
 				is_fallen_empire = yes
 				has_ai_personality = fallen_empire_xenophobe
 				not = { is_at_war_with = root }
+				relative_power = { who = event_target:flusion_primitives_country category = fleet value = pathetic }
 			}
 		}
 
@@ -317,23 +318,57 @@ is_forbidden_for_kaiser_starbase = {
 }
 
 kaiser_can_wardec = { #should be run in target country scope
+	OR = {
+		giga_is_standard_country_type = yes
+		is_fallen_empire = yes
+	}
 	NOR = {
 		has_country_flag = katzenartig_war_declaration_forbidden #for ACE
-		any_subject = { is_ai = no } #not overlord of player
-		overlord? = { is_ai = no } #not subject of player
+		has_country_flag = allied_to_kaiser
 		is_at_war_with = root #is already at war
-	}
-	katzen_vassal = no
-	is_ai = yes
-	NAND = { #not in fed with player
-		exists = federation
-		federation = {
-			any_member = {
-				is_ai = no
+		federation? = { any_member = { is_ai = no } } #not in fed with player
+		any_subject = { #not overlord of player that would be obligated to join war
+			is_ai = no
+			OR = {
+				any_agreement = {
+					OR = {
+						has_term_value = {
+							term = joins_overlord_wars
+							value = joins_overlord_wars_defensive
+						}
+						has_term_value = {
+							term = joins_overlord_wars
+							value = joins_overlord_wars_all
+						}
+					}
+				}
+				has_country_flag = allied_to_kaiser #don't drag players into war against their own vassal/overlord
+			}
+		}
+		AND = { #not subject of player that would be obligated to join war
+			overlord? = { is_ai = no }
+			OR = {
+				any_agreement = {
+					OR = {
+						has_term_value = {
+							term = joins_subject_wars
+							value = joins_subject_wars_defensive
+						}
+						has_term_value = {
+							term = joins_subject_wars
+							value = joins_subject_wars_all
+						}
+					}
+				}
+				overlord? = {
+					has_country_flag = allied_to_kaiser #don't drag players into war against their own vassal/overlord
+				}
 			}
 		}
 	}
-	any_neighbor_country = {
+	katzen_vassal = no #don't wardec your vassals Mr Kaiser
+	is_ai = yes #players use the opinion system, not random war-rolls
+	any_neighbor_country = { #must be adjacent to the greater Imperium
 		OR = {
 			is_country_type = katzenartig_imperium
 			katzen_vassal = yes

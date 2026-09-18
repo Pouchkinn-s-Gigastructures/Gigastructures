@@ -1953,7 +1953,12 @@ country_event = { #Inform player that Flusion is fighting
 		if = {
 			limit = { is_ai = no }
 			every_country = {
-				limit = { is_in_federation_with = ROOT }
+				limit = {
+					OR = {
+						has_defensive_pact = root
+						is_in_federation_with = root
+					}
+				}
 				join_war = ROOT
 				set_kaiser_war_opinion = yes
 				set_timed_country_flag = {
@@ -1963,6 +1968,21 @@ country_event = { #Inform player that Flusion is fighting
 			}
 		}
 		every_subject = {
+			limit = {
+				NOT = { is_at_war_with = event_target:flusion_primitives_country }
+				any_agreement = { #only subjects obligated to join in defence
+					OR = {
+						has_term_value = {
+							term = joins_overlord_wars
+							value = joins_overlord_wars_defensive
+						}
+						has_term_value = {
+							term = joins_overlord_wars
+							value = joins_overlord_wars_all
+						}
+					}
+				}
+			}
 			join_war = ROOT
 			set_kaiser_war_opinion = yes
 			set_timed_country_flag = {
@@ -1970,18 +1990,39 @@ country_event = { #Inform player that Flusion is fighting
 				days = 900
 			}
 		}
-		set_kaiser_war_opinion = yes
 		if = {
 			limit = {
-				is_ai = no
+				is_subject = yes
+				any_agreement = { #only overlords obligated to join in defence
+					OR = {
+						has_term_value = {
+							term = joins_subject_wars
+							value = joins_subject_wars_defensive
+						}
+						has_term_value = {
+							term = joins_subject_wars
+							value = joins_subject_wars_all
+						}
+					}
+				}
 			}
-			country_event = { id = giga_katzen.014 days = 90 random = 60 }
+			overlord = {
+				join_war = ROOT
+				set_kaiser_war_opinion = yes
+				set_timed_country_flag = {
+					flag = recent_katzenartig_war
+					days = 900
+				}
+			}
+		}
+		set_kaiser_war_opinion = yes
+		if = {
+			limit = { is_ai = no }
+			country_event = { id = giga_katzen.014 days = 90 random = 60 } #Katzens offer peace having seized the system
 		}
 		else_if = {
-			limit = {
-				is_ai = yes
-			}
-			country_event = { id = giga_katzen.014 days = 630 random = 180 }
+			limit = { is_ai = yes }
+			country_event = { id = giga_katzen.014 days = 630 random = 180 } #Let the Katzens fight the AI longer for more territory
 		}
 	}
 
@@ -2807,13 +2848,18 @@ country_event = { #hello
 				attacker_war_goal = "wg_katzen_defence"
 				name = "Katzenkrieg"
 			}
+			every_country = {
+				limit = { has_country_flag = allied_to_kaiser }
+				join_war = event_target:flusion_primitives_country
+			}
 			event_target:flusion_primitives_country = {
 				every_owned_fleet = {
+					limit = { is_mobile = yes }
 					set_location = event_target:gigaflusion
 				}
 			}
 			every_country = {
-				limit = { is_in_federation_with = ROOT }
+				limit = { is_in_federation_with = ROOT } #can't call defensive pact allies in an offensive war
 				join_war = ROOT
 				set_kaiser_war_opinion = yes
 				set_timed_country_flag = {
@@ -2823,13 +2869,49 @@ country_event = { #hello
 			}
 			every_subject = {
 				limit = {
-					NOT = { is_at_war_with = event_target:flusion_primitives_country }
+					any_agreement = { #only subjects obligated to join offensive wars
+						OR = {
+							has_term_value = {
+								term = joins_overlord_wars
+								value = joins_overlord_wars_offensive
+							}
+							has_term_value = {
+								term = joins_overlord_wars
+								value = joins_overlord_wars_all
+							}
+						}
+					}
 				}
 				join_war = ROOT
 				set_kaiser_war_opinion = yes
 				set_timed_country_flag = {
 					flag = recent_katzenartig_war
 					days = 900
+				}
+			}
+			if = {
+				limit = {
+					is_subject = yes
+					any_agreement = { #only overlords obligated to join in offence
+						OR = {
+							has_term_value = {
+								term = joins_subject_wars
+								value = joins_subject_wars_offensive
+							}
+							has_term_value = {
+								term = joins_subject_wars
+								value = joins_subject_wars_all
+							}
+						}
+					}
+				}
+				overlord = {
+					join_war = ROOT
+					set_kaiser_war_opinion = yes
+					set_timed_country_flag = {
+						flag = recent_katzenartig_war
+						days = 900
+					}
 				}
 			}
 			set_timed_country_flag = {
@@ -5989,8 +6071,8 @@ country_event = { #Manage war forges and the Kaiser's eco
 						is_at_war_with = event_target:flusion_primitives_country
 					}
 				}
-				country_event = { id = giga_katzenai.0131 days = 6 }
-				country_event = { id = giga_katzenai.013 days = 20 }
+				country_event = { id = giga_katzenai.0131 days = 6 } #Kaiser moon recall warning
+				country_event = { id = giga_katzenai.013 days = 20 } #Kaiser moon actually recalled
 			}
 			set_timed_global_flag = {
 				flag = kaiser_moon_recall_cooldown
@@ -6621,31 +6703,25 @@ country_event = { #every 8-12 years, Kaiser randomly declares war on an AI and r
 		if = {
 			limit = {
 				katzen_reformation_active = no #don't start wars during the inwards-focus era
-				event_target:flusion_primitives_country = {
+				event_target:flusion_primitives_country = { #no wars if in Moonless chaos
 					OR = {
 						NOT = { has_country_flag = kaiser_moon_destroyed }
 						has_global_flag = katzen_reformation_complete
 					}
 				}
 
-				#make sure he can handle another war
+				#make sure he can handle any potential additional war
 				OR = {
-					AND = {
-						is_at_war = yes #only wardec weak and alone countries when already bogged in wars elsewhere
+					AND = { #if already bogged in another war, only wardec weak and alone countries
+						is_at_war = yes
 						any_country = {
 							kaiser_can_wardec = yes
-							OR = {
-								AND = {
-									NOT = { exists = federation }
-									giga_is_standard_country_type = yes
-									OR = {
-										relative_power = {
-											who = event_target:flusion_primitives_country
-											category = fleet
-											value <= inferior
-										}
-									}
-								}
+							NOT = { exists = federation }
+							giga_is_standard_country_type = yes
+							relative_power = {
+								who = event_target:flusion_primitives_country
+								category = fleet
+								value <= inferior
 							}
 						}
 					}
@@ -6657,33 +6733,26 @@ country_event = { #every 8-12 years, Kaiser randomly declares war on an AI and r
 								AND = {
 									NOT = { exists = federation }
 									giga_is_standard_country_type = yes
-									OR = {
-										relative_power = {
-											who = event_target:flusion_primitives_country
-											category = fleet
-											value <= equivalent
-										}
+									relative_power = {
+										who = event_target:flusion_primitives_country
+										category = fleet
+										value <= equivalent
 									}
 								}
 								AND = {
 									giga_is_standard_country_type = yes
-									OR = {
-										relative_power = {
-											who = event_target:flusion_primitives_country
-											category = fleet
-											value <= inferior
-										}
+									relative_power = {
+										who = event_target:flusion_primitives_country
+										category = fleet
+										value <= inferior
 									}
-									exists = federation
-									NOT = {
-										federation = {
+									federation? = {
+										NOT = {
 											any_member = {
-												OR = {
-													relative_power = {
-														who = event_target:flusion_primitives_country
-														category = fleet
-														value >= equivalent
-													}
+												relative_power = {
+													who = event_target:flusion_primitives_country
+													category = fleet
+													value >= equivalent
 												}
 											}
 										}
@@ -6710,33 +6779,26 @@ country_event = { #every 8-12 years, Kaiser randomly declares war on an AI and r
 						AND = {
 							NOT = { exists = federation }
 							giga_is_standard_country_type = yes
-							OR = {
-								relative_power = {
-									who = event_target:flusion_primitives_country
-									category = fleet
-									value <= equivalent
-								}
+							relative_power = {
+								who = event_target:flusion_primitives_country
+								category = fleet
+								value <= equivalent
 							}
 						}
 						AND = {
 							giga_is_standard_country_type = yes
-							OR = {
-								relative_power = {
-									who = event_target:flusion_primitives_country
-									category = fleet
-									value <= inferior
-								}
+							relative_power = {
+								who = event_target:flusion_primitives_country
+								category = fleet
+								value <= inferior
 							}
-							exists = federation
-							NOT = {
-								federation = {
+							federation? = {
+								NOT = {
 									any_member = {
-										OR = {
-											relative_power = {
-												who = event_target:flusion_primitives_country
-												category = fleet
-												value >= equivalent
-											}
+										relative_power = {
+											who = event_target:flusion_primitives_country
+											category = fleet
+											value >= equivalent
 										}
 									}
 								}
@@ -6754,6 +6816,10 @@ country_event = { #every 8-12 years, Kaiser randomly declares war on an AI and r
 					}
 				}
 				save_global_event_target_as = kaiser_attack_target
+				if = {
+					limit = { has_federation = yes }
+					federation = { save_global_event_target_as = kaiser_attack_target_federation }
+				}
 				random_list = { #roll whether the target fights or surrenders to vassalisation
 					80 = { #FIGHT
 						event_target:flusion_primitives_country = {
@@ -6769,7 +6835,12 @@ country_event = { #every 8-12 years, Kaiser randomly declares war on an AI and r
 						}
 						set_kaiser_war_opinion = yes
 						every_country = {
-							limit = { is_in_federation_with = event_target:kaiser_random_war_target }
+							limit = {
+								OR = {
+									has_defensive_pact = event_target:kaiser_attack_target
+									is_in_federation_with = event_target:kaiser_attack_target
+								}
+							}
 							join_war = event_target:kaiser_attack_target
 							set_kaiser_war_opinion = yes
 							set_timed_country_flag = {
@@ -6778,11 +6849,51 @@ country_event = { #every 8-12 years, Kaiser randomly declares war on an AI and r
 							}
 						}
 						every_subject = {
+							limit = {
+								NOT = { is_at_war_with = event_target:flusion_primitives_country }
+								any_agreement = { #only subjects obligated to join in defence
+									OR = {
+										has_term_value = {
+											term = joins_overlord_wars
+											value = joins_overlord_wars_defensive
+										}
+										has_term_value = {
+											term = joins_overlord_wars
+											value = joins_overlord_wars_all
+										}
+									}
+								}
+							}
 							join_war = event_target:kaiser_attack_target
 							set_kaiser_war_opinion = yes
 							set_timed_country_flag = {
 								flag = recent_katzenartig_war
 								days = 900
+							}
+						}
+						if = {
+							limit = {
+								is_subject = yes
+								any_agreement = { #only overlords obligated to join in defence
+									OR = {
+										has_term_value = {
+											term = joins_subject_wars
+											value = joins_subject_wars_defensive
+										}
+										has_term_value = {
+											term = joins_subject_wars
+											value = joins_subject_wars_all
+										}
+									}
+								}
+							}
+							overlord = {
+								join_war = event_target:kaiser_attack_target
+								set_kaiser_war_opinion = yes
+								set_timed_country_flag = {
+									flag = recent_katzenartig_war
+									days = 900
+								}
 							}
 						}
 						every_country = { #inform others
@@ -6822,10 +6933,14 @@ country_event = { #every 8-12 years, Kaiser randomly declares war on an AI and r
 								is_galactic_custodian = yes
 								is_galactic_emperor = yes
 								has_federation = yes
-								relative_power = {
+								AND = { #overlords of players should NOT submit
+									is_overlord = yes
+									any_subject = { is_ai = no }
+								}
+								relative_power = { #if you're strong enough to fight, fight
 									who = event_target:flusion_primitives_country
 									category = fleet
-									value = equivalent
+									value >= equivalent
 								}
 							}
 						}
@@ -6857,6 +6972,7 @@ country_event = { #every 8-12 years, Kaiser randomly declares war on an AI and r
 						modifier = { factor = 1.25 has_valid_civic = civic_private_military_companies } #mercs
 						modifier = { factor = 0.5 has_valid_civic = civic_worker_coop } #they know Katzens wouldn't like worker organisation
 						modifier = { factor = 0.5 owner_main_species = { has_trait = trait_humanoid_psychological_infertility } } #not suited to constant mobilisation
+						modifier = { factor = 0.5 is_overlord = yes } #don't want to swap to vassalhood (note that overlords of players cannot submit at all)
 
 						country_event = { id = giga_katzen.1031 } #make them and their subjects Katzprotektorts
 						every_country = { #inform others
@@ -9250,7 +9366,7 @@ country_event = {
 			limit = {
 				has_modifier = katzen_attache
 			}
-			country_event = { id = giga_katzen.5001 days = 10 }
+			country_event = { id = giga_katzen.5001 days = 10 } #recall attache
 		}
 		set_timed_country_flag = {
 			flag = recent_katzenartig_war
@@ -9277,7 +9393,12 @@ country_event = {
 			join_war = event_target:flusion_primitives_country
 		}
 		every_country = {
-			limit = { is_in_federation_with = ROOT }
+			limit = {
+				OR = {
+					has_defensive_pact = root
+					is_in_federation_with = root
+				}
+			}
 			join_war = ROOT
 			set_kaiser_war_opinion = yes
 			set_timed_country_flag = {
@@ -9286,11 +9407,51 @@ country_event = {
 			}
 		}
 		every_subject = {
+			limit = {
+				NOT = { is_at_war_with = event_target:flusion_primitives_country }
+				any_agreement = { #only subjects obligated to join in defence
+					OR = {
+						has_term_value = {
+							term = joins_overlord_wars
+							value = joins_overlord_wars_defensive
+						}
+						has_term_value = {
+							term = joins_overlord_wars
+							value = joins_overlord_wars_all
+						}
+					}
+				}
+			}
 			join_war = ROOT
 			set_kaiser_war_opinion = yes
 			set_timed_country_flag = {
 				flag = recent_katzenartig_war
 				days = 900
+			}
+		}
+		if = {
+			limit = {
+				is_subject = yes
+				any_agreement = { #only overlords obligated to join in defence
+					OR = {
+						has_term_value = {
+							term = joins_subject_wars
+							value = joins_subject_wars_defensive
+						}
+						has_term_value = {
+							term = joins_subject_wars
+							value = joins_subject_wars_all
+						}
+					}
+				}
+			}
+			overlord = {
+				join_war = ROOT
+				set_kaiser_war_opinion = yes
+				set_timed_country_flag = {
+					flag = recent_katzenartig_war
+					days = 900
+				}
 			}
 		}
 		save_global_event_target_as = kaiser_attack_target
@@ -9319,16 +9480,46 @@ country_event = {
 	desc = {
 		trigger = {
 			katzen_vassal = no
-			event_target:kaiser_attack_target = { is_fallen_empire = no }
+			event_target:kaiser_attack_target = {
+				is_fallen_empire = no
+				has_federation = no
+				NOR = {
+					any_subject = { is_same_value = root }
+					overlord? = { is_same_value = root }
+				}
+			}
 		}
 		text = "giga_katzen.051.normal.desc"
 	}
 	desc = {
 		trigger = {
 			katzen_vassal = yes
-			event_target:kaiser_attack_target = { is_fallen_empire = no }
+			event_target:kaiser_attack_target = {
+				is_fallen_empire = no
+				has_federation = no
+			}
 		}
 		text = "giga_katzen.051.normal.protectorate.desc"
+	}
+	desc = {
+		trigger = {
+			katzen_vassal = no
+			event_target:kaiser_attack_target = {
+				is_fallen_empire = no
+				has_federation = yes
+			}
+		}
+		text = "giga_katzen.051.federation.desc"
+	}
+	desc = {
+		trigger = {
+			katzen_vassal = yes
+			event_target:kaiser_attack_target = {
+				is_fallen_empire = no
+				has_federation = yes
+			}
+		}
+		text = "giga_katzen.051.federation.protectorate.desc"
 	}
 	desc = {
 		trigger = {
@@ -9370,6 +9561,50 @@ country_event = {
 		}
 		text = "giga_katzen.051.precursor_nonkatzen.protectorate.desc"
 	}
+	desc = {
+		trigger = {
+			katzen_vassal = no
+			event_target:kaiser_attack_target = {
+				is_fallen_empire = no #niche circumstances allow FE overlords but we don't account for that yet
+				any_subject = { is_same_value = root }
+				NOT = { is_at_war_with = event_target:flusion_primitives_country }
+			}
+		}
+		text = "giga_katzen.051.overlordofplayer.desc"
+	}
+	desc = {
+		trigger = {
+			katzen_vassal = no
+			event_target:kaiser_attack_target = {
+				is_fallen_empire = no #niche circumstances allow FE overlords but we don't account for that yet
+				any_subject = { is_same_value = root }
+				is_at_war_with = event_target:flusion_primitives_country
+			}
+		}
+		text = "giga_katzen.051.overlordofplayer.alreadyatwar.desc"
+	}
+	desc = {
+		trigger = {
+			katzen_vassal = no
+			event_target:kaiser_attack_target = {
+				is_fallen_empire = no #niche circumstances (mostly modded) allow FE subjects but we don't account for that yet
+				overlord? = { is_same_value = root }
+				NOT = { is_at_war_with = event_target:flusion_primitives_country }
+			}
+		}
+		text = "giga_katzen.051.subjectofplayer.desc"
+	}
+	desc = {
+		trigger = {
+			katzen_vassal = no #niche circumstances (mostly modded) allow FE subjects but we don't account for that yet
+			event_target:kaiser_attack_target = {
+				is_fallen_empire = no
+				overlord? = { is_same_value = root }
+				is_at_war_with = event_target:flusion_primitives_country
+			}
+		}
+		text = "giga_katzen.051.subjectofplayer.alreadyatwar.desc"
+	}
 
 	is_triggered_only = yes
 
@@ -9383,29 +9618,175 @@ country_event = {
 	option = {
 		trigger = {
 			katzen_vassal = no
+			event_target:kaiser_attack_target = {
+				NOR = {
+					any_subject = { is_same_value = root }
+					overlord? = { is_same_value = root }
+				}
+			}
 		}
 		name = "giga_katzen.051.a"
 	}
 
 	option = {
 		trigger = {
-			katzen_vassal = yes
+			katzen_vassal = no
+			NOT = { is_at_war_with = event_target:flusion_primitives_country }
+			event_target:kaiser_attack_target = {
+				OR = {
+					any_subject = { is_same_value = root }
+					overlord? = { is_same_value = root }
+				}
+			}
 		}
 		name = "giga_katzen.051.b"
 	}
 
 	option = {
 		trigger = {
-			katzen_vassal = yes
+			katzen_vassal = no
+			is_at_war_with = event_target:flusion_primitives_country
+			event_target:kaiser_attack_target = {
+				OR = {
+					any_subject = { is_same_value = root }
+					overlord? = { is_same_value = root }
+				}
+			}
+		}
+		name = "giga_katzen.051.alreadyatwar.b"
+	}
+
+	option = {
+		trigger = {
+			katzen_vassal = no
+			event_target:kaiser_attack_target = {
+				OR = {
+					any_subject = { is_same_value = root }
+					overlord? = { is_same_value = root }
+				}
+			}
+		}
+		allow = {
+			NOT = { is_at_war_with = event_target:flusion_primitives_country }
 		}
 		name = "giga_katzen.051.c"
+		custom_tooltip = giga_katzen.020.war.tooltip
+		add_resource = { influence = 100 }
+		hidden_effect = {
+			set_kaiser_war_opinion = yes
+			declare_war = {
+				target = event_target:flusion_primitives_country
+				attacker_war_goal = "wg_katzen_defence"
+				name = "Katzenkrieg"
+			}
+			every_country = {
+				limit = { is_in_federation_with = ROOT } #can't call defensive pact allies in an offensive war - defensive pacts don't take any pre-emptive self-defence excuses in Stellaris
+				join_war = ROOT
+				set_kaiser_war_opinion = yes
+				set_timed_country_flag = {
+					flag = recent_katzenartig_war
+					days = 900
+				}
+			}
+			every_subject = {
+				limit = {
+					NOT = { is_at_war_with = event_target:flusion_primitives_country }
+					any_agreement = { #only subjects obligated to join in defence
+						OR = {
+							has_term_value = {
+								term = joins_overlord_wars
+								value = joins_overlord_wars_defensive
+							}
+							has_term_value = {
+								term = joins_overlord_wars
+								value = joins_overlord_wars_all
+							}
+						}
+					}
+				}
+				join_war = ROOT
+				set_kaiser_war_opinion = yes
+				set_timed_country_flag = {
+					flag = recent_katzenartig_war
+					days = 900
+				}
+			}
+			if = {
+				limit = {
+					is_subject = yes
+					any_agreement = { #only overlords obligated to join in defence
+						OR = {
+							has_term_value = {
+								term = joins_subject_wars
+								value = joins_subject_wars_defensive
+							}
+							has_term_value = {
+								term = joins_subject_wars
+								value = joins_subject_wars_all
+							}
+						}
+					}
+				}
+				overlord = {
+					join_war = ROOT
+					set_kaiser_war_opinion = yes
+					set_timed_country_flag = {
+						flag = recent_katzenartig_war
+						days = 900
+					}
+				}
+			}
+			set_timed_country_flag = {
+				flag = recent_katzenartig_war
+				days = 900
+			}
+		}
+	}
+
+	option = {
+		trigger = {
+			katzen_vassal = yes
+		}
+		name = "giga_katzen.051.d"
+	}
+
+	option = {
+		trigger = {
+			katzen_vassal = yes
+		}
+		name = "giga_katzen.051.e"
+	}
+
+	option = {
+		trigger = {
+			event_target:kaiser_attack_target = {
+				is_fallen_empire = yes
+				has_country_flag = giga_meopa_fe
+			}
+		}
+		name = "giga_katzen.051.f"
 	}
 }
 
 country_event = {
 	id = giga_katzen.052
 	title = "giga_katzen.052.name"
-	desc = "giga_katzen.052.desc"
+	desc = {
+		trigger = {
+			event_target:kaiser_attack_target = {
+				is_overlord = no
+			}
+		}
+		text = "giga_katzen.052.desc"
+	}
+	desc = {
+		trigger = {
+			event_target:kaiser_attack_target = {
+				is_overlord = yes
+			}
+		}
+		text = "giga_katzen.052.withvassals.desc"
+	}
 
 	is_triggered_only = yes
 
@@ -9427,14 +9808,21 @@ country_event = {
 		trigger = {
 			is_pacifist = yes
 		}
-		name = "giga_katzen.052.b"
+		name = "giga_katzen.052.pacifist"
+	}
+
+	option = {
+		trigger = {
+			is_militarist = yes
+		}
+		name = "giga_katzen.052.militarist"
 	}
 
 	option = {
 		trigger = {
 			katzen_vassal = yes
 		}
-		name = "giga_katzen.052.c"
+		name = "giga_katzen.052.b"
 	}
 }
 
