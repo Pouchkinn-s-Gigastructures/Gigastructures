@@ -1,0 +1,596 @@
+### Sirens utilizing Psionic Aura version - Audience
+# the idea with this is that it has a visual indicator and will play out slightly differently compared to the normal Sirenalia
+# -> Strife Field is the "maximum range" of the psionic aura
+# The Siren aura has been coded to be unstoppable and will win any aura clashing, though, it will still slow them down
+# same deal with shroud seal
+
+
+giga_eawaf_inner_field_aura = {
+    background = "GFX_giga_eawaf_shroud_aura_background"
+    ## 3 levels, having only one or two level will come with some unpleasant visual bugs (missing tooltips)
+    ## baked with some nothingburger buffs
+    intensity_level = {
+        end = 250000
+        rival_fleet_modifier = { # only for the tooltip
+            custom_tooltip = giga_eawaf_inner_field_aura_tooltip
+        }
+        owner_fleet_modifier = {
+            ship_shield_hardening_add = 0.10
+            ship_armor_hardening_add = 0.10
+            ship_hull_regen_add_perc = 0.15
+            ship_armor_regen_add_perc = 0.15
+            ship_shield_regen_add_perc = 0.15
+        }
+        ai_weight_coefficient = -100    # AI do NOT want to enter the field
+    }
+    intensity_level = {
+        end = 500000
+        rival_fleet_modifier = { # only for the tooltip
+            custom_tooltip = giga_eawaf_inner_field_aura_tooltip
+        }
+        owner_fleet_modifier = {
+            ship_shield_hardening_add = 0.25
+            ship_armor_hardening_add = 0.25
+            ship_hull_regen_add_perc = 0.25
+            ship_armor_regen_add_perc = 0.25
+            ship_shield_regen_add_perc = 0.25
+        }
+        ai_weight_coefficient = -100    # AI do NOT want to enter the field
+    }
+    intensity_level = {
+        end = 1000000
+        rival_fleet_modifier = { # only for the tooltip
+            custom_tooltip = giga_eawaf_inner_field_aura_tooltip
+        }
+        owner_fleet_modifier = {
+            ship_shield_hardening_add = 0.5
+            ship_armor_hardening_add = 0.5
+            ship_hull_regen_add_perc = 0.35
+            ship_armor_regen_add_perc = 0.35
+            ship_shield_regen_add_perc = 0.35
+        }
+        ai_weight_coefficient = -100    # AI do NOT want to enter the field
+    }
+
+
+
+    rival_fleet_modifier = {
+        potential = { hidden_trigger = { any_owned_ship = { giga_eawaf_has_disenchanter = no } } }
+        ## the modifiers disappear from tooltip so we have to add our own
+        custom_tooltip = giga_eawaf_field_aura_ship_modifier.1
+        show_only_custom_tooltip = yes
+        show_if_not_potential = yes
+        modifier = {
+            giga_eawaf_strife_field_ship_modifier = 1
+        }
+        mult = event_target:giga_eawaf_country.giga_eawaf_field_potency_multiplier
+    }
+
+    on_start = {
+        add_aura_intensity = 1000000
+        if = {
+            limit = { has_star_flag = giga_eawaf_outer_field_system }
+            remove_star_flag = giga_eawaf_outer_field_system
+        }
+        ## mark this system as inner field system
+        set_star_flag = giga_eawaf_inner_field_system
+        every_system_ambient_object = {
+            limit = { OR = {
+                is_ambient_object_type = giga_eawaf_strife_field_outer_object
+                is_ambient_object_type = giga_eawaf_strife_field_inner_object
+            } }
+            destroy_ambient_object = this
+        }
+        star = {
+            create_ambient_object = { type = "giga_eawaf_strife_field_inner_object" location = this }
+            last_created_ambient_object = { set_location = { target = prev distance = 0 angle = 45 } }
+        }
+        # set_timed_star_flag = { flag = newly_spawned_psionic_aura months = 6 }
+
+        ### Apply the inner strife field effect through an event that also loops itself
+        if = {
+            limit = { NOT = { has_star_flag = giga_eawaf_inner_field_effect_applying } }
+            system_event = { id = giga_eawaf_psionic.1 }
+        }
+
+    }
+
+    ## executed monthly after every aura has updated its progress
+    on_monthly = {
+        custom_tooltip = giga_eawaf_inner_field_aura_spread
+
+        ## enthrall shroud seal monthly
+        giga_eawaf_enthrall_shroud_seal = yes
+
+        ##### For aura clashing #####
+        set_timed_star_flag = { flag = aura_clashing_on_monthly_check days = 20 }
+
+        ## sorry we're winning now
+        root = { save_event_target_as = winning_system }
+
+        every_neighbor_system = {
+            limit = { ## exclude system with Grand Bulwark (immune to the Sirens) or Sirens' own aura
+                NOR = {
+                    has_psionic_aura = giga_eawaf_outer_field_aura
+                    has_psionic_aura = giga_eawaf_inner_field_aura
+                    has_megastructure = anti_sirens_shield
+                }
+            }
+
+            ## Make sure to set the distance just in case
+            if = {
+                limit = { NOT = { is_variable_set = giga_eawaf_distance_from_faust } }
+                set_variable = { which = giga_eawaf_distance_from_faust value = 0 }
+                export_trigger_value_to_variable = {
+                    trigger = distance
+                    parameters = {
+                        source = event_target:giga_eawaf_faust_system
+                        type = euclidean
+                    }
+                    variable = giga_eawaf_distance_from_faust
+                }
+                round_variable = giga_eawaf_distance_from_faust
+            }
+
+            ## enthrall shroud seal monthly for neighbour systems
+            giga_eawaf_enthrall_shroud_seal = yes
+
+            ##### For aura clashing #####
+            if = {
+                limit = {
+                    # NOT = { has_star_flag = aura_clashing_on_monthly_check }
+                    has_psionic_aura = yes  ## making sure there's a psionic aura there
+                    aura_owner = { NOT = { is_same_value = root.aura_owner } }  ## obviously don't fight the same country who own this aura
+                }
+
+                ## remove flags first to make sure nothing weird happen
+                remove_star_flag = aura_is_clashing_against_@root
+                remove_star_flag = aura_clash_winning_against_@root
+                root = {
+                    remove_star_flag = aura_is_clashing_against_@prev
+                    remove_star_flag = aura_clash_winning_against_@prev
+                }
+
+                ## sorry you're losing now
+                save_event_target_as = losing_system
+
+                ## sorry we're winning now
+                event_target:winning_system = {
+                    set_star_flag = aura_is_clashing_against_@event_target:losing_system
+                    set_star_flag = aura_clash_winning_against_@event_target:losing_system
+                }
+
+                ## sorry you're losing now
+                event_target:losing_system = {
+                    set_star_flag = aura_is_clashing_against_@event_target:winning_system
+
+                    ## notify the owner of the aura that's going to get destroyed
+                    aura_owner = {
+                        if = {
+                            limit = { NOT = { has_country_flag = giga_eawaf_aura_clashing_event_triggered } }
+                            set_country_flag = aura_clashing_event_triggered ## for vanilla
+                            set_country_flag = has_encountered_psionic_auras ## for vanilla
+                            set_country_flag = giga_eawaf_aura_clashing_event_triggered
+                            country_event = {
+                                id = giga_eawaf_psionic.101
+                                scopes = { from = prev fromfrom = event_target:winning_system }
+                            }
+                        }
+                    }
+
+                    ## pending the removal of the losing psionic aura
+                    if = {
+                        limit = { NOT = { has_star_flag = giga_eawaf_psionic_aura_pending_removal } }
+                        set_star_flag = giga_eawaf_psionic_aura_pending_removal
+                        system_event = { id = giga_eawaf_psionic.3 days = value:giga_eawaf_inner_field_remove_enemy_aura_delay }
+                    }
+                }
+            }
+
+            ### for expanding
+            else_if = {
+                limit = {
+                    ### No conflict. Nice, we can expand
+                    has_psionic_aura = no
+
+                    ## Must be in the outer strife field range but further than the inner strife field
+                    check_variable = { which = giga_eawaf_distance_from_faust value <= event_target:giga_eawaf_country.giga_eawaf_inner_strife_field_range }
+
+                }
+
+                set_star_flag = giga_eawaf_inner_field_system
+                spawn_psionic_aura = {
+                    type = giga_eawaf_inner_field_aura
+                    owner = event_target:giga_eawaf_country
+                    update_type = no  #update all other owned psionic aura to this new one
+                }
+            }
+
+        }
+    }
+
+    on_gain_level = { custom_tooltip = giga_eawaf_inner_field_aura_spread }
+    on_lose_level = { }
+    on_progress_complete = { custom_tooltip = giga_eawaf_inner_field_aura_spread }
+
+    ## on update_type = yes -> all of that empire's aura get universally changed to another psionic aura still owned by that same empire
+    on_type_change = {
+        every_system_ambient_object = {
+            limit = { is_ambient_object_type = giga_eawaf_strife_field_inner_object }
+            destroy_ambient_object = this
+        }
+    }
+
+    ## on psionic aura disappearing / intensity level fall below 0
+    on_vanish = {
+        every_system_ambient_object = {
+            limit = { is_ambient_object_type = giga_eawaf_strife_field_inner_object }
+            destroy_ambient_object = this
+        }
+        try_resolve_aura_clashing = yes
+
+        remove_star_flag = giga_eawaf_inner_field_system
+
+        ##### returning stuffs if possible ######
+        #Return ships to owners
+        every_ship_in_system = {
+            limit = {
+                controller = { is_country_type = giga_eawaf_sirens }
+                has_ship_flag = giga_eawaf_enthralled_by_sirens
+            }
+            random_country = {
+                limit = { has_country_flag = giga_eawaf_former_owner@PREV }
+                save_event_target_as = giga_eawaf_former_owner
+            }
+            fleet = { set_owner = event_target:giga_eawaf_former_owner set_controller = event_target:giga_eawaf_former_owner }
+        }
+
+        #Return starbases to owners
+        starbase = {
+            if = {
+                limit = {
+                    controller = { is_country_type = giga_eawaf_sirens }
+                    any_country = { has_country_flag = giga_eawaf_former_owner@PREV }
+                }
+                random_country = {
+                    limit = { has_country_flag = giga_eawaf_former_owner@PREV }
+                    save_event_target_as = giga_eawaf_former_owner
+                }
+                set_owner = event_target:giga_eawaf_former_owner
+            }
+        }
+
+        #Return planets to owners or have them revolt
+        every_system_planet_colony = {
+            limit = {
+                owner = { is_country_type = giga_eawaf_sirens }
+                has_carrier_flag = giga_eawaf_enthralled_by_sirens
+            }
+            if = {
+                limit = { NOT = { any_country = { has_country_flag = giga_eawaf_former_owner@PREV } } }
+                create_sirens_splinter_state = yes
+            }
+            else = {
+                random_country = {
+                    limit = { has_country_flag = giga_eawaf_former_owner@PREV }
+                    save_event_target_as = giga_eawaf_former_owner
+                }
+                set_owner = event_target:giga_eawaf_former_owner
+                solar_system = { starbase = { set_owner = event_target:giga_eawaf_former_owner } }
+            }
+        }
+    }
+
+    daily_decrease = { base = 0 }
+    monthly_decrease = {
+        base = 0
+        modifier = {
+            subtract = 200000   ## disappear from the target system in 5 months
+            NOT = {  # not in the range of inner strife field anymore
+                check_variable = { which = giga_eawaf_distance_from_faust value <= event_target:giga_eawaf_country.giga_eawaf_inner_strife_field_range }
+            }
+            desc = giga_eawaf_inner_field_aura_natural_decrease
+        }
+    }
+
+    ## not relevant
+    increase_trigger = {
+        always = no
+    }
+
+    monthly_increase = {
+        base = 40000
+        # base = 5000
+        # modifier = {
+        #     mult = value:giga_eawaf_aura_monthly_increase_mult
+        #     desc = tech_psionic_aura
+        # }
+    }
+
+
+    aura_galaxy_texture = "gfx/map/psionic_auras/giga_eawaf_inner_field_aura.dds"
+    aura_hyperlane_texture = "gfx/map/psionic_auras/giga_eawaf_inner_field_aura_hyperlane.dds"
+}
+
+giga_eawaf_outer_field_aura = {
+    background = "GFX_giga_eawaf_shroud_aura_background"
+    ## 3 levels, having only one or two level will come with some unpleasant visual bugs (missing tooltips)
+    intensity_level = {
+        end = 25000
+        owner_fleet_modifier = {
+            ship_shield_hardening_add = 0.10
+            ship_armor_hardening_add = 0.10
+            ship_hull_regen_add_perc = 0.05
+            ship_armor_regen_add_perc = 0.05
+            ship_shield_regen_add_perc = 0.05
+        }
+        ai_weight_coefficient = -6    # AI don't like entering the field
+    }
+    intensity_level = {
+        end = 50000
+        owner_fleet_modifier = {
+            ship_shield_hardening_add = 0.15
+            ship_armor_hardening_add = 0.15
+            ship_hull_regen_add_perc = 0.15
+            ship_armor_regen_add_perc = 0.1
+            ship_shield_regen_add_perc = 0.1
+        }
+        ai_weight_coefficient = -6    # AI don't like entering the field
+    }
+    intensity_level = {
+        end = 100000
+        owner_fleet_modifier = {
+            ship_shield_hardening_add = 0.25
+            ship_armor_hardening_add = 0.25
+            ship_hull_regen_add_perc = 0.15
+            ship_armor_regen_add_perc = 0.15
+            ship_shield_regen_add_perc = 0.15
+        }
+        ai_weight_coefficient = -6    # AI don't like entering the field
+    }
+
+    rival_fleet_modifier = {
+        potential = { hidden_trigger = { any_owned_ship = { giga_eawaf_has_disenchanter = no } } }
+        ## the modifiers disappear from tooltip so we have to add our own
+        custom_tooltip = giga_eawaf_field_aura_ship_modifier.1
+        show_only_custom_tooltip = yes
+        show_if_not_potential = yes     ## show even if potential doesn't satisfy (necessary since the UI is always on country scope)
+        modifier = {
+            giga_eawaf_strife_field_ship_modifier = 1
+        }
+        mult = event_target:giga_eawaf_country.giga_eawaf_field_potency_multiplier
+    }
+
+    ## inner field don't need this cause everything in inner field should belong to the Sirens anyway
+    rival_planet_modifier = {
+        modifier = {
+            giga_eawaf_outer_strife_field_modifier = 1
+        }
+        mult = value:giga_eawaf_outer_strife_field_modifiers
+    }
+
+
+    on_start = {
+        add_aura_intensity = 100000
+        if = {  ## just in case
+            limit = { has_star_flag = giga_eawaf_inner_field_system }
+            remove_star_flag = giga_eawaf_inner_field_system
+        }
+        ## mark this system as outer field system
+        set_star_flag = giga_eawaf_outer_field_system
+
+        every_system_ambient_object = {
+            limit = { OR = {
+                is_ambient_object_type = giga_eawaf_strife_field_outer_object
+                is_ambient_object_type = giga_eawaf_strife_field_inner_object
+            } }
+            destroy_ambient_object = this
+        }
+        star = {
+            create_ambient_object = { type = giga_eawaf_strife_field_outer_object location = this }
+            last_created_ambient_object = { set_location = { target = prev distance = 0 angle = 45 } }
+        }
+        # set_timed_star_flag = { flag = newly_spawned_psionic_aura months = 6 }
+    }
+
+    ## executed monthly after every aura has updated its progress
+    on_monthly = {
+        custom_tooltip = giga_eawaf_outer_field_aura_spread
+
+        ##### For aura clashing #####
+        set_timed_star_flag = { flag = aura_clashing_on_monthly_check days = 20 }
+
+        ## sorry we're winning now
+        root = { save_event_target_as = winning_system }
+
+        every_neighbor_system = {
+            limit = { ## exclude system with Grand Bulwark (immune to the Sirens) or Sirens' own aura
+                NOR = {
+                    has_psionic_aura = giga_eawaf_outer_field_aura
+                    has_psionic_aura = giga_eawaf_inner_field_aura
+                    has_megastructure = anti_sirens_shield
+                }
+            }
+
+            ## Make sure to set the distance just in case
+            if = {
+                limit = { NOT = { is_variable_set = giga_eawaf_distance_from_faust } }
+                set_variable = { which = giga_eawaf_distance_from_faust value = 0 }
+                export_trigger_value_to_variable = {
+                    trigger = distance
+                    parameters = {
+                        source = event_target:giga_eawaf_faust_system
+                        type = euclidean
+                    }
+                    variable = giga_eawaf_distance_from_faust
+                }
+                round_variable = giga_eawaf_distance_from_faust
+            }
+
+            ## 5% chance to enthrall shroud seal monthly
+            random_list = {
+                95 = { }
+                5 = { giga_eawaf_enthrall_shroud_seal = yes }
+            }
+
+            ##### For aura clashing #####
+            if = {
+                limit = {
+                    # NOT = { has_star_flag = aura_clashing_on_monthly_check }
+                    has_psionic_aura = yes  ## making sure there's a psionic aura there
+                    aura_owner = { NOT = { is_same_value = root.aura_owner } }  ## obviously don't fight the same country who own this aura
+                }
+
+                ## remove flags first to make sure nothing weird happen
+                remove_star_flag = aura_is_clashing_against_@root
+                remove_star_flag = aura_clash_winning_against_@root
+                root = {
+                    remove_star_flag = aura_is_clashing_against_@prev
+                    remove_star_flag = aura_clash_winning_against_@prev
+                }
+
+                ## sorry you're losing now
+                save_event_target_as = losing_system
+
+                ## sorry we're winning now
+                event_target:winning_system = {
+                    set_star_flag = aura_is_clashing_against_@event_target:losing_system
+                    set_star_flag = aura_clash_winning_against_@event_target:losing_system
+                }
+
+                ## sorry you're losing now
+                event_target:losing_system = {
+                    set_star_flag = aura_is_clashing_against_@event_target:winning_system
+
+                    ## notify the owner of the aura that's going to get destroyed
+                    aura_owner = {
+                        if = {
+                            limit = { NOT = { has_country_flag = giga_eawaf_aura_clashing_event_triggered } }
+                            set_country_flag = aura_clashing_event_triggered ## for vanilla
+                            set_country_flag = has_encountered_psionic_auras ## for vanilla
+                            set_country_flag = giga_eawaf_aura_clashing_event_triggered
+                            country_event = {
+                                id = giga_eawaf_psionic.101
+                                scopes = { from = prev fromfrom = event_target:winning_system }
+                            }
+                        }
+                    }
+
+                    ## pending the removal of the losing psionic aura
+                    if = {
+                        limit = { NOT = { has_star_flag = giga_eawaf_psionic_aura_pending_removal } }
+                        set_star_flag = giga_eawaf_psionic_aura_pending_removal
+                        system_event = { id = giga_eawaf_psionic.3 days = value:giga_eawaf_remove_enemy_aura_delay }
+                    }
+                }
+            }
+
+            ### for expanding
+            else_if = {
+                limit = {
+                    ### No conflict. Nice, we can expand
+                    has_psionic_aura = no
+
+                    ## Must be in the outer strife field range but further than the inner strife field
+                    check_variable = { which = giga_eawaf_distance_from_faust value > event_target:giga_eawaf_country.giga_eawaf_inner_strife_field_range }
+                    check_variable = { which = giga_eawaf_distance_from_faust value <= event_target:giga_eawaf_country.giga_eawaf_outer_strife_field_range }
+
+                    ## can't expand, shroud seal blocking the way
+                    NOT = { has_megastructure = shroud_seal }
+                }
+
+                set_star_flag = giga_eawaf_outer_field_system
+                spawn_psionic_aura = {
+                    type = giga_eawaf_outer_field_aura
+                    owner = event_target:giga_eawaf_country
+                    update_type = no  #update all other owned psionic aura to this new one
+                }
+            }
+        }
+    }
+
+    on_gain_level = { custom_tooltip = giga_eawaf_outer_field_aura_spread }
+    on_lose_level = { }
+    on_progress_complete = { custom_tooltip = giga_eawaf_outer_field_aura_spread }
+
+    ## on update_type = yes -> all of that empire's aura get universally changed to another psionic aura still owned by that same empire
+    on_type_change = {
+        every_system_ambient_object = {
+            limit = { is_ambient_object_type = giga_eawaf_strife_field_outer_object }
+            destroy_ambient_object = this
+        }
+    }
+
+    ## on psionic aura disappearing / intensity level fall below 0
+    on_vanish = {
+        every_system_ambient_object = {
+            limit = { is_ambient_object_type = giga_eawaf_strife_field_outer_object }
+            destroy_ambient_object = this
+        }
+        try_resolve_aura_clashing = yes
+        remove_star_flag = giga_eawaf_outer_field_system
+    }
+
+    daily_decrease = { base = 0 }
+    monthly_decrease = {
+        base = 0
+        modifier = {
+            subtract = 20000   ## disappear from the target system in 5 months
+            OR = {
+                NOT = {  # not in the range of outer strife field anymore
+                    check_variable = { which = giga_eawaf_distance_from_faust value > event_target:giga_eawaf_country.giga_eawaf_inner_strife_field_range }
+                    check_variable = { which = giga_eawaf_distance_from_faust value <= event_target:giga_eawaf_country.giga_eawaf_outer_strife_field_range }
+                }
+            }
+            desc = giga_eawaf_outer_field_aura_natural_decrease
+        }
+
+        ## shroud seal
+        # remember, 10% that they can get enthralled every month and boosts the Sirens instead
+        modifier = {
+            subtract = 20000   ## disappear from the target system in 5 months
+            OR = {
+                has_megastructure = shroud_seal
+                any_neighbor_system = { has_megastructure = shroud_seal }
+            }
+            desc = AFFECTED_BY_SHROUD_SEALS
+        }
+
+        ## disappear from the target system in 10 month
+        # shouldn't be too op since this doesn't stop the strife field from expanding to other systems WHILE staying inside one with these buildings
+        # also nothing stops the field from spawning inside the system again lol
+        modifier = {
+            subtract = 10000
+            any_system_planet_colony = {
+                OR = {
+                    has_active_building = building_psionic_suppressor
+                    has_active_building = building_ancient_ward_2
+                }
+            }
+            any_system_ship_colony = {
+                OR = {
+                    has_active_building = building_psionic_suppressor
+                    has_active_building = building_ancient_ward_2
+                }
+            }
+            desc = AFFECTED_BY_PSIONIC_SUPPRESSORS
+        }
+    }
+
+    ## not relevant
+    increase_trigger = {
+        always = yes
+    }
+
+    monthly_increase = {
+        base = 4000
+        # base = 2000
+        # modifier = {
+        #     mult = value:giga_eawaf_aura_monthly_increase_mult
+        #     desc = tech_psionic_aura
+        # }
+    }
+
+    aura_galaxy_texture = "gfx/map/psionic_auras/giga_eawaf_outer_field_aura.dds"
+    aura_hyperlane_texture = "gfx/map/psionic_auras/giga_eawaf_outer_field_aura_hyperlane.dds"
+}
