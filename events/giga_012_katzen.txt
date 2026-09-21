@@ -1833,7 +1833,7 @@ country_event = { #Inform player that Flusion has reached space age
 		}
 	}
 
-	location = from
+	location = event_target:giga_jublio_system
 	is_triggered_only = yes
 
 	diplomatic = yes
@@ -4359,13 +4359,13 @@ country_event = {
 	desc = {
 		text = "giga_katzen.2001.a.desc"
 		trigger = {
-			NOT = { has_ascension_perk = ap_enigmatic_engineering }
+			NOT = { has_global_flag = katzen_reformation_complete }
 		}
 	}
 	desc = {
-		text = "giga_katzen.2001.b.desc" #enigmatic
+		text = "giga_katzen.2001.b.desc"
 		trigger = {
-			has_ascension_perk = ap_enigmatic_engineering
+			has_global_flag = katzen_reformation_complete
 		}
 	}
 
@@ -8518,34 +8518,23 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		OR = {
-			NOT = { has_country_flag = kaiser_moon_destroyed }
-			has_global_flag = katzen_reformation_complete
-		}
 		is_country_type = katzenartig_imperium # Don't check any other countries, none of them should ever be imperium.
 	}
 
 	immediate = {
 		country_event = { id = giga_katzen.041 days = 330 random = 60 } #Kaiser demands stuff again in about a year
-		#country_event = { id = giga_katzen.041 days = 180 random = 60 } #Kaiser tries again in only 8 months if no eligible land grabs #TODO this alternate interval needs to be reworked due to the katzen_reformation_active check
+		#country_event = { id = giga_katzen.041 days = 180 random = 60 } #Kaiser tries again in only 8 months if no eligible land grabs #TODO this alternate interval needs to be reworked
 		if = {
 			limit = {
 				katzen_reformation_active = no #don't demand land during reformation
+				NOT = { has_country_flag = kaiser_moon_destroyed }
 			}
+			log = "Land trade Kaiser event happened"
 			every_country = {
-				limit = {
-					has_country_flag = kaiser_demand_target
-				}
+				limit = { has_country_flag = kaiser_demand_target }
 				remove_country_flag = kaiser_demand_target
 			}
-			every_system = { #REMOVE FLAGS
-				limit = { has_star_flag = kaiser_demands_system }
-				remove_star_flag = kaiser_demands_system
-			}
-			every_system = {
-				limit = { has_star_flag = kaiser_demands_system_root }
-				remove_star_flag = kaiser_demands_system_root
-			}
+			clear_kaiser_demanded_systems = yes
 			set_variable = { #Reset the value of the Kaiser's deal to 0
 				which = "kaiser_trade_value"
 				value = 0
@@ -8588,12 +8577,13 @@ country_event = {
 							}
 						}
 					}
+					log = "Land trade Kaiser event happened within trade section"
 					save_global_event_target_as = kaiser_system_1 #First system demanded
 					set_star_flag = kaiser_demands_system
 					calculate_system_value_kaiser = yes
 					owner = {
 						set_country_flag = kaiser_demand_target
-						save_event_target_as = kaiser_system_demand_target
+						save_global_event_target_as = kaiser_system_demand_target
 					}
 					event_target:flusion_primitives_country = {
 						set_variable = {
@@ -8637,6 +8627,7 @@ country_event = {
 								is_country = event_target:kaiser_system_demand_target
 							}
 						}
+						log = "Land trade Kaiser event searched for second system"
 						save_global_event_target_as = kaiser_system_2 #Second system demanded
 						set_star_flag = kaiser_demands_system
 						calculate_system_value_kaiser = yes
@@ -8649,9 +8640,10 @@ country_event = {
 					}
 				}
 			}
-			else = {
-				clear_kaiser_demanded_systems = yes
-			}
+			# else = {
+			# 	clear_kaiser_demanded_systems = yes
+			# 	log = "Land trade Kaiser event cleared after first system"
+			# }
 			if = { #3rd system
 				limit = {
 					check_variable = {
@@ -8699,6 +8691,7 @@ country_event = {
 								is_country = event_target:kaiser_system_demand_target
 							}
 						}
+						log = "Land trade Kaiser event searched for third system"
 						save_global_event_target_as = kaiser_system_3 #Third system demanded
 						set_star_flag = kaiser_demands_system
 						calculate_system_value_kaiser = yes
@@ -8711,246 +8704,266 @@ country_event = {
 					}
 				}
 			}
-			else = {
-				clear_kaiser_demanded_systems = yes
-			}
-			random_list = {
-				#Kaiser will always demand at least 3 systems, with diminishing chances of 4 and 5.
-				#A more pissed Kaiser is more likely to demand extra!
-				#On the other hand, a friendly Kaiser will generally ask for less.
-				60 = {
-					modifier = {
-						factor = 0.2
-						exists = event_target:kaiser_system_demand_target
-						event_target:kaiser_system_demand_target = {
-							kaiser_opinion_range_elated = yes
-						}
+			# else = {
+			# 	clear_kaiser_demanded_systems = yes
+			# 	log = "Land trade Kaiser event cleared after second system"
+			# }
+
+			#Kaiser will always demand at least 3 systems, with diminishing chances of 4 and 5.
+			#A more pissed Kaiser is more likely to demand extra!
+			#On the other hand, a friendly Kaiser will generally ask for less.
+			if = {
+				limit = {
+					check_variable = {
+						which = "kaiser_system_demanded"
+						value = 4
 					}
-					modifier = {
-						factor = 0.4
-						exists = event_target:kaiser_system_demand_target
-						event_target:kaiser_system_demand_target = {
-							kaiser_opinion_range_very_friendly = yes
-						}
-					}
-					modifier = {
-						factor = 0.6
-						exists = event_target:kaiser_system_demand_target
-						event_target:kaiser_system_demand_target = {
-							kaiser_opinion_range_friendly = yes
-						}
-					}
-					modifier = {
-						factor = 0.8
-						exists = event_target:kaiser_system_demand_target
-						event_target:kaiser_system_demand_target = {
-							kaiser_opinion_range_cordial = yes
-						}
-					}
-					modifier = {
-						factor = 1.2
-						exists = event_target:kaiser_system_demand_target
-						event_target:kaiser_system_demand_target = {
-							kaiser_opinion_range_terse = yes
-						}
-					}
-					modifier = {
-						factor = 1.4
-						exists = event_target:kaiser_system_demand_target
-						event_target:kaiser_system_demand_target = {
-							kaiser_opinion_range_displeased = yes
-						}
-					}
-					modifier = {
-						factor = 1.6
-						exists = event_target:kaiser_system_demand_target
-						event_target:kaiser_system_demand_target = {
-							kaiser_opinion_range_angered = yes
-						}
-					}
-					if = { #Check if Kaiser did find a third suitable system
-						limit = {
-							event_target:flusion_primitives_country = {
-								check_variable = {
-									which = "kaiser_system_demanded"
-									value = 3
-								}
+				}
+				random_list = {
+					60 = {
+						modifier = {
+							factor = 0.2
+							exists = event_target:kaiser_system_demand_target
+							event_target:kaiser_system_demand_target = {
+								kaiser_opinion_range_elated = yes
 							}
 						}
-						random_system = { #Attempt to find a fourth one neighboring any demanded systems
+						modifier = {
+							factor = 0.4
+							exists = event_target:kaiser_system_demand_target
+							event_target:kaiser_system_demand_target = {
+								kaiser_opinion_range_very_friendly = yes
+							}
+						}
+						modifier = {
+							factor = 0.6
+							exists = event_target:kaiser_system_demand_target
+							event_target:kaiser_system_demand_target = {
+								kaiser_opinion_range_friendly = yes
+							}
+						}
+						modifier = {
+							factor = 0.8
+							exists = event_target:kaiser_system_demand_target
+							event_target:kaiser_system_demand_target = {
+								kaiser_opinion_range_cordial = yes
+							}
+						}
+						modifier = {
+							factor = 1.2
+							exists = event_target:kaiser_system_demand_target
+							event_target:kaiser_system_demand_target = {
+								kaiser_opinion_range_terse = yes
+							}
+						}
+						modifier = {
+							factor = 1.4
+							exists = event_target:kaiser_system_demand_target
+							event_target:kaiser_system_demand_target = {
+								kaiser_opinion_range_displeased = yes
+							}
+						}
+						modifier = {
+							factor = 1.6
+							exists = event_target:kaiser_system_demand_target
+							event_target:kaiser_system_demand_target = {
+								kaiser_opinion_range_angered = yes
+							}
+						}
+						if = { #Check if Kaiser did find a third suitable system
 							limit = {
-								OR = {
-									has_star_flag = kaiser_demands_system
-									has_star_flag = kaiser_demands_system_root
-								}
-								any_neighbor_system = {
-									NOT = { has_star_flag = kaiser_demands_system} #Not already demanded
-									is_capital_system = no #Can't demand if its a capital
-									owner? = { #can't demand unowned systems from you
-										giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
-										NOR = {
-											is_at_war_with = event_target:flusion_primitives_country #Not at war
-											is_in_federation_with = event_target:flusion_primitives_country #Not allied (kaiser isn't THAT cocky)
-											has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
-											has_country_flag = recent_kaiser_demand #short cd
-											katzen_vassal = yes
-										}
-										has_country_flag = kaiser_demand_target #Same guy as before
-										is_country = event_target:kaiser_system_demand_target
+								event_target:flusion_primitives_country = {
+									check_variable = {
+										which = "kaiser_system_demanded"
+										value = 3
 									}
 								}
 							}
-							random_neighbor_system = {
+							random_system = { #Attempt to find a fourth one neighboring any demanded systems
 								limit = {
-									NOT = { has_star_flag = kaiser_demands_system } #Not already demanded
-									is_capital_system = no  #Can't demand if its a capital
-									owner? = { #can't demand unowned systems from you
-										giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
-										NOR = {
-											is_at_war_with = event_target:flusion_primitives_country #Not at war
-											is_in_federation_with = event_target:flusion_primitives_country #Not allied (kaiser isn't THAT cocky)
-											has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
-											has_country_flag = recent_kaiser_demand #short cd
+									OR = {
+										has_star_flag = kaiser_demands_system
+										has_star_flag = kaiser_demands_system_root
+									}
+									any_neighbor_system = {
+										NOT = { has_star_flag = kaiser_demands_system} #Not already demanded
+										is_capital_system = no #Can't demand if its a capital
+										owner? = { #can't demand unowned systems from you
+											giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
+											NOR = {
+												is_at_war_with = event_target:flusion_primitives_country #Not at war
+												is_in_federation_with = event_target:flusion_primitives_country #Not allied (kaiser isn't THAT cocky)
+												has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
+												has_country_flag = recent_kaiser_demand #short cd
+												katzen_vassal = yes
+											}
+											has_country_flag = kaiser_demand_target #Same guy as before
+											is_country = event_target:kaiser_system_demand_target
 										}
-										has_country_flag = kaiser_demand_target #Same guy as before
-										is_country = event_target:kaiser_system_demand_target
 									}
 								}
-								save_global_event_target_as = kaiser_system_4 #Fourth system demanded
-								set_star_flag = kaiser_demands_system
-								calculate_system_value_kaiser = yes
+								random_neighbor_system = {
+									limit = {
+										NOT = { has_star_flag = kaiser_demands_system } #Not already demanded
+										is_capital_system = no  #Can't demand if its a capital
+										owner? = { #can't demand unowned systems from you
+											giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
+											NOR = {
+												is_at_war_with = event_target:flusion_primitives_country #Not at war
+												is_in_federation_with = event_target:flusion_primitives_country #Not allied (kaiser isn't THAT cocky)
+												has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
+												has_country_flag = recent_kaiser_demand #short cd
+											}
+											has_country_flag = kaiser_demand_target #Same guy as before
+											is_country = event_target:kaiser_system_demand_target
+										}
+									}
+									save_global_event_target_as = kaiser_system_4 #Fourth system demanded
+									set_star_flag = kaiser_demands_system
+									calculate_system_value_kaiser = yes
+									event_target:flusion_primitives_country = {
+										set_variable = {
+											which = "kaiser_system_demanded"
+											value = 4
+										}
+									}
+								}
+							}
+						}
+						# else = {
+						# 	clear_kaiser_demanded_systems = yes
+						# 	log = "Land trade Kaiser event cleared after third system"
+						# }
+					}
+					40 = {}
+				}
+			}
+			if = {
+				limit = {
+					check_variable = {
+						which = "kaiser_system_demanded"
+						value = 4
+					}
+				}
+				random_list = { #5th system
+					60 = {
+						modifier = {
+							factor = 0.2
+							exists = event_target:kaiser_system_demand_target
+							event_target:kaiser_system_demand_target = {
+								kaiser_opinion_range_elated = yes
+							}
+						}
+						modifier = {
+							factor = 0.4
+							exists = event_target:kaiser_system_demand_target
+							event_target:kaiser_system_demand_target = {
+								kaiser_opinion_range_very_friendly = yes
+							}
+						}
+						modifier = {
+							factor = 0.6
+							exists = event_target:kaiser_system_demand_target
+							event_target:kaiser_system_demand_target = {
+								kaiser_opinion_range_friendly = yes
+							}
+						}
+						modifier = {
+							factor = 0.8
+							exists = event_target:kaiser_system_demand_target
+							event_target:kaiser_system_demand_target = {
+								kaiser_opinion_range_cordial = yes
+							}
+						}
+						modifier = {
+							factor = 1.2
+							exists = event_target:kaiser_system_demand_target
+							event_target:kaiser_system_demand_target = {
+								kaiser_opinion_range_terse = yes
+							}
+						}
+						modifier = {
+							factor = 1.4
+							exists = event_target:kaiser_system_demand_target
+							event_target:kaiser_system_demand_target = {
+								kaiser_opinion_range_displeased = yes
+							}
+						}
+						modifier = {
+							factor = 1.6
+							exists = event_target:kaiser_system_demand_target
+							event_target:kaiser_system_demand_target = {
+								kaiser_opinion_range_angered = yes
+							}
+						}
+						if = { #Check if Kaiser did find a fourth suitable system
+							limit = {
 								event_target:flusion_primitives_country = {
-									set_variable = {
+									check_variable = {
 										which = "kaiser_system_demanded"
 										value = 4
 									}
 								}
 							}
-						}
-					}
-					else = {
-						clear_kaiser_demanded_systems = yes
-					}
-				}
-				40 = {}
-			}
-			random_list = { #5th system
-				60 = {
-					modifier = {
-						factor = 0.2
-						exists = event_target:kaiser_system_demand_target
-						event_target:kaiser_system_demand_target = {
-							kaiser_opinion_range_elated = yes
-						}
-					}
-					modifier = {
-						factor = 0.4
-						exists = event_target:kaiser_system_demand_target
-						event_target:kaiser_system_demand_target = {
-							kaiser_opinion_range_very_friendly = yes
-						}
-					}
-					modifier = {
-						factor = 0.6
-						exists = event_target:kaiser_system_demand_target
-						event_target:kaiser_system_demand_target = {
-							kaiser_opinion_range_friendly = yes
-						}
-					}
-					modifier = {
-						factor = 0.8
-						exists = event_target:kaiser_system_demand_target
-						event_target:kaiser_system_demand_target = {
-							kaiser_opinion_range_cordial = yes
-						}
-					}
-					modifier = {
-						factor = 1.2
-						exists = event_target:kaiser_system_demand_target
-						event_target:kaiser_system_demand_target = {
-							kaiser_opinion_range_terse = yes
-						}
-					}
-					modifier = {
-						factor = 1.4
-						exists = event_target:kaiser_system_demand_target
-						event_target:kaiser_system_demand_target = {
-							kaiser_opinion_range_displeased = yes
-						}
-					}
-					modifier = {
-						factor = 1.6
-						exists = event_target:kaiser_system_demand_target
-						event_target:kaiser_system_demand_target = {
-							kaiser_opinion_range_angered = yes
-						}
-					}
-					if = { #Check if Kaiser did find a fourth suitable system
-						limit = {
-							event_target:flusion_primitives_country = {
-								check_variable = {
-									which = "kaiser_system_demanded"
-									value = 4
-								}
-							}
-						}
-						random_system = { #Attempt to find a fifth one neighboring any demanded systems
-							limit = {
-								OR = {
-									has_star_flag = kaiser_demands_system
-									has_star_flag = kaiser_demands_system_root
-								}
-								any_neighbor_system = {
-									NOT = { has_star_flag = kaiser_demands_system } #Not already demanded
-									is_capital_system = no  #Can't demand if its a capital
-									owner? = { #can't demand unowned systems from you
-										giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
-										NOR = {
-											is_at_war_with = event_target:flusion_primitives_country #Not at war
-											is_in_federation_with = event_target:flusion_primitives_country #Not allied (kaiser isn't THAT cocky)
-											has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
-											has_country_flag = recent_kaiser_demand #short cd
-											katzen_vassal = yes
-										}
-										has_country_flag = kaiser_demand_target #Same guy as before
-										is_country = event_target:kaiser_system_demand_target
-									}
-								}
-							}
-							random_neighbor_system = {
+							random_system = { #Attempt to find a fifth one neighboring any demanded systems
 								limit = {
-									NOT = { has_star_flag = kaiser_demands_system } #Not already demanded
-									is_capital_system = no  #Can't demand if its a capital
-									owner? = { #can't demand unowned systems from you
-										giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
-										NOR = {
-											is_at_war_with = event_target:flusion_primitives_country #Not at war
-											is_in_federation_with = event_target:flusion_primitives_country #Not allied (kaiser isn't THAT cocky)
-											has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
-											has_country_flag = recent_kaiser_demand #short cd
-											katzen_vassal = yes
+									OR = {
+										has_star_flag = kaiser_demands_system
+										has_star_flag = kaiser_demands_system_root
+									}
+									any_neighbor_system = {
+										NOT = { has_star_flag = kaiser_demands_system } #Not already demanded
+										is_capital_system = no  #Can't demand if its a capital
+										owner? = { #can't demand unowned systems from you
+											giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
+											NOR = {
+												is_at_war_with = event_target:flusion_primitives_country #Not at war
+												is_in_federation_with = event_target:flusion_primitives_country #Not allied (kaiser isn't THAT cocky)
+												has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
+												has_country_flag = recent_kaiser_demand #short cd
+												katzen_vassal = yes
+											}
+											has_country_flag = kaiser_demand_target #Same guy as before
+											is_country = event_target:kaiser_system_demand_target
 										}
-										has_country_flag = kaiser_demand_target #Same guy as before
-										is_country = event_target:kaiser_system_demand_target
 									}
 								}
-								save_global_event_target_as = kaiser_system_5 #Fifth system demanded
-								set_star_flag = kaiser_demands_system
-								calculate_system_value_kaiser = yes
-								event_target:flusion_primitives_country = {
-									set_variable = {
-										which = "kaiser_system_demanded"
-										value = 5
+								random_neighbor_system = {
+									limit = {
+										NOT = { has_star_flag = kaiser_demands_system } #Not already demanded
+										is_capital_system = no  #Can't demand if its a capital
+										owner? = { #can't demand unowned systems from you
+											giga_is_standard_country_type = yes #Only demand from regular empires (kaiser isn't suicidal)
+											NOR = {
+												is_at_war_with = event_target:flusion_primitives_country #Not at war
+												is_in_federation_with = event_target:flusion_primitives_country #Not allied (kaiser isn't THAT cocky)
+												has_country_flag = recently_gave_kaiser_land #didn't already give land to the Kaiser
+												has_country_flag = recent_kaiser_demand #short cd
+												katzen_vassal = yes
+											}
+											has_country_flag = kaiser_demand_target #Same guy as before
+											is_country = event_target:kaiser_system_demand_target
+										}
+									}
+									save_global_event_target_as = kaiser_system_5 #Fifth system demanded
+									set_star_flag = kaiser_demands_system
+									calculate_system_value_kaiser = yes
+									event_target:flusion_primitives_country = {
+										set_variable = {
+											which = "kaiser_system_demanded"
+											value = 5
+										}
 									}
 								}
 							}
 						}
+						# else = {
+						# 	clear_kaiser_demanded_systems = yes
+						# 	log = "Land trade Kaiser event cleared after fourth system"
+						# }
 					}
-					else = {
-						clear_kaiser_demanded_systems = yes
-					}
+					40 = {}
 				}
-				40 = {}
 			}
 			if = {
 				limit = {
@@ -8958,32 +8971,10 @@ country_event = {
 						has_star_flag = kaiser_demands_system
 					}
 				}
+				log = "Land trade Kaiser event got to Notification block"
 				#Calculate how many alloys Kaiser will give.
 				calculate_system_trade_offer_from_kaiser = yes
-				if = { #send the actual demand
-					limit = {
-						event_target:kaiser_system_demand_target = {
-							OR = {
-								is_subject = no
-								AND = {
-									is_subject = yes
-									is_ai = yes
-									overlord = {
-										is_ai = yes
-									}
-								}
-								AND = {
-									is_subject = yes
-									is_ai = no
-								}
-							}
-						}
-					}
-					event_target:kaiser_system_demand_target = {
-						country_event = { id = giga_katzen.042 }
-					}
-				}
-				else_if = {
+				if = {
 					limit = {
 						event_target:kaiser_system_demand_target = {
 							is_subject = yes
@@ -8998,20 +8989,38 @@ country_event = {
 							country_event = { id = giga_katzen.042 }
 						}
 					}
+					log = "Land trade Kaiser event first notif block"
+				}
+				else = { #send the actual demand
+					# limit = {
+					# 	event_target:kaiser_system_demand_target = {
+					# 		OR = {
+					# 			is_subject = no
+					# 			AND = {
+					# 				is_subject = yes
+					# 				is_ai = yes
+					# 				overlord = {
+					# 					is_ai = yes
+					# 				}
+					# 			}
+					# 			AND = {
+					# 				is_subject = yes
+					# 				is_ai = no
+					# 			}
+					# 		}
+					# 	}
+					# }
+					event_target:kaiser_system_demand_target = {
+						country_event = { id = giga_katzen.042 }
+					}
+					log = "Land trade Kaiser event second notif block"
 				}
 			}
 			if = {
 				limit = {
 					NOT = { any_system = { has_star_flag = kaiser_demands_system } }
 				}
-				every_system = { #REMOVE FLAGS
-					limit = { has_star_flag = kaiser_demands_system }
-					remove_star_flag = kaiser_demands_system
-				}
-				every_system = {
-					limit = { has_star_flag = kaiser_demands_system_root }
-					remove_star_flag = kaiser_demands_system_root
-				}
+				#clear_kaiser_demanded_systems = yes
 				every_country = {
 					limit = {
 						has_country_flag = kaiser_demand_target
@@ -9077,7 +9086,7 @@ country_event = { #Kaiser demands land!
 	}
 
 	immediate = {
-		set_timed_country_flag = { flag = recent_kaiser_demand days = 30 }
+		set_timed_country_flag = { flag = recent_kaiser_demand days = 60 }
 	}
 
 	picture = GFX_evt_partition
@@ -9220,6 +9229,7 @@ country_event = { #Kaiser demands land!
 				remove_star_flag = kaiser_demands_system_root
 			}
 		}
+		log = "Nation accepted Kaiser land demands"
 	}
 
 	option = {
@@ -9251,15 +9261,9 @@ country_event = { #Kaiser demands land!
 				}
 			}
 			decrease_kaiser_opinion = yes
-			every_system = {
-				limit = { has_star_flag = kaiser_demands_system }
-				remove_star_flag = kaiser_demands_system
-			}
-			every_system = {
-				limit = { has_star_flag = kaiser_demands_system_root }
-				remove_star_flag = kaiser_demands_system_root
-			}
+			#clear_kaiser_demanded_systems = yes
 		}
+		log = "Nation refused Kaiser land demands"
 	}
 
 	abort_effect = {
@@ -9273,14 +9277,7 @@ country_event = { #Kaiser demands land!
 				}
 			}
 			while = { count = 2 decrease_kaiser_opinion = yes } # A second one for ignoring him
-			every_system = {
-				limit = { has_star_flag = kaiser_demands_system }
-				remove_star_flag = kaiser_demands_system
-			}
-			every_system = {
-				limit = { has_star_flag = kaiser_demands_system_root }
-				remove_star_flag = kaiser_demands_system_root
-			}
+			#clear_kaiser_demanded_systems = yes
 		}
 	}
 
@@ -11646,6 +11643,7 @@ country_event = { #Collapse of Katzenartig
 
 	immediate = {
 		set_update_modifiers_batch = begin
+		clear_kaiser_demanded_systems = yes
 		clear_flusion_ezic_sabotage_modifiers = yes
 		clear_flusion_katown_shield_modifiers = yes
 		if = { #all remaining Siegfrieds blow up
@@ -15383,7 +15381,7 @@ ship_event = {
 									value = 15
 								}
 							}
-							country_event = { id = giga_katzen.8511 }
+							country_event = { id = giga_katzen.8511 } #Scrap salvaged notifying event
 						}
 					}
 				}
@@ -15480,7 +15478,7 @@ country_event = {
 			}
 			every_country = {
 				limit = { is_ai = no }
-				country_event = { id = giga_katzen.8510 days = 10 }
+				country_event = { id = giga_katzen.8510 days = 10 } #Unterraumboots deployed notifier
 			}
 			set_global_flag = katzen_submarines_deployed
 			set_country_flag = katzen_submarines_deployed
@@ -15657,7 +15655,7 @@ fleet_event = {
 					which = giga_submarine_fleet_ship_count
 					value = ROOT.giga_submarine_fleet_ship_count
 				}
-				fleet_event = { id = giga_katzen.8508 days = 360 }
+				fleet_event = { id = giga_katzen.8508 days = 360 } #force unsubmerge
 				every_country = {
 					set_faction_hostility = {
 						target = event_target:katzen_submarine_country
@@ -15792,7 +15790,7 @@ fleet_event = {
 					which = giga_submarine_fleet_ship_count
 					value = ROOT.giga_submarine_fleet_ship_count
 				}
-				fleet_event = { id = giga_katzen.8508 days = 360 }
+				fleet_event = { id = giga_katzen.8508 days = 360 } #force unsubmerge
 				every_country = {
 					establish_communications_no_message = event_target:katzen_submarine_country # Don't try to change the hostility unless they know eachother, it does funky shit
 					set_faction_hostility = {
@@ -16094,6 +16092,7 @@ country_event = {
 	}
 }
 
+#submarines bombard planet - called by on_planet_bombarded
 planet_event = {
 	id = giga_katzen.8513
 	hide_window = yes
