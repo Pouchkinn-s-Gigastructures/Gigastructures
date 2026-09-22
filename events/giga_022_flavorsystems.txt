@@ -278,7 +278,7 @@ planet_event = {
 				limit = {
 					exists = controller
 					controller = {
-						has_country_flag = giga_rogue_ai_pcc_army_country
+						is_same_value = event_target:giga_rogue_ai_pcc_army_country
 					}
 				}
 				every_planet_army = {
@@ -314,23 +314,28 @@ planet_event = {
 
 	immediate = {
 		if = {
-			limit = { 
+			limit = {
 				has_modifier = giga_rogue_ai_computer
 			}
-			planet_event = { id = giga_flavor_systems.1103 days = 720 random = 3600 }
+			planet_event = { id = giga_flavor_systems.1103 days = 720 random = 3600 } #call the attack again
 		}
 		if = {
-			limit = { 
+			limit = {
 				has_modifier = giga_rogue_ai_computer
 				is_colony = yes
 				has_ground_combat = no 
 			}
-			create_country = {
-				name = "Threat Expurgation Units"
-				type = faction
-				effect = { 
-					establish_communications_no_message = root.owner
-					set_country_flag = giga_rogue_ai_pcc_army_country
+			if = {
+				limit = {
+					NOT = { exists = event_target:giga_rogue_ai_pcc_army_country }
+				}
+				create_country = {
+					name = "Threat Expurgation Units"
+					type = faction
+					effect = {
+						establish_communications_no_message = root.owner
+						save_global_event_target_as = giga_rogue_ai_pcc_army_country
+					}
 				}
 			}
 			while = {
@@ -339,13 +344,12 @@ planet_event = {
 					chance = 70
 					create_army = {
 						name = NAME_pcc_army
-						owner = last_created_country
+						owner = event_target:giga_rogue_ai_pcc_army_country
 						type = "pcc_rogue_ai_army"
-						species = owner_main_species
 					}
 				}
 			}
-			planet_event = { id = giga_flavor_systems.1104 }
+			planet_event = { id = giga_flavor_systems.1104 } #notify of attack
 		}
 	}
 }
@@ -379,7 +383,8 @@ country_event = {
     is_triggered_only = yes
 
     trigger = {
-        from = { has_country_flag = giga_rogue_ai_pcc_army_country }
+		exists = event_target:giga_rogue_ai_pcc_army_country
+        from = { is_same_value = event_target:giga_rogue_ai_pcc_army_country }
         fromfrom = { 
             is_planet_class = pc_giga_planetary_computer
             has_modifier = giga_rogue_ai_computer

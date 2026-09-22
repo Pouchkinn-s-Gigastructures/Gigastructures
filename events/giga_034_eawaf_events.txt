@@ -1281,27 +1281,6 @@ system_event = {
 
 		event_target:giga_eawaf_faust_system_center = { change_pc = pc_giga_empty_space }
 
-		#Create hidden countries used to control the strife fields VFX on the galaxy map
-		#For unfinished dust storm strife field galaxy map indicator - Caramel
-		# create_country = {
-		# 	type = giga_eawaf_strife_field
-		# 	name = "Inner Strife Field"
-		# 	effect = {
-		# 		save_global_event_target_as = giga_eawaf_strife_field_country_inner
-		# 		activate_fog_machine = giga_eawaf_strife_field_cloud_inner
-		# 		fog_machine_auto_tracking = no
-		# 	}
-		# }
-		# create_country = {
-		# 	type = giga_eawaf_strife_field
-		# 	name = "Outer Strife Field"
-		# 	effect = {
-		# 		save_global_event_target_as = giga_eawaf_strife_field_country_outer
-		# 		activate_fog_machine = giga_eawaf_strife_field_cloud_outer
-		# 		fog_machine_auto_tracking = no
-		# 	}
-		# }
-
 		#Remake the country
 		create_country = {
 			name = "Sirenalia"
@@ -1887,6 +1866,13 @@ country_event = {
 			}
 		}
 	}
+
+	immediate = {
+		if = {
+			limit = { has_global_flag = giga_eawaf_dlc_version }
+			country_event = { id = giga_eawaf_psionic.100 }
+		}
+	}
 }
 
 #TECHNICAL SIRENS SHENANIGANS
@@ -1953,7 +1939,17 @@ country_event = {
 					}
 					giga_eawaf_calculate_strife = yes
 					giga_eawaf_update_strife_field_size_2 = yes
-					giga_eawaf_apply_strife_field_effects = yes
+					if = {
+						limit = { NOT = { has_global_flag = giga_eawaf_dlc_version } }
+						giga_eawaf_apply_strife_field_effects = yes
+					}
+					else = {
+						if = {
+							limit = { NOT = { has_global_flag = giga_eawaf_psionic_applied_strife_field_effect } }
+							giga_eawaf_psionic_apply_strife_field_effects = yes
+							set_timed_global_flag = { flag = giga_eawaf_psionic_applied_strife_field_effect days = 360 }
+						}
+					}
 				}
 				giga_eawaf_calculate_war_materials = yes
 				#Let's build fleets! Every 2 levels of the Enthraller, the Sirens can produce one additional standard fleet at once.
@@ -2036,12 +2032,21 @@ fleet_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		From = { has_star_flag = giga_eawaf_inner_field_system }
+		from = {
+			if = { limit = { has_global_flag = giga_eawaf_dlc_version }
+				has_psionic_aura = giga_eawaf_inner_field_aura
+			}
+			else = {
+				has_star_flag = giga_eawaf_inner_field_system
+			}
+		}
 		NOT = { #These are shielded automatically
-			OR = {
-				any_owned_ship = { ehof_is_science_ship = yes }
-				any_owned_ship = { ehof_is_construction_ship = yes }
-				any_owned_ship = { is_ship_size = transport }
+			any_owned_ship = {
+				OR = {
+					ehof_is_science_ship = yes
+					ehof_is_construction_ship = yes
+					is_ship_size = transport
+				}
 			}
 			owner = { has_technology = giga_tech_eawaf_disenchanter_3 }
 		}
@@ -2049,12 +2054,18 @@ fleet_event = {
 	}
 
 	immediate = {
-		every_owned_ship = {
-			if = { #Unprotected by Disenchanters
-				limit = { NOR = { has_component = GIGA_EAWAF_DISENCHANTER_3 has_component = GIGA_EAWAF_DISENCHANTER_4 } }
-				fleet = { set_owner = event_target:giga_eawaf_country set_fleet_flag = giga_eawaf_enthralled_by_sirens }
-				giga_eawaf_clear_strife_field_ship_modifiers = yes
+		if = {
+			limit = {
+				any_owned_ship = {
+					NOR = {
+						has_component = GIGA_EAWAF_DISENCHANTER_3
+						has_component = GIGA_EAWAF_DISENCHANTER_4
+					}
+				}
 			}
+			set_owner = event_target:giga_eawaf_country
+			set_fleet_flag = giga_eawaf_enthralled_by_sirens
+			every_owned_ship = { giga_eawaf_clear_strife_field_ship_modifiers = yes }
 		}
 	}
 }
@@ -2066,6 +2077,7 @@ ship_event = {
 	is_triggered_only = yes
 
 	trigger = {
+		NOT = { has_global_flag = giga_eawaf_dlc_version }
 		From = { giga_eawaf_is_field_system = yes }
 		FromFrom = { NOT = { is_country_type = giga_eawaf_sirens } }
 		NOT = { #These are shielded automatically
@@ -2089,44 +2101,6 @@ ship_event = {
 				mult = event_target:giga_eawaf_country.giga_eawaf_field_potency_multiplier
 			}
 		}
-		else_if = {
-			limit = { has_component = GIGA_EAWAF_DISENCHANTER_1 }
-			add_modifier = { modifier = giga_eawaf_disenchanter_1_speed_modifier days = -1 }
-			add_modifier = {
-				modifier = giga_eawaf_disenchanter_1_upkeep_modifier
-				days = -1
-				mult = event_target:giga_eawaf_country.giga_eawaf_field_potency_multiplier
-			}
-		}
-		else_if = {
-			limit = { has_component = GIGA_EAWAF_DISENCHANTER_2 }
-			#add_modifier = { modifier = giga_eawaf_disenchanter_2_speed_modifier days = -1 }
-			add_modifier = {
-				modifier = giga_eawaf_disenchanter_2_upkeep_modifier
-				days = -1
-				mult = event_target:giga_eawaf_country.giga_eawaf_field_potency_multiplier
-			}
-		}
-		else_if = {
-			limit = { has_component = GIGA_EAWAF_DISENCHANTER_3 }
-			if = {
-				limit = { ROOT.FROM = { has_star_flag = giga_eawaf_inner_field_system } }
-				add_modifier = { modifier = giga_eawaf_disenchanter_3_speed_modifier days = -1 }
-			}
-			add_modifier = {
-				modifier = giga_eawaf_disenchanter_3_upkeep_modifier
-				days = -1
-				mult = event_target:giga_eawaf_country.giga_eawaf_field_potency_multiplier
-			}
-		}
-		else_if = {
-			limit = { has_component = GIGA_EAWAF_DISENCHANTER_4 }
-			add_modifier = {
-				modifier = giga_eawaf_disenchanter_4_upkeep_modifier
-				days = -1
-				mult = event_target:giga_eawaf_country.giga_eawaf_field_potency_multiplier
-			}
-		}
 		set_update_modifiers_batch = end
 	}
 }
@@ -2138,6 +2112,7 @@ ship_event = {
 	is_triggered_only = yes
 
 	trigger = {
+		NOT = { has_global_flag = giga_eawaf_dlc_version }
 		giga_eawaf_has_strife_field_ship_modifiers = yes
 		From = { giga_eawaf_is_field_system = no }
 	}
@@ -3540,6 +3515,13 @@ planet_event = {
 	id = giga_eawaf.7003
 	hide_window = yes
 	is_triggered_only = yes
+
+	trigger = { #Equestria may be at war but even they can't nuke the planet if they don't have it
+		owner = {
+			is_same_value = event_target:giga_eawaf_country
+			is_primitive = yes
+		}
+	}
 
 	immediate = {
 		set_update_modifiers_batch = begin
@@ -5372,7 +5354,7 @@ country_event = {
 		text = "giga_eawaf.7015.desc.kaiser"
 		trigger = { event_target:giga_eawaf_country = { has_country_flag = giga_eaw_kaiser_unifier } }
 	}
-	location = from
+	location = event_target:giga_eawaf_planet
 	is_triggered_only = yes
 
 	diplomatic = yes
@@ -5678,6 +5660,272 @@ country_event = {
 		event_target:giga_eawaf_sirens_takeover_situation = { set_situation_locked = no }
 	}
 }
+
+
+
+namespace = giga_eawaf_psionic
+
+#############################################################
+############           DLC SIRENALIA            #############
+#############################################################
+## The alternate Sirenalia crisis where psionic aura and similar mechanics are utilized
+## Only trigger if host has the psionic dlc, enabled by default in the menu
+
+## loop apply the effect of inner strife field, could be put in on_monthly but that's more weight on the game performance
+system_event = {
+	id = giga_eawaf_psionic.1
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_star_flag = giga_eawaf_inner_field_effect_applying
+
+		#Take control of everything that is not shielded. If system is unowned, build starbase.
+		every_system_planet = {
+			limit = { is_colony = yes }
+			giga_eawaf_clear_outer_strife_field_modifier = yes
+			if = {
+				limit = {
+					NOT = { has_building = building_giga_eawaf_disenchanter_building_2 }
+					owner = { giga_eawaf_is_immune_to_sirens = no }
+				}
+				owner? = { set_country_flag = giga_eawaf_former_owner@prev } #Remember the former owner
+				set_owner = event_target:giga_eawaf_country
+				set_controller = event_target:giga_eawaf_country
+				add_building = building_giga_eawaf_sirens_capital
+				set_carrier_flag = giga_eawaf_enthralled_by_sirens
+			}
+		}
+
+		every_fleet_in_system = {
+			limit = {
+				NOT = { controller = { is_same_value = event_target:giga_eawaf_country } }
+				owner = { giga_eawaf_is_immune_to_sirens = no }
+				NOR = {
+					any_owned_ship = {
+						has_component = GIGA_EAWAF_DISENCHANTER_3
+						has_component = GIGA_EAWAF_DISENCHANTER_4
+						has_active_building = building_giga_eawaf_disenchanter_building_2
+					}
+				}
+			}
+			owner = { set_country_flag = giga_eawaf_former_owner@prev } #Remember the former owner
+			set_owner = event_target:giga_eawaf_country
+			set_fleet_flag = giga_eawaf_enthralled_by_sirens
+		}
+
+		every_ship_in_system = {
+			limit = {
+				NOT = { controller = { is_same_value = event_target:giga_eawaf_country } }
+				NOR = {
+					has_component = GIGA_EAWAF_DISENCHANTER_3
+					has_component = GIGA_EAWAF_DISENCHANTER_4
+					has_active_building = building_giga_eawaf_disenchanter_building_2
+				}
+				owner = { giga_eawaf_is_immune_to_sirens = no }
+			}
+			owner = { set_country_flag = giga_eawaf_former_owner@prev } #Remember the former owner
+			fleet = { set_owner = event_target:giga_eawaf_country }
+			set_ship_flag = giga_eawaf_enthralled_by_sirens
+		}
+
+		every_system_megastructure = {
+			if = {
+				limit = { owner? = { giga_eawaf_is_immune_to_sirens = no } }
+				owner = { set_country_flag = giga_eawaf_former_owner@prev } #Remember the former owner
+			}
+
+			## Special: enthrall shroud seal if there're any
+			if = {
+				limit = { is_megastructure_type = shroud_seal }
+				owner? = {
+					country_event = {
+						id = giga_eawaf_psionic.102
+						scopes = { from = prevprev }
+					}
+				}
+				if = {
+					limit = { exists = planet }
+					solar_system = {
+						spawn_megastructure = {
+							type = "giga_eawaf_shroud_seal"
+							planet = prev.planet
+							owner = event_target:giga_eawaf_country
+						}
+					}
+				}
+				else = {
+					solar_system = {
+						spawn_megastructure = {
+							type = "giga_eawaf_shroud_seal"
+							coords_from = prev
+							owner = event_target:giga_eawaf_country
+						}
+					}
+				}
+				remove_megastructure = this
+			}
+			## else do the generic thing with every other mega (stealing their ownership)
+			else = {
+				set_owner = event_target:giga_eawaf_country
+				set_megastructure_flag = giga_eawaf_enthralled_by_sirens
+			}
+		}
+
+		## build starbase
+		if = {
+			limit = { NOT = { exists = starbase } }
+			create_starbase = {
+				size = starbase_starhold
+				owner = event_target:giga_eawaf_country
+			}
+		}
+		else = {
+			starbase = {
+				if = {
+					limit = {
+						exists = owner
+						owner = { giga_eawaf_is_immune_to_sirens = no }
+					}
+					set_owner = event_target:giga_eawaf_country
+				}
+			}
+		}
+
+		if = {	## continue to loop as long as inner field aura is present
+			limit = { has_psionic_aura = giga_eawaf_inner_field_aura }
+			system_event = { id = giga_eawaf_psionic.1 days = 90 }    ## loop every 3 month
+		}
+		else = { ## else remove the flag just in case inner field aura spawn in the system again
+			remove_star_flag = giga_eawaf_inner_field_effect_applying
+		}
+	}
+}
+
+
+
+system_event = {
+	id = giga_eawaf_psionic.3
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		destroy_psionic_aura = yes
+		remove_star_flag = giga_eawaf_psionic_aura_pending_removal
+	}
+}
+
+# detected the sirens' aura
+country_event = {
+	id = giga_eawaf_psionic.100
+	title = giga_eawaf_psionic.100.name
+	desc = giga_eawaf_psionic.100.desc
+	location = event_target:giga_eawaf_faust_system
+	picture = GFX_evt_shroud_psionic_aura
+	show_sound = event_end_of_the_cycle
+	is_triggered_only = yes
+
+	option = {
+		name = giga_eawaf_psionic.100.a
+	}
+
+	option = {
+		name = giga_eawaf_psionic.100.b
+		trigger = {
+			any_country = {
+				OR = {
+					is_country_type = mindwarden_enclave
+					has_origin = origin_mindwardens
+				}
+			}
+		}
+		hidden_effect = { set_country_flag = has_encountered_psionic_auras }
+		add_research_option = tech_psionic_suppression
+	}
+
+	option = {
+		name = giga_eawaf_psionic.100.c
+		trigger = { has_technology = tech_psionic_aura }
+		add_research_option = tech_aura_intensification
+	}
+
+	option = {
+		name = giga_eawaf_psionic.100.d
+		trigger = { has_origin = origin_mindwardens }
+	}
+}
+
+# our psionic aura failed the battle
+country_event = {
+	id = giga_eawaf_psionic.101
+	title = giga_eawaf_psionic.101.name
+	desc = giga_eawaf_psionic.101.desc
+	location = from
+	picture = GFX_evt_shroud_generic
+	show_sound = event_psionic_aura
+	is_triggered_only = yes
+
+	option = {
+		name = giga_eawaf_psionic.101.a
+	}
+	option = {
+		name = giga_eawaf_psionic.101.b
+	}
+	option = {
+		name = giga_eawaf_psionic.101.c
+		trigger = {
+			OR = {
+				has_origin = origin_endbringers
+				has_covenant = end_of_the_cycle
+			}
+		}
+	}
+}
+
+country_event = {
+	id = giga_eawaf_psionic.102
+	title = giga_eawaf_psionic.102.name
+	desc = giga_eawaf_psionic.102.desc
+	location = from
+	picture = GFX_evt_shroud_shroud_seal
+	show_sound = event_air_raid_siren
+	is_triggered_only = yes
+
+
+	option = {
+		name = giga_eawaf_psionic.102.a
+		custom_tooltip = giga_eawaf_psionic.102.tooltip
+	}
+	option = {
+		name = giga_eawaf_psionic.102.b
+		custom_tooltip = giga_eawaf_psionic.102.tooltip
+	}
+	option = {
+		name = giga_eawaf_psionic.102.c
+		custom_tooltip = giga_eawaf_psionic.102.tooltip
+	}
+
+	immediate = {
+		set_global_flag = giga_eawaf_shroud_seal_notified
+	}
+}
+
+country_event = {
+	id = giga_eawaf_psionic.103
+	title = giga_eawaf_psionic.103.name
+	desc = giga_eawaf_psionic.103.desc
+	location = from
+	picture = GFX_evt_exploding_ship
+	show_sound = event_structural_collapse
+	is_triggered_only = yes
+
+
+	option = {
+		name = giga_eawaf_psionic.103.a
+	}
+
+}
+
 
 
 # #DEBUG/TESTING/CHEAT EVENTS

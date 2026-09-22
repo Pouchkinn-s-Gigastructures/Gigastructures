@@ -250,7 +250,12 @@ country_event = {
 country_event = {
     id = giga_blokkat.10030
     title = "giga_blokkat.10030.name"
-    desc =  "giga_blokkat.10030.desc"
+    desc = giga_blokkat.10030.desc.a
+    desc = {
+        exclusive_trigger = { has_sots = yes }
+        text = giga_blokkat.10030.desc.b
+    }
+
     location = event_target:blokkat_spawn_system
     is_triggered_only = yes
     diplomatic = yes
@@ -298,11 +303,11 @@ country_event = {
 
     option = { #Uh oh
         name = "giga_blokkat.10034.a"
+        allow = { has_sots = no }
         custom_tooltip = "giga_blokkat.10034.tooltip"
         event_target:blokkat_country = {
             add_modifier = {
                 modifier = the_power_of_blokk_and_anime
-                days = -1
             }
         }
     }
@@ -313,7 +318,6 @@ country_event = {
         event_target:blokkat_country = {
             add_modifier = {
                 modifier = the_power_of_blokk_and_anime
-                days = -1
             }
         }
     }
@@ -324,7 +328,6 @@ country_event = {
         event_target:blokkat_country = {
             add_modifier = {
                 modifier = the_power_of_blokk_and_anime
-                days = -1
             }
         }
     }
@@ -335,7 +338,6 @@ country_event = {
         event_target:blokkat_country = {
             add_modifier = {
                 modifier = the_power_of_blokk_and_anime
-                days = -1
             }
         }
     }
@@ -346,7 +348,16 @@ country_event = {
         event_target:blokkat_country = {
             add_modifier = {
                 modifier = the_power_of_blokk_and_anime
-                days = -1
+            }
+        }
+    }
+
+    option = { #Uh oh
+        name = "giga_blokkat.10034.f"
+        custom_tooltip = "giga_blokkat.10034.tooltip"
+        event_target:blokkat_country = {
+            add_modifier = {
+                modifier = the_power_of_blokk_and_anime
             }
         }
     }
@@ -8272,18 +8283,31 @@ country_event = {
             custom_tooltip = {
                 fail_text = "blokkat_not_enough_energy"
                 hidden_trigger = {
-                    resource_stockpile_compare = {
-                        resource = energy
-                        value > 1
-                        mult = blokkat_shieldkiller_activation_cost
+                    if = {
+                        limit = { is_nomadic = no }
+                        resource_stockpile_compare = {
+                            resource = energy
+                            value > 1
+                            mult = blokkat_shieldkiller_activation_cost
+                        }
+                    }
+                    else = {
+                        resource_stockpile_compare = { resource = alloys value > 0.3 mult = blokkat_shieldkiller_activation_cost }
                     }
                 }
             }
         }
         trigger = { NOT = { has_global_flag = just_activated_blokkat_shieldkiller } }
-        add_resource = {
-            energy = -1
-            mult = blokkat_shieldkiller_activation_cost
+        if = {
+            limit = { is_nomadic = no }
+            add_resource = {
+                energy = -1
+                mult = blokkat_shieldkiller_activation_cost
+            }
+        }
+        else = {
+            multiply_variable = { which = blokkat_shieldkiller_activation_cost value = 0.3 }
+            add_resource = { alloys = -1 mult = blokkat_shieldkiller_activation_cost }
         }
         hidden_effect = {
             set_global_flag = just_activated_blokkat_shieldkiller
@@ -8367,34 +8391,41 @@ country_event = {
         trigger = { # Don't show the upgrade option if it's already upgraded
             NOT = {
                 event_target:giga_blokkat_shieldkiller_system = {
-                    any_system_megastructure = {
-                        is_megastructure_type = blokkat_shield_killer_4
-                    }
+                    has_megastructure = blokkat_shield_killer_4
                 }
             }
         }
 
         allow = { # Gotta have the tech and resources
             has_technology = giga_tech_blokkat_mega_stage_4
-            resource_stockpile_compare = {
-                resource = alloys
-                value >= 500000
+            if = {
+                limit = { is_nomadic = no }
+                resource_stockpile_compare = { resource = alloys value >= 500000 mult = modifier:giga_mega_cost_balance }
+                resource_stockpile_compare = { resource = energy value >= 1000000 mult = modifier:giga_mega_cost_balance }
+                resource_stockpile_compare = { resource = unity value >= @giga_tera_unity_cost mult = modifier:giga_mega_cost_balance }
             }
-            resource_stockpile_compare = {
-                resource = energy
-                value >= 1000000
-            }
-            resource_stockpile_compare = {
-                resource = unity
-                value >= @giga_tera_unity_cost
+            else = {
+                resource_stockpile_compare = { resource = alloys value >= 800000 mult = modifier:giga_mega_cost_balance }
+                resource_stockpile_compare = { resource = unity value >= @giga_tera_unity_cost mult = modifier:giga_mega_cost_balance }
             }
         }
-
-        add_resource = { # TODO: Make this account for _all_ mega cost modifiers somehow
-            alloys = -500000
-            energy = -1000000
-            unity = -20000 # can't do "-@giga_tera_unity_cost"
-            mult = modifier:giga_mega_cost_balance
+        if = {
+            limit = { is_nomadic = no }
+            add_resource = {
+                # TODO: Make this account for _all_ mega cost modifiers somehow
+                alloys = -500000
+                energy = -1000000
+                unity = -20000 # can't do "-@giga_tera_unity_cost"
+                mult = modifier:giga_mega_cost_balance
+            }
+        }
+        else = {
+            add_resource = {
+                # TODO: Make this account for _all_ mega cost modifiers somehow
+                alloys = -800000
+                unity = -20000 # can't do "-@giga_tera_unity_cost"
+                mult = modifier:giga_mega_cost_balance
+            }
         }
     }
 }

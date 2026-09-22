@@ -3695,8 +3695,20 @@ fleet_event = {
 		from = { #give it a kick if stuck
 			if = {
 				limit = { NOT = { has_star_flag = blokkat_stripmine_failsafe_flag } }
-				set_timed_star_flag = { flag = blokkat_stripmine_failsafe_flag days = 361 }
-				system_event = { id = giga_blokkat.7010 days = 360 }
+				if = {
+					limit = { has_global_flag = giga_blokkats_deathmode }
+					set_timed_star_flag = { flag = blokkat_stripmine_failsafe_flag days = 91 }
+					system_event = { id = giga_blokkat.7010 days = 90 }
+				}
+				else_if = {
+					limit = { has_global_flag = giga_blokkats_endtech }
+					set_timed_star_flag = { flag = blokkat_stripmine_failsafe_flag days = 151 }
+					system_event = { id = giga_blokkat.7010 days = 150 }
+				}
+				else = {
+					set_timed_star_flag = { flag = blokkat_stripmine_failsafe_flag days = 361 }
+					system_event = { id = giga_blokkat.7010 days = 360 }
+				}
 			}
 		}
 	}
@@ -3718,6 +3730,12 @@ system_event = {
 			set_timed_star_flag = { flag = blokkat_stripmine_failsafe_flag days = 61 }
 			every_fleet_in_system = {
 				limit = { has_fleet_flag = blokkat_stripmine_fleet }
+				every_owned_ship = {
+					limit = { OR = {  is_disabled = yes is_system_locked = yes } }
+					repair_ship = yes
+					set_disabled = no
+					set_system_locked = no
+				}
 				queue_actions = {
 					find_closest_system = {
 						trigger = {
@@ -3754,7 +3772,13 @@ fleet_event = {
 
 	immediate = {
 		from = { #give it a kick if stuck
-			system_event = { id = giga_blokkat.7012 days = 540 }
+			if = {
+				limit = { has_global_flag = giga_blokkats_deathmode }
+				system_event = { id = giga_blokkat.7012 days = 360 }
+			}
+			else = {
+				system_event = { id = giga_blokkat.7012 days = 540 }
+			}
 		}
 	}
 }
@@ -3769,19 +3793,18 @@ system_event = {
 	}
 
 	immediate = {
-		set_timed_global_flag = {
-			flag = blokkats_respawned_to_unstuck
-			days = 180
-		}
+		set_timed_global_flag = { flag = blokkats_respawned_to_unstuck days = 180 }
 		if = {
 			limit = { 
 				any_fleet_in_system = { has_fleet_flag = blokkat_mothership_fleet } 
 			}
 			system_event = { id = giga_blokkat.7012 days = 30 }
-			if = {
-				limit = { event_target:blokkat_mothership_fleet = { is_in_combat = no } }
-				event_target:blokkat_mothership_fleet = { set_disabled = yes }
-				event_target:blokkat_mothership_fleet = { destroy_fleet = THIS }
+			event_target:blokkat_mothership_fleet = {
+				if = {
+					limit = { is_in_combat = no }
+					set_disabled = yes
+					destroy_fleet = this
+				}
 			}
 		}
 	}
@@ -4743,11 +4766,31 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		is_blokkat_country_type = yes
 		OR = {
-			has_global_flag = giga_blokkats_endtech
-			has_global_flag = giga_blokkats_deathmode
-			has_global_flag = anime_blokkats
+			AND = {
+				is_blokkat_country_type = yes
+				OR = {
+					has_global_flag = giga_blokkats_endtech
+					has_global_flag = giga_blokkats_deathmode
+					has_global_flag = anime_blokkats
+				}
+			}
+			## supposed to be its own event but can be put here temporarily for now
+			AND = {
+				is_fallen_empire = yes
+				has_global_flag = giga_fe_planetcrafts_7
+				fromfrom = {
+					## should cancel right at the first ship that isn't a systemcraft in a fleet
+					## we can do it this way because systemcraft is always on its own fleet
+					NOT = {
+						any_owned_ship = {
+							NOT = {
+								is_ship_size = giga_systemcraft
+							}
+						}
+					}
+				}
+			}
 		}
 		fromfrom = { NOT = { has_fleet_flag = giga_combat_modifying_active } }
 	}
