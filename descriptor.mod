@@ -1,4 +1,4 @@
-version="3.40.2"
+version="3.40.3"
 tags={
 	"Gameplay"
 }
