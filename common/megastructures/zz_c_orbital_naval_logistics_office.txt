@@ -11,7 +11,7 @@ orbital_naval_logistics_office_0 = {
 		exists = owner
 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
 	}
-	
+
 	build_time = 1080
 	resources = {
 		category = giga_kilostructures
@@ -39,7 +39,11 @@ orbital_naval_logistics_office_0 = {
 	}
 
 	possible = {
-		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+		inline_script = megastructures/system_ownership_or_waystation_check
+		custom_tooltip = {
+			fail_text = "requires_no_orbital_naval_logistics_office"
+			system_has_arc_furnace = no
+		}
 		custom_tooltip = {
 			fail_text = "requires_not_capped"
 			from = {
@@ -56,36 +60,43 @@ orbital_naval_logistics_office_0 = {
 
 	placement_rules = {
 		planet_possible = {
-			custom_tooltip = { fail_text = "requires_surveyed_planet"			is_surveyed = { who = prev.from status = yes } }
-			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
-			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+			custom_tooltip = {
+				fail_text = "requires_survey_not_habitable"
+				is_surveyed = {			# prevent leaking habitability information
+					who = prev.from
+					status = yes
+				}
+				colonizable_planet = no
+			}
+			custom_tooltip = {
+				fail_text = "requires_no_anomaly"
+				NOT = {
+					has_anomaly = yes
+				}
+			}
+			custom_tooltip = {
+				fail_text = "requires_not_minor_planetary_body"
+				NOR = {
+					is_asteroid = yes
+					is_moon = yes
+				}
+			}
+			custom_tooltip = {
+				fail_text = "requires_not_star"
+				is_star = no
+			}
 			custom_tooltip = {
 				fail_text = "requires_not_astral_scar"
 				is_astral_scar = no
 			}
 			custom_tooltip = {
-				fail_text = "requires_colonized_planet_orbital_ring"
-				is_colony = yes
-				exists = owner
-				exists = controller
-				controller = { is_same_value = prev.owner }
+				fail_text = "requires_not_ring_world"
+				is_ringworld = no
 			}
 			custom_tooltip = {
-				fail_text = "must_build_around_developed_planet"
-				or = {
-					and = {
-						is_colony = yes
-						exists = owner
-						exists = controller
-						has_upgraded_capital = yes
-					}
-				}
-			}
-			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
-			custom_tooltip = {
-				fail_text = "requires_no_orbital_debris"
-				NOR = {
-					has_planet_flag = has_orbital_debris
+				fail_text = "requires_no_existing_megastructure"
+				NOT = {
+					has_planet_flag = megastructure
 				}
 			}
 		}
@@ -100,7 +111,7 @@ orbital_naval_logistics_office_0 = {
 		mult = value:giga_ai_unlock_low_priority
 		mult = value:giga_ai_militarist
 
-		modifier = { factor = 2.00	from = { has_federation = yes federation = { has_federation_type = research_federation } } }
+		modifier = { factor = 2.00	from = { has_federation = yes federation = { has_federation_type = military_federation } } }
 	}
 
 	on_build_complete = {
@@ -144,7 +155,7 @@ orbital_naval_logistics_office_1 = {
 		exists = owner
 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
 	}
-	
+
 	build_time = 3600
 	resources = {
 		category = giga_kilostructures
@@ -157,12 +168,7 @@ orbital_naval_logistics_office_1 = {
 		}
 		upkeep = {
 			energy = 25
-			trade = 24
-		}
-
-		upkeep = {
-			trade = 1.5
-			multiplier = planet.value:giga_count_jobs|JOB|soldier|JOB2|warrior_drone|
+			alloys = 15
 		}
 	}
 
@@ -174,13 +180,9 @@ orbital_naval_logistics_office_1 = {
 	}
 
 	country_modifier = {
-		country_naval_cap_add = 64
-	}
-
-	triggered_country_modifier = {
-		potential = { always = yes }
-		country_naval_cap_add = 4
-		multiplier = fromfrom.planet.value:giga_count_jobs|JOB|soldier|JOB2|warrior_drone|
+		country_naval_cap_add = 128
+		command_limit_add = 32
+		# country_starbase_capacity_add = 2
 	}
 
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
