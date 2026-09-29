@@ -21,7 +21,6 @@ giga_tech_orbital_naval_logistics = {
 	}
 
 	potential = {
-		has_any_megastructure_dlc = yes
 		NOT = { has_global_flag = orbital_naval_logistics_disabled }
 	}
 
@@ -57,9 +56,10 @@ giga_tech_orbital_elysium = {
 	#modifier = { planet_stability_add = 1 }			# Incase this tech's megastructure is disabled
 
 	potential = {
-		has_any_megastructure_dlc = yes
+		always = no #disabled since 4.0
 		giga_can_use_habitables = yes
 		NOT = { has_global_flag = giga_elysium_disabled }
+		is_nomadic = no
 	}
 
 	weight_modifier = {
@@ -97,7 +97,6 @@ giga_tech_ringworld_buildings = {
 	weight = @tier5weight1
 
 	potential = {
-		has_any_megastructure_dlc = yes
 		giga_can_use_habitables = yes
 	}
 
@@ -130,7 +129,7 @@ giga_tech_orbital_artificial_eco = {
 	category = { biology }
 	is_rare = no
 	prerequisites = {
-		tech_terrestrial_sculpting
+        #moved terrestrial sculptin to potential so we can have nomads ignore it
 		OR = {
 			tech_cruisers
 			tech_harbingers
@@ -147,13 +146,16 @@ giga_tech_orbital_artificial_eco = {
 	}
 
 	potential = {
-		has_any_megastructure_dlc = yes
 		NOT = {
 			AND = {
 				has_global_flag = orchid_disabled # is prereq for yggdrasil
 				has_global_flag = orbital_artificial_eco_disabled
 			}
 		}
+        OR = {
+            is_nomadic = yes
+            has_technology = tech_terrestrial_sculpting
+        }
 	}
 
 	weight_modifier = {
@@ -220,7 +222,6 @@ giga_tech_planetary_seeder_nexus = {
 			country_uses_bio_ships = yes
 			is_catalytic_empire = yes
 		}
-		has_any_megastructure_dlc = yes
 		NOT = {
 			AND = {
 				has_global_flag = orchid_disabled # is prereq for yggdrasil
@@ -273,7 +274,6 @@ giga_tech_yggdrasil_orchid = {
 	modifier = { planet_jobs_food_produces_mult = 0.05 }			# Incase this tech's megastructure is disabled
 
 	potential = {
-		has_any_megastructure_dlc = yes
 		NOT = { has_global_flag = orchid_disabled }
 	}
 
@@ -314,7 +314,6 @@ giga_tech_the_vat = {
 	modifier = { planet_jobs_food_produces_mult = 0.05 }			# Incase this tech's megastructure is disabled
 
 	potential = {
-		has_any_galactic_wonders_dlc = yes
 		NOT = { has_global_flag = the_vat_disabled }
 		has_galactic_wonders = yes
 		OR = {
@@ -349,11 +348,17 @@ giga_tech_asteroid_manufactory = {
 	area = society
 	tier = 3
 	category = { new_worlds }
-	prerequisites = { tech_starbase_3 tech_space_mining_2 }
+	prerequisites = {
+		OR = {
+			tech_waystation_2
+			tech_starbase_3
+		}
+		tech_space_mining_2
+	}
+
 	weight = @tier3weight2
 
 	potential = {
-		has_any_megastructure_dlc = yes
 		NOT = { has_global_flag = asteroid_manufactory_disabled }
 	}
 
@@ -411,7 +416,6 @@ giga_tech_terraform_barren = {
 	modifier = { terraform_speed_mult = 0.05 }			# Incase this tech's megastructure is disabled
 
 	potential = {
-		has_any_megastructure_dlc = yes
 		NOT = {
 			AND = {
 				has_global_flag = terraform_barren_disabled
@@ -421,6 +425,7 @@ giga_tech_terraform_barren = {
 				has_global_flag = glue_disabled
 			}
 		}
+		is_nomadic = no
 	}
 
 	weight_modifier = {
@@ -454,7 +459,6 @@ giga_tech_terraform_barren = {
 # 	modifier = { terraform_speed_mult = 0.05 }			# Incase this tech's megastructure is disabled
 
 # 	potential = {
-# 		has_any_megastructure_dlc = yes
 # 		NOT = {
 # 			has_global_flag = terraform_frozen_disabled
 # 		}
@@ -488,7 +492,6 @@ giga_tech_terraform_toxic = {
 	modifier = { terraform_speed_mult = 0.05 }			# Incase this tech's megastructure is disabled
 
 	potential = {
-		has_any_megastructure_dlc = yes
 		NOT = {
 			AND = {
 				has_global_flag = terraform_toxic_disabled
@@ -497,6 +500,7 @@ giga_tech_terraform_toxic = {
 				has_global_flag = glue_disabled
 			}
 		}
+		is_nomadic = no
 	}
 
 	weight_modifier = {
@@ -529,13 +533,13 @@ giga_tech_terraform_molten = {
 	modifier = { terraform_speed_mult = 0.05 }			# Incase this tech's megastructure is disabled
 
 	potential = {
-		has_any_megastructure_dlc = yes
 		NOT = {
 			AND = {
 				has_global_flag = geothermal_disabled
 				has_global_flag = glue_disabled
 			}
 		}
+		is_nomadic = no
 	}
 
 	weight_modifier = {
@@ -568,8 +572,8 @@ giga_tech_terraform_shattered = {
 	modifier = { terraform_speed_mult = 0.05 }			# Incase this tech's megastructure is disabled
 
 	potential = {
-		has_any_megastructure_dlc = yes
 		NOT = { has_global_flag = glue_disabled }
+		is_nomadic = no
 	}
 
 	weight_modifier = {
@@ -594,15 +598,41 @@ giga_tech_planetary_computer = {
 	is_rare = yes
 	prerequisites = { "tech_ecological_adaptation" "tech_self_aware_logic" "tech_power_plant_3" "giga_tech_macro_scale_weather_manipulation" }
 	weight = @tier5weight3
-	prereqfor_desc = {
-		custom = { title = "allow_planetary_computer"	desc = "desc_planetary_computer" }
+
+	#everyone who isn't Wilderness technically gets a swap so Wilderness doesn't get the "Unlocks Megastructure" desc
+	technology_swap = {
+		name = giga_tech_planetary_computer
+		inherit_icon = yes
+		inherit_effects = yes
+
+		prereqfor_desc = {
+			custom = { title = "allow_planetary_computer"	desc = "desc_planetary_computer" }
+		}
+
+		trigger = {
+			is_wilderness_empire = no
+		}
 	}
-	modifier = { all_technology_research_speed = 0.05 }			# Incase this tech's megastructure is disabled
+
+	technology_swap = {
+		name = giga_tech_planetary_computer_wilderness_swap
+		inherit_icon = yes
+		inherit_effects = yes
+
+		trigger = {
+			is_wilderness_empire = yes
+		}
+	}
+
+	modifier = {			# Incase this tech's megastructure is disabled or inaccessible to your empire type
+		planet_researchers_produces_mult = 0.05
+		planet_researchers_upkeep_mult = 0.05
+	}
 
 	potential = {
-		has_any_galactic_wonders_dlc = yes
 		has_galactic_wonders = yes
 		NOT = { has_global_flag = planetary_computer_disabled }
+		is_nomadic = no
 	}
 
 	weight_modifier = {
@@ -636,8 +666,8 @@ giga_tech_stellar_ring_habitat = {
 	potential = {
 		always = no # 3.9 made this mega obsolete, pending rework
 		#
-		#has_any_megastructure_dlc = yes
 		#is_void_dweller_empire = yes
+		# is_nomadic = no
 	}
 
 	weight_modifier = {
@@ -736,7 +766,6 @@ giga_tech_psychic_hypersiphon = {
 	}
 
 	potential = {
-		has_any_galactic_wonders_dlc = yes
 		has_finished_psionic_tradition = yes
 		NOT = { has_global_flag = siphon_disabled }
 	}

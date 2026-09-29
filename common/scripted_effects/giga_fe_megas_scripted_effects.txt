@@ -1,5 +1,6 @@
 
 giga_move_to_capital = {
+	optimize_memory
 	random_list = {
 		4 = { random_planet_within_border = { save_event_target_as = giga_fe_fleet_spawn } }
 		2 = { capital_scope.solar_system = { random_system_planet = { save_event_target_as = giga_fe_fleet_spawn } } }
@@ -7,48 +8,229 @@ giga_move_to_capital = {
 	last_created_fleet = { set_location = event_target:giga_fe_fleet_spawn }
 }
 
-giga_moon_fe = {
-	# create_leader = {
-	# 	class = admiral
-	# 	species = ROOT.species
-	# 	name = random
-	# 	skill = 6
-	# }
-	create_fleet = { 
-		name = "Attack Moon" 
-		settings = { spawn_debris = no } 
-		effect = { 
-			set_owner = prev 
-			create_ship = { 
-				name = "Celestial Defender"	
-				design = "Ancient AI Planetoid"	
-				effect = { 
-					set_ship_flag = giga_moon_fe
-					add_modifier = {
-						modifier = giga_fe_planetcraft_buff
-						days = -1
-					}
-				} 
+giga_create_fe_celestials = {
+	optimize_memory
+	[[!SYSTEMCRAFT]
+	while = {
+		count = event_target:global_event_country.giga_$STATE$_$CELESTIAL$craft_min_count
+		create_fleet = {
+			name = "name_war_$CELESTIAL$"
+			settings = { spawn_debris = no }
+			effect = {
+				set_owner = prev
+				create_ship = { fleet_cache_recalc = no name = "giga_$CELESTIAL$_$TYPE$" design = "giga_$CELESTIAL$_$TYPE$" }
 			}
-			# assign_leader = last_created_leader
-		} 
-	} 
+		}
+		giga_move_to_capital = yes
+	}]
+	[[HAVE_MAXIMUM]
+	while = {
+		count = event_target:global_event_country.giga_$STATE$_$CELESTIAL$craft_max_count
+		random_list = {
+			2 = {
+				create_fleet = {
+					name = "name_war_$CELESTIAL$"
+					settings = { spawn_debris = no }
+					effect = {
+						set_owner = prev
+						create_ship = { fleet_cache_recalc = no name = "giga_$CELESTIAL$_$TYPE$" design = "giga_$CELESTIAL$_$TYPE$" }
+					}
+				}
+			}
+			1 = {}
+		}
+		giga_move_to_capital = yes
+	} ]
+	[[SYSTEMCRAFT]
+	while = {
+		count = event_target:global_event_country.giga_$STATE$_systemcraft_count
+		create_fleet = {
+			name = "name_war_system"
+			settings = { spawn_debris = no is_boss = yes }
+			effect = {
+				set_owner = prev
+				create_ship = { fleet_cache_recalc = no name = "giga_system_$TYPE$" design = "giga_system_$TYPE$" }
+			}
+		}
+		giga_move_to_capital = yes
+	} ]
 }
 
-giga_planet_fe = {
+giga_designate_fe_celestials = {
+	optimize_memory
+	while = {
+		count = event_target:global_event_country.giga_ae_$CELESTIAL$craft_min_count
+		if = {
+			limit = { any_planet_within_border = { giga_can_be_war_$CELESTIAL$ = yes } }
+			random_planet_within_border = {
+				limit = { giga_can_be_war_$CELESTIAL$ = yes }
+				set_planet_size = $SIZE|10$
+				set_planet_flag = dormant_war_$CELESTIAL$
+			}
+		}
+	}
+	[[HAVE_MAXIMUM]
+	while = {
+		count = event_target:global_event_country.giga_ae_$CELESTIAL$craft_max_count
+		if = {
+			limit = { any_planet_within_border = { giga_can_be_war_$CELESTIAL$ = yes } }
+			random_list = {
+				2 = {
+					random_planet_within_border = {
+						limit = { giga_can_be_war_$CELESTIAL$ = yes }
+						set_planet_size = $SIZE|10$
+						set_planet_flag = dormant_war_$CELESTIAL$
+					}
+				}
+				1 = {}
+			}
+		}
+	} ]
+	giga_apply_fe_celestials_buff = yes
+}
+
+## for singular usage like celestials "waking up" from designated planet
+giga_create_singular_fe_celestials = {
+	optimize_memory
 	create_fleet = {
-		name = "Grand Defender"
-		settings = { spawn_debris = no is_boss = yes }
+		name = "name_war_$CELESTIAL$"
+		settings = { spawn_debris = no }
 		effect = {
 			set_owner = prev
-			create_ship = {
-				name = "Grand Defender"
-				design = "Ancient Planetcraft"
-				effect = {
-					set_ship_flag = giga_planet_fe
-					add_modifier = {
-						modifier = giga_fe_planetcraft_buff
-						days = -1
+			create_ship = { fleet_cache_recalc = no name = "giga_$CELESTIAL$_$TYPE$" design = "giga_$CELESTIAL$_$TYPE$" }
+		}
+	}
+	last_created_fleet =  { set_location = $LOCATION$ }
+}
+
+giga_apply_fe_celestials_buff = {
+	optimize_memory
+	every_owned_ship = {
+		limit = { OR = {
+			is_ship_size = giga_war_moon
+			is_ship_size = giga_planet_behemoth
+			is_ship_size = giga_systemcraft
+		} }
+		set_ship_flag = giga_moon_fe
+		add_modifier = { modifier = giga_fe_planetcraft_buff }
+		if = { limit = {
+			has_global_flag = giga_fe_planetcrafts_7
+			NOT = { has_global_flag = gigas_menu_fe_planetcrafts_celestials }
+			is_ship_size = giga_systemcraft }
+			if = { limit = {
+				owner = { OR = { is_country_type = fallen_empire is_country_type = awakened_fallen_empire } }
+				NOT = { has_modifier = giga_fe_tartarus_systemcraft_buff } }
+				add_modifier = { modifier = giga_fe_tartarus_systemcraft_buff }
+			}
+		}
+	}
+}
+
+giga_apply_fe_repeatable_modifiers = {
+	optimize_memory
+	every_country = {
+		limit = { is_country_type = fallen_empire }
+		if = {
+			limit = { NOT = { has_global_flag = gigas_menu_fe_planetcrafts_celestials } }
+			change_variable = { which = giga_fe_repeatable_count value = $REPEATABLE_COUNT|0$ }
+		}
+		## might as well as putting the modifier here
+		add_modifier = { modifier = giga_fe_ehof_sr_upkeep_help }
+	}
+}
+
+# Sets the FE/AE celestial count variable
+giga_set_fe_celestial_counts = {
+	optimize_memory
+	if = {
+		limit = { NOT = { has_global_flag = gigas_menu_fe_planetcrafts_repeatables } }
+		event_target:global_event_country = {
+			set_variable = { which = giga_fe_mooncraft_min_count   value = $FE_MOON_MIN|0$ }
+			set_variable = { which = giga_fe_mooncraft_max_count   value = $FE_MOON_MAX|0$ }
+			set_variable = { which = giga_fe_planetcraft_min_count value = $FE_PLANET_MIN|0$ }
+			set_variable = { which = giga_fe_planetcraft_max_count value = $FE_PLANET_MAX|0$ }
+			set_variable = { which = giga_ae_mooncraft_min_count   value = $AE_MOON_MIN|0$ }
+			set_variable = { which = giga_ae_mooncraft_max_count   value = $AE_MOON_MAX|0$ }
+			set_variable = { which = giga_ae_planetcraft_min_count value = $AE_PLANET_MIN|0$ }
+			set_variable = { which = giga_ae_planetcraft_max_count value = $AE_PLANET_MAX|0$ }
+			set_variable = { which = giga_fe_systemcraft_count     value = $FE_SYSTEMCRAFT|0$ }
+			set_variable = { which = giga_ae_systemcraft_count     value = $AE_SYSTEMCRAFT|0$ }
+		}
+	}
+}
+
+giga_fe_difficulty_set_up = {
+	optimize_memory
+	giga_apply_fe_repeatable_modifiers = { REPEATABLE_COUNT = $REPEATABLE_COUNT|0$ }
+	giga_set_fe_celestial_counts = {
+		FE_MOON_MIN = $FE_MOON_MIN|0$
+		FE_MOON_MAX = $FE_MOON_MAX|0$
+		FE_PLANET_MIN = $FE_PLANET_MIN|0$
+		FE_PLANET_MAX = $FE_PLANET_MAX|0$
+		AE_MOON_MIN = $AE_MOON_MIN|0$
+		AE_MOON_MAX = $AE_MOON_MAX|0$
+		AE_PLANET_MIN = $AE_PLANET_MIN|0$
+		AE_PLANET_MAX = $AE_PLANET_MAX|0$
+		FE_SYSTEMCRAFT = $FE_SYSTEMCRAFT|0$
+		AE_SYSTEMCRAFT = $AE_SYSTEMCRAFT|0$
+	}
+}
+
+# 50/50 chance of 1-2 extra hyperlanes for the Paluush system
+giga_fe_add_paluush_lanes = {
+	optimize_memory
+	random_list = {
+		1 = { while = { count = 1 giga_generate_hyperlane = yes } }
+		1 = { while = { count = 2 giga_generate_hyperlane = yes } }
+	}
+}
+
+# Generic "maybe give this FE a mega" effect
+# EVENT: event id duh
+# DISABLED_FLAG: global flag that disables the roll
+# FACTOR_VALUE and FACTOR_FLAG: optional modifiers that increase or decrease the chance, can add more if needed
+# NOTHING_KILL = optional: country flag that zeroes/remove the "nothing" option. TLDR: default is 3 = {} but can be adjusted
+giga_fe_roll_generic_mega = {
+	optimize_memory
+	random_list = {
+		1 = {
+			country_event = { id = $EVENT$ }
+			modifier = { factor = 0 has_global_flag = $DISABLED_FLAG$ }
+			modifier = { factor = $FACTOR_VALUE_1|1$ has_country_flag = $FACTOR_FLAG_1|giga_nothing_flag$ }
+			modifier = { factor = $FACTOR_VALUE_2|1$ has_country_flag = $FACTOR_FLAG_2|giga_nothing_flag$ }
+		}
+		3 = {
+			modifier = { factor = $NOTHING_KILL|1$ has_country_flag = $NOTHING_KILL_FLAG|giga_nothing_flag$ }
+		}
+	}
+}
+
+# Spiritualist FE
+giga_fe_spiritualist_megas = {
+	optimize_memory
+	random_list = {
+		50 = { # Give them Chosen One (Cool and good)
+			leader = {
+				add_trait = { trait = leader_trait_chosen }
+				remove_trait = leader_trait_psionic
+			}
+		}
+		50 = { # Give them the Siphon
+			modifier = { factor = 0 has_global_flag = siphon_disabled }
+			random_system_within_border = {
+				limit = {
+					NOT = { any_system_planet = { habitable_planet = yes } }
+					NOT = { is_star_class = sc_black_hole }
+				}
+				random_system_planet = {
+					limit = { is_star = yes }
+					giga_create_fallen_empire_fleet = yes
+					solar_system = {
+						spawn_megastructure = {
+							type = psychic_hypersiphon_2
+							planet = PREV
+							owner = PREVPREVPREV
+						}
 					}
 				}
 			}
@@ -56,63 +238,140 @@ giga_planet_fe = {
 	}
 }
 
-giga_planet_fe_holy = {
-	# create_leader = {
-	# 	class = admiral
-	# 	species = ROOT.species
-	# 	name = random
-	# 	skill = 8
-	# }
-	create_fleet = {
-		name = "Protector of Faith"
-		settings = { spawn_debris = no is_boss = yes }
-		effect = {
-			set_owner = prev
-			create_ship = {
-				name = "Protector of Faith"
-				design = "Ancient Holy Planetcraft"
-				effect = {
-					set_ship_flag = giga_planet_fe
-					set_ship_flag = giga_planet_fe_spiritualist
-					add_modifier = {
-						modifier = giga_fe_planetcraft_buff
-						days = -1
-					}
+giga_fe_xenophile_megas = {
+	optimize_memory
+	random_list = {
+		50 = { # Interstellar Assembly
+			country_event = { id = giga_fallen_empire_megas.3003 }
+			modifier = { factor = 0 has_global_flag = vanilla_interstellar_disabled }
+		}
+		50 = {}
+	}
+	random_list = {
+		50 = { # Sentry Array
+			country_event = { id = giga_fallen_empire_megas.3001 }
+			modifier = { factor = 0 has_global_flag = vanilla_array_disabled }
+		}
+		50 = { # Humongous Brain
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = orchid_disabled
+					has_global_flag = matrioshka_brain_disabled
+					has_global_flag = meopa_spawned_as_fe
+					has_country_flag = giga_meopa_fe
+					NOT = { any_planet_within_border = { has_carrier_flag = fe_the_preserve } }
 				}
 			}
-			# assign_leader = last_created_leader
+			country_event = { id = giga_fallen_empire_megas.3002 }
 		}
 	}
 }
 
-giga_planet_fe_xenophobe = {
-	create_leader = {
-		class = commander
-		species = ROOT.species
-		name = random
-		skill = 5
-	}
-	create_fleet = {
-		name = "Grand Warden"
-		settings = { spawn_debris = no is_boss = yes }
-		effect = {
-			set_owner = prev
-			create_ship = {
-				name = "Grand Warden"
-				design = "Ancient Planetcraft"
-				effect = {
-					set_ship_flag = giga_planet_fe
-					set_ship_flag = giga_planet_fe_xenophobe
-					add_modifier = {
-						modifier = giga_fe_planetcraft_buff
-						days = -1
-					} 
-				}
-			}
-			assign_leader = last_created_leader
+giga_fe_xenophobe_megas = {
+	optimize_memory
+	random_list = {
+		70 = { # Dyson Sphere
+			country_event = { id = giga_fallen_empire_megas.4001 }
+			modifier = { factor = 0 has_global_flag = vanilla_dyson_disabled }
+		}
+		30 = { # The Ultimate Deterrent: Planetcrafts
+			modifier = { factor = 0 has_global_flag = giga_fe_planetcrafts_0 }
+			country_event = { id = giga_fallen_empire_megas.4002 }
 		}
 	}
 }
+
+giga_fe_materialist_megas = {
+	optimize_memory
+	random_list = {
+		0 = { # Nothing (for Pouchkinn)
+			modifier = { add = 50 has_global_flag = pouchkinn_gatzo_fe }
+		}
+		50 = { # Science Nexus
+			country_event = { id = giga_fallen_empire_megas.5001 }
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = vanilla_nexus_disabled
+					has_global_flag = pouchkinn_gatzo_fe
+				}
+			}
+		}
+		50 = { # The Old Ringworlds (Why did Paradox remove those?? They were amazing! I'm adding them back lol)
+			create_species = {
+				name = "NAME_Synthetic"
+				plural = "NAME_Synthetic_plural"
+				class = ROBOT
+				portrait = random
+				namelist = "AI"
+				traits = {
+					trait = "trait_mechanical"
+					trait = "trait_robot_domestic_protocols"
+					trait = "trait_robot_luxurious"
+				}
+				effect = {
+					save_global_event_target_as = materialist_fe_synths
+				}
+			}
+			set_policy = { # So that they don't kill off their robots
+				policy = appropriation
+				option = appropriation_not_allowed
+				cooldown = no
+			}
+			country_event = { id = giga_fallen_empire_megas.5002 }
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = pouchkinn_gatzo_fe
+					has_global_flag = vanilla_ringworld_disabled
+				}
+			}
+		}
+		5000 = { # Disinterested Gamers
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = pouchkinn_gatzo_fe
+					has_global_flag = giga_fe_gamers_disabled
+					has_global_flag = matrioshka_brain_disabled
+					has_global_flag = orchid_disabled
+				}
+			}
+			country_event = { id = giga_fallen_empire_megas.5003 }
+		}
+	}
+}
+
+
+giga_fe_spawn_mega_generic = {
+	optimize_memory
+	random_planet_within_border = {
+		limit = {
+			[[YGGDRASIL] giga_is_gas_giant = yes ]
+			# can add more here if needed
+			planet_has_no_megastructure = yes
+		}
+		[[FE_CITADEL] solar_system = { create_fe_citadel = yes } ]
+		[[FE_FLEET] giga_create_fallen_empire_fleet = yes ]
+		random_list = {
+			1 = {
+				## Meopa receive special treatment and get all the goodies
+				[[MEOPA] modifier = { factor = 0 root = { has_country_flag = giga_meopa_fe } } ]
+				solar_system = { spawn_megastructure = { type = $MEGASTRUCTURE_RUINED$ planet = prev owner = root } }
+			}
+			1 = {
+				modifier = {
+					factor = 1
+					always = $ENABLE_MEGASTRUCTURE_INTACT|yes$
+				}
+				solar_system = { spawn_megastructure = { type = $MEGASTRUCTURE_INTACT$ planet = prev owner = root } }
+			}
+		}
+		[[MEGASTRUCTURE_FLAG] set_carrier_flag = megastructure ]
+	}
+}
+
 
 # MATERIALIST RINGWORLDS
 # The Capital
@@ -146,7 +405,7 @@ spawn_materialist_fe_beacon_of_infinity = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -164,7 +423,7 @@ spawn_materialist_fe_beacon_of_infinity = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -189,7 +448,7 @@ spawn_materialist_fe_beacon_of_infinity = {
 			set_all_comms_surveyed = no
 			clear_blockers = yes
 			trigger_megastructure_icon = yes
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 			create_pop_group = {
 				species = space_owner.owner_species
 				ethos = { ethic = ethic_materialist }
@@ -230,7 +489,7 @@ spawn_materialist_fe_beacon_of_infinity = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -248,7 +507,7 @@ spawn_materialist_fe_beacon_of_infinity = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -272,7 +531,7 @@ spawn_materialist_fe_beacon_of_infinity = {
 			set_all_comms_surveyed = no
 			clear_blockers = yes
 			trigger_megastructure_icon = yes
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 			create_pop_group = {
 				species = space_owner.owner_species
 				ethos = { ethic = ethic_materialist }
@@ -322,7 +581,7 @@ spawn_materialist_fe_beacon_of_infinity = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -340,7 +599,7 @@ spawn_materialist_fe_beacon_of_infinity = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -360,7 +619,7 @@ spawn_materialist_fe_beacon_of_infinity = {
 			set_all_comms_surveyed = no
 			clear_blockers = yes
 			trigger_megastructure_icon = yes
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 			while = {
 				count = 5
 				add_district = district_rw_city
@@ -414,7 +673,7 @@ spawn_materialist_fe_beacon_of_infinity = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -432,7 +691,7 @@ spawn_materialist_fe_beacon_of_infinity = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -452,7 +711,7 @@ spawn_materialist_fe_beacon_of_infinity = {
 			set_all_comms_surveyed = no
 			clear_blockers = yes
 			trigger_megastructure_icon = yes
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 			create_pop_group = {
 				species = space_owner.owner_species
 				ethos = { ethic = ethic_materialist }
@@ -540,7 +799,7 @@ spawn_materialist_fe_beacon_of_stability = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -558,7 +817,7 @@ spawn_materialist_fe_beacon_of_stability = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -582,7 +841,7 @@ spawn_materialist_fe_beacon_of_stability = {
 			set_all_comms_surveyed = no
 			clear_blockers = yes
 			trigger_megastructure_icon = yes
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 			create_pop_group = {
 				species = ROOT.owner_species
 				ethos = { ethic = ethic_materialist }
@@ -704,7 +963,7 @@ spawn_materialist_fe_gaming_food_center = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -722,7 +981,7 @@ spawn_materialist_fe_gaming_food_center = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -742,7 +1001,7 @@ spawn_materialist_fe_gaming_food_center = {
 			set_all_comms_surveyed = no
 			clear_blockers = yes
 			trigger_megastructure_icon = yes
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 			while = {
 				count = 5
 				add_district = district_rw_city
@@ -785,7 +1044,7 @@ spawn_materialist_fe_gaming_food_center = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -803,7 +1062,7 @@ spawn_materialist_fe_gaming_food_center = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -821,7 +1080,7 @@ spawn_materialist_fe_gaming_food_center = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -839,7 +1098,7 @@ spawn_materialist_fe_gaming_food_center = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -857,7 +1116,7 @@ spawn_materialist_fe_gaming_food_center = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -877,7 +1136,7 @@ spawn_materialist_fe_gaming_food_center = {
 			set_all_comms_surveyed = no
 			clear_blockers = yes
 			trigger_megastructure_icon = yes
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 			while = {
 				count = 5
 				add_district = district_rw_city
@@ -926,7 +1185,7 @@ spawn_materialist_fe_gaming_food_center = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -944,7 +1203,7 @@ spawn_materialist_fe_gaming_food_center = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 	spawn_planet = {
@@ -962,7 +1221,7 @@ spawn_materialist_fe_gaming_food_center = {
 			# 	surveyor = FROM
 			# }
 			set_all_comms_surveyed = no
-			set_planet_flag = megastructure
+			set_carrier_flag = megastructure
 		}
 	}
 }
@@ -1013,7 +1272,7 @@ giga_create_fallen_empire_fleet = {
 		limit = { exists = space_owner }
 		create_fleet = {
 			effect = {
-				set_owner = ROOT.space_owner
+				set_owner = prev.space_owner
 				while = {
 					count = 8
 					create_fallen_empire_large_ship = yes

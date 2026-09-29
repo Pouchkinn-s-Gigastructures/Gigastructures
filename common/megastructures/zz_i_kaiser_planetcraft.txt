@@ -1,0 +1,161 @@
+kaiser_planetcraft_1 = {
+	entity = "war_planet_phase_01_entity"
+	construction_entity = "war_planet_phase_01_entity"
+	portrait = "GFX_megastructure_planetcraft"
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 35000
+		}
+		upkeep = {
+			energy = 75
+			alloys = 30
+		}
+	}
+
+	possible = { from = { is_country_type = katzenartig_imperium } }
+
+	potential = { is_country_type = katzenartig_imperium }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+}
+
+kaiser_planetcraft_2 = {
+	entity = ""
+	construction_entity = "war_planet_phase_03_construction_entity"
+	portrait = "GFX_megastructure_planetcraft"
+	upgrade_from = { kaiser_planetcraft_1 }
+
+	outliner_trigger = {
+		exists = owner
+		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+	}
+
+	build_time = 3600
+	resources = {
+		category = giga_megastructures
+		inline_script = {
+			script = megastructures/generic_parts/giga_mega_alloy_cost
+			alloys = 100000
+		}
+		upkeep = {
+			energy = 75
+			alloys = 30
+		}
+	}
+
+	possible = { from = { is_country_type = katzenartig_imperium } }
+
+	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
+	on_build_complete = {
+		from = {
+			# every_owned_fleet = {
+			# 	limit = { has_fleet_flag = kaisermoon_platform }
+			# 	delete_fleet = THIS
+			# }
+			if = {
+				limit = {
+					NOT = {
+						any_owned_leader = { has_leader_flag = flusiondouclaw }
+					}
+				}
+				create_leader = {
+					class = commander
+					species = event_target:flusion_katzens
+					name = "Douclaw MacCathur"
+					skill = 4
+					gender = male
+					background_ethic = ethic_materialist
+					background_job = soldier
+					background_planet = event_target:gigaflusion
+					traits = {
+						trait = katzen_trait_elite
+						trait = katzen_trait_nukelad
+						trait = katzen_trait_blitzkrieg
+					}
+					effect = {
+						save_global_event_target_as = flusion_douclaw
+						set_douclaw_real_portrait = yes
+						set_council_position = councilor_defense
+					}
+				}
+			}
+			create_fleet = { #Spawn the cooler attack moon and an escort fleet.
+				name = "Kaiserübermachtflotte"
+				settings = {
+					spawn_debris = no
+					can_upgrade = no
+					can_change_composition = yes
+					uses_naval_capacity = yes
+				}
+				effect = {
+					set_owner = event_target:flusion_primitives_country
+					assign_leader = event_target:flusion_douclaw
+					set_location = fromfrom.planet
+					set_fleet_stance = aggressive
+					create_ship = {
+						name = "Kaiserübermacht"
+						design = "Kaiser Planetcraft"
+						prefix = no
+					}
+					while = {
+						count = 6 #1.5x as much as the Moon
+						spawn_katzen_cruiser = yes
+					}
+					while = {
+						count = 18 #1.5x as much as the Moon
+						spawn_katzen_bomber = yes
+					}
+					while = {
+						count = 36 #1.5x as much as the Moon
+						spawn_katzen_panzer = yes
+					}
+					if = {
+						limit = {
+							has_global_flag = katzen_blimps_deployed
+						}
+						while = {
+							count = 2 #Moon fleet didn't get any of these!
+							spawn_katzen_blimp = yes
+						}
+					}
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						has_country_flag = kaiser_moon_destroyed
+						has_country_flag = kaiser_moon_destroyed_events_done
+						has_modifier = katzenartig_disarray
+					}
+				}
+				remove_country_flag = kaiser_moon_destroyed
+				remove_country_flag = kaiser_moon_destroyed_events_done
+				remove_modifier = katzenartig_disarray
+			}
+			set_global_flag = katzen_reformation_complete
+			set_global_flag = katzen_mkii_deployed #roll out the Mark II ship designs!
+			every_playable_country = {
+				limit = { is_ai = no }
+				country_event = { id = giga_katzen.7032 } #informative event
+				if = {
+					limit = {
+						has_modifier = katzen_planetcraft_intervention
+					}
+					remove_modifier = katzen_planetcraft_intervention
+				}
+			}
+		}
+
+		fromfrom.planet = { remove_planet = yes }
+		remove_megastructure = fromfrom
+	}
+}

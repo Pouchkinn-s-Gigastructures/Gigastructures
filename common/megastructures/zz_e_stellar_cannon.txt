@@ -1,0 +1,220 @@
+# only add enable / disable on the site
+dyson_gun_0 = {
+	entity = "construction_platform_entity"
+	construction_entity = "construction_platform_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	entity_offset = { x = 0 y = -30 }
+	build_time = 1800
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 2000
+			influence = 300
+		}
+		cost = {
+			trigger = {
+				country_uses_bio_ships = no
+			}
+			alloys = 2000
+		}
+		cost = {
+			trigger = {
+				country_uses_bio_ships = yes
+			}
+			alloys = 2000
+			mult = 0.5
+		}
+		cost = {
+			trigger = {
+				country_uses_bio_ships = yes
+			}
+			food = 2000
+			mult = @halved_alloy_to_food_cost_ratio
+		}
+
+		upkeep = {
+			energy = 25
+		}
+	}
+
+	custom_tooltip_requirements = "MEGASTRUCTURE_TOOLTIP_REQUIREMENTS_DYSON_GUN"
+
+	prerequisites = { "tech_dyson_gun" }
+
+	potential = {
+		owner? = {
+			is_nomadic = no
+		}
+		NOT = { has_global_flag = vanilla_stellar_cannon_disabled  }
+	}
+
+	possible = {
+		hidden_trigger = {
+			exists = starbase
+		}
+		custom_tooltip = {
+			fail_text = "requires_inside_border"
+			is_inside_border = from
+		}
+		custom_tooltip = {
+			fail_text = "requires_no_existing_megastructure"
+			has_no_non_gate_megastructure = yes
+			NOT = {
+				any_system_planet = {
+					is_planet_class = pc_cosmogenesis_world
+				}
+			}
+		}
+		custom_tooltip = {
+			fail_text = "requires_surveyed_system"
+			NOT = {
+				any_system_planet = {
+					is_surveyed = {
+						who = prev.from
+						status = no
+					}
+				}
+			}
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			custom_tooltip = {
+				fail_text = "requires_no_anomaly"
+				NOT = { has_anomaly = yes }
+			}
+			custom_tooltip = {
+				fail_text = "requires_neutron_star_or_pulsar"
+				is_star = yes
+				if = {
+					limit = {
+						is_trinary_star = no
+						is_binary_star = no
+					}
+					OR = {
+						is_star_class = sc_neutron_star
+						is_star_class = sc_pulsar
+					}
+				}
+				else = {
+					OR = {
+						is_planet_class = pc_neutron_star
+						is_planet_class = pc_pulsar
+					}
+				}
+			}
+		}
+	}
+
+	# root = system
+	# from = country
+	ai_weight = {
+		factor = 15
+
+		modifier = {
+			factor = 2
+			owner? = {
+				resource_stockpile_compare = {
+					resource = energy
+					value >= 30000
+				}
+			}
+		}
+
+		modifier = {
+			factor = 0.1
+			owner? = {
+				is_pacifist = yes
+			}
+		}
+
+		modifier = {
+			factor = 2
+			owner? = {
+				is_militarist = yes
+			}
+		}
+
+		modifier = {
+			factor = 0.1
+			owner? = {
+				is_xenophile = yes
+			}
+		}
+
+		modifier = {
+			factor = 2
+			owner? = {
+				is_xenophobe = yes
+			}
+		}
+
+		modifier = {
+			factor = 0.1
+			any_neighbor_system = {
+				exists = owner
+				NOT = {
+					owner = { is_same_value = from }
+				}
+			}
+		}
+
+		modifier = {
+			factor = 0
+			from = {
+				any_system_within_border = {
+					distance = {
+						source = root.solar_system
+						use_bypasses = no
+						min_jumps = 1
+						max_jumps = 25
+					}
+					any_system_megastructure = {
+						is_quantum_catapult_megastructure = yes
+					}
+				}
+			}
+		}
+		modifier = {
+			factor = 0
+			from = {
+				any_system_within_border = {
+					any_system_megastructure = {
+						is_dyson_gun = yes
+					}
+				}
+			}
+		}
+	}
+
+	on_build_start = {}
+	on_build_cancel = {}
+	on_build_complete = {
+		from = {
+			if = {
+				limit = {
+					has_relic = r_contingency_core
+					has_country_flag = built_dyson_gun_site
+				}
+				set_country_flag = built_dyson_gun_site_contingency
+			}
+			else_if = {
+				limit = {
+					NOT = { has_country_flag = built_dyson_gun_site }
+				}
+				set_country_flag = built_dyson_gun_site
+				country_event = { id = tutorial.2126 }
+			}
+		}
+		fromfrom.planet = {
+			if = {
+				limit = { has_orbital_station = yes }
+				orbital_station = {
+					dismantle = yes
+				}
+			}
+		}
+	}
+}

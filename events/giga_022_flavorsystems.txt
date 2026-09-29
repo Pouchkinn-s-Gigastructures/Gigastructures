@@ -84,9 +84,8 @@ country_event = {
 					clear_planet_modifiers = yes
 					change_pc = pc_giga_planetary_computer
 					set_planet_size = 20
-					#set_planet_flag = orbital_arcology
 					set_planet_flag = giga_planetary_computer
-					set_planet_flag = giga_rogue_ai_planetary_computer
+					set_carrier_flag = giga_rogue_ai_planetary_computer
 					set_planet_flag = giga_planet_mega
 					add_modifier = {
 						modifier = giga_planetary_computer
@@ -115,10 +114,7 @@ country_event = {
 					solar_system = {
 						set_star_flag = rogue_pc_system
 						set_star_flag = giga_special_ruined_system
-						# spawn_megastructure = {
-						# 	type = orbital_arcology_1
-						# 	planet = PREV
-						# }
+						set_star_flag = hostile_system
 						if = {
 							limit = {
 								NOR = {
@@ -145,7 +141,14 @@ country_event = {
 ship_event = {
 	id = giga_flavor_systems.1101
 	title = "giga_flavor_systems.1101.name"
-	desc = "giga_flavor_systems.1101.desc"
+	desc = {
+		text = "giga_flavor_systems.1101.settled.desc"
+		trigger = { owner = { is_nomadic = no } }
+	}
+	desc = {
+		text = "giga_flavor_systems.1101.nomad.desc"
+		trigger = { owner = { is_nomadic = yes } }
+	}
 	picture = GFX_evt_machine_space_battle
 	show_sound = event_radio_chatter
 	location = from
@@ -157,13 +160,23 @@ ship_event = {
 		}
 	}
 
-	option = { 
-		name = "giga_flavor_systems.1101.a"
+	option = {
+		trigger = {
+			owner = { is_nomadic = no }
+		}
+		name = "giga_flavor_systems.1101.settled.a"
+	}
+
+	option = {
+		trigger = {
+			owner = { is_nomadic = yes }
+		}
+		name = "giga_flavor_systems.1101.nomad.a" #nomads can't use and don't need the world itself
 	}
 }
 
 #When PCC is colonised
-planet_event = {
+carrier_event = {
 	id = giga_flavor_systems.1100
 	title = "giga_flavor_systems.1100.name"
 	desc = "giga_flavor_systems.1100.desc"
@@ -174,12 +187,12 @@ planet_event = {
 
 	trigger = {
 		is_planet_class = pc_giga_planetary_computer
-		has_planet_flag = giga_rogue_ai_planetary_computer
-		NOT = { has_planet_flag = giga_rogue_ai_planetary_computer_colonized }
+		has_carrier_flag = giga_rogue_ai_planetary_computer
+		NOT = { has_carrier_flag = giga_rogue_ai_planetary_computer_colonized }
 	}
 
 	immediate = {
-		set_planet_flag = giga_rogue_ai_planetary_computer_colonized
+		set_carrier_flag = giga_rogue_ai_planetary_computer_colonized
 		planet_event = { id = giga_flavor_systems.1103 days = 500 random = 360 }
 		planet_event = { id = giga_flavor_systems.1106 days = 30 }
 	}
@@ -265,7 +278,7 @@ planet_event = {
 				limit = {
 					exists = controller
 					controller = {
-						has_country_flag = giga_rogue_ai_pcc_army_country
+						is_same_value = event_target:giga_rogue_ai_pcc_army_country
 					}
 				}
 				every_planet_army = {
@@ -301,23 +314,28 @@ planet_event = {
 
 	immediate = {
 		if = {
-			limit = { 
+			limit = {
 				has_modifier = giga_rogue_ai_computer
 			}
-			planet_event = { id = giga_flavor_systems.1103 days = 720 random = 3600 }
+			planet_event = { id = giga_flavor_systems.1103 days = 720 random = 3600 } #call the attack again
 		}
 		if = {
-			limit = { 
+			limit = {
 				has_modifier = giga_rogue_ai_computer
 				is_colony = yes
 				has_ground_combat = no 
 			}
-			create_country = {
-				name = "Threat Expurgation Units"
-				type = faction
-				effect = { 
-					establish_communications_no_message = root.owner
-					set_country_flag = giga_rogue_ai_pcc_army_country
+			if = {
+				limit = {
+					NOT = { exists = event_target:giga_rogue_ai_pcc_army_country }
+				}
+				create_country = {
+					name = "Threat Expurgation Units"
+					type = faction
+					effect = {
+						establish_communications_no_message = root.owner
+						save_global_event_target_as = giga_rogue_ai_pcc_army_country
+					}
 				}
 			}
 			while = {
@@ -326,13 +344,12 @@ planet_event = {
 					chance = 70
 					create_army = {
 						name = NAME_pcc_army
-						owner = last_created_country
+						owner = event_target:giga_rogue_ai_pcc_army_country
 						type = "pcc_rogue_ai_army"
-						species = owner_main_species
 					}
 				}
 			}
-			planet_event = { id = giga_flavor_systems.1104 }
+			planet_event = { id = giga_flavor_systems.1104 } #notify of attack
 		}
 	}
 }
@@ -366,7 +383,8 @@ country_event = {
     is_triggered_only = yes
 
     trigger = {
-        from = { has_country_flag = giga_rogue_ai_pcc_army_country }
+		exists = event_target:giga_rogue_ai_pcc_army_country
+        from = { is_same_value = event_target:giga_rogue_ai_pcc_army_country }
         fromfrom = { 
             is_planet_class = pc_giga_planetary_computer
             has_modifier = giga_rogue_ai_computer
@@ -968,7 +986,10 @@ country_event = {
 	option = { 
 		name = "giga_wrecked_ships.1022.a"
 		add_monthly_resource_mult = { resource = engineering_research value = 4 }
-		add_resource = { alloys = 2000 }
+		add_resource = {
+			alloys = 3600
+			mult = value:giga_megastructure_dismantle_refund_mult # Vanilla megastructure_dismantle_refund_mult not used as all empires should get a reward from dismantling ruined warships, scavengers just get more
+		}
 	}
 }
 
@@ -1038,7 +1059,10 @@ country_event = {
 	option = { 
 		name = "giga_wrecked_ships.1022.a"
 		add_monthly_resource_mult = { resource = engineering_research value = 6 }
-		add_resource = { alloys = 4000 }
+		add_resource = {
+			alloys = 7500
+			mult = value:giga_megastructure_dismantle_refund_mult # Vanilla megastructure_dismantle_refund_mult not used as all empires should get a reward from dismantling ruined warships, scavengers just get more
+		}
 	}
 }
 
@@ -1106,9 +1130,12 @@ country_event = {
 	is_triggered_only = yes
 
 	option = { 
-		name = "giga_wrecked_ships.1022.a"
+		name = "giga_wrecked_ships.1032.a"
 		add_monthly_resource_mult = { resource = engineering_research value = 2 }
-		add_resource = { alloys = 1800 }
+		add_resource = {
+			alloys = 3000
+			mult = value:giga_megastructure_dismantle_refund_mult # Vanilla megastructure_dismantle_refund_mult not used as all empires should get a reward from dismantling ruined warships, scavengers just get more
+		}
 	}
 }
 
@@ -1179,7 +1206,10 @@ country_event = {
 	option = { 
 		name = "giga_wrecked_ships.1022.a"
 		add_monthly_resource_mult = { resource = engineering_research value = 12 }
-		add_resource = { alloys = 6000 }
+		add_resource = {
+			alloys = 6000
+			mult = value:giga_megastructure_dismantle_refund_mult # Vanilla megastructure_dismantle_refund_mult not used as all empires should get a reward from dismantling ruined warships, scavengers just get more
+		}
 	}
 }
 
@@ -1196,9 +1226,10 @@ country_event = {
 	option = { 
 		name = "giga_wrecked_ships.1043.a"
 		add_monthly_resource_mult = { resource = engineering_research value = 32 }
-		add_resource = { 
-			alloys = 15000
-			minerals = 7500 
+		add_resource = {
+			alloys = 18000 # 1/3, construction site not included
+			minerals = 7500
+			mult = value:giga_megastructure_dismantle_refund_mult # Vanilla megastructure_dismantle_refund_mult not used as all empires should get a reward from dismantling ruined warships, scavengers just get more
 		}
 	}
 }
@@ -1217,8 +1248,9 @@ country_event = {
 		name = "giga_wrecked_ships.1044.a"
 		add_monthly_resource_mult = { resource = engineering_research value = 128 }
 		add_resource = {
-			alloys = 80000
+			alloys = 105000 # 1/3, construction site not included
 			minerals = 40000
+			mult = value:giga_megastructure_dismantle_refund_mult # Vanilla megastructure_dismantle_refund_mult not used as all empires should get a reward from dismantling ruined warships, scavengers just get more
 		}
 	}
 }

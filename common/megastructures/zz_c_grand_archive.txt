@@ -1,7 +1,7 @@
 # Grand Archive
 
-@entity_x				= -8
-@entity_y				= -8
+@entity_x				= -16
+@entity_y				= 4
 
 grand_archive_0 = {
 	entity = "grand_archive_entity"
@@ -33,21 +33,52 @@ grand_archive_0 = {
 	show_prereqs = yes
 
 	potential = {
-		giga_is_standard_country_type = yes
-		NOT = {
-			any_owned_megastructure = {
-				is_megastructure_type = grand_archive_0
-			}
-		}
+        giga_is_standard_country_type = yes
+		has_grand_archive = no
 	}
 
 	possible = {
-        hidden_trigger = {
-            exists = starbase
-        }
-		custom_tooltip = {
-			fail_text = "requires_inside_border"
-			is_inside_border = from
+		if = {
+			limit = {
+				from = {
+					is_nomadic = no
+				}
+			}
+			hidden_trigger = {
+				exists = starbase
+			}
+			custom_tooltip = {
+				fail_text = "requires_inside_border"
+				is_inside_border = from
+			}
+			custom_tooltip = {
+				fail_text = must_have_2500_pops
+				OR = {
+					from = {
+						pop_amount >= 2500
+					}
+					from.owner = {
+						is_wilderness_empire = yes
+					}
+				}
+			}
+		}
+		else = {
+			custom_tooltip = {
+				fail_text = requires_tier_2_waystation_on_wayline
+				any_starbase_in_system = {
+					is_waystation_starbase = yes
+					owner? = {
+						is_same_value = from
+					}
+					any_starbase_in_network = {
+						has_starbase_size >= starbase_waystation_2
+						owner? = {
+							is_same_value = from
+						}
+					}
+				}
+			}
 		}
 		custom_tooltip = {
 			fail_text = "requires_surveyed_system"
@@ -60,39 +91,50 @@ grand_archive_0 = {
 				}
 			}
 		}
-        custom_tooltip = {
-            fail_text = must_have_2500_pops
-            OR = {
-                from = {
-                    pop_amount >= 2500
-                }
-                from.owner = {
-                    is_wilderness_empire = yes
-                }
-            }
-        }
 	}
 
 	placement_rules = {
 		planet_possible = {
-			is_colony = yes
-            owner = {
-                NOT = { is_primitive = yes }
-            }
-			OR = {
-				# Machines & Robot Expac: Continued checks will be here
-				inline_script = {
-					script = generic_parts/giga_toggled_code
-					code = "oxr_mdlc_can_build_grand_archive = yes"
-					toggle = @oxr_mdlc_mod
+			custom_tooltip = {
+				fail_text = "requires_survey_not_habitable"
+				is_surveyed = {			# prevent leaking habitability information
+					who = prev.from
+					status = yes
 				}
-				pop_amount >= 2500
-				AND = {
-					exists = owner
-					owner = { is_wilderness_empire = yes }
+				colonizable_planet = no
+			}
+			custom_tooltip = {
+				fail_text = "requires_no_anomaly"
+				NOT = {
+					has_anomaly = yes
 				}
 			}
-		}
+			custom_tooltip = {
+				fail_text = "requires_not_minor_planetary_body"
+				NOR = {
+					is_asteroid = yes
+					is_moon = yes
+				}
+			}
+			custom_tooltip = {
+				fail_text = "requires_not_star"
+				is_star = no
+			}
+			custom_tooltip = {
+				fail_text = "requires_not_astral_scar"
+				is_astral_scar = no
+			}
+			custom_tooltip = {
+				fail_text = "requires_not_ring_world"
+				is_ringworld = no
+			}
+			custom_tooltip = {
+				fail_text = "requires_no_existing_megastructure"
+				NOT = {
+					has_planet_flag = megastructure
+				}
+			}
+		} # use these for all non-star megastructures
 	}
 
 	country_modifier = {
@@ -117,12 +159,20 @@ grand_archive_0 = {
 		}
 	}
 
-	on_build_start = {}
-	on_build_cancel = {}
 	on_build_complete = {
 		from = {
+			country_event = {
+				id = grand_archive.8090
+				scopes = {
+					from = fromfrom
+					fromfrom = prev
+					fromfromfrom = fromfromfrom
+				}
+			}
 			if = {
-				limit = { has_country_flag = grand_archive_destroyed }
+				limit = {
+					has_country_flag = grand_archive_destroyed
+				}
 				remove_country_flag = grand_archive_destroyed
 				country_event = {
 					id = grand_archive.4580

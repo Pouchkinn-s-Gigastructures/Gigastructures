@@ -23,7 +23,7 @@ giga_hypersiphon_calculate_empire_fleet_buffs_damage = {
     add = modifier:weapon_type_energy_weapon_damage_mult
     add = modifier:weapon_type_kinetic_weapon_damage_mult
     divide = 3
-    add = modifier:shipclass_military_damage_mult
+    add = modifier:ship_weapon_damage
     add = 1
 }
 
@@ -93,4 +93,33 @@ giga_hypersiphon_calculate_empire_navy_size = {
 
     # remove standing fleet again as we only want what they could build
     subtract = trigger:used_naval_capacity_integer
+}
+
+# say x is the value of the excess budget
+# to maintain a linear scaling progression, we must divide by the same value for both hp and dps
+# we divide our buff value by x mil to achieve a scale of budget over x times more powerful
+# Hull & shield: mult = sqrt(x) - 1 (due to the nature of percentage modifiers)
+giga_hypersiphon_excess_hp_buff_value = {
+    weight = $budget$
+    divide = 10000000
+    square_root = yes
+    subtract = 1
+}
+
+# say y is our final dps buff value
+# fire rate is always 1/10 of damage, it's defined in the static modifier itself
+# Damage mult = y - 1, where y = (-9 + sqrt(81 + 40 * sqrt(x))) / 2
+# can be translated to y^2 + 9y = 10 * sqrt(x)
+# this formula will make the relative DPS buff equal to square root of the excess budget
+# mostly random bullshit go...it just works
+giga_hypersiphon_excess_damage_buff_value = {
+    weight = $budget$
+    divide = 10000000
+    square_root = yes
+    multiply = 40
+    add = 81
+    square_root = yes
+    subtract = 9
+    divide = 2
+    subtract = 1
 }
