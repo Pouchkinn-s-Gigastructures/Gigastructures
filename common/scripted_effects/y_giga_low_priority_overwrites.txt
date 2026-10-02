@@ -307,3 +307,211 @@ hyperthermia_galaxy_effect = {
         destroy_colony = yes
     }
 }
+
+# the birch ignores the cannon lol
+# it would take a long time for the devastation to go away due to the birch's size
+# also birch cool tech mumbo jumbo
+dyson_gun_apply_damage = {
+	# Devastation is only inflicted when at least 10,000 energy was spent charging the shot
+	from.owner = {
+		if = {
+			limit = {
+				check_variable = {
+					which = dyson_gun_charge
+					value >= 10000
+				}
+			}
+			set_country_flag = dyson_gun_devastating_shot
+		}
+		else = {
+			remove_country_flag = dyson_gun_devastating_shot
+		}
+	}
+
+	if = {
+		limit = {
+			from = {
+				is_megastructure_type = dyson_gun_1
+			}
+		}
+		from.owner = {
+			set_variable = {
+				which = dyson_gun_damage
+				value = dyson_gun_charge
+			}
+			divide_variable = {
+				which = dyson_gun_damage
+				value = 100
+			}
+			set_variable = {
+				which = dyson_gun_damage_shielded
+				value = dyson_gun_damage
+			}
+			multiply_variable = {
+				which = dyson_gun_damage_shielded
+				value = 0.4
+			}
+		}
+		every_ship_in_system = {
+			dyson_gun_damage_ship = yes
+		}
+		every_system_planet = {
+			limit = {
+				is_colony = yes
+				NOT = { is_planet_class = pc_birch }
+			}
+			dyson_gun_devastate_colony = {
+				AMOUNT = 10
+				SHIELDED = 1
+			}
+		}
+	}
+	if = {
+		limit = {
+			from = {
+				is_megastructure_type = dyson_gun_2
+			}
+		}
+		from.owner = {
+			set_variable = {
+				which = dyson_gun_damage
+				value = dyson_gun_charge
+			}
+			divide_variable = {
+				which = dyson_gun_damage
+				value = 50
+			}
+			set_variable = {
+				which = dyson_gun_damage_shielded
+				value = dyson_gun_damage
+			}
+			multiply_variable = {
+				which = dyson_gun_damage_shielded
+				value = 0.4
+			}
+		}
+		every_ship_in_system = {
+			dyson_gun_damage_ship = yes
+		}
+		every_system_planet = {
+			limit = {
+				is_colony = yes
+				NOT = { is_planet_class = pc_birch }
+			}
+			dyson_gun_devastate_colony = {
+				AMOUNT = 25
+				SHIELDED = 2.5
+			}
+		}
+	}
+	if = {
+		limit = {
+			from = {
+				is_megastructure_type = dyson_gun_3
+			}
+		}
+		from.owner = {
+			set_variable = {
+				which = dyson_gun_damage
+				value = dyson_gun_charge
+			}
+			divide_variable = {
+				which = dyson_gun_damage
+				value = 10
+			}
+			set_variable = {
+				which = dyson_gun_damage_shielded
+				value = dyson_gun_damage
+			}
+			multiply_variable = {
+				which = dyson_gun_damage_shielded
+				value = 0.4
+			}
+		}
+
+		every_ship_in_system = {
+			dyson_gun_damage_ship = yes
+		}
+		every_system_planet = {
+			limit = {
+				is_colony = yes
+				NOT = { is_planet_class = pc_birch }
+			}
+			dyson_gun_devastate_colony = {
+				AMOUNT = 50
+				SHIELDED = 5
+			}
+		}
+		every_system_planet = {
+			limit = {
+				from.owner = {
+					check_variable = {
+						which = dyson_gun_charge
+						value > 50000
+					}
+				}
+				# A planetary shield generator blocks the terraforming heat
+				has_planetary_shield_building = no
+			}
+			increase_planet_temperature_without_habitables = yes
+		}
+		if = {
+			limit = {
+				OR = {
+					is_active_resolution = "resolution_ecology_environmental_control_board"
+					is_active_resolution = "resolution_ecology_paradise_initiative"
+				}
+				from.owner = {
+					check_variable = {
+						which = dyson_gun_charge
+						value > 50000
+					}
+				}
+			}
+			from.owner = {
+				set_timed_country_flag = { flag = resolution_breached_terraformed days = 3600 }
+			}
+		}
+	}
+	if = {
+		limit = {
+			space_owner? = {
+				NOT = {
+					is_same_value = from.owner
+				}
+			}
+		}
+		space_owner = {
+			create_message = {
+				type = MESSAGE_DYSON_SHOT
+				localization =  MESSAGE_DYSON_SHOT_DESC
+				days = @toast_message_days
+			}
+			add_opinion_modifier = {
+				who = from.owner
+				modifier = opinion_dyson_gun_target
+			}
+		}
+	}
+	if = {
+		limit = {
+			any_system_planet = { is_colony = yes }
+			OR = {
+				is_active_resolution = "resolution_rulesofwar_independent_tribunals"
+				is_active_resolution = "resolution_rulesofwar_last_resort_doctrine"
+				is_active_resolution = "resolution_rulesofwar_demobilization_initiative"
+			}
+		}
+		from.owner = {
+			set_timed_country_flag = { flag = resolution_breached_fired_dyson_gun days = 3600 }
+		}
+	}
+	if = {
+		limit = {
+			any_system_planet = { is_homeworld = yes }
+		}
+		from.owner = {
+			set_country_flag = fired_dyson_gun_at_homeworld
+		}
+	}
+}
