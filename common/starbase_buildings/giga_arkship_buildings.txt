@@ -19,18 +19,39 @@ kugelblitz_arkship_building = {
     starbase_limit = {
         base = 1
     }
-    empire_limit = {
-        base = 0.1
-        modifier = {
-            add = owner.value:giga_kugel_limit
-        }
-    }
+    # empire_limit = {
+    #     base = 0.1
+    #     modifier = {
+    #         add = owner.value:giga_kugel_limit
+    #     }
+    # }
     potential = {
         NOT = { has_global_flag = kugel_disabled }
         owner? = {
             has_technology = giga_tech_kugelblitz_nomad
         }
         is_arkship_starbase = yes
+        OR = {
+            has_global_flag = kugel_capped_u
+            check_variable = {
+                which = giga_current_kugel
+                value < owner.value:giga_kugel_limit
+            }
+        }
+    }
+    possible = {
+        custom_tooltip = {
+            fail_text = "requires_not_capped"
+            from = {
+                OR = {
+                    has_global_flag = kugel_capped_u
+                    check_variable = {
+                        which = giga_current_kugel
+                        value < owner.value:giga_kugel_limit
+                    }
+                }
+            }
+        }
     }
     show_in_tech = "giga_tech_kugelblitz_nomad"
     show_tech_unlock_if = {
@@ -60,10 +81,25 @@ kugelblitz_arkship_building = {
                 }
             }
         }
-        custom_tooltip = sm_kugelblitz_upgrade_module_tt
         situation_nomad_economy_max_progress_add = @kugel_ark_building_tier1_OR
         country_resource_max_add = @kugel_ark_building_tier1_storage
+
     }
+
+    triggered_country_modifier = {
+        potential = {
+            owner? = {
+                NOT = {
+                    has_technology = tech_mega_engineering
+                    has_technology = giga_tech_tetradimensional_engineering
+                    #todo: Replace with nomad equivalent
+                }
+            }
+        }
+        custom_tooltip = sm_kugelblitz_upgrade_module_tt
+        show_only_custom_tooltip = no
+    }
+
     triggered_country_modifier = {
         potential = {
             owner? = {
@@ -88,19 +124,52 @@ kugelblitz_arkship_building = {
     #     situation_nomad_economy_max_progress_add = @kugel_ark_building_tier3_OR
     #     country_resource_max_add = @kugel_ark_building_tier3_storage
     # }
-    on_finished = {
+
+    on_queued = {
         owner? = {
             change_variable = { which = giga_current_kugel value = 1 }
         }
     }
-    on_destroyed = {
+    on_unqueued = {
         owner? = {
             if = {
-                limit = { check_variable = { which = giga_current_kugel value >= 1 } }
+                limit = {
+                    check_variable = { which = giga_current_kugel value >= 1 }
+                }
                 change_variable = { which = giga_current_kugel value = -1 }
             }
         }
     }
+    abort_construction_trigger = {
+        owner? = {
+            check_variable = {
+                which = giga_current_kugel
+                value >= owner.value:giga_kugel_limit
+            }
+        }
+    }
+    on_aborted = {
+        owner? = {
+            if = {
+                limit = {
+                    check_variable = { which = giga_current_kugel value >= 1 }
+                }
+                change_variable = { which = giga_current_kugel value = -1 }
+            }
+        }
+    }
+
+    on_destroyed = {
+        owner? = {
+            if = {
+                limit = {
+                    check_variable = { which = giga_current_kugel value >= 1 }
+                }
+                change_variable = { which = giga_current_kugel value = -1 }
+            }
+        }
+    }
+
 
     ai_weight = {
         weight = 100 #use same weight here - ai weighting is done in starbase_types.txt

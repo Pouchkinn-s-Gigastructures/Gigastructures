@@ -28,12 +28,12 @@ kugelblitz_waystation_module = {
     starbase_limit = {
         base = 1
     }
-    empire_limit = {
-        base = 0.1
-        modifier = {
-            add = owner.value:giga_kugel_limit #does this work?
-        }
-    }
+    # empire_limit = {
+    #     base = 0.1
+    #     modifier = {
+    #         add = owner.value:giga_kugel_limit
+    #     }
+    # }
 
     potential = {
         NOT = { has_global_flag = kugel_disabled }
@@ -41,6 +41,27 @@ kugelblitz_waystation_module = {
             has_technology = giga_tech_kugelblitz_nomad
         }
         is_waystation_starbase = yes
+        OR = {
+            has_global_flag = kugel_capped_u
+            check_variable = {
+                which = giga_current_kugel
+                value < owner.value:giga_kugel_limit
+            }
+        }
+    }
+    possible = {
+        custom_tooltip = {
+            fail_text = "requires_not_capped"
+            from = {
+                OR = {
+                    has_global_flag = kugel_capped_u
+                    check_variable = {
+                        which = giga_current_kugel
+                        value < owner.value:giga_kugel_limit
+                    }
+                }
+            }
+        }
     }
     show_in_tech = "giga_tech_kugelblitz"
     show_tech_unlock_if = {
@@ -70,7 +91,6 @@ kugelblitz_waystation_module = {
                 }
             }
         }
-        custom_tooltip = sm_kugelblitz_upgrade_module_tt
         starbase_stockpile_capacity_add = @kugel_module_tier1_storage
     }
     triggered_country_modifier = {
@@ -85,6 +105,20 @@ kugelblitz_waystation_module = {
         }
         situation_nomad_economy_max_progress_add = @kugel_module_tier1_OR
     }
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                NOT = {
+                    has_technology = tech_mega_engineering
+                    has_technology = giga_tech_tetradimensional_engineering
+                    #todo: Replace with nomad equivalent
+                }
+            }
+        }
+        custom_tooltip = sm_kugelblitz_upgrade_module_tt
+        show_only_custom_tooltip = no
+    }
+
     triggered_station_modifier = {
         potential = {
             owner? = {
@@ -130,15 +164,47 @@ kugelblitz_waystation_module = {
     #     situation_nomad_economy_max_progress_add = @kugel_module_tier3_OR
     # }
 
-    on_finished = {
+    on_queued = {
         owner? = {
             change_variable = { which = giga_current_kugel value = 1 }
         }
     }
+    on_unqueued = {
+        owner? = {
+            if = {
+                limit = {
+                    check_variable = { which = giga_current_kugel value >= 1 }
+                }
+                change_variable = { which = giga_current_kugel value = -1 }
+            }
+        }
+    }
+
+    abort_construction_trigger = {
+        owner? = {
+            check_variable = {
+                which = giga_current_kugel
+                value >= owner.value:giga_kugel_limit
+            }
+        }
+    }
+    on_aborted = {
+        owner? = {
+            if = {
+                limit = {
+                    check_variable = { which = giga_current_kugel value >= 1 }
+                }
+                change_variable = { which = giga_current_kugel value = -1 }
+            }
+        }
+    }
+
     on_destroyed = {
         owner? = {
             if = {
-                limit = { check_variable = { which = giga_current_kugel value >= 1 } }
+                limit = {
+                    check_variable = { which = giga_current_kugel value >= 1 }
+                }
                 change_variable = { which = giga_current_kugel value = -1 }
             }
         }
