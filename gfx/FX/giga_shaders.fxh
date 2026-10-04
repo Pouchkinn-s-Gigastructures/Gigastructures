@@ -313,6 +313,81 @@ MainCode PixelOmniMeshShip
 
 	]]
 
+PixelShader = {
+    MainCode PixelGigaLyuiniteNanites
+        ConstantBuffers = { Common, ShipConstants, Shadow, TiledPointLight }
+    [[
+        float4 calcSurface( VS_OUTPUT_PDXMESHSTANDARD In, int mipBias, float scale, float speedMult ) : PDX_COLOR
+        {
+            float4 vUV = float4((In.vUV0 * scale) + vUVAnimationDir * vUVAnimationTime * speedMult, 0.f, mipBias);
+
+            // textures
+            float4 vDiffuse = tex2Dbias( DiffuseMap, vUV );
+            float4 vNormalMap = tex2Dbias( NormalMap, vUV );
+            float3 vNormalSample = UnpackRRxGNormal(vNormalMap);
+            float4 vProperties = tex2Dbias( SpecularMap, vUV );
+
+            float4 col = vDiffuse;
+
+            if (mipBias == 0) {
+                col.rgb = float3(0.2, 0.0, 0.0);
+            }
+            else {
+                col.rgb = float3(0.0, 0.0, 0.4);
+            }
+
+            if (dot(-vCamLookAtDir, normalize(In.vNormal)) < 0.0) {
+                col.rgb *= 0.5;
+            }
+            return col;
+        }
+
+        float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
+        {
+            const float MIP_SCALE = 0.037;
+            const float MIP_BIAS = 10.0;
+            const float THRESHOLD_BASE = 0.5;
+            const float THRESHOLD_MIN = 0.135;
+
+            // calculate fake mip level for alpha clipping
+            float3 dx = ddx(In.vPos);
+            float3 dy = ddy(In.vPos);
+
+            float spanSquared = max(dot(dx,dx),dot(dy,dy));
+
+            float pseudoMip = 0.5 * log2(spanSquared) + MIP_BIAS;
+            pseudoMip = max(0.0, pseudoMip);
+
+            // view angle bias, to counteract outlining
+            float NdotV = saturate( dot( normalize( In.vNormal ), vCamLookAtDir ) );
+            float angleCorrection = (1.0 - NdotV) * 0.1;
+
+            // dynamic clipping level
+            float threshold = max(THRESHOLD_BASE - (pseudoMip * MIP_SCALE) - angleCorrection, THRESHOLD_MIN);
+
+            // surface layers
+            float4 vLayer1 = calcSurface(In, 0, 1.f, 1.f);
+            float4 vLayer2 = calcSurface(In, -1, 2.f, 0.75f);
+
+            // mix layers
+            float a1 = vLayer1.a;
+            float a2 = vLayer2.a * (1.0 - a1);
+            float aSum = a1 + a2;
+            float4 vOut = float4((vLayer1.rgb * a1 + vLayer2.rgb * a2) / max(aSum, 0.00001), aSum);
+
+            // drop pixels under threshold
+            clip(vOut.a - threshold);
+
+            // return solid
+            return float4(vOut.rgb, 1.f);
+        }
+    ]]
+}
+
+#// ####################################################################################################################
+#// BLOKKATS
+#// ####################################################################################################################
+
 #// rainbow blokkat
 PixelShader = {
 	MainCode PixelRainbowBlokkat

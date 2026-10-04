@@ -5161,6 +5161,36 @@ Effect PdxMeshPortraitHairDepthSkinnedShadow
 	Defines = { "IS_SHADOW" }
 }
 
+Effect PdxMeshGigaLyuiniteNanites
+{
+    VertexShader = "VertexPdxMeshStandard"
+    PixelShader = "PixelGigaLyuiniteNanites"
+    BlendState = "BlendStateAlphaBlendWriteAlpha";
+    RasterizerState = "RasterizerStateNoCulling"
+    Defines = {}
+}
+
+Effect PdxMeshGigaLyuiniteNanitesSkinned
+{
+    VertexShader = "VertexPdxMeshStandardSkinned"
+    PixelShader = "PixelGigaLyuiniteNanites"
+    Defines = {}
+}
+
+Effect PdxMeshGigaLyuiniteNanitesShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+Effect PdxMeshGigaLyuiniteNanitesSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardSkinnedShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
 #// old blokkat
 Effect PdxMeshRainbowBlokkatPortraitSkinned
 {
