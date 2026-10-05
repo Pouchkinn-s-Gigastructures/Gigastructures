@@ -6,6 +6,7 @@ Includes = {
 	"tiled_pointlights.fxh"
 	"pdxmesh_samplers.fxh"
 	"pdxmesh_ship.fxh"
+	"giga_functions.fxh"
 	#//"giga_debug.fxh"
 }
 
@@ -319,27 +320,81 @@ PixelShader = {
     [[
         float4 calcSurface( VS_OUTPUT_PDXMESHSTANDARD In, int mipBias, float scale, float speedMult ) : PDX_COLOR
         {
+            bool backface = isBackFace(In.vPos, In.vNormal);
+            float3 vPos = In.vPos.xyz / In.vPos.w;
             float4 vUV = float4((In.vUV0 * scale) + vUVAnimationDir * vUVAnimationTime * speedMult, 0.f, mipBias);
 
-            // textures
-            float4 vDiffuse = tex2Dbias( DiffuseMap, vUV );
+            LightingProperties lightingProperties;
+            lightingProperties._WorldSpacePos = vPos;
+            lightingProperties._ToCameraDir = normalize( vCamPos - vPos );
+
+            float3 vInNormal = normalize( In.vNormal );
             float4 vNormalMap = tex2Dbias( NormalMap, vUV );
-            float3 vNormalSample = UnpackRRxGNormal(vNormalMap);
+            float3x3 TBN = Create3x3( normalize( In.vTangent ), normalize( In.vBitangent ), vInNormal );
+
+            float3 vNormal = normalize( mul( UnpackRRxGNormal(vNormalMap), TBN ) );
+            if( backface ) {
+                vNormal = -vNormal;
+            }
+            float4 vDiffuse = tex2Dbias( DiffuseMap, vUV );
+            float vEmissive = vNormalMap.b;
+            float EmissiveRecolorCrunch = ShipVars.r;
+
             float4 vProperties = tex2Dbias( SpecularMap, vUV );
 
-            float4 col = vDiffuse;
-
-            if (mipBias == 0) {
-                col.rgb = float3(0.2, 0.0, 0.0);
-            }
-            else {
-                col.rgb = float3(0.0, 0.0, 0.4);
+            if( PrimaryColor.a > 0.0f ) {
+                vDiffuse.rgb = lerp( vDiffuse.rgb, vec3( max( vDiffuse.r, max( vDiffuse.g, vDiffuse.b ) ) ) * PrimaryColor.rgb, saturate( (vEmissive * EmissiveRecolorCrunch ) ) );
             }
 
-            if (dot(-vCamLookAtDir, normalize(In.vNormal)) < 0.0) {
-                col.rgb *= 0.5;
+            if(backface) {
+                vDiffuse.rgb *= 0.35;
             }
-            return col;
+
+            float3 vColor = vDiffuse.rgb;
+
+            lightingProperties._Glossiness = vProperties.a;
+            lightingProperties._NonLinearGlossiness = GetNonLinearGlossiness(lightingProperties._Glossiness);
+
+            float vCubemapIntensity = CubemapIntensity;
+
+            vColor = ToGamma(vColor);
+            vColor = ToLinear(lerp( vColor, vColor * ( vProperties.r * PrimaryColor.rgb ), vProperties.r ));
+
+            lightingProperties._Normal = vNormal;
+            float SpecRemapped = vProperties.g * vProperties.g * 0.4;
+            float vMetalness = vProperties.b;
+
+            float MetalnessRemapped = 1.0 - (1.0 - vMetalness) * (1.0 - vMetalness);
+
+            lightingProperties._Diffuse = MetalnessToDiffuse(MetalnessRemapped, vColor);
+            lightingProperties._SpecularColor = MetalnessToSpec(MetalnessRemapped, vColor, SpecRemapped);
+
+            float3 diffuseLight = vec3(0.0);
+            float3 specularLight = vec3(0.0);
+            CalculateSystemPointLight(lightingProperties, 1.0f, diffuseLight, specularLight);
+            CalculateShipCameraLights(lightingProperties, 1.0f, diffuseLight, specularLight);
+            CalculatePointLights(lightingProperties, LightDataMap, LightIndexMap, diffuseLight, specularLight);
+
+            float3 vEyeDir = normalize( vPos - vCamPos.xyz );
+            float3 reflection = reflect( vEyeDir, vNormal );
+            float MipmapIndex = GetEnvmapMipLevel(lightingProperties._Glossiness);
+            float3 reflectiveColor = texCUBElod( EnvironmentMap, float4(reflection, MipmapIndex) ).rgb * vCubemapIntensity;
+            specularLight += reflectiveColor * FresnelGlossy(lightingProperties._SpecularColor, -vEyeDir, lightingProperties._Normal, lightingProperties._Glossiness);
+
+            float vCamDistance = length( vPos - vCamPos );
+            float vCamDistFadeValue = saturate( ( vCamDistance - CamLightFadeStartStop.x ) / ( CamLightFadeStartStop.y - CamLightFadeStartStop.x ) );
+            float vAmbientIntensity = lerp( AmbientIntensityNearFar.x, AmbientIntensityNearFar.y, vCamDistFadeValue );
+
+            if(backface) {
+                specularLight *= 0.25;
+            }
+
+            vColor = ComposeLight( lightingProperties, vAmbientIntensity, diffuseLight, specularLight );
+            vColor = lerp( vColor, vDiffuse.rgb, vEmissive );
+
+            float alpha = vDiffuse.a;
+
+            return float4(vColor, alpha );
         }
 
         float4 main( VS_OUTPUT_PDXMESHSTANDARD In ) : PDX_COLOR
@@ -347,7 +402,7 @@ PixelShader = {
             const float MIP_SCALE = 0.037;
             const float MIP_BIAS = 10.0;
             const float THRESHOLD_BASE = 0.5;
-            const float THRESHOLD_MIN = 0.135;
+            const float THRESHOLD_MIN = 0.2;
 
             // calculate fake mip level for alpha clipping
             float3 dx = ddx(In.vPos);

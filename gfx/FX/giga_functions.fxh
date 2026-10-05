@@ -1,3 +1,8 @@
+#if !defined(PDX_DIRECTX_9) && !defined(PDX_DIRECTX_11) && !defined(PDX_ORBIS)
+    #define ddx(val) dFdx(val)
+    #define ddy(val) dFdy(val)
+#endif
+
 Code
 [[
 static const float GIGA_GALAXY_SIZE = 5000.f;
@@ -41,4 +46,15 @@ float4x4 inverse(float4x4 m) {
     return ret;
 }
 
+bool isBackFace(float3 vPos, float3 vNormal) {
+    float3 dX = ddx(vPos);
+    float3 dY = ddy(vPos);
+
+    float3 normal = normalize(cross(dX,dY));
+
+    return dot(normal, normalize(vNormal)) < 0.0;
+}
+bool isBackFace(float4 vPos, float3 vNormal) {
+    return isBackFace(vPos.xyz / vPos.w, vNormal);
+}
 ]]
