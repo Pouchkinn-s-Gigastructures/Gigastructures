@@ -3,14 +3,35 @@ giga_discover_galactic_core_situation = {
     complete_icon_frame = GFX_situation_outcome_frame_blue
     complete_icon = GFX_situation_outcome_unknown
 
+    on_start = {
+        owner = { set_country_flag = giga_discover_galactic_core_situation_approach_hands_off }
+    }
+
     stages = {
-        stage = {
+        stage_1 = {
             icon = GFX_situation_stage_1
             icon_background = GFX_situation_stage_frame_blue
+            end = 20
+        }
+        stage_2 = {
+            icon = GFX_situation_stage_2
+            icon_background = GFX_situation_stage_frame_blue
+            end = 40
+            on_first_enter = {
+                owner = { country_event = { id = giga_mega.404 } }
+            }
+        }
+        stage_3 = {
+            icon = GFX_situation_stage_3
+            icon_background = GFX_situation_stage_frame_blue
             end = 60
+            on_first_enter = {
+                owner = { country_event = { id = giga_mega.406 } }
+            }
         }
     }
 
+    # Approach flags are read by value:giga_core_situation_progress_mod and giga_mega.407
     approach = {
         name = giga_discover_galactic_core_situation_approach_hands_off
         icon = GFX_situation_approach_balance_sheet
@@ -18,6 +39,21 @@ giga_discover_galactic_core_situation = {
         default = yes
         on_select = {
             custom_tooltip = giga_discover_galactic_core_situation_approach_hands_off_tooltip
+            hidden_effect = {
+                owner = {
+                    remove_country_flag = giga_discover_galactic_core_situation_approach_hands_on
+                    remove_country_flag = giga_discover_galactic_core_situation_approach_delay
+                    set_country_flag = giga_discover_galactic_core_situation_approach_hands_off
+                }
+            }
+        }
+        # Only time I can see an AI getting the situation is if a player swapped off of their country, so keep the approach they left on
+        ai_weight = {
+            base = 1
+            modifier = {
+                factor = 1000
+                current_situation_approach = giga_discover_galactic_core_situation_approach_hands_off
+            }
         }
     }
 
@@ -27,6 +63,13 @@ giga_discover_galactic_core_situation = {
         icon_background = GFX_situation_approach_bg_green
         on_select = {
             custom_tooltip = giga_discover_galactic_core_situation_approach_hands_on_tooltip
+            hidden_effect = {
+                owner = {
+                    remove_country_flag = giga_discover_galactic_core_situation_approach_hands_off
+                    remove_country_flag = giga_discover_galactic_core_situation_approach_delay
+                    set_country_flag = giga_discover_galactic_core_situation_approach_hands_on
+                }
+            }
         }
         triggered_modifier = {
             potential = {
@@ -42,6 +85,14 @@ giga_discover_galactic_core_situation = {
             country_physics_tech_research_speed = 0.15
             country_energy_produces_mult = -0.05
         }
+        # Only time I can see an AI getting the situation is if a player swapped off of their country, so keep the approach they left on
+        ai_weight = {
+            base = 1
+            modifier = {
+                factor = 1000
+                current_situation_approach = giga_discover_galactic_core_situation_approach_hands_on
+            }
+        }
     }
 
     approach = {
@@ -50,6 +101,13 @@ giga_discover_galactic_core_situation = {
         icon_background = GFX_situation_approach_bg_red
         on_select = {
             custom_tooltip = giga_discover_galactic_core_situation_approach_delay_tooltip
+            hidden_effect = {
+                owner = {
+                    remove_country_flag = giga_discover_galactic_core_situation_approach_hands_off
+                    remove_country_flag = giga_discover_galactic_core_situation_approach_hands_on
+                    set_country_flag = giga_discover_galactic_core_situation_approach_delay
+                }
+            }
         }
         allow = {
             owner = {
@@ -70,35 +128,37 @@ giga_discover_galactic_core_situation = {
             country_unity_produces_mult = 0.10
             country_energy_produces_mult = -0.075
         }
+        ai_weight = {
+            base = 1
+            # Only time I can see an AI getting the situation is if a player swapped off of their country, so keep the approach they left on
+            modifier = {
+                factor = 1000
+                current_situation_approach = giga_discover_galactic_core_situation_approach_delay
+            }
+        }
     }
 
     monthly_progress = {
         base = 1
         modifier = {
-            desc = string_current_approach
-            add = 0.5
-            current_situation_approach = giga_discover_galactic_core_situation_approach_hands_on
-        }
-        modifier = {
-            desc = string_current_approach
-            subtract = 0.5
-            current_situation_approach = giga_discover_galactic_core_situation_approach_delay
+            desc = giga_discover_galactic_core_situation_shared_progress
+            add = value:giga_core_situation_progress_mod
         }
     }
 
     on_progress_complete = {
-        hidden_effect = {
-            if = { limit = { current_situation_approach = giga_discover_galactic_core_situation_approach_hands_off } owner = { set_country_flag = giga_discover_galactic_core_situation_approach_hands_off } }
-            if = { limit = { current_situation_approach = giga_discover_galactic_core_situation_approach_hands_on } owner = { set_country_flag = giga_discover_galactic_core_situation_approach_hands_on } }
-            if = { limit = { current_situation_approach = giga_discover_galactic_core_situation_approach_delay } owner = { set_country_flag = giga_discover_galactic_core_situation_approach_delay } }
-        }
+        hidden_effect = { set_global_flag = giga_core_breached_by_situation }
         owner = {
             country_event = {
-                id = giga_mega.403
+                id = giga_mega.407
             }
         }
     }
 
-    abort_trigger = { has_global_flag = giga_galactic_core_spawned }
-    on_abort = { owner = { country_event = { id = giga_mega.404 } } }
+    # Progress is shared, so other players complete normally rather than aborting
+    abort_trigger = {
+        has_global_flag = giga_galactic_core_spawned
+        NOT = { has_global_flag = giga_core_breached_by_situation }
+    }
+    on_abort = { owner = { country_event = { id = giga_mega.408 } } }
 }
