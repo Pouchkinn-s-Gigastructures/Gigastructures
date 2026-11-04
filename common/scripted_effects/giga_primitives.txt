@@ -78,6 +78,10 @@ generate_corrona_primitives_on_planet = {
 	add_building = building_giga_corrona_homes
 	add_building = building_giga_corrona_capital
 	create_pre_ftl_blockers = yes
+	add_modifier = {
+		modifier = corrona_defence_buff
+		days = -1
+	}
 }
 
 # Flusion
@@ -89,7 +93,13 @@ generate_flusion_primitives_on_planet = {
 			set_global_flag = flusion_no_katzens
 			modifier = {
 				factor = 0 #Katzen crisis needs Katzens
-				has_global_flag = katzenartig_always
+				OR = { #TODO please delink difficulty and guaranteed someone please
+					has_global_flag = katzenartig_always
+					has_global_flag = katzenartig_deathwish
+					has_global_flag = katzenartig_stellarite
+					has_global_flag = katzenartig_improbable
+					has_global_flag = katzenartig_easy
+				}
 			}
 		}
 		75 = {
@@ -172,6 +182,7 @@ generate_flusion_primitives_on_planet = {
 	create_species = { #create Katzen species even if flusion_no_katzens in case someone wants to force-spawn them later
 		name = "Katzen"
 		plural = "Katzens"
+		adjective = "Katzen"
 		class = POUCHKINN
 		portrait = douclaw
 		homeworld = THIS
@@ -193,6 +204,7 @@ generate_flusion_primitives_on_planet = {
 	create_species = {
 		name = "Katzen"
 		plural = "Katzens"
+		adjective = "Katzen"
 		class = POUCHKINN
 		portrait = loris
 		namelist = MAM1
@@ -215,6 +227,7 @@ generate_flusion_primitives_on_planet = {
 	create_species = {
 		name = "Katzen"
 		plural = "Katzens"
+		adjective = "Katzen"
 		class = POUCHKINN
 		portrait = dietrich
 		namelist = MAM1
@@ -237,6 +250,7 @@ generate_flusion_primitives_on_planet = {
 	create_species = {
 		name = "Katzen"
 		plural = "Katzens"
+		adjective = "Katzen"
 		class = MAM
 		portrait = mam14
 		homeworld = THIS
@@ -290,6 +304,29 @@ generate_flusion_primitives_on_planet = {
 		set_graphical_culture = industrial_01
 		set_country_flag = flusion_primitives
 		save_global_event_target_as = flusion_primitives_country
+		unlock_council_slots = 1
+		set_council_position_to_council = councilor_defense
+		switch = { #apply difficulty-based buffs (disappear upon Kaiser crisis awakening)
+			trigger = has_global_flag
+			katzenartig_deathwish = {
+				add_modifier = {
+					modifier = initial_flusion_buff
+					days = -1
+				}
+			}
+			katzenartig_stellarite = {
+				add_modifier = {
+					modifier = initial_flusion_buff_stellarite
+					days = -1
+				}
+			}
+			katzenartig_improbable = {
+				add_modifier = {
+					modifier = initial_flusion_buff_improbable
+					days = -1
+				}
+			}
+		}
 	}
 
 	remove_all_buildings = yes
@@ -379,12 +416,14 @@ generate_flusion_primitives_on_planet = {
 				effect = {
 					set_leader_flag = flusiondouclaw
 					save_global_event_target_as = flusion_douclaw
+					set_council_position = councilor_defense
 				}
 			}
 		}
 
 		set_colony_type = col_giga_pre_ftl_fusion
 	}
+
 	add_building = building_giga_flusion_home
 	add_building = building_giga_flusion_home
 	add_building = building_giga_flusion_home
@@ -403,7 +442,62 @@ generate_flusion_primitives_on_planet = {
 	while = { count = 1 create_army = { name = NAME_altarian_army	owner = last_created_country species = event_target:flusionians type = "flusion_early_army" } }
 	while = { count = 1 create_army = { name = NAME_manglarian_army	owner = last_created_country species = event_target:flusionians type = "flusion_early_army" } }
 
+	setup_real_flusion_portraits = yes
+	event_target:flusion_douclaw = { set_douclaw_real_portrait = yes }
+
 	create_pre_ftl_blockers = yes
+
+	#give more techs because tech modules are so wonky :pensive:
+	create_country = {
+		name = "kaiserbleh"
+		type = giga_t1_tech_dump
+		effect = { save_global_event_target_as = flusion_tech_dump_t1 }
+	}
+	create_country = {
+		name = "kaiserbluh"
+		type = giga_t2_tech_dump
+		effect = { save_global_event_target_as = flusion_tech_dump_t2 }
+	}
+	create_country = {
+		name = "kaiserbloh"
+		type = giga_t3_tech_dump
+		effect = { save_global_event_target_as = flusion_tech_dump_t3 }
+	}
+	create_country = {
+		name = "kaiserblah"
+		type = giga_t4_tech_dump
+		effect = { save_global_event_target_as = flusion_tech_dump_t4 }
+	}
+	create_country = {
+		name = "kaiserblih"
+		type = giga_t5_tech_dump
+		effect = { save_global_event_target_as = flusion_tech_dump_t5 }
+	}
+	event_target:flusion_primitives_country = {
+		copy_techs_from = { target = event_target:flusion_tech_dump_t1 }
+		copy_techs_from = { target = event_target:flusion_tech_dump_t2 }
+		copy_techs_from = { target = event_target:flusion_tech_dump_t3 }
+		copy_techs_from = { target = event_target:flusion_tech_dump_t4 }
+		copy_techs_from = { target = event_target:flusion_tech_dump_t5 }
+	}
+	event_target:flusion_tech_dump_t1 = { destroy_country = yes }
+	event_target:flusion_tech_dump_t2 = { destroy_country = yes }
+	event_target:flusion_tech_dump_t3 = { destroy_country = yes }
+	event_target:flusion_tech_dump_t4 = { destroy_country = yes }
+	event_target:flusion_tech_dump_t5 = { destroy_country = yes }
+
+	# Force-spawn the Mondkanone if the Kaiser is guaranteed
+	if = {
+		limit = {
+			OR = {
+				has_global_flag = katzenartig_always
+				has_global_flag = katzenartig_deathwish
+				has_global_flag = katzenartig_stellarite
+				has_global_flag = katzenartig_improbable
+			}
+		}
+		planet_event = { id = giga_flusion.299 days = 2 }
+	}
 }
 
 # Paluush
