@@ -1399,7 +1399,6 @@ country_event = {
 				limit = { has_modifier = katzen_orbital_bombardment_shield }
 				remove_modifier = katzen_orbital_bombardment_shield
 			}
-			set_planet_flag = flusion_katzen_nuked
 			change_pc = pc_katzenland
 			remove_all_districts = yes
 			remove_all_buildings = yes
@@ -1642,7 +1641,7 @@ event = {
 }
 
 #Apply Katzen Engineering to a planet
-planet_event = {
+carrier_event = {
 	id = giga_flusion.200
 	hide_window = yes
 	is_triggered_only = yes
@@ -1650,23 +1649,45 @@ planet_event = {
 	trigger = {
 		has_orbital_bombardment_stance = katzen
 		is_planet_habitable = yes
+		count_owned_pop_amount = {
+			count <= 50
+		}
 	}
 
 	immediate = {
 		owner = {
-			add_static_war_exhaustion = {
-				attacker = from
-				location = root
-				value_for_planet_destruction = 0.5
+			if = {
+				limit = {
+					owner = {
+						is_at_war_with = from
+					}
+				}
+				add_static_war_exhaustion = {
+					attacker = from
+					location = root
+					value_for_planet_destruction = 0.5
+				}
 			}
 			set_country_flag = planet_got_katzenland
 			add_opinion_modifier = { who = from modifier = opinion_katzenland_my_planet }
 			save_event_target_as = empire_got_katzenland
+			if = {
+				limit = {
+					NAND = {
+						has_origin = origin_progenitor_hive
+						root = { is_capital = yes }
+					}
+				}
+				#country_event = { id = action.82 } #TODO
+			}
+			else = {
+				country_event = { id = origin.3265 }
+			}
 		}
 		every_country = { #Apply opinion modifiers
 			limit = {
 				NOT = { is_in_federation_with = from }
-				NOT = { is_subject = yes }
+				is_subject = no
 				is_fanatic_xenophobe = no #Xenophobes don't care
 				ehof_default_country = yes
 				NOT = { has_country_flag = planet_got_katzenland }
@@ -1747,15 +1768,11 @@ planet_event = {
 				habitable_structure = yes
 				NOT = { is_planet_class = pc_habitat }
 			}
-			while = {
-				count = 28
-				random_owned_pop_group = { kill_single_pop = yes }
-			}
+			every_owned_pop_group = { kill_all_pop = yes }
 			remove_all_buildings = yes
 			remove_all_districts = yes
 			destroy_colony = yes
 		}
-		set_planet_flag = katzen_nuked
 	}
 }
 
