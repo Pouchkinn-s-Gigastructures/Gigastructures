@@ -178,17 +178,30 @@ giga_amb_progress_calc = {
 }
 
 # apply diminishing returns
-# sqrt(speed - offset + 0.25) - 0.5 + offset
-# the 0.25 and 0.5 come from the derivative of y = sqrt(x) as offsets to make the derivative 1 at speed = 0
+# (speed - offset) / ((speed - offset) + (cap - offset)) * (cap - offset) + offset
+# slope = 1 when speed = offset, speed approaches cap as it grows
 giga_amb_progress_dr = {
 	weight = giga_amb_progress
-	
-	subtract = @giga_amb_dr_offset
-	add = 0.25
-	square_root = yes
 
-	subtract = 0.5
+	subtract = @giga_amb_dr_offset
+	multiply = value:giga_amb_dr_cap_minus_offset
+	divide = value:giga_amb_progress_dr_divisor
+
 	add = @giga_amb_dr_offset
+}
+
+# cap - offset
+giga_amb_dr_cap_minus_offset = {
+	base = @giga_amb_dr_cap
+	subtract = @giga_amb_dr_offset
+}
+
+# (speed - offset) + (cap - offset)
+giga_amb_progress_dr_divisor = {
+	weight = giga_amb_progress
+
+	subtract = @giga_amb_dr_offset
+	add = value:giga_amb_dr_cap_minus_offset
 }
 
 giga_amb_cap_calc = {
@@ -200,6 +213,16 @@ giga_amb_cap_calc = {
 		}
 		mode = add
 	}
+}
+
+# used in one planet big tensile building
+giga_amb_one_planet_hub_mult = {
+	base = 0
+	modifier = {
+		exists = owner
+		add = owner.giga_amb_cap
+	}
+	min = 1
 }
 
 giga_amb_start_bonus = {
