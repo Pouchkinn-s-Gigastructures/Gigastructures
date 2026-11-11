@@ -948,9 +948,9 @@ planet_event = {
 
 	immediate = {
 		solar_system = {
-			if = {
-				limit = { exists = space_owner }
-				space_owner = { country_event = { id = giga_eawaf.20061 } }
+			every_fleet_in_system = {
+				limit = { owner? = { is_ai = no } }
+				owner = { country_event = { id = giga_eawaf.20061 } }
 			}
 		}
 		planet_event = { id = giga_eawaf.2007 days = 120 } #The spell proper
@@ -968,10 +968,15 @@ country_event = {
 
 	trigger = {
 		exists = root
+		NOT = { has_country_flag = giga_eawaf_20061_fired }
 	}
 
 	option = {
 		name = "giga_eawaf.20061.a"
+	}
+
+	immediate = {
+		set_country_flag = giga_eawaf_20061_fired
 	}
 }
 
@@ -1022,19 +1027,13 @@ planet_event = {
 		}
 		solar_system = { #Delete everything
 			set_star_flag = eawaf_faust_killzone #keeps AI out via giga_ai_should_restrict_system in case a hyperlane forms
-			if = {
-				limit = { exists = space_owner } #Message to system owner
-				space_owner = { country_event = { id = giga_eawaf.20071 } }
-				every_playable_country = { #Message to everyone else
-					limit = { is_ai = no NOT = { is_country = PREV.space_owner } }
-					country_event = { id = giga_eawaf.20072 }
-				}
+			every_fleet_in_system = {
+				limit = { owner? = { is_ai = no } }
+				owner = { country_event = { id = giga_eawaf.20071 } }
 			}
-			else = {
-				every_playable_country = { #Message to everyone else
-					limit = { is_ai = no }
-					country_event = { id = giga_eawaf.20072 }
-				}
+			every_playable_country = { #Message to everyone else
+				limit = { is_ai = no NOT = { has_country_flag = giga_eawaf_20071_fired } }
+				country_event = { id = giga_eawaf.20072 }
 			}
 			set_star_class = sc_giga_eawaf_faust_shroud
 			set_star_flag = giga_eawaf_siren_faust #Blocks triggering of the Geocentric event
@@ -1067,6 +1066,15 @@ planet_event = {
 			}
 			set_asteroid_belt = { radius = 0 }
 			every_neighbor_system = { remove_hyperlane = { from = this to = prev } }
+			star = { #in case a Dyson was on the star
+				switch = {
+					trigger = has_modifier
+					default = { }
+					dyson_swarm_1_mod = { remove_modifier = dyson_swarm_1_mod }
+					dyson_swarm_2_mod = { remove_modifier = dyson_swarm_2_mod }
+					dyson_swarm_3_mod = { remove_modifier = dyson_swarm_3_mod }
+				}
+			}
 		}
 	}
 }
@@ -1078,11 +1086,16 @@ country_event = {
 	desc = "giga_eawaf.20071.desc"
 	picture = GFX_evt_supernova
 	show_sound = event_activating_unknown_technology
-	location = root
+	location = event_target:giga_eawaf_faust_system
 	is_triggered_only = yes
 
 	trigger = {
 		exists = root
+		NOT = { has_country_flag = giga_eawaf_20071_fired }
+	}
+
+	immediate = {
+		set_country_flag = giga_eawaf_20071_fired
 	}
 
 	option = {
@@ -1133,11 +1146,16 @@ country_event = {
 	desc = "giga_eawaf.20072.desc"
 	picture = GFX_evt_supernova
 	show_sound = event_activating_unknown_technology
-	location = from
+	location = event_target:giga_eawaf_faust_system
 	is_triggered_only = yes
 
 	trigger = {
 		exists = root
+		NOT = { has_country_flag = giga_eawaf_20072_fired }
+	}
+
+	immediate = {
+		set_country_flag = giga_eawaf_20072_fired
 	}
 
 	option = {
@@ -1986,6 +2004,11 @@ country_event = {
 					subtract_variable = { which = giga_eawaf_sirens_warmaterial_count value = 200 }
 					giga_eawaf_create_standard_sirens_fleet = yes
 				}
+				if = {
+					limit = { NOT = { has_global_flag = giga_eawaf_applied_fleet_movement } }
+					set_timed_global_flag = { flag = giga_eawaf_applied_fleet_movement days = 119 }
+					giga_eawaf_fleet_movement = yes
+				}
 			}
 		}
 		set_update_modifiers_batch = end
@@ -1999,18 +2022,21 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		FromFrom = { is_ship_size = giga_eawaf_sirens_enthraller }
-		FromFromFrom.owner = { giga_eawaf_is_immune_to_sirens = no }
+		fromfrom = { is_ship_size = giga_eawaf_sirens_enthraller }
+		fromfromfrom.owner = { giga_eawaf_is_immune_to_sirens = no }
 	}
 
 	immediate = {
 		create_fleet = {
 			name = "Enthralled Vessels"
+			settings = {
+				can_change_composition = yes
+			}
 			effect = {
 				set_owner = root
 				create_ship = {
 					name = "Enthralled Vessels"
-					design = ROOT.FromFromFrom
+					design = root.fromfromfrom
 					prefix = no
 					upgradable = no
 				}
@@ -2019,6 +2045,7 @@ country_event = {
 					distance = 0
 					angle = random
 				}
+				set_fleet_flag = giga_eawaf_enthralled_by_enthraller
 				#queue_actions = { merge_fleet = { target = Root.FromFrom.fleet } }
 			}
 		}
@@ -2060,12 +2087,18 @@ fleet_event = {
 					NOR = {
 						has_component = GIGA_EAWAF_DISENCHANTER_3
 						has_component = GIGA_EAWAF_DISENCHANTER_4
+						has_active_building = building_giga_eawaf_disenchanter_building_2
+						is_ship_size = military_arkship_champions_forge
 					}
 				}
 			}
 			set_owner = event_target:giga_eawaf_country
 			set_fleet_flag = giga_eawaf_enthralled_by_sirens
 			every_owned_ship = { giga_eawaf_clear_strife_field_ship_modifiers = yes }
+		}
+		else_if = {
+			limit = { is_ship_size = military_arkship_champions_forge }
+			damage_ship = { amount = 92233720368547 attacker = event_target:giga_eawaf_country }
 		}
 	}
 }
@@ -2176,19 +2209,26 @@ starbase_event = {
 }
 
 #Sirens go bomb planet
-planet_event = {
+carrier_event = {
 	id = giga_eawaf.3008
 	hide_window = yes
 	is_triggered_only = yes
 
 	trigger = {
-		FROM = { is_country_type = giga_eawaf_sirens }
+		has_orbital_bombardment_stance = sirenalia
+		NOT = { has_carrier_flag = giga_eawaf_bombard_cooldown }
 	}
 
 	immediate = {
+		set_timed_carrier_flag = { flag = giga_eawaf_bombard_cooldown days = 21 }
 		while = {
-			count = 1
-			create_army = { name = "Mind Thralls" owner = event_target:giga_eawaf_country species = event_target:eawaf_ponies  type = "eawaf_sirens_army"  }
+			count = 10
+			create_army = {
+				name = "Mind Thralls"
+				owner = event_target:giga_eawaf_country
+				species = event_target:eawaf_ponies
+				type = "eawaf_sirens_army"
+			}
 		}
 	}
 }
@@ -2237,7 +2277,7 @@ country_event = {
 			limit = {
 				solar_system = {
 					NOT = {
-						any_system_planet = {
+						any_system_planet_colony = {
 							owner = { is_country_type = giga_eawaf_sirens }
 						}
 					}
@@ -2291,14 +2331,16 @@ country_event = {
 }
 
 #Trying to land on inner field planet without disenchanter 3, armies taken over lol
-planet_event = {
+# This = colony
+# From = country attacking
+carrier_event = {
 	id = giga_eawaf.3012
 	hide_window = yes
 	is_triggered_only = yes
 
 	trigger = {
 		solar_system = { has_star_flag = giga_eawaf_inner_field_system }
-		From = { NOT = { has_technology = giga_tech_eawaf_disenchanter_3 } }
+		from = { NOT = { has_technology = giga_tech_eawaf_disenchanter_3 } }
 	}
 
 	immediate = {
@@ -2519,6 +2561,242 @@ situation_event = {
 	}
 }
 
+fleet_event = {
+	id = giga_eawaf.3016
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = { exists = this }
+
+	immediate = {
+		solar_system? = { set_timed_star_flag = { flag = giga_eawaf_fleet_present days = 31 } }
+		set_fleet_flag = giga_eawaf_event_3016_active
+		if = {
+			limit = { is_fleet_idle = yes }
+			## might be unnecessary
+			clear_orders = yes
+			clear_fleet_actions = this
+
+			queue_actions = {
+				find_closest_planet = {
+					trigger = {
+						id = giga_eawaf_leading_fleet_movement.1
+						is_colony = yes
+						controller? = { is_hostile = event_target:giga_eawaf_country }
+					}
+					found_planet = {
+						effect = {
+							id = giga_eawaf_leading_fleet_effect.1
+							prev = {
+								auto_move_to_planet = { target = prev clear_auto_move_on_arrival = yes }
+							}
+						}
+					}
+					failed = {
+						find_closest_system = {
+							trigger = {
+								id = giga_eawaf_leading_fleet_movement.2
+								NOT = { has_star_flag = giga_eawaf_fleet_present }
+								OR = {
+									any_system_planet_colony = { controller? = { is_hostile = event_target:giga_eawaf_country } }
+									any_fleet_in_system = {
+										controller? = { is_hostile = event_target:giga_eawaf_country }
+										is_disabled = no
+									}
+								}
+							}
+							found_system = {
+								effect = {
+									id = giga_eawaf_leading_fleet_effect.2
+									set_timed_star_flag = { flag = giga_eawaf_fleet_present days = 31 }
+								}
+								effect = {
+									id = giga_eawaf_leading_fleet_effect.3
+									giga_eawaf_fleet_jump = {
+										LIMIT = "
+											NOT = { is_same_value = prev.solar_system }
+											OR = {
+												count_neighbor_system = { count = 0 }
+												prev.solar_system = { count_neighbor_system = { count = 0 } }
+											}
+										"
+										FLEET = prev
+										DESTINATION = prev
+									}
+								}
+								move_to = this
+								wait = 4
+								find_closest_fleet = {
+									trigger = {
+										id = giga_eawaf_leading_fleet_movement.3
+										controller? = { is_hostile = event_target:giga_eawaf_country }
+										is_disabled = no
+									}
+									found_fleet = { attack_fleet = { target = this allow_ftl = no } }
+									system_only = yes
+								}
+								wait = 6
+								find_closest_planet = {
+									found_planet = {
+										effect = {
+											id = giga_eawaf_leading_fleet_effect.4
+											prevprev = {
+												auto_move_to_planet = { target = prev clear_auto_move_on_arrival = yes }
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		fleet_event = { id = giga_eawaf.3016 days = 30 random = 30 }
+	}
+}
+
+fleet_event = {
+	id = giga_eawaf.3017
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = this
+		NOT = { has_fleet_flag = giga_eawaf_event_3016_active }
+	}
+
+	immediate = {
+		# solar_system? = { set_timed_star_flag = { flag = giga_eawaf_fleet_present days = 31 } }
+		set_fleet_flag = giga_eawaf_event_3017_active
+		if = {
+			limit = {
+				is_in_combat = no
+				NOT = { exists = event_target:giga_eawaf_leading_fleet_@root }
+			}
+			## might be unnecessary
+			clear_orders = yes
+			clear_fleet_actions = this
+			remove_auto_move_target = yes
+
+			controller = {
+				random_owned_fleet = {
+					limit = { has_fleet_flag = giga_eawaf_leading_fleet  }
+					save_global_event_target_as = giga_eawaf_leading_fleet_@root
+				}
+			}
+			auto_follow_fleet = { target = event_target:giga_eawaf_leading_fleet_@root attack_fleet = no }
+		}
+		### has auto move target but its target is in an unaccessible location so we jump to them
+		else_if = {
+			limit = {
+				NOT = { has_modifier = jump_drive_cooldown }
+				is_fleet_idle = yes
+				exists = event_target:giga_eawaf_leading_fleet_@root
+				event_target:giga_eawaf_leading_fleet_@root = {
+					solar_system? = { NOR = {
+						is_same_value = root.solar_system
+						any_neighbor_system = { is_same_value = root.solar_system }
+					} }
+				}
+			}
+			clear_orders = yes
+			clear_fleet_actions = this
+			event_target:giga_eawaf_leading_fleet_@root = {
+				solar_system = { save_event_target_as = giga_eawaf_jump_location }
+			}
+			giga_eawaf_fleet_jump = {
+				LIMIT = "always = yes"
+				FLEET = root
+				DESTINATION = event_target:giga_eawaf_jump_location
+			}
+			remove_auto_move_target = yes
+			auto_follow_fleet = { target = event_target:giga_eawaf_leading_fleet_@root attack_fleet = no }
+		}
+		fleet_event = { id = giga_eawaf.3017 days = 45 }
+	}
+}
+
+fleet_event = {
+	id = giga_eawaf.3018
+	hide_window = yes
+	is_triggered_only = yes
+
+	trigger = {
+		exists = this
+		NOT = { has_fleet_flag = giga_eawaf_event_3017_active }
+	}
+
+	immediate = {
+		# solar_system? = { set_timed_star_flag = { flag = giga_eawaf_fleet_present days = 31 } }
+		set_fleet_flag = giga_eawaf_event_3018_active
+		clear_fleet_actions = this
+		clear_orders = yes
+		queue_actions = {
+			find_closest_fleet = {
+				trigger = {
+					id = giga_eawaf_fleet_movement
+					is_in_combat = no
+					OR = {
+						has_fleet_flag = giga_eawaf_enthralled_by_enthraller
+						has_fleet_flag = giga_eawaf_enthralled_by_sirens
+					}
+				}
+				found_fleet = {
+					merge_fleet = { target = this allow_ftl = yes }
+				}
+				system_only = yes
+				failed = {
+					find_closest_system = {
+						trigger = {
+							id = giga_eawaf_fleet_movement.1
+							any_fleet_in_system = {
+								is_in_combat = no
+								OR = {
+									has_fleet_flag = giga_eawaf_enthralled_by_enthraller
+									has_fleet_flag = giga_eawaf_enthralled_by_sirens
+								}
+							}
+						}
+						found_system = {
+							move_to = this
+							find_closest_fleet = {
+								trigger = {
+									id = giga_eawaf_fleet_movement.2
+									is_in_combat = no
+									OR = {
+										has_fleet_flag = giga_eawaf_enthralled_by_enthraller
+										has_fleet_flag = giga_eawaf_enthralled_by_sirens
+									}
+									# NOT = { has_fleet_order = merge_fleet_order }
+								}
+								found_fleet = {
+									merge_fleet = { target = this allow_ftl = yes }
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		## have sufficient amount of 'power', time to actively join the fight
+		if = {
+			limit = {
+				OR = { fleet_size > 300 fleet_power > 400000 }
+				NOR = {
+					has_fleet_order = merge_fleet_order
+					has_fleet_flag = giga_eawaf_event_3017_active
+				}
+			}
+			## still keep giga_eawaf_event_3018_active flag to prevent it from running again
+			fleet_event = { id = giga_eawaf.3017 }
+		}
+		else = {
+			fleet_event = { id = giga_eawaf.3018 days = 45 }
+		}
+	}
+}
 # #Kamikaze kills enemy ship, and kills itself too.
 # country_event = {
 # 	id = giga_eawaf.30061
@@ -2773,6 +3051,7 @@ country_event = {
 	picture = GFX_evt_exploding_ship
 	show_sound = event_collapsing_ruins
 	is_triggered_only = yes
+	location = event_target:giga_eawaf_system
 
 	trigger = {
 		FromFromFrom = { is_ship_size = giga_eawaf_sirens_fortress }
@@ -2805,6 +3084,7 @@ country_event = {
 	picture = GFX_evt_exploding_ship
 	show_sound = event_collapsing_ruins
 	is_triggered_only = yes
+	location = event_target:giga_eawaf_system
 
 	trigger = {
 		FromFromFrom = { is_ship_size = giga_eawaf_sirens_megastructure_core }
@@ -2883,7 +3163,7 @@ country_event = {
 }
 
 #Variant of above, to stop players bombarding the planet down to 0 pops then insta-winning ground combat before the above event triggers. Ideally the above event is encountered.
-planet_event = {
+carrier_event = {
 	id = giga_eawaf.60021
 	hide_window = yes
 	is_triggered_only = yes
@@ -5585,7 +5865,7 @@ country_event = {
 }
 
 #The Alicorns spawn
-planet_event = {
+carrier_event = {
 	id = giga_eawaf.7102
 	hide_window = yes
 	is_triggered_only = yes
@@ -5628,7 +5908,7 @@ country_event = {
 }
 
 #Faust invaded during sirens, pause situation
-planet_event = {
+carrier_event = {
 	id = giga_eawaf.7104
 	hide_window = yes
 	is_triggered_only = yes
@@ -5701,8 +5981,8 @@ system_event = {
 			limit = {
 				NOT = { controller = { is_same_value = event_target:giga_eawaf_country } }
 				owner = { giga_eawaf_is_immune_to_sirens = no }
-				NOR = {
-					any_owned_ship = {
+				any_owned_ship = {
+					NOR = {
 						has_component = GIGA_EAWAF_DISENCHANTER_3
 						has_component = GIGA_EAWAF_DISENCHANTER_4
 						has_active_building = building_giga_eawaf_disenchanter_building_2
@@ -5725,7 +6005,10 @@ system_event = {
 				owner = { giga_eawaf_is_immune_to_sirens = no }
 			}
 			owner = { set_country_flag = giga_eawaf_former_owner@prev } #Remember the former owner
-			fleet = { set_owner = event_target:giga_eawaf_country }
+			fleet = {
+				set_owner = event_target:giga_eawaf_country
+				set_fleet_flag = giga_eawaf_enthralled_by_sirens
+			}
 			set_ship_flag = giga_eawaf_enthralled_by_sirens
 		}
 

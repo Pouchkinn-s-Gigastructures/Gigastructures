@@ -66,8 +66,17 @@ giga_eawaf_inner_field_aura = {
         mult = event_target:giga_eawaf_country.giga_eawaf_field_potency_multiplier
     }
 
+    ## just in case of weird spawn
+    owner_planet_modifier = {
+        potential = { NOT = { is_scope_type = country } }  #prevent tooltip
+        modifier = {
+            giga_eawaf_outer_strife_field_modifier = 1
+        }
+        mult = value:giga_eawaf_outer_strife_field_modifiers
+    }
+
     on_start = {
-        add_aura_intensity = 1000000
+        add_aura_intensity = 600000
         if = {
             limit = { has_star_flag = giga_eawaf_outer_field_system }
             remove_star_flag = giga_eawaf_outer_field_system
@@ -101,6 +110,14 @@ giga_eawaf_inner_field_aura = {
 
         ## enthrall shroud seal monthly
         giga_eawaf_enthrall_shroud_seal = yes
+
+        if = {
+            limit = { NOT = { exists = starbase } }
+            create_starbase = {
+                size = starbase_starhold
+                owner = event_target:giga_eawaf_country
+            }
+        }
 
         ##### For aura clashing #####
         set_timed_star_flag = { flag = aura_clashing_on_monthly_check days = 20 }
@@ -140,7 +157,6 @@ giga_eawaf_inner_field_aura = {
                 limit = {
                     # NOT = { has_star_flag = aura_clashing_on_monthly_check }
                     has_psionic_aura = yes  ## making sure there's a psionic aura there
-                    aura_owner = { NOT = { is_same_value = root.aura_owner } }  ## obviously don't fight the same country who own this aura
                 }
 
                 ## remove flags first to make sure nothing weird happen
@@ -193,7 +209,7 @@ giga_eawaf_inner_field_aura = {
                     ### No conflict. Nice, we can expand
                     has_psionic_aura = no
 
-                    ## Must be in the outer strife field range but further than the inner strife field
+                    ## Must be in the inner strife field range
                     check_variable = { which = giga_eawaf_distance_from_faust value <= event_target:giga_eawaf_country.giga_eawaf_inner_strife_field_range }
 
                 }
@@ -286,17 +302,16 @@ giga_eawaf_inner_field_aura = {
         base = 0
         modifier = {
             subtract = 200000   ## disappear from the target system in 5 months
-            NOT = {  # not in the range of inner strife field anymore
+            NOR = {  # not in the range of inner strife field anymore
                 check_variable = { which = giga_eawaf_distance_from_faust value <= event_target:giga_eawaf_country.giga_eawaf_inner_strife_field_range }
+                has_star_flag = giga_eawaf_inner_field_system
             }
             desc = giga_eawaf_inner_field_aura_natural_decrease
         }
     }
 
     ## not relevant
-    increase_trigger = {
-        always = no
-    }
+    increase_trigger = { }
 
     monthly_increase = {
         base = 40000
@@ -364,7 +379,13 @@ giga_eawaf_outer_field_aura = {
         mult = event_target:giga_eawaf_country.giga_eawaf_field_potency_multiplier
     }
 
-    ## inner field don't need this cause everything in inner field should belong to the Sirens anyway
+    owner_planet_modifier = {
+        potential = { NOT = { is_scope_type = country } }
+        modifier = {
+            giga_eawaf_outer_strife_field_modifier = 1
+        }
+        mult = value:giga_eawaf_outer_strife_field_modifiers
+    }
     rival_planet_modifier = {
         modifier = {
             giga_eawaf_outer_strife_field_modifier = 1
@@ -374,7 +395,7 @@ giga_eawaf_outer_field_aura = {
 
 
     on_start = {
-        add_aura_intensity = 100000
+        add_aura_intensity = 60000
         if = {  ## just in case
             limit = { has_star_flag = giga_eawaf_inner_field_system }
             remove_star_flag = giga_eawaf_inner_field_system
@@ -441,7 +462,15 @@ giga_eawaf_outer_field_aura = {
                 limit = {
                     # NOT = { has_star_flag = aura_clashing_on_monthly_check }
                     has_psionic_aura = yes  ## making sure there's a psionic aura there
-                    aura_owner = { NOT = { is_same_value = root.aura_owner } }  ## obviously don't fight the same country who own this aura
+                    ## can't spread into Aeternum core systems
+                    if = {
+                        limit = { check_variable = { which = giga_eawaf_sirens_difficulty value < 7 } }
+                        aura_owner = { is_country_type = dormant_aeternum }
+                        OR = {
+                            has_star_flag = giga_galactic_center
+                            has_star_flag = giga_inner
+                        }
+                    }
                 }
 
                 ## remove flags first to make sure nothing weird happen
@@ -540,10 +569,12 @@ giga_eawaf_outer_field_aura = {
         modifier = {
             subtract = 20000   ## disappear from the target system in 5 months
             OR = {
-                NOT = {  # not in the range of outer strife field anymore
+                NAND = {
+                    # not in the range of outer strife field anymore
                     check_variable = { which = giga_eawaf_distance_from_faust value > event_target:giga_eawaf_country.giga_eawaf_inner_strife_field_range }
                     check_variable = { which = giga_eawaf_distance_from_faust value <= event_target:giga_eawaf_country.giga_eawaf_outer_strife_field_range }
                 }
+                NOT = { has_star_flag = giga_eawaf_outer_field_system }
             }
             desc = giga_eawaf_outer_field_aura_natural_decrease
         }
@@ -581,9 +612,7 @@ giga_eawaf_outer_field_aura = {
     }
 
     ## not relevant
-    increase_trigger = {
-        always = yes
-    }
+    increase_trigger = { }
 
     monthly_increase = {
         base = 4000
