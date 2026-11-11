@@ -320,8 +320,8 @@ giga_eawaf_apply_strife_field_effects = {
 				limit = {
 					NOT = { controller = { is_same_value = event_target:giga_eawaf_country } }
 					owner = { giga_eawaf_is_immune_to_sirens = no }
-					NOR = {
-						any_owned_ship = {
+					any_owned_ship = {
+						NOR = {
 							has_component = GIGA_EAWAF_DISENCHANTER_3
 							has_component = GIGA_EAWAF_DISENCHANTER_4
 							has_active_building = building_giga_eawaf_disenchanter_building_2
@@ -343,7 +343,10 @@ giga_eawaf_apply_strife_field_effects = {
 					owner = { giga_eawaf_is_immune_to_sirens = no }
 				}
 				owner = { set_country_flag = giga_eawaf_former_owner@prev } #Remember the former owner
-				fleet = { set_owner = event_target:giga_eawaf_country } 
+				fleet = {
+					set_owner = event_target:giga_eawaf_country
+					set_fleet_flag = giga_eawaf_enthralled_by_sirens
+				}
 				set_ship_flag = giga_eawaf_enthralled_by_sirens
 			}
 			every_system_megastructure = {
@@ -403,7 +406,10 @@ giga_eawaf_apply_strife_field_effects = {
 					limit = { has_country_flag = giga_eawaf_former_owner@PREV }
 					save_event_target_as = giga_eawaf_former_owner
 				}
-				fleet = { set_owner = event_target:giga_eawaf_former_owner set_controller = event_target:giga_eawaf_former_owner }
+				fleet = {
+					set_owner = event_target:giga_eawaf_former_owner
+					set_controller = event_target:giga_eawaf_former_owner
+				}
 			}
 			starbase = { #Return starbases to owners
 				if = {
@@ -523,7 +529,7 @@ giga_eawaf_calculate_strife = {
 		# -> You can slow the Siren down quite a bit but you gotta pay the price if you abuse it too much (or just too unlucky)
 		if = {
 			limit = { has_global_flag = giga_eawaf_dlc_version }
-			multiply_variable = { which = giga_eawaf_total_strife value = event_target:giga_eawaf_country.giga_eawaf_enthralled_shroud_seal_amount }
+			multiply_variable = { which = giga_eawaf_total_strife value = giga_eawaf_enthralled_shroud_seal_amount }
 		}
 
 		round_variable = giga_eawaf_total_strife
@@ -629,9 +635,7 @@ giga_eawaf_update_strife_field_size_2 = {
 		if = { #Reached expansion threshold, grow the field!
 			limit = {
 				check_variable = { which = giga_eawaf_total_strife value > value:giga_eawaf_strife_field_range_next_level_cost }
-				NOT = { has_country_flag = giga_eawaf_strife_field_cooldown }
 			}
-			set_timed_country_flag = { flag = giga_eawaf_strife_field_cooldown days = 900 }
 			change_variable = { which = giga_eawaf_outer_strife_field_range_level value = 1 }
 			#Actual 'in-game' Outer Field range
 			set_variable = { which = giga_eawaf_outer_strife_field_range value = value:giga_eawaf_outer_strife_field_range } 
@@ -654,7 +658,6 @@ giga_eawaf_update_strife_field_size_2 = {
 			limit = {
 				check_variable = { which = giga_eawaf_total_strife value < value:giga_eawaf_strife_field_range_prev_level_cost }
 				check_variable = { which = giga_eawaf_outer_strife_field_range_level value > 0 } #This can't go below 1.
-				NOT = { has_country_flag = giga_eawaf_strife_field_cooldown }
 			}
 			every_playable_country = {
 				create_message = {
@@ -721,9 +724,12 @@ giga_eawaf_create_standard_sirens_fleet = {
 			while = { count = 1 create_ship = { name = random design = "Panopticon" prefix = no } }
 			while = { count = 3 create_ship = { name = random design = "Enthraller" prefix = no } }
 			set_location = { target = event_target:giga_eawaf_planet distance = 125 angle = random }
+			set_fleet_flag = giga_eawaf_standard_fleet
 			set_fleet_stance = aggressive
+			set_fleet_bombardment_stance = sirenalia
+			set_aggro_range = 500
+			set_aggro_range_measure_from = self
 			set_formation_scale = 2
-			add_modifier = {  }
 		}
 	}
 }
@@ -1138,10 +1144,12 @@ giga_eawaf_destroy_strife_field = {
 			if = {
 				limit = { has_star_flag = giga_eawaf_outer_field_system }
 				remove_star_flag = giga_eawaf_outer_field_system
+				destroy_psionic_aura = yes
 			}
 			if = {
 				limit = { has_star_flag = giga_eawaf_inner_field_system }
 				remove_star_flag = giga_eawaf_inner_field_system
+				destroy_psionic_aura = yes
 			}
 			every_fleet_in_system = { #Return ships to owners
 				limit = {
@@ -1275,25 +1283,17 @@ giga_eawaf_destroy_strife_field = {
 giga_eawaf_psionic_apply_strife_field_effects = {
 	optimize_memory
 	every_system = { #We fetch the distance of every system from Faust. This has to be done regularly in case new systems are added.
-		limit = { ## not needed to check system that already has the aura applied
-			NOR = {
-				has_psionic_aura = giga_eawaf_outer_field_aura
-				has_psionic_aura = giga_eawaf_inner_field_aura
+		limit = { NOT = { is_variable_set = giga_eawaf_distance_from_faust } }
+		set_variable = { which = giga_eawaf_distance_from_faust value = 0 }
+		export_trigger_value_to_variable = {
+			trigger = distance
+			parameters = {
+				source = event_target:giga_eawaf_faust_system
+				type = euclidean
 			}
+			variable = giga_eawaf_distance_from_faust
 		}
-		if = {
-			limit = { NOT = { is_variable_set = giga_eawaf_distance_from_faust } }
-			set_variable = { which = giga_eawaf_distance_from_faust value = 0 }
-			export_trigger_value_to_variable = {
-				trigger = distance
-				parameters = {
-					source = event_target:giga_eawaf_faust_system
-					type = euclidean
-				}
-				variable = giga_eawaf_distance_from_faust
-			}
-			round_variable = giga_eawaf_distance_from_faust
-		}
+		round_variable = giga_eawaf_distance_from_faust
 
 		if = { #If they are closer to Faust than the Outer Field range variable, BUT further than the Inner Field, apply Outer Field effects.
 			limit = {
@@ -1301,6 +1301,7 @@ giga_eawaf_psionic_apply_strife_field_effects = {
 				check_variable = { which = giga_eawaf_distance_from_faust value > event_target:giga_eawaf_country.giga_eawaf_inner_strife_field_range }
 				NOT = { has_megastructure = anti_sirens_shield }
 			}
+			destroy_psionic_aura = yes
 			spawn_psionic_aura = {
 				type = giga_eawaf_outer_field_aura
 				owner = event_target:giga_eawaf_country
@@ -1313,6 +1314,7 @@ giga_eawaf_psionic_apply_strife_field_effects = {
 				check_variable = { which = giga_eawaf_distance_from_faust value <= event_target:giga_eawaf_country.giga_eawaf_inner_strife_field_range }
 				NOT = { has_megastructure = anti_sirens_shield }
 			}
+			destroy_psionic_aura = yes
 			spawn_psionic_aura = {
 				type = giga_eawaf_inner_field_aura
 				owner = event_target:giga_eawaf_country
@@ -1390,4 +1392,89 @@ giga_eawaf_enthrall_shroud_seal = {
 		}
 		remove_megastructure = this
 	}
+}
+
+giga_eawaf_fleet_movement = {
+	optimize_memory
+	while = {
+		limit = {
+			count_owned_fleet = { count < 4 limit = { has_fleet_flag = giga_eawaf_leading_fleet } }
+		}
+		random_owned_fleet = {
+			limit = { has_fleet_flag = giga_eawaf_standard_fleet }
+			set_fleet_flag = giga_eawaf_leading_fleet
+			if = {
+				limit = { NOT = { has_fleet_flag = giga_eawaf_event_3016_active } }
+				fleet_event = { id = giga_eawaf.3016 }
+			}
+		}
+	}
+	every_owned_fleet = {
+		limit = {
+			is_in_combat = no
+			NOR = {
+				AND = { is_ship_class = shipclass_starbase NOT = { exists = starbase.colony } }
+				is_ship_class = shipclass_military_station
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					is_civilian = yes
+					is_ship_class = shipclass_mining_station
+					is_ship_class = shipclass_research_station
+					is_ship_class = shipclass_transport
+				}
+			}
+			destroy_fleet = this	## remove useless ship
+		}
+		if = {
+			limit = {
+				has_fleet_flag = giga_eawaf_standard_fleet
+				has_fleet_flag = giga_eawaf_enthralled_by_sirens
+			}
+			remove_fleet_flag = giga_eawaf_enthralled_by_sirens
+		}
+		if = {
+			limit = {
+				OR = {
+					has_fleet_flag = giga_eawaf_enthralled_by_enthraller
+					has_fleet_flag = giga_eawaf_enthralled_by_sirens
+				}
+				NOT = { has_fleet_flag = giga_eawaf_event_3018_active }
+			}
+			fleet_event = { id = giga_eawaf.3018 }
+		}
+		else_if = {
+			limit = {
+				has_fleet_flag = giga_eawaf_standard_fleet
+				NOR = {
+					has_fleet_flag = giga_eawaf_event_3017_active
+					has_fleet_flag = giga_eawaf_event_3016_active
+				}
+			}
+			fleet_event = { id = giga_eawaf.3017 }
+		}
+	}
+}
+
+
+giga_eawaf_fleet_jump = {
+	optimize_memory
+	if = {
+		limit = { $LIMIT$ }
+		$FLEET$ = {
+			set_location = { target = $DESTINATION$ distance = 270 angle = random }
+			create_ambient_object = {
+				type = horror_spawn_object
+				location = this
+				use_3d_location = yes
+				entity_scale_to_size = yes
+				scale = 0.02
+				play_animation_once = yes
+			}
+			add_modifier = { modifier = "jump_drive_cooldown" days = 180 }
+		}
+	}
+
 }

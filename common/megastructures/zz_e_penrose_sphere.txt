@@ -162,9 +162,16 @@ penrose_sphere_1 = {
 	potential = { NOT = { has_global_flag = penrose_sphere_disabled } }
 	possible = { from = { has_technology = giga_tech_penrose_sphere_1 } }
 
+	overclock_loc_key = GIGA_UPGRADE_CTRL
+	overclock_types = {
+		giga_overclock_penrose_sphere_power
+		giga_overclock_penrose_sphere_bomb
+	}
+
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
 	on_build_complete = {
 		save_event_target_as = giga_system
+		fromfrom = { set_overclock = giga_overclock_penrose_sphere_power }
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		from = { country_event = { id = giga_dialog.1202 scopes = { from = this fromfrom = root.fromfrom } } }	# Notification
 	}
@@ -181,7 +188,10 @@ penrose_sphere_2 = {
 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
 	}
 
-	potential = { NOT = { has_global_flag = penrose_sphere_disabled } }
+	potential = {
+		NOT = { has_global_flag = penrose_sphere_disabled }
+		from = { NOT = { has_megastructure_flag = penrose_bomb } }
+	}
 	possible = { from = { has_technology = giga_tech_penrose_sphere_1 } }
 
 	build_time = 2700
@@ -263,31 +273,10 @@ penrose_sphere_3 = {
 ##################################
 ### Detonate it ##################
 ##################################
-penrose_bomb_frame = {
-	entity = "blackholeframe_entity"
-	portrait = "GFX_megastructure_construction_background"
-	upgrade_from = { penrose_sphere_1 }
-	upgrade_desc = hide
-	
-	outliner_trigger = {
-		exists = owner
-		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
-	}
-	
-	potential = { always = no }
-
-	build_time = 1
-	resources = {
-		category = giga_megastructures
-		upkeep = { energy = 10 }
-
-	}
-}
-
 penrose_bomb_unarmed = {
 	entity = "penrose_sphere_entity"
 	portrait = "GFX_megastructure_construction_background"
-	upgrade_from = { penrose_bomb_frame }
+	upgrade_from = { penrose_sphere_1 }
 	upgrade_desc = hide
 
 	outliner_trigger = {
@@ -295,7 +284,20 @@ penrose_bomb_unarmed = {
 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
 	}
 
-	potential = { NOT = { has_global_flag = penrose_sphere_disabled } }
+	potential = {
+		NOT = { has_global_flag = penrose_sphere_disabled }
+		is_ai = no
+		from = { has_megastructure_flag = penrose_bomb }
+	}
+	possible = {
+		custom_tooltip = {
+			fail_text = requires_no_cohesive_system
+			NOR = {
+				cohesive_system = yes
+				compound_cluster = yes
+			}
+		}
+	}
 
 	build_time = 2700
 	resources = {
