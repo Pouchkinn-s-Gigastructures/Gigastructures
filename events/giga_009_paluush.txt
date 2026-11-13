@@ -1399,31 +1399,16 @@ country_event = {
 				limit = { has_modifier = katzen_orbital_bombardment_shield }
 				remove_modifier = katzen_orbital_bombardment_shield
 			}
-			set_planet_flag = flusion_katzen_nuked
 			change_pc = pc_katzenland
+			remove_all_districts = yes
+			remove_all_buildings = yes
 			clear_blockers = yes
 			clear_deposits = yes
 			add_planet_devastation = -100
 			add_deposit = d_bomb_crater
 			add_deposit = d_bomb_crater
-			add_deposit = d_bomb_crater
-			add_deposit = d_bomb_crater
-			add_deposit = d_bomb_crater
-			add_deposit = d_bomb_crater
-			add_deposit = d_bomb_crater
 			add_deposit = d_radioactive_wasteland
-			add_deposit = d_radioactive_wasteland
-			add_deposit = d_radioactive_wasteland
-			add_deposit = d_radioactive_wasteland
-			add_deposit = d_radioactive_wasteland
-			add_deposit = d_searing_desert
-			add_deposit = d_searing_desert
-			add_deposit = d_tempestous_mountain
-			add_deposit = d_geothermal_vent
-			add_deposit = d_ore_rich_caverns
-			add_deposit = d_rich_mountain
-			add_deposit = d_dust_desert
-			add_deposit = d_bubbling_swamp
+			create_katzenland_deposits_new = yes
 			add_modifier = {
 				modifier = "katzenland_planet"
 				days = -1
@@ -1431,26 +1416,7 @@ country_event = {
 			set_planet_entity = {
 				entity = flusion_planet_deserted_entity
 			}
-			while = {
-				count = 3
-				remove_district = district_generator
-			}
-			while = {
-				count = 3
-				remove_district = district_mining
-			}
-			while = {
-				count = 3
-				remove_district = district_city
-			}
-			while = {
-				count = 3
-				remove_district = district_farming
-			}
-			while = {
-				count = 28
-				random_owned_pop_group = { kill_single_pop = yes }
-			}
+			every_owned_pop_group = { kill_all_pop = yes }
 		}
 	}
 
@@ -1488,7 +1454,14 @@ country_event = {
 country_event = {
 	id = giga_flusion.005
 	title = "giga_flusion.005.name"
-	desc = "giga_flusion.005.desc"
+	desc = {
+		trigger = { NOT = { has_country_flag = tech_katzen_atomic_munitions_from_scorched } }
+		text = "giga_flusion.005.desc"
+	}
+	desc = {
+		trigger = { has_country_flag = tech_katzen_atomic_munitions_from_scorched }
+		text = "giga_flusion.005.scorched.desc"
+	}
 
 	picture = GFX_evt_relic_world_street
 	show_sound = event_radio_chatter
@@ -1497,13 +1470,17 @@ country_event = {
 		set_country_flag = katzen_atomic_munitions_possible
 	}
 	option = {
+		trigger = {
+			NOT = { has_country_flag = tech_katzen_atomic_munitions_from_scorched }
+		}
 		name = "giga_flusion.005.a"
 		add_research_option = tech_katzen_atomic_munitions
 		add_tech_progress = {
 			tech = tech_katzen_atomic_munitions
-			progress = 0.25
+			progress = 0.2
 		}
 		hidden_effect = {
+			set_country_flag = tech_katzen_atomic_munitions_from_katzens
 			if = {
 				limit = {
 					NOR = {
@@ -1519,8 +1496,42 @@ country_event = {
 	}
 
 	option = {
+		trigger = {
+			NOR = {
+				has_country_flag = tech_katzen_atomic_munitions_from_scorched
+				has_origin = origin_scorched
+			}
+		}
 		name = "giga_flusion.005.b"
 		remove_country_flag = katzen_atomic_munitions_possible
+	}
+
+	option = {
+		trigger = {
+			NOT = { has_country_flag = tech_katzen_atomic_munitions_from_scorched }
+			has_origin = origin_scorched
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = @tier4unityreward
+			min = @tier4unitymin
+			max = @tier4unitymax
+		}
+		name = "giga_flusion.005.scorched.b"
+		remove_country_flag = katzen_atomic_munitions_possible
+	}
+
+	option = {
+		trigger = {
+			has_country_flag = tech_katzen_atomic_munitions_from_scorched
+		}
+		add_monthly_resource_mult = {
+			resource = engineering_research
+			value = @tier4researchreward
+			min = @tier4researchmin
+			max = @tier4researchmax
+		}
+		name = "giga_flusion.005.c"
 	}
 }
 
@@ -1630,41 +1641,59 @@ event = {
 }
 
 #Apply Katzen Engineering to a planet
-planet_event = {
+carrier_event = {
 	id = giga_flusion.200
 	hide_window = yes
 	is_triggered_only = yes
 
 	trigger = {
 		has_orbital_bombardment_stance = katzen
-		is_planet_habitable = yes
+		is_planet_habitable = yes #can transform machine, hive and tomb, unlike armageddon/pox in action.81
+		count_owned_pop_amount = {
+			count <= 200
+		}
 	}
 
 	immediate = {
 		owner = {
-			add_static_war_exhaustion = {
-				attacker = from
-				location = root
-				value_for_planet_destruction = 0.5
+			if = {
+				limit = {
+					owner = {
+						is_at_war_with = from
+					}
+				}
+				add_static_war_exhaustion = {
+					attacker = from
+					location = root
+					value_for_planet_destruction = 0.5
+				}
 			}
 			set_country_flag = planet_got_katzenland
 			add_opinion_modifier = { who = from modifier = opinion_katzenland_my_planet }
 			save_event_target_as = empire_got_katzenland
+			if = {
+				limit = {
+					NAND = {
+						has_origin = origin_progenitor_hive
+						root = { is_capital = yes }
+					}
+				}
+				country_event = { id = giga_flusion.202 }
+			}
+			else = {
+				country_event = { id = origin.3265 }
+			}
 		}
 		every_country = { #Apply opinion modifiers
 			limit = {
 				NOT = { is_in_federation_with = from }
-				NOT = { is_subject = yes }
+				is_subject = no
 				is_fanatic_xenophobe = no #Xenophobes don't care
 				ehof_default_country = yes
 				NOT = { has_country_flag = planet_got_katzenland }
 				NOR = { #Genocidal empires don't care
-					has_valid_civic = civic_fanatic_purifiers
-					has_valid_civic = civic_hive_devouring_swarm
-					has_valid_civic = civic_machine_terminator
-					event_target:empire_got_katzenland = { has_valid_civic = civic_fanatic_purifiers }
-					event_target:empire_got_katzenland = { has_valid_civic = civic_hive_devouring_swarm }
-					event_target:empire_got_katzenland = { has_valid_civic = civic_machine_terminator }
+					is_homicidal = yes
+					event_target:empire_got_katzenland = { is_homicidal = yes }
 				}
 				#Only care if its a "normal" empire
 				event_target:empire_got_katzenland = {
@@ -1687,30 +1716,18 @@ planet_event = {
 				}
 			}
 			from = { country_event = { id = giga_flusion.201 } }
-			remove_all_buildings = yes
+			change_pc = pc_katzenland
 			remove_all_districts = yes
+			remove_all_buildings = yes
 			clear_blockers = yes
 			clear_deposits = yes
+			create_katzenland_deposits_new = yes
+			every_owned_pop_group = { kill_all_pop = yes }
+			destroy_colony = yes
 			add_modifier = {
 				modifier = "irradiated_desert_planet"
 				days = -1
 			}
-			while = {
-				count = 12
-				create_katzenland_deposits = yes
-			}
-			while = {
-				count = 28
-				random_owned_pop_group = { kill_single_pop = yes }
-			}
-			remove_modifier = "natural_beauty"
-			remove_modifier = "atmospheric_aphrodisiac"
-			remove_modifier = "atmospheric_hallucinogen"
-			remove_modifier = "lush_planet"
-			remove_modifier = "dangerous_wildlife"
-			destroy_colony = yes
-			change_pc = pc_barren
-			change_pc = pc_katzenland
 		}
 		else_if = {
 			limit = {
@@ -1739,18 +1756,15 @@ planet_event = {
 				habitable_structure = yes
 				NOT = { is_planet_class = pc_habitat }
 			}
-			while = {
-				count = 28
-				random_owned_pop_group = { kill_single_pop = yes }
-			}
+			every_owned_pop_group = { kill_all_pop = yes }
 			remove_all_buildings = yes
 			remove_all_districts = yes
 			destroy_colony = yes
 		}
-		set_planet_flag = katzen_nuked
 	}
 }
 
+# Planet is turned into Irradiated Desert World by Atomic bombing stance (bombarder)
 country_event = {
 	id = giga_flusion.201
 	title = "giga_flusion.201.name"
@@ -1761,6 +1775,9 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
+		trigger = {
+			has_country_flag = tech_katzen_atomic_munitions_from_katzens
+		}
 		name = "giga_flusion.201.a"
 		add_monthly_resource_mult = {
 			resource = unity
@@ -1768,6 +1785,57 @@ country_event = {
 			min = @tier3unitymin
 			max = @tier3unitymax
 		}
+	}
+
+	option = {
+		trigger = {
+			has_country_flag = tech_katzen_atomic_munitions_from_scorched
+			has_origin = origin_scorched
+		}
+		name = "giga_flusion.201.b"
+		add_monthly_resource_mult = {
+			resource = unity
+			value = @tier3unityreward
+			min = @tier3unitymin
+			max = @tier3unitymax
+		}
+	}
+}
+
+# Planet is turned into Irradiated Desert World by Atomic bombing stance (former owner)
+country_event = {
+	id = giga_flusion.202
+	title = "giga_flusion.201.name"
+	desc = "giga_flusion.202.desc"
+	picture = GFX_evt_relic_world_street
+	show_sound = event_ghost_town
+	location = from
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_flusion.202.a"
+		custom_tooltip = bombed_to_katzenland_world
+	}
+
+	option = {
+		trigger = { is_capitalist = yes }
+		name = "giga_flusion.202.b"
+		custom_tooltip = bombed_to_katzenland_world
+	}
+
+	option = {
+		trigger = {
+			fromfrom = {
+				OR = {
+					katzen_country_type = yes
+					has_country_flag = giga_meopa_fe
+					#not the pony Kaiser this time
+					has_country_flag = katzen_civil_war_faction
+				}
+			}
+		}
+		name = "giga_flusion.202.c"
+		custom_tooltip = bombed_to_katzenland_world
 	}
 }
 
