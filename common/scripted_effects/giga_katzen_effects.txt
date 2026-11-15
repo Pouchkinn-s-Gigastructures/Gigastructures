@@ -1175,21 +1175,35 @@ calculate_arkship_value_kaiser = {
 		}
 	}
 
-	if = { #Spinal mount adds value
-		limit = {
-			is_arkship_tier_3 = yes
-			OR = { #OR can be removed if Gigas overwrites arkship_spinal_slot_free with our spinals
-				arkship_spinal_slot_free = no
-				inline_script = components/spinal_mounts/has_giga_spinal_mount
-			}
-		}
-		event_target:flusion_primitives_country = {
-			change_variable = {
-				which = "kaiser_trade_value"
-				value = 40 #4k trade 2k alloys - equivalent to settled empire selling heneric megastructure
-			}
-		}
-	}
+	#idk I can't be bothered finishing this atm #TODO
+	# if = { #Spinal mount adds value
+	# 	limit = {
+	# 		starbase = { #can be simplified if Gigas overwrites arkship_spinal_slot_free with our spinals
+	# 			# OR = {
+	# 			# 	arkship_spinal_slot_free = no
+	# 			# 	AND = {
+	# 			# 		is_arkship_tier_3 = yes
+	# 			# 		inline_script = components/spinal_mounts/has_giga_spinal_mount
+	# 			# 	}
+	# 			# }
+	# 			OR = {
+	# 				has_starbase_module = arkship_spinal_devastator_mount
+	# 				has_starbase_module = arkship_capital_shipyard
+	# 				has_starbase_module = arkship_planetary_refinery
+	# 				has_starbase_module = arkship_stellar_igniter
+	# 				has_starbase_module = arkship_system_scanner
+	# 				has_starbase_module = arkship_exodus_jump
+	# 				inline_script = components/spinal_mounts/has_giga_spinal_mount
+	# 			}
+	# 		}
+	# 	}
+	# 	event_target:flusion_primitives_country = {
+	# 		change_variable = {
+	# 			which = "kaiser_trade_value"
+	# 			value = 40 #4k trade 2k alloys - equivalent to settled empire selling heneric megastructure
+	# 		}
+	# 	}
+	# }
 
 	event_target:flusion_primitives_country = {
 		round_variable = "kaiser_trade_value"
@@ -1417,20 +1431,110 @@ transfer_system_to_kaiser = {
 
 #run on carrier scope
 transfer_arkship_to_kaiser = {
-	every_owned_pop_group = {
-		resettle_pop_group = {
-			POP_GROUP = this
-			PLANET = event_target:gigaflusion
-			PERCENTAGE = 1
+	# every_owned_pop_group = {
+	# 	resettle_pop_group = {
+	# 		POP_GROUP = this
+	# 		PLANET = event_target:gigaflusion
+	# 		PERCENTAGE = 1
+	# 	}
+	# }
+	# event_target:flusion_primitives_country = {
+	# 	change_variable = {
+	# 		which = kaiser_resource_stockpile
+	# 		value = 5000
+	# 	}
+	# }
+	# destroy_ship = this
+
+
+	if = {
+		limit = {
+			exists = event_target:katzen_nomadic_fleet
+		}
+		set_owner = event_target:katzen_nomadic_fleet
+		create_pop_group = {
+			species = event_target:flusion_katzens
+			size = 200 #send a few Kaiser-loyal minders on board
 		}
 	}
-	event_target:flusion_primitives_country = {
-		change_variable = {
-			which = kaiser_resource_stockpile
-			value = 5000
+	else = {
+		create_country = {
+			ignore_initial_colony_error = yes
+			type = default
+			name = "Kaiserlicher Flottenstaat"
+			adjective = "Flottenstaatsisch"
+			ethos = event_target:flusion_primitives_country
+			authority = auth_oligarchic #run by officers like a branch of the military
+			civics = event_target:flusion_primitives_country
+			origin = origin_katzen_nomads
+			species = event_target:flusion_primitives_country.species
+			name_list = katzens
+			graphical_culture = mammalian_01
+			use_hostilities_from = event_target:flusion_primitives_country
+			flag = {
+				icon = {
+					category="flusionian"
+					file="katzen_flag.dds"
+				}
+				background = {
+					category="backgrounds"
+					file="circle.dds"
+				}
+				colors = {
+					"blue"
+					"indigo"
+					"null"
+					"null"
+				}
+			}
+			effect = {
+				set_male_ruler_title = "Gouverneur-Admiral"
+				save_global_event_target_as = katzen_nomadic_fleet
+				save_event_target_as = subject_country
+				set_country_flag = nomad_vassal@event_target:flusion_primitives_country
+				establish_communications_no_message = event_target:flusion_primitives_country
+				event_target:flusion_primitives_country = {
+					every_relation = {
+						establish_communications_no_message = event_target:subject_country
+					}
+				}
+				copy_techs_from = {
+					target = event_target:flusion_primitives_country
+				}
+				katzen_set_protectorate = yes
+				add_resource = {
+					minerals = 50000
+					alloys = 20000
+					energy = 50000
+					food = 50000
+					consumer_goods = 50000
+					exotic_gases = 5000
+					volatile_motes = 5000
+					rare_crystals = 5000
+					influence = 250
+					unity = 100000 #give a kickstart on traditions since they are lacking
+				}
+				set_country_as_nomad_effect = { IS_NOMAD = yes }
+				country_event = {
+					id = nomads.20
+				}
+				set_resource_converter = nomadic_operational_reserves
+				set_variable = { which = contract_completed value = 0 }
+				set_faction_properties = {
+					needs_border_access = no
+				}
+				give_technology = { tech = tech_civilian_arkship }
+				give_technology = { tech = tech_military_arkship }
+				give_technology = { tech = tech_science_arkship }
+				give_technology = { tech = tech_waystation_1 }
+			}
+		}
+		set_owner = event_target:katzen_nomadic_fleet
+		create_pop_group = {
+			species = event_target:flusion_katzens
+			size = 1000 #kickstart the vassal for their first arkship
 		}
 	}
-	destroy_ship = this
 }
 
 katzen_clear_capitals = {
@@ -3480,8 +3584,17 @@ katzen_set_protectorate = {
 	}
 	if = {
 		limit = { is_gestalt = no }
-		set_ruler_title_male = "katzen_protektorat_ruler_title"
-		set_ruler_title_female = "katzen_protektorat_ruler_title"
+		if = {
+			limit = {
+				is_nomadic = yes
+			}
+			set_male_ruler_title = "Gouverneur-Admiral"
+			set_female_ruler_title = "Gouverneur-Admiralin"
+		}
+		else = {
+			set_ruler_title_male = "katzen_protektorat_ruler_title"
+			set_ruler_title_female = "katzen_protektorat_ruler_title"
+		}
 		create_katzen_governor = yes
 	}
 	if = { #nope
@@ -3520,9 +3633,20 @@ katzen_free_protectorate = {
 		country_event = { id = giga_katzen.0034 days = 15 random = 5 }
 	}
 	set_subject_of = { who = none }
-	set_name = {
-		key = "katzen_ex_protektorat_name" #this should be but refuses to work with GetStarName
-		variable_string = "[this.Capital.GetName]"
+	if = {
+		limit = {
+			is_nomadic = yes
+		}
+		set_name = {
+			key = "katzen_ex_protektorat_nomad_name"
+			variable_string = "[this.Capital.GetName]"
+		}
+	}
+	else = {
+		set_name = {
+			key = "katzen_ex_protektorat_name" #this should be but refuses to work with GetStarName
+			variable_string = "[this.Capital.GetName]"
+		}
 	}
 }
 
