@@ -1101,7 +1101,10 @@ calculate_arkship_value_kaiser = {
 	else_if = {
 		limit = {
 			ship = {
-				is_ship_size = carks_planark
+				OR = {
+					is_ship_size = carks_planark
+					is_ship_size = carks_planark_nomad
+				}
 			}
 		}
 		event_target:flusion_primitives_country = {
@@ -1114,7 +1117,10 @@ calculate_arkship_value_kaiser = {
 	else_if = {
 		limit = {
 			ship = {
-				is_ship_size = carks_lunark
+				OR = {
+					is_ship_size = carks_lunark
+					is_ship_size = carks_lunark_nomad
+				}
 			}
 		}
 		event_target:flusion_primitives_country = {
@@ -1431,6 +1437,7 @@ transfer_system_to_kaiser = {
 
 #run on carrier scope
 transfer_arkship_to_kaiser = {
+	set_update_modifiers_batch = begin
 	# every_owned_pop_group = {
 	# 	resettle_pop_group = {
 	# 		POP_GROUP = this
@@ -1446,7 +1453,6 @@ transfer_arkship_to_kaiser = {
 	# }
 	# destroy_ship = this
 
-
 	if = {
 		limit = {
 			exists = event_target:katzen_nomadic_fleet
@@ -1461,7 +1467,7 @@ transfer_arkship_to_kaiser = {
 		create_country = {
 			ignore_initial_colony_error = yes
 			type = default
-			name = "Kaiserlicher Flottenstaat"
+			name = "Kaiserlichen Flottenstaat"
 			adjective = "Flottenstaatsisch"
 			ethos = event_target:flusion_primitives_country
 			authority = auth_oligarchic #run by officers like a branch of the military
@@ -1489,6 +1495,7 @@ transfer_arkship_to_kaiser = {
 			}
 			effect = {
 				set_male_ruler_title = "Gouverneur-Admiral"
+				set_female_ruler_title = "Gouverneur-Admiralin"
 				save_global_event_target_as = katzen_nomadic_fleet
 				save_event_target_as = subject_country
 				set_country_flag = nomad_vassal@event_target:flusion_primitives_country
@@ -1501,7 +1508,22 @@ transfer_arkship_to_kaiser = {
 				copy_techs_from = {
 					target = event_target:flusion_primitives_country
 				}
+				give_technology = { tech = tech_civilian_arkship }
+				give_technology = { tech = tech_military_arkship }
+				give_technology = { tech = tech_science_arkship }
+				give_technology = { tech = tech_waystation_1 }
+				force_add_civic = civic_hired_guns #third civic now that they have the tech
 				katzen_set_protectorate = yes
+				apply_katzen_difficulty = yes
+				set_country_as_nomad_effect = { IS_NOMAD = yes }
+				country_event = {
+					id = nomads.20 #starts arkship reserves situation
+				}
+				set_resource_converter = nomadic_operational_reserves
+				set_variable = { which = contract_completed value = 0 }
+				set_faction_properties = {
+					needs_border_access = no
+				}
 				add_resource = {
 					minerals = 50000
 					alloys = 20000
@@ -1514,19 +1536,12 @@ transfer_arkship_to_kaiser = {
 					influence = 250
 					unity = 100000 #give a kickstart on traditions since they are lacking
 				}
-				set_country_as_nomad_effect = { IS_NOMAD = yes }
-				country_event = {
-					id = nomads.20
-				}
-				set_resource_converter = nomadic_operational_reserves
-				set_variable = { which = contract_completed value = 0 }
-				set_faction_properties = {
-					needs_border_access = no
-				}
-				give_technology = { tech = tech_civilian_arkship }
-				give_technology = { tech = tech_military_arkship }
-				give_technology = { tech = tech_science_arkship }
-				give_technology = { tech = tech_waystation_1 }
+			}
+		}
+		owner = { #selling empire
+			add_intel = {
+				amount = 30
+				who = event_target:katzen_nomadic_fleet
 			}
 		}
 		set_owner = event_target:katzen_nomadic_fleet
@@ -1535,6 +1550,13 @@ transfer_arkship_to_kaiser = {
 			size = 1000 #kickstart the vassal for their first arkship
 		}
 	}
+	#rename_planet_katzen = yes #TODO custom name pool for arkships one day... and the prefix KSS on all nomadic colonies (also this doesn't work atm because it renames the colony and not the ship)
+	add_modifier = {
+		modifier = katzen_arkship_investment #+100% build speed to help them economically adjust
+		years = 5
+		clear_on_owner_change = yes
+	}
+	set_update_modifiers_batch = end
 }
 
 katzen_clear_capitals = {
@@ -3628,6 +3650,16 @@ katzen_free_protectorate = {
 
 	if = {
 		limit = {
+			has_global_flag = galcom_mobilizes_against_kaiser
+		}
+		add_modifier = {
+			modifier = galcom_mobilizes_against_kaiser
+			days = -1
+		}
+	}
+
+	if = {
+		limit = {
 			leader = { has_leader_flag = katzen_governor }
 		}
 		country_event = { id = giga_katzen.0034 days = 15 random = 5 }
@@ -3661,19 +3693,19 @@ katzen_calculate_score = { #to be run on Katzenartig country scope
 	#modify Kaiser Score accounting for some special things
 	if = {
 		limit = {
-			event_target:giga_flusion = { has_planet_flag = sonya_rescued }
+			event_target:gigaflusion = { has_planet_flag = sonya_rescued }
 		}
 		change_variable = { which = kaiser_score value = -1 }
 	}
 	if = {
 		limit = {
-			event_target:giga_flusion = { has_planet_flag = loris_dam_blown }
+			event_target:gigaflusion = { has_planet_flag = loris_dam_blown }
 		}
 		change_variable = { which = kaiser_score value = -1 }
 	}
 	if = {
 		limit = {
-			event_target:giga_flusion = { has_planet_flag = solak_dam_blown }
+			event_target:gigaflusion = { has_planet_flag = solak_dam_blown }
 		}
 		change_variable = { which = kaiser_score value = -1 }
 	}
@@ -3686,7 +3718,7 @@ katzen_calculate_score = { #to be run on Katzenartig country scope
 	#katzen_panzers_stolen is the other operation but they don't necessarily know that happened
 	if = {
 		limit = {
-			event_target:giga_flusion = { has_planet_flag = loris_removed }
+			event_target:gigaflusion = { has_planet_flag = loris_removed }
 		}
 		change_variable = { which = kaiser_score value = -1 }
 	}

@@ -3304,8 +3304,10 @@ country_event = { #hello
 	option = { #Sell nomadic colonies
 		name = "giga_katzen.020.trade_arkship"
 		custom_tooltip = "giga_katzen.020.trade_arkship.tooltip"
-		trigger = {
-			is_nomadic = yes
+		trigger = { #has any arkships, rather than is_nomadic, mostly for carks compat
+			any_owned_colony = {
+				carrier_is_type = ship
+			}
 		}
 		allow = {
 			custom_tooltip = {
@@ -3320,7 +3322,7 @@ country_event = { #hello
 			}
 			custom_tooltip = {
 				fail_text = cant_recently_sold_arkship
-				NOT = { has_country_flag = recently_sold_kaiser_land }
+				NOT = { has_country_flag = recently_sold_kaiser_arkship }
 			}
 		}
 		hidden_effect = {
@@ -3339,6 +3341,7 @@ country_event = { #hello
 			random_owned_colony = {
 				limit = {
 					is_capital = no
+					carrier_is_type = ship
 				}
 				set_carrier_flag = kaiser_sell_1
 				save_global_event_target_as = kaiser_sell_1
@@ -3346,6 +3349,7 @@ country_event = { #hello
 			random_owned_colony = {
 				limit = {
 					is_capital = no
+					carrier_is_type = ship
 					NOT = {
 						has_carrier_flag = kaiser_sell_1
 					}
@@ -3356,6 +3360,7 @@ country_event = { #hello
 			random_owned_colony = {
 				limit = {
 					is_capital = no
+					carrier_is_type = ship
 					NOR = {
 						has_carrier_flag = kaiser_sell_1
 						has_carrier_flag = kaiser_sell_2
@@ -3367,6 +3372,7 @@ country_event = { #hello
 			random_owned_colony = {
 				limit = {
 					is_capital = no
+					carrier_is_type = ship
 					NOR = {
 						has_carrier_flag = kaiser_sell_1
 						has_carrier_flag = kaiser_sell_2
@@ -3766,13 +3772,21 @@ country_event = {
 				name = "Freiheitkrieg"
 			}
 		}
+		allow = {
+			NOT = {
+				has_origin = origin_katzen_nomads #special empire that never rebels
+			}
+		}
 	}
 
 	option = {
 		name = "giga_katzen.0033.b"
 		custom_tooltip = "giga_katzen.0033.b.tooltip"
 		allow = {
-			is_ai = no
+			OR = {
+				is_ai = no
+				has_origin = origin_katzen_nomads #special empire that never rebels
+			}
 		}
 	}
 }
@@ -5408,7 +5422,9 @@ country_event = { #Trading with Kaiser
 				ship = {
 					OR = {
 						is_ship_size = carks_lunark
+						is_ship_size = carks_lunark_nomad
 						is_ship_size = carks_planark
+						is_ship_size = carks_planark_nomad
 						is_ship_size = carks_sysark
 						is_ship_size = carks_sysark_o
 					}
@@ -5433,7 +5449,9 @@ country_event = { #Trading with Kaiser
 				ship = {
 					NOR = {
 						is_ship_size = carks_lunark
+						is_ship_size = carks_lunark_nomad
 						is_ship_size = carks_planark
+						is_ship_size = carks_planark_nomad
 						is_ship_size = carks_sysark
 						is_ship_size = carks_sysark_o
 						is_ship_size = carks_quasark
@@ -5467,14 +5485,14 @@ country_event = { #Trading with Kaiser
 		}
 		hidden_effect = {
 			set_timed_country_flag = {
-				flag = recently_sold_kaiser_land
+				flag = recently_sold_kaiser_arkship
 				days = 720
 			}
-			remove_country_flag = recently_gave_kaiser_land
-			set_timed_country_flag = {
-				flag = recently_gave_kaiser_land
-				days = 720
-			}
+			# remove_country_flag = recently_gave_kaiser_land
+			# set_timed_country_flag = {
+			# 	flag = recently_gave_kaiser_land
+			# 	days = 720
+			# }
 			random_list = {
 				40 = {
 					increase_kaiser_opinion = yes
@@ -5542,14 +5560,14 @@ country_event = { #Trading with Kaiser
 		}
 		hidden_effect = {
 			set_timed_country_flag = {
-				flag = recently_sold_kaiser_land
+				flag = recently_sold_kaiser_arkship
 				days = 720
 			}
-			remove_country_flag = recently_gave_kaiser_land
-			set_timed_country_flag = {
-				flag = recently_gave_kaiser_land
-				days = 720
-			}
+			# remove_country_flag = recently_gave_kaiser_land
+			# set_timed_country_flag = {
+			# 	flag = recently_gave_kaiser_land
+			# 	days = 720
+			# }
 			random_list = {
 				60 = {
 					increase_kaiser_opinion = yes
@@ -5611,14 +5629,14 @@ country_event = { #Trading with Kaiser
 		}
 		hidden_effect = {
 			set_timed_country_flag = {
-				flag = recently_sold_kaiser_land
+				flag = recently_sold_kaiser_arkship
 				days = 720
 			}
-			remove_country_flag = recently_gave_kaiser_land
-			set_timed_country_flag = {
-				flag = recently_gave_kaiser_land
-				days = 720
-			}
+			# remove_country_flag = recently_gave_kaiser_land
+			# set_timed_country_flag = {
+			# 	flag = recently_gave_kaiser_land
+			# 	days = 720
+			# }
 			random_list = {
 				80 = {
 					increase_kaiser_opinion = yes
@@ -17616,14 +17634,31 @@ country_event = { #Roll for Instability
 			}
 			random_list = {
 				50 = { #suffers instability
-					every_country = {
-						limit = { is_ai = no }
-						country_event = { id = giga_katzen.7012 } #inform others
+					every_country = { #inform player
+						limit = {
+							is_ai = no
+						}
+						country_event = { id = giga_katzen.7012 }
+					}
+					every_country = { #Katzen vassals roll to rebel over the next year
+						limit = {
+							is_ai = yes
+							katzen_vassal = yes
+							NOT = { has_origin = origin_katzen_nomads } #special empire that never rebels
+						}
+						random_list = {
+							1 = {
+								country_event = { id = giga_katzen.7015 days = 30 random = 330 } #raaahhh freedom or something
+							}
+							1 = {
+								#stay loyal
+							}
+						}
 					}
 					country_event = { id = giga_katzen.7011 days = 1080 random = 360 } #roll to restabilise or collapse
 					capital_scope = {
 						add_modifier = {
-							modifier = flusion_consolidation_instability #heavy economic debuff
+							modifier = flusion_consolidation_instability #heavy economic debuff (so that instability is harmful even if it doesn't lead to full collapse)
 							days = -1
 						}
 					}
@@ -17719,7 +17754,7 @@ country_event = { #Notify nation of Reformation instability
 			declare_war = {
 				target = event_target:flusion_primitives_country
 				attacker_war_goal = "wg_katzen_defence"
-				name = "Freiheitkrieg"
+				name = "Katzenkrieg"
 			}
 			every_country = {
 				limit = { is_in_federation_with = ROOT }
@@ -17750,6 +17785,12 @@ country_event = { #Notify nation of Reformation instability
 
 		hidden_effect = {
 			katzen_free_protectorate = yes
+			set_kaiser_war_opinion = yes
+			declare_war = {
+				target = event_target:flusion_primitives_country
+				attacker_war_goal = "wg_katzen_defence"
+				name = "Freiheitkrieg"
+			}
 		}
 	}
 
@@ -17783,7 +17824,7 @@ country_event = { #Notify nation of Reformation instability
 	}
 }
 
-country_event = {
+country_event = { #Imperium restabilises notif
 	id = giga_katzen.7013
 	title = "giga_katzen.7013.name"
 	desc = "giga_katzen.7013.desc"
@@ -17816,7 +17857,7 @@ country_event = {
 	}
 }
 
-country_event = {
+country_event = { #Imperium implodes notif
 	id = giga_katzen.7014
 	title = "giga_katzen.7014.name"
 	desc = "giga_katzen.7014.desc"
@@ -17847,6 +17888,110 @@ country_event = {
 		}
 		name = DOTDOTDOT
 		custom_tooltip = giga_katzen.7020.c.tooltip
+	}
+}
+
+country_event = { #AI vassal rebels during instability mechanics
+	id = giga_katzen.7015
+	hide_window = yes
+
+	is_triggered_only = yes
+
+	immediate = {
+		save_event_target_as = katzen_reformation_rebels
+		every_playable_country = {
+			limit = {
+				is_ai = no
+			}
+			country_event = {
+				id = giga_katzen.7016 #notify players
+			}
+		}
+		katzen_free_protectorate = yes
+		set_kaiser_war_opinion = yes
+		declare_war = {
+			target = event_target:flusion_primitives_country
+			attacker_war_goal = "wg_katzen_defence"
+			name = "Freiheitkrieg"
+		}
+	}
+}
+
+country_event = { #AI vassal rebels during instability notif
+	id = giga_katzen.7016
+	title = "giga_katzen.7016.name"
+	desc = {
+		trigger = {
+			event_target:katzen_reformation_rebels = {
+				is_gestalt = no
+				is_nomadic = no
+			}
+		}
+		text = "giga_katzen.7016.desc"
+	}
+	desc = {
+		trigger = {
+			event_target:katzen_reformation_rebels = {
+				is_gestalt = no
+				is_nomadic = yes
+			}
+		}
+		text = "giga_katzen.7016.nomadic.desc"
+	}
+	desc = {
+		trigger = {
+			event_target:katzen_reformation_rebels = {
+				is_gestalt = yes
+				is_nomadic = no
+			}
+		}
+		text = "giga_katzen.7016.gestalt.desc"
+	}
+	desc = {
+		trigger = {
+			event_target:katzen_reformation_rebels = {
+				is_gestalt = yes
+				is_nomadic = yes
+			}
+		}
+		text = "giga_katzen.7016.gestalt_nomadic.desc"
+	}
+	location = event_target:katzen_reformation_rebels.capital_scope
+	show_sound = event_open_revolt
+	picture = GFX_evt_spymaster
+
+	is_triggered_only = yes
+
+	option = {
+		trigger = {
+			katzen_vassal = no
+			NOT = {
+				has_country_flag = katzen_previous_vassal
+			}
+		}
+		name = giga_katzen.7016.a
+	}
+
+	option = {
+		trigger = {
+			katzen_vassal = no
+			has_country_flag = katzen_previous_vassal
+		}
+		name = giga_katzen.7016.b
+	}
+
+	option = {
+		trigger = {
+			katzen_vassal = yes
+		}
+		name = giga_katzen.7016.c
+	}
+
+	option = {
+		trigger = {
+			katzen_vassal = yes
+		}
+		name = giga_katzen.7016.d
 	}
 }
 
