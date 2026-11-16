@@ -318,7 +318,36 @@ spawn_katzen_submarine_fleet = {
 	}
 }
 
-rename_planet_katzen = {
+# rename_planet_arkship_katzen = { #TODO Katzen arkships should be getting their PREFIX
+# 	if = {
+# 		limit = {
+# 			carrier_is_type = ship
+# 		}
+# 		set_name = "$katzen_arkship_prefix$$NAME$"
+# 	}
+# 	else = {
+# 		set_name = $NAME$
+# 	}
+# }
+# rename_colony_katzen = { #this effect only for testing - reintegrate with the one below after
+# 	random_list = {
+# 		1 = {
+# 			rename_planet_arkship_katzen = { NAME = "Neu Großlaurendaar" }
+# 		}
+# 		1 = {
+# 			rename_planet_arkship_katzen = { NAME = "Felinida" }
+# 		}
+# 	}
+# 	if = { #rename all parts of the Arkship to the new name
+# 		limit = {
+# 			carrier_is_type = ship
+# 		}
+# 		ship = { set_name = prev }
+# 		fleet = { set_name = prev }
+# 	}
+# }
+
+rename_colony_katzen = {
 	if = { #rename special planets to certain things or their original Katzen name, just in case
 		limit = {
 			has_carrier_flag = gigaflusion
@@ -519,7 +548,7 @@ rename_planet_katzen = {
 			}
 			0 = {
 				set_name = "Fliegenhafen"
-				modifier = { add = 5 is_planet_class = pc_habitable_gas_giant }
+				modifier = { add = 5 OR = { is_planet_class = pc_habitable_gas_giant carrier_is_type = ship } }
 			}
 			0 = {
 				set_name = "Augedessturm"
@@ -531,7 +560,7 @@ rename_planet_katzen = {
 			}
 			0 = {
 				set_name = "Weltraumkatzhaus"
-				modifier = { add = 5 is_planet_class = pc_habitat }
+				modifier = { add = 5 OR = { is_planet_class = pc_habitat carrier_is_type = ship } }
 			}
 			0 = {
 				set_name = "Eispfoteburg"
@@ -642,7 +671,15 @@ rename_planet_katzen = {
 			1 = { set_name = "Mitternachtsstrahl" }
 			1 = { set_name = "Eisernefront" }
 			1 = { set_name = "Bohemeowa" }
+			1 = { set_name = "Würfelhass" }
 		}
+	}
+	if = { #rename all parts of the Arkship to the new name
+		limit = {
+			carrier_is_type = ship
+		}
+		ship = { set_name = prev }
+		fleet = { set_name = prev }
 	}
 }
 
@@ -1508,14 +1545,24 @@ transfer_arkship_to_kaiser = {
 				copy_techs_from = {
 					target = event_target:flusion_primitives_country
 				}
-				give_technology = { tech = tech_civilian_arkship }
-				give_technology = { tech = tech_military_arkship }
-				give_technology = { tech = tech_science_arkship }
-				give_technology = { tech = tech_waystation_1 }
 				force_add_civic = civic_hired_guns #third civic now that they have the tech
 				katzen_set_protectorate = yes
 				apply_katzen_difficulty = yes
 				set_country_as_nomad_effect = { IS_NOMAD = yes }
+				give_technology = { tech = tech_arkship_construction } #nomad techs must be given after setting country as nomad
+				give_technology = { tech = tech_arkship_tier_2 }
+				if = {
+					limit = {
+						has_global_flag = katzen_reformation_complete #to make progression fair at least a little
+					}
+					give_technology = { tech = tech_arkship_tier_3 }
+				}
+				give_technology = { tech = tech_civilian_arkship }
+				give_technology = { tech = tech_military_arkship }
+				give_technology = { tech = tech_science_arkship }
+				give_technology = { tech = tech_waystation_1 }
+				give_technology = { tech = tech_waystation_2 }
+				give_technology = { tech = tech_waystation_3 }
 				country_event = {
 					id = nomads.20 #starts arkship reserves situation
 				}
@@ -1536,6 +1583,10 @@ transfer_arkship_to_kaiser = {
 					influence = 250
 					unity = 100000 #give a kickstart on traditions since they are lacking
 				}
+				add_modifier = { #non-bullshit-level base economic production to avoid a lame duck empire
+					modifier = katzen_nomads_economic_support
+					days = -1 #this is removed if the Imperium collapses
+				}
 			}
 		}
 		owner = { #selling empire
@@ -1550,9 +1601,9 @@ transfer_arkship_to_kaiser = {
 			size = 1000 #kickstart the vassal for their first arkship
 		}
 	}
-	#rename_planet_katzen = yes #TODO custom name pool for arkships one day... and the prefix KSS on all nomadic colonies (also this doesn't work atm because it renames the colony and not the ship)
+	rename_colony_katzen = yes #TODO fix rename_planet_arkship_katzen to add the prefix KSS on all nomadic colonies
 	add_modifier = {
-		modifier = katzen_arkship_investment #+100% build speed to help them economically adjust
+		modifier = katzen_arkship_investment #build speed boost to help them economically adjust
 		years = 5
 		clear_on_owner_change = yes
 	}
