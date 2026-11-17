@@ -9,7 +9,6 @@ giga_tech_orbital_naval_logistics = {
 	area = society
 	tier = 4
 	category = { military_theory }
-	is_rare = yes
 	prerequisites = {
 		OR = {
 			"tech_starbase_4"
@@ -34,10 +33,6 @@ giga_tech_orbital_naval_logistics = {
 	weight_modifier = {
 		inline_script = technology/tech_weight_boni/militarist_tech_weight_bonus
 
-		inline_script = {
-			script = technologies/rare_technologies_weight_modifiers
-			TECHNOLOGY = giga_tech_orbital_naval_logistics
-		}
 	}
 
 	ai_weight = {
@@ -54,7 +49,6 @@ giga_tech_orbital_elysium = {
 	area = society
 	tier = 3
 	category = { statecraft }
-	is_rare = yes
 	prerequisites = { "tech_starbase_3" "tech_galactic_administration" }
 	weight = @tier3weight3
 	prereqfor_desc = {
@@ -70,10 +64,6 @@ giga_tech_orbital_elysium = {
 	}
 
 	weight_modifier = {
-		inline_script = {
-			script = technologies/rare_technologies_weight_modifiers
-			TECHNOLOGY = giga_tech_orbital_elysium
-		}
 
 		inline_script = technology/tech_weight_boni/expansionist_tech_weight_bonus
 		inline_script = technology/tech_weight_boni/authority_tech_weight_bonus
@@ -134,21 +124,15 @@ giga_tech_orbital_artificial_eco = {
 	area = society
 	tier = 3
 	category = { biology }
-	is_rare = no
 	prerequisites = {
-        #moved terrestrial sculptin to potential so we can have nomads ignore it
-		OR = {
-			tech_cruisers
-			tech_harbingers
-		}
+		tech_basic_science_lab_2
+		tech_colonial_centralization
 	}
 	weight = @tier3weight2
 	prereqfor_desc = {
 		custom = { title = "allow_orbital_artificial_eco"	desc = "desc_orbital_artificial_eco" }
 	}
 	modifier = {
-		country_resource_max_add = 2500
-		terraform_speed_mult = 0.05
 		giga_orbital_artificial_eco_limit_add = 3
 	}
 
@@ -166,17 +150,27 @@ giga_tech_orbital_artificial_eco = {
 	}
 
 	weight_modifier = {
-		# genetics/hives get priority
-		inline_script = technology/tech_weight_boni/genetics_tech_weight_bonus
-
-		inline_script = {
-			script = technology/tech_weight_boni/neighbor_spread_tech_weight_bonus
-			TECHNOLOGY = giga_tech_orbital_artificial_eco
+		factor = 0.5
+		modifier = {
+			factor = 0.2
+			NOT = { has_councilor_with_kilo_brain = { TRAIT = biology } }
 		}
+
+		modifier = {
+			factor = 2
+			tech_weight_factor_check_ruined_restored = { megastructure = orbital_artificial_eco}
+		}
+
+		inline_script = { script = technology/tech_weight_boni/scientist_tech_weight_bonus }
 	}
 
 	ai_weight = {
-		factor = @giga_aiweight_multiplier_medium	#Science is good.
+		factor = @giga_aiweight_multiplier_medium	#Science is okay
+
+		modifier = {
+			factor = 2
+			is_ai = no
+		}
 	}
 }
 
@@ -213,6 +207,7 @@ giga_tech_planetary_seeder_nexus = {
 	weight_modifier = {
 		factor = 0.5
 		inline_script = technology/tech_weight_boni/genetics_tech_weight_bonus
+		inline_script = technology/tech_weight_boni/ecological_tech_weight_bonus
 
 		modifier = {
 			factor = 0.2
@@ -244,11 +239,7 @@ giga_tech_yggdrasil_orchid = {
 	tier = 4
 	category = { biology }
 	is_rare = yes
-	prerequisites = { 
-		OR = {
-			tech_battleships
-			tech_stingers
-		}
+	prerequisites = {
 		tech_mega_engineering
 		tech_terrestrial_sculpting
 		giga_tech_orbital_artificial_eco
@@ -264,12 +255,14 @@ giga_tech_yggdrasil_orchid = {
 	}
 
 	weight_modifier = {
+
 		modifier = {
-			factor = @giga_tech_weight_boost_4
-			is_catalytic_empire = yes
+			factor = 2
+			tech_weight_factor_check_ruined_restored = { megastructure = yggdrasil_orchid }
 		}
 
 		inline_script = technology/tech_weight_boni/genetics_tech_weight_bonus
+		inline_script = technology/tech_weight_boni/ecological_tech_weight_bonus
 
 		inline_script = {
 			script = technologies/rare_technologies_weight_modifiers
@@ -288,7 +281,7 @@ giga_tech_the_vat = {
 	tier = 5
 	category = { biology }
 	is_rare = yes
-	weight = @tier2weight3 # don't know why this is 70 but it is
+	weight = @giga_tier6weight2
 
 	prereqfor_desc = {
 		custom = {
@@ -301,18 +294,17 @@ giga_tech_the_vat = {
 	potential = {
 		NOT = { has_global_flag = the_vat_disabled }
 		has_galactic_wonders = yes
-		OR = {
-			has_genetically_ascended = yes
-			has_active_tradition = tr_genetics_finish_extra_traits
-			
-			has_ascension_perk = ap_mechromancy # robots go brrt
-		}
+		has_technology = tech_gene_expressions
 	}
 
 	weight_modifier = {
-		inline_script = technology/tech_weight_boni/militarist_tech_weight_bonus
 		inline_script = technology/tech_weight_boni/genetics_tech_weight_bonus
 		inline_script = technology/tech_weight_boni/ecological_tech_weight_bonus
+
+		modifier = {
+			factor = 2
+			tech_weight_factor_check_5_stage = { megastructure = the_vat }
+		}
 
 		inline_script = {
 			script = technologies/rare_technologies_weight_modifiers
@@ -357,6 +349,11 @@ giga_tech_asteroid_manufactory = {
 			NOT = { years_passed > 50 }
 		}
 
+		modifier = {
+			factor = 2
+			tech_weight_factor_asteroid = {megastructure = asteroid_manufactory}
+		}
+
 		inline_script = {
 			script = technology/tech_weight_boni/neighbor_spread_tech_weight_bonus
 			TECHNOLOGY = giga_tech_asteroid_manufactory
@@ -364,15 +361,6 @@ giga_tech_asteroid_manufactory = {
 
 		inline_script = technology/tech_weight_boni/expansionist_tech_weight_bonus
 		inline_script = technology/tech_weight_boni/exploitative_tech_weight_bonus
-
-		modifier = {
-			factor = 1.25
-			has_tradition = tr_macroengineering_adopt
-		}
-		modifier = {
-			factor = 1.25
-			has_tradition = tr_macroengineering_finish
-		}
 	}
 
 	ai_weight = {
@@ -421,6 +409,10 @@ giga_tech_terraform_barren = {
 		inline_script = {
 			script = technologies/rare_technologies_weight_modifiers
 			TECHNOLOGY = giga_tech_terraform_barren
+		}
+		modifier = {
+			factor = 2
+			tech_weight_factor_check_2_stage = {megastructure = terraform_barren }
 		}
 	}
 
@@ -495,6 +487,10 @@ giga_tech_terraform_toxic = {
 			script = technologies/rare_technologies_weight_modifiers
 			TECHNOLOGY = giga_tech_terraform_toxic
 		}
+		modifier = {
+			factor = 2
+			tech_weight_factor_check_2_stage = {megastructure = terraform_toxic }
+		}
 	}
 
 	ai_weight = {
@@ -533,6 +529,10 @@ giga_tech_terraform_molten = {
 			script = technologies/rare_technologies_weight_modifiers
 			TECHNOLOGY = giga_tech_terraform_molten
 		}
+		modifier = {
+			factor = 2
+			tech_weight_factor_check_2_stage = {megastructure = terraform_molten }
+		}
 	}
 
 	ai_weight = {
@@ -564,6 +564,10 @@ giga_tech_terraform_shattered = {
 		inline_script = {
 			script = technologies/rare_technologies_weight_modifiers
 			TECHNOLOGY = giga_tech_terraform_shattered
+		}
+		modifier = {
+			factor = 2
+			tech_weight_factor_check_5_stage = { megastructure = terraform_shattered }
 		}
 	}
 
@@ -624,6 +628,11 @@ giga_tech_planetary_computer = {
 			script = technologies/rare_technologies_weight_modifiers
 			TECHNOLOGY = giga_tech_planetary_computer
 		}
+
+		modifier = {
+			factor = 2
+			tech_weight_factor_check_3_stage = { megastructure = planetary_computer }
+		}
 	}
 
 	ai_weight = {
@@ -631,69 +640,67 @@ giga_tech_planetary_computer = {
 	}
 }
 
-giga_tech_stellar_ring_habitat = {
-	area = society
-	cost = @tier5cost3
-	tier = 5
-	category = { new_worlds }
-	prerequisites = { tech_mega_engineering tech_habitat_2 }
-	weight = @tier5weight3
-	is_rare = yes
-
-	prereqfor_desc = {
-		custom = { title = allow_giga_orbital	desc = desc_giga_orbital }
-	}
-
-	potential = {
-		always = no # 3.9 made this mega obsolete, pending rework
-		#
-		#is_void_dweller_empire = yes
-		# is_nomadic = no
-	}
-
-	weight_modifier = {
-		factor = 0.25
-
-		modifier = {
-			factor = @giga_tech_weight_malus_2
-			is_militarist = yes
-		}
-		modifier = {
-			factor = @giga_tech_weight_boost_3
-			is_pacifist = yes
-		}
-		modifier = {
-			factor = @giga_tech_weight_boost_3
-			has_valid_civic = civic_machine_servitor
-		}
-
-		inline_script = technology/tech_weight_boni/maniacal_or_spark_tech_weight_bonus
-
-		modifier = {
-			factor = @giga_tech_weight_boost_3
-			has_galactic_wonders = yes
-		}
-		modifier = {
-			factor = @giga_tech_weight_boost_6
-			has_ascension_perk = ap_master_builders
-		}
-		inline_script = {
-			script = technologies/rare_technologies_weight_modifiers
-			TECHNOLOGY = giga_tech_stellar_ring_habitat
-		}
-
-		modifier = { factor = 0	giga_can_use_habitables = no	}
-	}
-
-	ai_weight = {
-		factor = @giga_aiweight_multiplier_medium
-
-		modifier = {
-			factor = 10
-			has_valid_civic = civic_machine_servitor
-		}
-	}
-}
+# giga_tech_stellar_ring_habitat = {
+# 	area = society
+# 	cost = @tier5cost3
+# 	tier = 5
+# 	category = { new_worlds }
+# 	prerequisites = { tech_mega_engineering tech_habitat_2 }
+# 	weight = @tier5weight3
+# 	is_rare = yes
+#
+# 	prereqfor_desc = {
+# 		custom = { title = allow_giga_orbital	desc = desc_giga_orbital }
+# 	}
+#
+# 	potential = {
+# 		always = no # 3.9 made this mega obsolete, pending rework
+# 		#
+# 		#is_void_dweller_empire = yes
+# 		# is_nomadic = no
+# 	}
+#
+# 	weight_modifier = {
+# 		factor = 0.25
+#
+# 		modifier = {
+# 			factor = @giga_tech_weight_malus_2
+# 			is_militarist = yes
+# 		}
+# 		modifier = {
+# 			factor = @giga_tech_weight_boost_3
+# 			is_pacifist = yes
+# 		}
+# 		modifier = {
+# 			factor = @giga_tech_weight_boost_3
+# 			has_valid_civic = civic_machine_servitor
+# 		}
+#
+# 		modifier = {
+# 			factor = @giga_tech_weight_boost_3
+# 			has_galactic_wonders = yes
+# 		}
+# 		modifier = {
+# 			factor = @giga_tech_weight_boost_6
+# 			has_ascension_perk = ap_master_builders
+# 		}
+# 		inline_script = {
+# 			script = technologies/rare_technologies_weight_modifiers
+# 			TECHNOLOGY = giga_tech_stellar_ring_habitat
+# 		}
+#
+# 		modifier = { factor = 0	giga_can_use_habitables = no	}
+# 	}
+#
+# 	ai_weight = {
+# 		factor = @giga_aiweight_multiplier_medium
+#
+# 		modifier = {
+# 			factor = 10
+# 			has_valid_civic = civic_machine_servitor
+# 		}
+# 	}
+# }
 
 ########################
 ### Psionics ###########
@@ -718,7 +725,6 @@ giga_tech_shroud_conduit = {
 		factor = 0.5
 
 		inline_script = technology/tech_weight_boni/spiritualist_tech_weight_bonus
-		inline_script = technology/tech_weight_boni/maniacal_or_spark_tech_weight_bonus
 
 		inline_script = {
 			script = technologies/rare_technologies_weight_modifiers
