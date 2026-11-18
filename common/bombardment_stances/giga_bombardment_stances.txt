@@ -3,6 +3,7 @@ redtoxin = {
 		owner = {
 			has_technology = tech_scourge_deployment
 			ehof_default_country = yes
+			NOT = { has_policy_flag = orbital_bombardment_selective }
 		}
 	}
 	default = no
@@ -25,7 +26,13 @@ redtoxin = {
 		modifier = {
 			factor = 0.01
 			exists = from
-			from = { owner = { NOT = { is_hostile = root.owner } } }
+			from = {
+				owner = { NOT = { is_hostile = root.owner } }
+				NAND = {
+					controller = { is_crisis_faction = yes }
+					planet_garrison_strength > 0
+				}
+			}
 		}
 	}
 }
@@ -51,22 +58,33 @@ katzen = {
 	trigger = {
 		owner = {
 			has_technology = tech_katzen_atomic_munitions
+			OR = { #needs dangerous bombardment policies but Katzens bypass this req
+				NOT = { has_policy_flag = orbital_bombardment_selective }
+				katzen_country_type = yes
+				has_country_flag = giga_meopa_fe
+				has_country_flag = giga_eaw_kaiser_unifier
+				AND = {
+					has_country_flag = katzen_civil_war_faction
+					is_ai = yes #players can get the above flag without the tech
+				}
+			}
 		}
 	}
 
 	default = no
 
 	stop_when_armies_dead = no
+	stop_when_ground_combat = no
 	abduct_pops = no
 
 	planet_damage = 5.0
 	army_damage = 3.0
-	kill_pop_chance = {
-		base = 3 # Yeah this seems like a bombardment stance that will kill
-	}
 
-	kill_pop_amount = { min = 250 max = 1000 }
+	kill_pop_chance = {
+		base = 5.0 # Yeah this seems like a bombardment stance that will kill
+	}
 	min_pops_to_kill_pop = 0
+	kill_pop_amount = { min = 0 max = 200 }
 
 	# root = fleet
 	# from = planet
@@ -77,6 +95,39 @@ katzen = {
 			exists = from
 			from = {
 				owner = { NOT = { is_hostile = root.owner } }
+				NAND = {
+					controller = { is_crisis_faction = yes }
+					planet_garrison_strength > 0
+				}
+			}
+		}
+		modifier = {
+			factor = 5 #Scorched Earth autochthony path favours spreading the flames
+			owner = {
+				has_country_flag = giga_scorched_habitability_preference #stealing this flag because it's set in the right way
+			}
+		}
+		modifier = {
+			factor = 10000
+			owner = {
+				OR = { #Katzens and their signature style
+					katzen_country_type = yes
+					has_country_flag = giga_evil_meopa_fe
+					has_country_flag = giga_pouchkinn_meopa_fe
+					has_country_flag = katzen_civil_war_socialist
+					has_country_flag = katzen_civil_war_junta
+					has_country_flag = giga_eaw_kaiser_unifier
+				}
+			}
+		}
+		modifier = {
+			factor = 0
+			owner = {
+				OR = { #nicer Katzen empires (they have the tech but wouldn't use it)
+					has_country_flag = giga_nice_meopa_fe
+					has_country_flag = katzen_civil_war_republic
+					has_country_flag = katzen_civil_war_realm
+				}
 			}
 		}
 	}
