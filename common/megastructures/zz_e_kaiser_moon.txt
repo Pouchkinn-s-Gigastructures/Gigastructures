@@ -12,7 +12,7 @@ kaiser_moon_0 = {
 	
 	build_time = 1800
 	resources = {
-		category = giga_megastructures
+		category = giga_attack_moon
 		cost = {
 			influence = 100
 		}
@@ -23,40 +23,52 @@ kaiser_moon_0 = {
 		upkeep = { energy = 5 }
 	}
 
-	potential = { always = no }
+	potential = {
+		has_technology = giga_tech_kaiser_moon
+		NOT = { has_global_flag = warmoon_disabled }
+		OR = {
+			has_global_flag = warmoon_capped_u
+			is_country_type = katzenartig_imperium
+			check_variable = {
+				which = giga_current_warmoon
+				value < value:giga_warmoon_limit
+			}
+		}
+	}
 
 	possible = {
 		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					has_global_flag = warmoon_capped_u
+					is_country_type = katzenartig_imperium
+					check_variable = {
+						which = giga_current_warmoon
+						value < value:giga_warmoon_limit
+					}
+				}
+			}
+		}
 	}
 
 	placement_rules = {
 		planet_possible = {
 			custom_tooltip = { fail_text = "must_build_size_567"
-				OR = {
-					planet_size <= 10
-					is_planet_class = pc_strip_mined
-					is_planet_class = pc_core_mined
-				}
+				planet_size <= 10
+			}
+			custom_tooltip = {
+				fail_text = "must_build_around_molten_barren_stripmined"
+				giga_can_be_war_moon = yes
 			}
 			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
 			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
 			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+			custom_tooltip = { fail_text = "requires_no_crisis_planet"			NOT = { has_planet_flag = crisis_vital_planet } }
 			custom_tooltip = { fail_text = "requires_not_asteroid"				is_asteroid = no }
 			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
-			custom_tooltip = {
-				fail_text = "requires_not_astral_scar"
-				is_astral_scar = no
-			}
-			custom_tooltip = {
-				fail_text = "must_build_around_molten_barren_stripmined"
-				OR = {
-					giga_is_frozen = yes
-					giga_is_barren_cn = yes
-					giga_is_molten = yes
-					is_planet_class = pc_strip_mined
-					is_planet_class = pc_core_mined
-				}
-			}
+			custom_tooltip = { fail_text = "requires_not_astral_scar" is_astral_scar = no }
 		}
 	}
 
@@ -136,7 +148,9 @@ kaiser_moon_0 = {
 		save_event_target_as = giga_system
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		from = {
+			set_timed_country_flag = { flag = has_recently_built_war_moon years = 5 }
 			country_event = { id = giga_katzen.0902 }	# Notification
+			change_variable = { which = giga_current_warmoon value = 1 }
 		}
 		fromfrom.planet = {
 			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
@@ -160,10 +174,10 @@ kaiser_moon_1 = {
 	
 	build_time = 2700
 	resources = {
-		category = giga_megastructures
+		category = giga_attack_moon
 		inline_script = {
 			script = megastructures/generic_parts/giga_mega_alloy_cost
-			alloys = 10000
+			alloys = 21000
 		}
 		upkeep = {
 			energy = 20
@@ -171,6 +185,18 @@ kaiser_moon_1 = {
 		}
 	}
 
+	potential = {
+		has_technology = giga_tech_kaiser_moon
+		NOT = { has_global_flag = warmoon_disabled }
+		OR = {
+			has_global_flag = warmoon_capped_u
+			is_country_type = katzenartig_imperium
+			check_variable = {
+				which = giga_current_warmoon
+				value < value:giga_warmoon_limit
+			}
+		}
+	}
 	possible = { from = { has_technology = giga_tech_kaiser_moon } }
 
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
@@ -194,10 +220,10 @@ kaiser_moon_2 = {
 	
 	build_time = 3600
 	resources = {
-		category = giga_megastructures
+		category = giga_attack_moon
 		inline_script = {
 			script = megastructures/generic_parts/giga_mega_alloy_cost
-			alloys = 15000
+			alloys = 33000
 		}
 		upkeep = {
 			energy = 40
@@ -205,6 +231,7 @@ kaiser_moon_2 = {
 		}
 	}
 
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
 	possible = { from = { has_technology = giga_tech_kaiser_moon } }
 
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
@@ -236,6 +263,7 @@ kaiser_moon_2 = {
 								}
 							}
 						}
+						set_location = event_target:giga_planet
 					}
 				}
 			}
@@ -274,6 +302,7 @@ kaiser_moon_2 = {
 							}
 						}
 						set_fleet_stance = aggressive
+						set_location = event_target:giga_planet
 					}
 				}
 			}
@@ -342,6 +371,7 @@ kaiser_moon_2 = {
 						}
 						assign_leader = event_target:flusion_douclaw
 						set_fleet_stance = aggressive
+						set_location = event_target:giga_planet
 					}
 				}
 				event_target:flusion_primitives_country = {
@@ -361,7 +391,6 @@ kaiser_moon_2 = {
 				}
 			}
 		}
-		last_created_fleet = { set_location = fromfrom.planet }
 		fromfrom.planet = { remove_planet = yes }
 		remove_megastructure = fromfrom
 	}

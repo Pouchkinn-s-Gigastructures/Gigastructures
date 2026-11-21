@@ -1,42 +1,34 @@
 blokkat_harvest_system = {
-	event_target:blokkat_country = {
-		if = {
-			limit = { NOT = { has_country_flag = blokkat_all_stripmining_fleets_go_home } }
-			set_timed_country_flag = {
-				flag = blokkat_all_stripmining_fleets_go_home
-				days = 90
-			}
-		}
-		if = {
-			limit = { NOT = { has_country_flag = blokkat_stripminers_heading_home } }
-			set_country_flag = blokkat_stripminers_heading_home
-		}
-	}
+	optimize_memory
 	if = {
 		limit = {
-			OR = {
-				any_system_planet = { is_planet_class = pc_infested }
-				any_system_planet = { is_planet_class = pc_ai }
-			}
-		}
-		every_system_planet = {
-			limit = {
-				OR = { 
-					has_planet_flag = machine_world_1
-					has_planet_flag = machine_world_2
-					has_planet_flag = machine_world_3
-					has_planet_flag = machine_world_4
+			any_system_planet = {
+				OR = {
+					is_planet_class = pc_ai
+					is_planet_class = pc_infested
 				}
 			}
-			planet_event = { id = giga_qso.111 }
 		}
 		every_system_planet = {
-			limit = { has_carrier_flag = machine_lair }
-			planet_event = { id = giga_qso.113 }
-		}
-		every_system_planet = {
-			limit = { is_planet_class = pc_infested }
-			planet_event = { id = giga_qso.115 } # Infested world
+			if = {
+				limit = {
+					OR = {
+						has_planet_flag = machine_world_1
+						has_planet_flag = machine_world_2
+						has_planet_flag = machine_world_3
+						has_planet_flag = machine_world_4
+					}
+				}
+				planet_event = { id = giga_qso.111 }
+			}
+			if = {
+				limit = { has_carrier_flag = machine_lair }
+				planet_event = { id = giga_qso.113 }
+			}
+			if = {
+				limit = { is_planet_class = pc_infested }
+				planet_event = { id = giga_qso.115 }
+			}
 		}
 	}
 	every_system_planet = {
@@ -45,7 +37,7 @@ blokkat_harvest_system = {
 			owner = { is_ai = no }
 		}
 		set_planet_flag = blokkat_dont_delete_yet
-		planet_event = { id = giga_blokkat.1023 }
+		carrier_event = { id = giga_blokkat.1023 }
 	}
 	if = {
 		limit = {
@@ -54,16 +46,12 @@ blokkat_harvest_system = {
 		set_global_flag = blokkats_ate_first_system
 		save_global_event_target_as = blokkat_first_stripmined_system
 		every_country = {
-			limit = {
-				has_event_chain = "blokkat_chain"
-			}
+			limit = { has_event_chain = "blokkat_chain" }
 			country_event = { id = giga_blokkat.1020 days = 2 }
 		}
 	}
 	every_country = {
-		limit = {
-			has_event_chain = "blokkat_chain"
-		}
+		limit = { has_event_chain = "blokkat_chain" }
 		add_event_chain_counter = {
 			event_chain = "blokkat_chain"
 			counter = "blokkat_systems_stripmined"
@@ -71,9 +59,7 @@ blokkat_harvest_system = {
 		}
 	}
 	every_system_planet = {
-		limit = {
-			is_star = no
-		}
+		limit = { is_star = no }
 		every_country = {
 			limit = {
 				has_event_chain = "blokkat_chain"
@@ -84,6 +70,7 @@ blokkat_harvest_system = {
 				amount = 1
 			}
 		}
+		clear_deposits = yes
 	}
 	set_star_class = sc_blokkat_stripmined
 	star = { if = { limit = { NOT = { has_planet_flag = shroud_storm_changed } } } set_planet_flag = shroud_storm_changed }
@@ -98,13 +85,12 @@ blokkat_harvest_system = {
 		}
 	}
 	set_asteroid_belt = { radius = 0 }
-	every_fleet_in_system = {
+	random_fleet_in_system = {
 		limit = { has_fleet_flag = blokkat_stripmine_fleet }
-		remove_fleet_flag = blokkat_charging_up
-		ROOT = {
+		root = {
 			create_ambient_object = {
 				type = blokkat_star_collapse
-				location = PREV
+				location = prev
 				entity_offset_height = -5
 				effect = {
 					set_ambient_object_flag = blokkat_star_collapse
@@ -122,19 +108,12 @@ blokkat_harvest_system = {
 			remove_carrier_flag = has_megastructure
 		}
 	}
-	system_event = { id = giga_blokkat.7002 days = 30 }
+	system_event = { id = giga_blokkat.7007 days = 30 }
 	every_system_planet = {
+		limit = { is_star = yes }
 		clear_deposits = yes
-	}
-	every_system_planet = {
-		limit = {
-			is_star = yes
-		}
 		change_pc = pc_giga_empty_space
-		add_modifier = {
-			modifier = blokkat_can_repair_system
-			days = -1
-		}
+		add_modifier = { modifier = blokkat_can_repair_system }
 		switch = {
 			trigger = has_modifier
 			default = { }
@@ -144,32 +123,24 @@ blokkat_harvest_system = {
 		}
 	}
 	every_system_planet = {
-		limit = {
-			is_colony = yes
-		}
+		limit = { is_colony = yes }
 		destroy_colony = yes
 	}
 	star = {
 		planet_event = { id = giga_blokkat.2002 }
 	}
 	every_system_ambient_object = {
-		limit = {
-			NOT = { has_ambient_object_flag = blokkat_star_collapse }
-		}
-		destroy_ambient_object = THIS
+		limit = { NOT = { has_ambient_object_flag = blokkat_star_collapse } }
+		destroy_ambient_object = this
 	}
 	system_event = { id = giga_blokkat.2003 days = 1 }
 	every_system_megastructure = {
-		limit = {
-			NOT = { mega_blokkats_wont_stripmine = yes }
-		}
+		limit = { NOT = { mega_blokkats_wont_stripmine = yes } }
 		set_owner = event_target:blokkat_country
 	}
 	blokkat_increment_system_ships = yes
 	every_fleet_in_system = {
-		limit = {
-			owner = { NOT = { is_country_type = blokkat_stripminers } }
-		}
+		limit = { owner = { NOT = { is_country_type = blokkat_stripminers } } }
 		if = {
 			limit = {
 				ehof_is_science_ship = yes
@@ -177,7 +148,7 @@ blokkat_harvest_system = {
 			}
 			owner = { country_event = { id = giga_blokkat.1043 } }
 		}
-		destroy_fleet = THIS
+		destroy_fleet = this
 	}
 	every_neighbor_system = { 
 		remove_hyperlane_safe = { from = prev to = this } 
@@ -185,6 +156,7 @@ blokkat_harvest_system = {
 }
 
 blokkat_increment_system_ships = {
+	optimize_memory
 	every_ship_in_system = {
 		limit = { owner = { NOT = { is_country_type = blokkat_stripminers } } }
 		every_country = {
@@ -198,59 +170,103 @@ blokkat_increment_system_ships = {
 	}
 }
 
-blokkat_harvest_system_mothership = {
-	every_system_planet = {
-		limit = { 
-			is_colony = yes
-			owner = { is_ai = no }
+## collecting lost fleet
+## happens when vester is harvesting system but before it fully finishes
+blokkat_gather_stragglers = {
+	optimize_memory
+	event_target:blokkat_country = {
+		every_owned_fleet = {
+			limit = {
+				solar_system? = { NOT = { is_same_value = event_target:current_blokkat_mothership_system } }
+				NOT = { has_fleet_flag = blokkat_scout_fleet }
+			}
+			every_owned_ship = {
+				if = { limit = { is_system_locked = yes } set_system_locked = no }
+				if = { limit = { is_disabled = yes } repair_ship = yes set_disabled = no set_disable_at_health = 0.01 }
+			}
+			if = {
+				limit = { is_in_combat = no }
+				solar_system = {
+					if = {
+						limit = { NOT = { has_hyperlane_to = event_target:current_blokkat_mothership_system } }
+						add_hyperlane_safe = { from = this to = event_target:current_blokkat_mothership_system }
+						save_event_target_as = blokkat_temp_system
+					}
+				}
+				clear_fleet_actions = this
+				clear_orders = yes
+				queue_actions = {
+					move_to = event_target:current_blokkat_mothership_system
+					effect = {
+						id = "blokkat_gather_straggler"
+						remove_hyperlane_safe = {
+							from = event_target:blokkat_temp_system
+							to = event_target:current_blokkat_mothership_system
+						}
+						if = {
+							limit = { has_fleet_flag = paired_with_stripminer }
+							remove_fleet_flag = paired_with_stripminer
+						}
+						if = {
+							limit = { has_fleet_flag = paired_with_escort }
+							remove_fleet_flag = paired_with_escort
+						}
+					}
+				}
+			}
 		}
-		planet_event = { id = giga_blokkat.1023 }
+	}
+}
+
+blokkat_harvest_system_mothership = {
+	optimize_memory
+	every_system_planet_colony = {
+		limit = { owner = { is_ai = no } }
+		carrier_event = { id = giga_blokkat.1023 }
 		set_planet_flag = blokkat_dont_delete_yet
 	}
 	if = {
 		limit = {
-			OR = {
-				any_system_planet = { is_planet_class = pc_infested }
-				any_system_planet = { is_planet_class = pc_ai }
-			}
-		}
-		every_system_planet = {
-			limit = {
-				OR = { 
-					has_planet_flag = machine_world_1
-					has_planet_flag = machine_world_2
-					has_planet_flag = machine_world_3
-					has_planet_flag = machine_world_4
+			any_system_planet = {
+				OR = {
+					is_planet_class = pc_infested
+					is_planet_class = pc_ai
 				}
 			}
-			planet_event = { id = giga_qso.111 }
 		}
 		every_system_planet = {
-			limit = { has_carrier_flag = machine_lair }
-			planet_event = { id = giga_qso.113 }
-		}
-		every_system_planet = {
-			limit = { is_planet_class = pc_infested }
-			planet_event = { id = giga_qso.115 } # Infested world
+			if = {
+				limit = {
+					OR = {
+						has_planet_flag = machine_world_1
+						has_planet_flag = machine_world_2
+						has_planet_flag = machine_world_3
+						has_planet_flag = machine_world_4
+					}
+				}
+				planet_event = { id = giga_qso.111 }
+			}
+			if = {
+				limit = { has_carrier_flag = machine_lair }
+				planet_event = { id = giga_qso.113 }
+			}
+			if = {
+				limit = { is_planet_class = pc_infested }
+				planet_event = { id = giga_qso.115 }
+			}
 		}
 	}
 	if = {
-		limit = {
-			NOT = { has_global_flag = blokkats_ate_first_system }
-		}
+		limit = { NOT = { has_global_flag = blokkats_ate_first_system } }
 		set_global_flag = blokkats_ate_first_system
 		save_global_event_target_as = blokkat_first_stripmined_system
 		every_country = {
-			limit = {
-				has_event_chain = "blokkat_chain"
-			}
+			limit = { has_event_chain = "blokkat_chain" }
 			country_event = { id = giga_blokkat.1020 days = 2 }
 		}
 	}
 	every_country = {
-		limit = {
-			has_event_chain = "blokkat_chain"
-		}
+		limit = { has_event_chain = "blokkat_chain" }
 		add_event_chain_counter = {
 			event_chain = "blokkat_chain"
 			counter = "blokkat_systems_stripmined"
@@ -258,19 +274,16 @@ blokkat_harvest_system_mothership = {
 		}
 	}
 	every_system_planet = {
-		limit = {
-			is_star = no
-		}
+		limit = { is_star = no }
 		every_country = {
-			limit = {
-				has_event_chain = "blokkat_chain"
-			}
+			limit = { has_event_chain = "blokkat_chain" }
 			add_event_chain_counter = {
 				event_chain = "blokkat_chain"
 				counter = "blokkat_planets_stripmined"
 				amount = 1
 			}
 		}
+		clear_deposits = yes
 	}
 	set_star_class = sc_blokkat_stripmined
 	star = { if = { limit = { NOT = { has_planet_flag = shroud_storm_changed } } } set_planet_flag = shroud_storm_changed }
@@ -285,17 +298,12 @@ blokkat_harvest_system_mothership = {
 		}
 	}
 	set_asteroid_belt = { radius = 0 }
-	random_fleet_in_system = {
-		limit = { has_fleet_flag = blokkat_mothership_fleet }
-		ROOT = {
-			create_ambient_object = {
-				type = blokkat_star_collapse
-				location = PREV
-				entity_offset_height = -5
-				effect = {
-					set_ambient_object_flag = blokkat_star_collapse
-				}
-			}
+	create_ambient_object = {
+		type = blokkat_star_collapse
+		location = event_target:blokkat_mothership_fleet
+		entity_offset_height = -5
+		effect = {
+			set_ambient_object_flag = blokkat_star_collapse
 		}
 	}
 	every_system_planet = {
@@ -308,19 +316,12 @@ blokkat_harvest_system_mothership = {
 			remove_carrier_flag = has_megastructure
 		}
 	}
-	system_event = { id = giga_blokkat.7005 days = 30 }
+	system_event = { id = giga_blokkat.7003 days = 30 }
 	every_system_planet = {
+		limit = { is_star = yes }
 		clear_deposits = yes
-	}
-	every_system_planet = {
-		limit = {
-			is_star = yes
-		}
 		change_pc = pc_giga_empty_space
-		add_modifier = {
-			modifier = blokkat_can_repair_system
-			days = -1
-		}
+		add_modifier = { modifier = blokkat_can_repair_system }
 		switch = {
 			trigger = has_modifier
 			default = { }
@@ -330,32 +331,24 @@ blokkat_harvest_system_mothership = {
 		}
 	}
 	every_system_planet = {
-		limit = {
-			is_colony = yes
-		}
+		limit = { is_colony = yes }
 		destroy_colony = yes
 	}
 	star = {
 		planet_event = { id = giga_blokkat.2002 }
 	}
 	every_system_ambient_object = {
-		limit = {
-			NOT = { has_ambient_object_flag = blokkat_star_collapse }
-		}
-		destroy_ambient_object = THIS
+		limit = { NOT = { has_ambient_object_flag = blokkat_star_collapse } }
+		destroy_ambient_object = this
 	}
 	every_system_megastructure = {
-		limit = {
-			NOT = { mega_blokkats_wont_stripmine = yes }
-		}
+		limit = { NOT = { mega_blokkats_wont_stripmine = yes } }
 		set_owner = event_target:blokkat_country
 	}
 	system_event = { id = giga_blokkat.2003 days = 1 }
 	blokkat_increment_system_ships = yes
 	every_fleet_in_system = {
-		limit = {
-			owner = { NOT = { is_country_type = blokkat_stripminers } }
-		}
+		limit = { owner = { NOT = { is_country_type = blokkat_stripminers } } }
 		if = {
 			limit = {
 				ehof_is_science_ship = yes
@@ -363,12 +356,16 @@ blokkat_harvest_system_mothership = {
 			}
 			owner = { country_event = { id = giga_blokkat.1043 } }
 		}
-		destroy_fleet = THIS
+		destroy_fleet = this
 	}
 	every_neighbor_system = { remove_hyperlane_safe = { from = prev to = this } }
+
+	## in this time, move the lost fleet back
+	blokkat_gather_stragglers = yes
 }
 
 update_blokkat_inquietude_display = {
+	optimize_memory
 	set_variable = {
 		which = blokkat_inquietude_research_value
 		value = 3
@@ -397,6 +394,7 @@ update_blokkat_inquietude_display = {
 
 
 create_blokkat_admiral = {
+	optimize_memory
 	create_leader = {
 		class = commander
 		set_age = 46546
@@ -419,6 +417,7 @@ create_blokkat_admiral = {
 }
 
 set_blokkat_leader_data = {
+	optimize_memory
 	random_list = {
 		1 = { set_name = "Blokkuasi" }
 		1 = { set_name = "Blokkong" }
@@ -1088,6 +1087,7 @@ set_blokkat_leader_data = {
 }
 
 set_blokkat_admiral_leader_data = {
+	optimize_memory
 	set_blokkat_leader_data = yes
 	set_name = {
 		key = "giga_blokkat_admiral_name"
@@ -1109,6 +1109,7 @@ set_blokkat_admiral_leader_data = {
 }
 
 create_strong_blokkat_admiral = {
+	optimize_memory
 	create_leader = {
 		class = commander
 		set_age = 46546
@@ -1133,6 +1134,7 @@ create_strong_blokkat_admiral = {
 
 #FLEETS
 spawn_blokkat_combat_fleet = {
+	optimize_memory
 	event_target:blokkat_country = {
 		create_strong_blokkat_admiral = yes
 	}
@@ -1180,6 +1182,7 @@ spawn_blokkat_combat_fleet = {
 
 #Main fleets
 spawn_blokkat_mothership_fleet = {
+	optimize_memory
 	#Spawn fleets
 	create_leader = {
 		class = commander
@@ -1224,6 +1227,7 @@ spawn_blokkat_mothership_fleet = {
 				distance = 5
 				angle = random
 			}
+			solar_system = { save_global_event_target_as = current_blokkat_mothership_system }
 			set_formation_scale = 10
 			assign_leader = last_created_leader
 			set_fleet_flag = blokkat_mothership_fleet
@@ -1258,6 +1262,7 @@ spawn_blokkat_mothership_fleet = {
 					while = {
 						count = 2
 						create_ship = {
+							fleet_cache_recalc = no
 							name = "Blokk-Terminator"
 							design = "Blokk-Terminator"
 							prefix = no
@@ -1278,6 +1283,7 @@ spawn_blokkat_mothership_fleet = {
 					while = {
 						count = 5
 						create_ship = {
+							fleet_cache_recalc = no
 							name = "Blokk-Terminator"
 							design = "Blokk-Terminator"
 							prefix = no
@@ -1295,6 +1301,7 @@ spawn_blokkat_mothership_fleet = {
 					while = {
 						count = 50
 						create_ship = {
+							fleet_cache_recalc = no
 							name = "Blokk-Custodian"
 							design = "Blokk-Custodian"
 							prefix = no
@@ -1304,6 +1311,7 @@ spawn_blokkat_mothership_fleet = {
 					while = {
 						count = 250
 						create_ship = {
+							fleet_cache_recalc = no
 							name = "Blokk-Evictor"
 							design = "Blokk-Evictor"
 							prefix = no
@@ -1316,6 +1324,7 @@ spawn_blokkat_mothership_fleet = {
 					while = {
 						count = 50
 						create_ship = {
+							fleet_cache_recalc = no
 							name = "Blokk-Terminator"
 							design = "Blokk-Terminator"
 							prefix = no
@@ -1331,6 +1340,7 @@ spawn_blokkat_mothership_fleet = {
 						}
 					}
 					create_ship = {
+						fleet_cache_recalc = no
 						name = "Blokk-Obliterator"
 						design = "Blokk-Obliterator"
 						prefix = no
@@ -1368,13 +1378,14 @@ spawn_blokkat_mothership_fleet = {
 					target = event_target:blokkat_mothership_fleet
 					attack_fleet = no
 				}
-				fleet_event = { id = giga_blokkat.7008 days = 15 }
+				fleet_event = { id = giga_blokkat.7012 days = 15 }
 			}
 		}
 	}
 }
 
 spawn_blokkat_harvesting_fleet = {
+	optimize_memory
 	event_target:blokkat_country = {
 		create_blokkat_admiral = yes
 	}
@@ -1419,6 +1430,7 @@ spawn_blokkat_harvesting_fleet = {
 }
 
 blokkat_movement_queue = {
+	optimize_memory
 	queue_actions = {
 		repeat = {
 			effect = {
@@ -1620,6 +1632,7 @@ spawn_blokkat_scout_fleet = {
 				while = {
 					count = 1
 					create_ship = {
+						fleet_cache_recalc = no
 						name = "Blokk-Custodian"
 						design = "Blokk-Custodian"
 						prefix = no
@@ -1629,6 +1642,7 @@ spawn_blokkat_scout_fleet = {
 				while = {
 					count = 10
 					create_ship = {
+						fleet_cache_recalc = no
 						name = "Blokk-Evictor"
 						design = "Blokk-Evictor"
 						prefix = no
@@ -1640,6 +1654,7 @@ spawn_blokkat_scout_fleet = {
 					while = {
 						count = 2
 						create_ship = {
+							fleet_cache_recalc = no
 							name = "Blokk-Custodian"
 							design = "Blokk-Custodian"
 							prefix = no
@@ -1649,6 +1664,7 @@ spawn_blokkat_scout_fleet = {
 					while = {
 						count = 20
 						create_ship = {
+							fleet_cache_recalc = no
 							name = "Blokk-Evictor"
 							design = "Blokk-Evictor"
 							prefix = no
@@ -1740,6 +1756,7 @@ spawn_blokkat_scout_fleet = {
 }
 
 spawn_blokkat_escort_fleet = {
+	optimize_memory
 	event_target:blokkat_country = {
 		if = {
 			limit = {
@@ -1769,6 +1786,7 @@ spawn_blokkat_escort_fleet = {
 				while = {
 					count = 5
 					create_ship = {
+						fleet_cache_recalc = no
 						name = "Blokk-Custodian"
 						design = "Blokk-Custodian"
 						prefix = no
@@ -1778,6 +1796,7 @@ spawn_blokkat_escort_fleet = {
 				while = {
 					count = 25
 					create_ship = {
+						fleet_cache_recalc = no
 						name = "Blokk-Evictor"
 						design = "Blokk-Evictor"
 						prefix = no
@@ -1790,6 +1809,7 @@ spawn_blokkat_escort_fleet = {
 				while = {
 					count = 10
 					create_ship = {
+						fleet_cache_recalc = no
 						name = "Blokk-Custodian"
 						design = "Blokk-Custodian"
 						prefix = no
@@ -1799,6 +1819,7 @@ spawn_blokkat_escort_fleet = {
 				while = {
 					count = 50
 					create_ship = {
+						fleet_cache_recalc = no
 						name = "Blokk-Evictor"
 						design = "Blokk-Evictor"
 						prefix = no
@@ -1811,6 +1832,7 @@ spawn_blokkat_escort_fleet = {
 				while = {
 					count = 2
 					create_ship = {
+						fleet_cache_recalc = no
 						name = "Blokk-Terminator"
 						design = "Blokk-Terminator"
 						prefix = no
@@ -1828,6 +1850,7 @@ spawn_blokkat_escort_fleet = {
 				while = {
 					count = 25
 					create_ship = {
+						fleet_cache_recalc = no
 						name = "Blokk-Custodian"
 						design = "Blokk-Custodian"
 						prefix = no
@@ -1837,6 +1860,7 @@ spawn_blokkat_escort_fleet = {
 				while = {
 					count = 125
 					create_ship = {
+						fleet_cache_recalc = no
 						name = "Blokk-Evictor"
 						design = "Blokk-Evictor"
 						prefix = no
@@ -1849,6 +1873,7 @@ spawn_blokkat_escort_fleet = {
 				while = {
 					count = 10
 					create_ship = {
+						fleet_cache_recalc = no
 						name = "Blokk-Terminator"
 						design = "Blokk-Terminator"
 						prefix = no
@@ -1879,119 +1904,81 @@ spawn_blokkat_escort_fleet = {
 			set_fleet_flag = blokkat_escort_fleet
 			set_fleet_flag = blokkat_fleet
 			assign_leader = event_target:new_blokkat_admiral
+			fleet_event = { id = giga_blokkat.7010 days = 1 }
 		}
 	}
 }
 
 #Difficulty
 apply_blokkat_difficulty_modifier_bigship_damage = {
-	if = {
-		limit = { has_global_flag = giga_blokkats_deathmode }
-		add_modifier = { modifier = blokkat_deathmode_ship_damage_buff_bigship days = -1 }
-	}
-	if = {
-		limit = { has_global_flag = giga_blokkats_endtech }
-		add_modifier = { modifier = blokkat_endtech_ship_damage_buff_bigship days = -1 }
-	}
-	if = {
-		limit = { has_global_flag = giga_blokkats_bismuth }
-		add_modifier = { modifier = blokkat_bismuth_ship_damage_buff days = -1 }
+	optimize_memory
+	switch = {
+		trigger = has_global_flag
+		giga_blokkats_bismuth = { add_modifier = { modifier = blokkat_bismuth_ship_damage_buff } }
+		giga_blokkats_endtech = { add_modifier = { modifier = blokkat_endtech_ship_damage_buff_bigship } }
+		giga_blokkats_deathmode = { add_modifier = { modifier = blokkat_deathmode_ship_damage_buff_bigship } }
 	}
 }
 
 apply_blokkat_difficulty_modifier = {
-	if = {
-		limit = { has_global_flag = giga_blokkats_deathmode }
-		add_modifier = { modifier = blokkat_deathmode_ship_buff days = -1 }
-	}
-	if = {
-		limit = { has_global_flag = giga_blokkats_endtech }
-		add_modifier = { modifier = blokkat_endtech_ship_buff days = -1 }
-	}
-	if = {
-		limit = { has_global_flag = giga_blokkats_bismuth }
-		add_modifier = { modifier = blokkat_bismuth_ship_buff days = -1 }
+	optimize_memory
+	switch = {
+		trigger = has_global_flag
+		giga_blokkats_bismuth = { add_modifier = { modifier = blokkat_bismuth_ship_buff } }
+		giga_blokkats_endtech = { add_modifier = { modifier = blokkat_endtech_ship_buff } }
+		giga_blokkats_deathmode = { add_modifier = { modifier = blokkat_deathmode_ship_buff } }
 	}
 }
 
 apply_blokkat_difficulty_modifier_damage = {
-	if = {
-		limit = { has_global_flag = giga_blokkats_deathmode }
-		add_modifier = { modifier = blokkat_deathmode_ship_damage_buff days = -1 }
-	}
-	if = {
-		limit = { has_global_flag = giga_blokkats_endtech }
-		add_modifier = { modifier = blokkat_endtech_ship_damage_buff days = -1 }
-	}
-	if = {
-		limit = { has_global_flag = giga_blokkats_bismuth }
-		add_modifier = { modifier = blokkat_bismuth_ship_damage_buff days = -1 }
+	optimize_memory
+	switch = {
+		trigger = has_global_flag
+		giga_blokkats_bismuth = { add_modifier = { modifier = blokkat_bismuth_ship_damage_buff } }
+		giga_blokkats_endtech = { add_modifier = { modifier = blokkat_endtech_ship_damage_buff } }
+		giga_blokkats_deathmode = { add_modifier = { modifier = blokkat_deathmode_ship_damage_buff } }
 	}
 }
 
 remove_flags_blokkat_difficulty = {
-	if = {
-		limit = { has_global_flag = giga_blokkats_very_easy }
-		remove_global_flag = giga_blokkats_very_easy
-	}
-	if = {
-		limit = { has_global_flag = giga_blokkats_easy }
-		remove_global_flag = giga_blokkats_easy
-	}
-	if = {
-		limit = { has_global_flag = giga_blokkats_normal }
-		remove_global_flag = giga_blokkats_normal
-	}
-	if = {
-		limit = { has_global_flag = giga_blokkats_bismuth }
-		remove_global_flag = giga_blokkats_bismuth
-	}
-	if = {
-		limit = { has_global_flag = giga_blokkats_endtech }
-		remove_global_flag = giga_blokkats_endtech
-	}
-	if = {
-		limit = { has_global_flag = giga_blokkats_deathmode }
-		remove_global_flag = giga_blokkats_deathmode
+	optimize_memory
+	switch = {
+		trigger = has_global_flag
+		giga_blokkats_very_easy = { remove_global_flag = giga_blokkats_very_easy }
+		giga_blokkats_easy = { remove_global_flag = giga_blokkats_easy }
+		giga_blokkats_normal = { remove_global_flag = giga_blokkats_normal }
+		giga_blokkats_bismuth = { remove_global_flag = giga_blokkats_bismuth }
+		giga_blokkats_endtech = { remove_global_flag = giga_blokkats_endtech }
+		giga_blokkats_deathmode = { remove_global_flag = giga_blokkats_deathmode }
 	}
 }
 
 reduce_blokkat_spawn_date = {
+	optimize_memory
 	if = {
 		limit = {
 			event_target:global_event_country = {
-				check_variable = {
-					which = blokkat_spawn_date
-					value > 2200
-				}
+				check_variable = { which = blokkat_spawn_date value > 2200 }
 			}
 		}
 		event_target:global_event_country = {
-			subtract_variable = {
-				which = blokkat_spawn_date
-				value = 50
-			}
+			subtract_variable = { which = blokkat_spawn_date value = 50 }
 		}
 	}
 	else_if = {
 		limit = {
 			event_target:global_event_country = {
-				check_variable = {
-					which = blokkat_spawn_date
-					value <= 2200
-				}
+				check_variable = { which = blokkat_spawn_date value <= 2200 }
 			}
 		}
 		event_target:global_event_country = {
-			set_variable = {
-				which = blokkat_spawn_date
-				value = 2550
-			}
+			set_variable = { which = blokkat_spawn_date value = 2550 }
 		}
 	}
 }
 
 begin_blokkat_spawn_cycle = {
+	optimize_memory
 	if = {
 		limit = { has_global_flag = giga_blokkats_guaranteed }
 		set_global_flag = blokkats_managed_to_spawn
@@ -2000,14 +1987,12 @@ begin_blokkat_spawn_cycle = {
 	if = {
 		limit = { NOT = { has_global_flag = giga_blokkats_guaranteed } }
 		set_global_flag = blokkat_trying_to_spawn
-		set_variable = {
-			which = blokkat_trying_to_spawn_count
-			value = 0
-		}
+		set_variable = { which = blokkat_trying_to_spawn_count value = 0 }
 	}
 }
 
 blokkat_harvest_system_player = {
+	optimize_memory
 	if = {
 		limit = {
 			OR = {
@@ -2041,7 +2026,7 @@ blokkat_harvest_system_player = {
 			owner = { is_ai = no }
 		}
 		set_planet_flag = blokkat_dont_delete_yet
-		planet_event = { id = giga_blokkat.1023 }
+		carrier_event = { id = giga_blokkat.1023 }
 	}
 	if = {
 		limit = {
@@ -2104,7 +2089,7 @@ blokkat_harvest_system_player = {
 			remove_carrier_flag = has_megastructure
 		}
 	}
-	system_event = { id = giga_blokkat.7002 days = 30 }
+	system_event = { id = giga_blokkat.7007 days = 30 }
 	every_system_planet = {
 		clear_deposits = yes
 	}
@@ -2115,7 +2100,7 @@ blokkat_harvest_system_player = {
 		change_pc = pc_giga_empty_space
 		add_modifier = {
 			modifier = blokkat_can_repair_system
-			days = -1
+			
 		}
 		switch = {
 			trigger = has_modifier
@@ -2152,6 +2137,7 @@ blokkat_harvest_system_player = {
 
 #Player fleets
 spawn_blokkat_harvesting_fleet_player = {
+	optimize_memory
 	create_fleet = { #Spawn some harvesting ships
 		name = "Blokk-Dismantler"
 		settings = {
@@ -2188,68 +2174,27 @@ spawn_blokkat_harvesting_fleet_player = {
 }
 
 update_blokkat_willingness_value = {
+	optimize_memory
 	#FOR DISPLAY
 	#People
-	set_variable = {
-		which = blokkat_willingness_happiness_value
-		value = -0.2
-	}
-	set_variable = {
-		which = blokkat_willingness_production_value
-		value = -0.3
-	}
-	set_variable = {
-		which = blokkat_willingness_megaproduction_value
-		value = -0.3
-	}
+	set_variable = { which = blokkat_willingness_happiness_value value = -0.2 }
+	set_variable = { which = blokkat_willingness_production_value value = -0.3 }
+	set_variable = { which = blokkat_willingness_megaproduction_value value = -0.3 }
 	#Government
-	set_variable = {
-		which = blokkat_willingness_leaderscost_value
-		value = 5
-	}
-	set_variable = {
-		which = blokkat_willingness_influence_value
-		value = -0.5
-	}
-	set_variable = {
-		which = blokkat_willingness_empiresize_value
-		value = 1
-	}
+	set_variable = { which = blokkat_willingness_leaderscost_value value = 5 }
+	set_variable = { which = blokkat_willingness_influence_value value = -0.5 }
+	set_variable = { which = blokkat_willingness_empiresize_value value = 1 }
 	#Military
-	set_variable = {
-		which = blokkat_willingness_firerate_value
-		value = -0.4
-	}
-	set_variable = {
-		which = blokkat_willingness_morale_value
-		value = -0.4
-	}
-	set_variable = {
-		which = blokkat_willingness_shipspeed_value
-		value = -0.4
-	}
+	set_variable = { which = blokkat_willingness_firerate_value value = -0.4 }
+	set_variable = { which = blokkat_willingness_morale_value value = -0.4 }
+	set_variable = { which = blokkat_willingness_shipspeed_value value = -0.4 }
 	#Science
-	set_variable = {
-		which = blokkat_willingness_researchspeed_value
-		value = -0.4
-	}
-	set_variable = {
-		which = blokkat_willingness_blokkatresearch_value
-		value = -0.3
-	}
-	set_variable = {
-		which = blokkat_willingness_jobsresearch_value
-		value = -0.15
-	}
+	set_variable = { which = blokkat_willingness_researchspeed_value value = -0.4 }
+	set_variable = { which = blokkat_willingness_blokkatresearch_value value = -0.3 }
+	set_variable = { which = blokkat_willingness_jobsresearch_value value = -0.15 }
 	#Global
-	set_variable = {
-		which = blokkat_willingness_stability_value
-		value = -0.2
-	}
-	set_variable = {
-		which = blokkat_willingness_unity_value
-		value = -0.4
-	}
+	set_variable = { which = blokkat_willingness_stability_value value = -0.2 }
+	set_variable = { which = blokkat_willingness_unity_value value = -0.4 }
 
 	#Set the base value
 	set_variable = { which = blokkat_willingness_science_modifier value = 100 }
@@ -2298,31 +2243,26 @@ update_blokkat_willingness_value = {
 
 	add_modifier = {
 		modifier = giga_blokkat_blokkat_willingness_government
-		days = -1
 		mult = ROOT.blokkat_willingness_government_modifier
 	}
 	
 	add_modifier = {
 		modifier = giga_blokkat_blokkat_willingness_military
-		days = -1
 		mult = ROOT.blokkat_willingness_military_modifier
 	}
 	
 	add_modifier = {
 		modifier = giga_blokkat_blokkat_willingness_science
-		days = -1
 		mult = ROOT.blokkat_willingness_science_modifier
 	}
 	
 	add_modifier = {
 		modifier = giga_blokkat_blokkat_willingness_population
-		days = -1
 		mult = ROOT.blokkat_willingness_population_modifier
 	}
 	
 	add_modifier = {
 		modifier = giga_blokkat_blokkat_willingness_global
-		days = -1
 		mult = ROOT.blokkat_willingness_global_modifier
 	}
 
@@ -2367,6 +2307,7 @@ update_blokkat_willingness_value = {
 }
 
 clear_willingness_modifiers = {
+	optimize_memory
 	if = {
 		limit = { has_modifier = giga_blokkat_blokkat_willingness_global }
 		remove_modifier = giga_blokkat_blokkat_willingness_global
@@ -2390,6 +2331,7 @@ clear_willingness_modifiers = {
 }
 
 clear_strike_leader_traits = {
+	optimize_memory
 	if = {
 		limit = { has_trait = trait_blokkat_on_strike_leader }
 		remove_trait = trait_blokkat_on_strike_leader
@@ -2397,12 +2339,14 @@ clear_strike_leader_traits = {
 }
 
 clear_strike_leader_class_flags = {
+	optimize_memory
 	if = { limit = { has_country_flag = blokkat_negotiating_scientist } remove_country_flag = blokkat_negotiating_scientist }
 	else_if = { limit = { has_country_flag = blokkat_negotiating_governor } remove_country_flag = blokkat_negotiating_governor }
 	else_if = { limit = { has_country_flag = blokkat_negotiating_commander } remove_country_flag = blokkat_negotiating_commander }
 }
 
 blokkat_calculate_harvested_galaxy_perc = {
+	optimize_memory
 	event_target:blokkat_country = {
 		set_variable = { which = blokkat_galaxy_system_count value = trigger:num_galaxy_systems }
 		set_variable = { which = blokkat_galaxy_system_count_harvested value = 0 }
@@ -2429,6 +2373,7 @@ blokkat_calculate_harvested_galaxy_perc = {
 }
 
 spawn_blokkat_evictor_fleet_player = {
+	optimize_memory
 	create_fleet = { #Spawn some Escort ships
 		name = "Blokk-Evictors"
 		settings = {
@@ -2459,6 +2404,7 @@ spawn_blokkat_evictor_fleet_player = {
 }
 
 spawn_blokkat_custodian_fleet_player = {
+	optimize_memory
 	create_fleet = { #Spawn some Escort ships
 		name = "Blokk-Custodians"
 		settings = {
@@ -2489,6 +2435,7 @@ spawn_blokkat_custodian_fleet_player = {
 }
 
 spawn_blokkat_dismantler_fleet_player = {
+	optimize_memory
 	create_fleet = { #Spawn some harvesting ships
 		name = "Blokk-Dismantler"
 		settings = {
@@ -2523,6 +2470,7 @@ spawn_blokkat_dismantler_fleet_player = {
 }
 
 spawn_blokkat_terminator_fleet_player = {
+	optimize_memory
 	create_fleet = { #Spawn some Escort ships
 		name = "Blokk-Terminator"
 		settings = {
@@ -2562,6 +2510,7 @@ spawn_blokkat_terminator_fleet_player = {
 }
 
 set_blokkat_willingness_etho_weights = {
+	optimize_memory
 	#Mil - Pac
 	if = {
 		limit = { has_ethic = ethic_militarist }
@@ -2618,6 +2567,7 @@ set_blokkat_willingness_etho_weights = {
 }
 
 spawn_blokkat_blokkazoi = {
+	optimize_memory
 	event_target:blokkat_country = {
 		create_leader = {
 			class = commander
@@ -2662,7 +2612,7 @@ spawn_blokkat_blokkazoi = {
 				effect = {
 					add_modifier = {
 						modifier = giga_blokkat_blokkazoi_buff
-						days = -1
+						
 					}
 					apply_blokkat_difficulty_modifier = yes 
 					apply_blokkat_difficulty_modifier_damage = yes
@@ -2707,6 +2657,7 @@ blokkat_spawn_harvesting_megastructure = {
 # clear all hyperlanes and connect up the path the vester has taken
 # for debug purposes, to draw out where the vester went after harvesting a galaxy
 draw_blokkat_vester_path = {
+	optimize_memory
 	# clear all lanes
 	every_system = {
 		every_system = {
