@@ -351,8 +351,10 @@ terraform_molten_1 = {
 				save_event_target_as = giga_planet
 				if = {
 					limit = {
-						root.from = { is_ai = yes }
-						has_infernals = yes
+						root.from = {
+							is_ai = yes
+							is_world_forger_empire = yes
+						}
 					}
 					start_terraform_process = pc_volcanic
 				}
@@ -444,7 +446,21 @@ terraform_toxic_1 = {
 				add_modifier = { modifier = megastructure_terraforming_candidate days = -1 }
 				save_event_target_as = giga_planet
 				if = {
-					limit = { root.from = { is_ai = yes } }
+					limit = {
+						root.from = {
+							is_ai = yes
+							has_ascension_perk = ap_detox
+						}
+					}
+					start_terraform_process = pc_nuked
+				}
+				else_if = {
+					limit = {
+						root.from = {
+							is_ai = yes
+							NOT = { has_ascension_perk = ap_detox }
+						}
+					}
 					start_terraform_process = pc_ll_foggy
 				}
 			}
@@ -452,75 +468,6 @@ terraform_toxic_1 = {
 		from = { country_event = { id = giga_dialog.3902 } }	# Notification
 	}
 }
-
-# #Glacial Dissolution Array (Frozen)
-# terraform_frozen_0 = {
-# 	entity = "giga_consite_5_5_entity"
-# 	construction_entity = "giga_consite_5_5_entity"
-# 	# construction_blocks_and_blocked_by = none # BLOCKING TEST
-# 	portrait = "GFX_megastructure_construction_background"
-# 	place_entity_on_planet_plane = no
-# 	upgrade_from = { terraform_site_0 }
-
-# 	outliner_trigger = {
-# 		exists = owner
-# 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
-# 	}
-
-# 	potential = { always = no }
-# 	possible = { always = no }
-
-# 	on_build_complete = {
-# 		save_event_target_as = giga_system
-# 		from = { country_event = { id = giga_dialog.3901 } }	# Notification
-# 	}
-# }
-
-# terraform_frozen_1 = {
-# 	entity = "atmo_purifier_rings_entity"
-# 	construction_entity = "atmo_purifier_just_poles_entity"
-# 	portrait = "GFX_megastructure_toxic_world"
-# 	upgrade_from = { terraform_frozen_0 }
-
-# 	outliner_trigger = {
-# 		exists = owner
-# 		NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
-# 	}
-	
-# 	build_time = @terraform_frozen_time
-# 	resources = {
-# 		category = megastructures
-# 		cost = { alloys = @terraform_frozen_cost unity = @giga_kilo_unity_cost }
-# 		upkeep = {
-# 			alloys = 20
-# 			energy = @terraform_frozen_ec_upkeep_idle
-# 		}
-# 		upkeep = {
-# 			trigger = { fromfrom.planet = { is_terraforming = yes } }
-# 			energy = @terraform_frozen_ec_upkeep
-# 		}
-# 	}
-
-# 	potential = { NOT = { has_global_flag = terraform_frozen_disabled } }
-# 	possible = { from = { has_technology = giga_tech_terraform_frozen } }
-
-# 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
-# 	on_build_complete = {
-# 		save_event_target_as = giga_system
-# 		if = {
-# 			limit = { exists = fromfrom.planet }
-# 			fromfrom.planet = {
-# 				add_modifier = { modifier = megastructure_terraforming_candidate days = -1 }
-# 				save_event_target_as = giga_planet
-# 				if = {
-# 					limit = { root.from = { is_ai = yes } }
-# 					start_terraform_process = pc_melted_frozen
-# 				}
-# 			}
-# 		}
-# 		from = { country_event = { id = giga_dialog.3902 } }	# Notification
-# 	}
-# }
 
 #Dynamic Core Ignitor (Barren)
 terraform_barren_0 = {
@@ -601,8 +548,56 @@ terraform_barren_1 = {
 				add_modifier = { modifier = megastructure_terraforming_candidate days = -1 }
 				save_event_target_as = giga_planet
 				if = {
-					limit = { from = { is_ai = yes } }
+					limit = {
+						root.from = { is_ai = yes }
+						OR = {
+							is_planet_class = pc_barren
+							is_planet_class = pc_barren_cold
+						}
+					}
 					start_terraform_process = pc_ll_temperate
+				}
+				else_if = {
+					limit = {
+						is_planet_class = pc_frozen
+						root.from = {
+							is_ai = yes
+							NOR = {
+								has_origin = origin_ocean_machines
+								has_origin = origin_ocean_paradise
+								is_anglers_empire = yes
+								is_idyllic_bloom_empire = yes
+								has_ascension_perk = ap_world_shaper
+							}
+						}
+					}
+					start_terraform_process = pc_melted_frozen
+				}
+				else_if = {
+					limit = {
+						is_planet_class = pc_frozen
+						root.from = {
+							is_ai = yes
+							OR = {
+								has_origin = origin_ocean_machines
+								has_origin = origin_ocean_paradise
+								is_anglers_empire = yes
+							}
+						}
+					}
+					start_terraform_process = pc_ocean
+				}
+				else_if = {
+					limit = {
+						root.from = {
+							is_ai = yes
+							OR = {
+								is_idyllic_bloom_empire = yes
+								has_ascension_perk = ap_world_shaper
+							}
+						}
+					}
+					start_terraform_process = pc_gaia
 				}
 			}
 		}
@@ -646,17 +641,6 @@ terraform_barren_1 = {
 # 		save_event_target_as = giga_system
 # 		from = {
 # 			country_event = { id = giga_dialog.3804 }	# Notification
-# 			if = {
-# 				limit = {
-# 					NOR = {
-# 						has_global_flag = giga_achievements_disabled
-# 						has_country_flag = giga_achievement_59
-# 					}
-# 				}
-# 				set_country_flag = giga_achievement_59
-# 				set_timed_country_flag = { flag = giga_achievement_59_notification days = 30 }
-# 				giga_achievement_sound = yes
-# 			}
 # 		}
 # 		event_target:potradus = {
 # 			save_event_target_as = giga_planet

@@ -4040,6 +4040,36 @@ Effect PdxMeshExtraDimensionalShipSkinnedShadow
 	Defines = { "IS_SHADOW" }
 }
 
+Effect PdxMeshExtraDimensionalShipUpdated
+{
+	VertexShader = "VertexPdxMeshStandard"
+	PixelShader = "PixelPdxMeshExtraDimensionalShipUpdated"
+	BlendState = "BlendStateAlphaBlend"
+	RasterizerState = "RasterizerStateNoCulling"
+}
+
+Effect PdxMeshExtraDimensionalShipUpdatedSkinned
+{
+	VertexShader = "VertexPdxMeshStandardSkinned"
+	PixelShader = "PixelPdxMeshExtraDimensionalShipUpdated"
+	BlendState = "BlendStateAlphaBlend"
+	RasterizerState = "RasterizerStateNoCulling"
+}
+
+Effect PdxMeshExtraDimensionalShipUpdatedShadow
+{
+	VertexShader = "VertexPdxMeshStandardShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
+Effect PdxMeshExtraDimensionalShipUpdatedSkinnedShadow
+{
+	VertexShader = "VertexPdxMeshStandardSkinnedShadow"
+	PixelShader = "PixelPdxMeshStandardShadow"
+	Defines = { "IS_SHADOW" }
+}
+
 Effect PdxMeshStandardConstruction
 {
 	VertexShader = "VertexPdxMeshStandard"

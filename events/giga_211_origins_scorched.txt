@@ -1,0 +1,587 @@
+namespace = giga_scorched
+
+#Triggers situation after game start
+country_event = {
+    id = giga_scorched.001
+    hide_window = yes
+    is_triggered_only = yes
+    trigger = { has_origin = origin_scorched }
+
+    immediate = {
+        #Planet setup
+        #Bit of a mess trying to interact in the right orders with the vanilla planet setup parts that apply, could probably be improved
+        capital_scope = {
+            create_katzenland_deposits_new = yes
+
+            remove_all_buildings = yes
+            generate_start_buildings_and_districts = yes
+            add_building = building_factory_1 #AI can't survive without, and it's just an annoying rush for players to build a second
+
+            generate_home_planet_final_pass = yes
+
+            add_modifier = {
+                modifier = "irradiated_desert_planet"
+                days = -1
+            }
+            if = {
+                limit = {
+                    root = { is_ai = no }
+                }
+                add_modifier = {
+                    modifier = "irradiated_desert_shelters"
+                    years = 15 #long enough to complete the situation and rejig your economy to prevent collapse #TODO make this decay gradually over a long period
+                }
+            }
+            else = {
+                add_modifier = {
+                    modifier = "irradiated_desert_shelters"
+                    years = -1 #AI need more help because of poor planning #TODO when it's changed to decay gradually, this will be unnecessary
+                    clear_on_owner_change = yes
+                }
+            }
+
+            set_planet_flag = giga_scorched_homeworld@root
+        }
+
+        #Start story situation
+        country_event = { id = giga_scorched.002 days = 720 random = 360 }
+        #situation (~12 years) should therefore be over within 15 years of game start
+    }
+}
+
+country_event = {
+    id = giga_scorched.002
+    is_triggered_only = yes
+
+    picture = GFX_evt_maginot_world
+    title = giga_scorched.002.name
+    desc = giga_scorched.002.desc
+
+    location = capital_scope
+
+    option = {
+        name = giga_scorched.002.a.renewal
+        start_situation = {
+            type = giga_situation_scorched
+            target = root
+            effect = {
+                set_situation_approach = giga_situation_scorched_approach_renewal
+            }
+        }
+        custom_tooltip = giga_scorched.002.a.renewal.tooltip
+        ai_chance = {
+            base = 1
+        }
+    }
+
+    option = {
+        name = giga_scorched.002.a.synthesis
+        start_situation = {
+            type = giga_situation_scorched
+            target = root
+            effect = {
+                set_situation_approach = giga_situation_scorched_approach_synthesis
+            }
+        }
+        custom_tooltip = giga_scorched.002.a.synthesis.tooltip
+        ai_chance = {
+            base = 1
+        }
+    }
+
+    option = {
+        name = giga_scorched.002.a.continuity
+        start_situation = {
+            type = giga_situation_scorched
+            target = root
+            effect = {
+                set_situation_approach = giga_situation_scorched_approach_continuity
+            }
+        }
+        custom_tooltip = giga_scorched.002.a.continuity.tooltip
+        ai_chance = {
+            base = 1
+        }
+    }
+}
+
+#Roll a new random event from the list every x months into the situation
+situation_event = {
+    id = giga_scorched.003
+    is_triggered_only = yes
+    hide_window = yes
+
+    immediate = {
+        change_variable = {
+            which = scorched_situation_timer
+            value = 1
+        }
+
+        if = {
+            limit = {
+                check_variable = {
+                    which = scorched_situation_timer
+                    value >= 36 #roughly 3 years
+                }
+            }
+            export_trigger_value_to_variable = {
+                trigger = situation_progress
+                variable = scorched_situation_final_position
+            }
+            owner = {
+                set_variable = {
+                    which = scorched_situation_final_position
+                    value = prev.scorched_situation_final_position
+                }
+                random_list = {
+                    1 = {
+                        country_event = { id = giga_scorched.004 }
+                        modifier = {
+                            factor = 0
+                            has_country_flag = triggered_scorched_event_1 #checks triggered instead of concluded in case it rolls again in the time someone doesn't answer
+                        }
+                    }
+                    1 = {
+                        country_event = { id = giga_scorched.005 }
+                        modifier = {
+                            factor = 0
+                            has_country_flag = triggered_scorched_event_2
+                        }
+                    }
+                    1 = {
+                        country_event = { id = giga_scorched.006 }
+                        modifier = {
+                            factor = 0
+                            has_country_flag = triggered_scorched_event_3
+                        }
+                    }
+                    1 = {
+                        country_event = { id = giga_scorched.007 }
+                        modifier = {
+                            factor = 0
+                            has_country_flag = triggered_scorched_event_4
+                        }
+                    }
+                }
+            }
+            set_variable = {
+                which = scorched_situation_timer
+                value = 0
+            }
+        }
+    }
+}
+
+country_event = {
+    id = giga_scorched.004
+    is_triggered_only = yes
+
+    picture = GFX_evt_death_from_above
+    title = giga_scorched.004.name
+    desc = giga_scorched.004.desc
+
+    immediate = {
+        set_country_flag = triggered_scorched_event_1
+    }
+
+    option = {
+        name = giga_scorched.004.a.renewal
+        capital_scope = {
+            add_deposit = d_katzenland_commemoration_memorial
+        }
+        every_situation = {
+            limit = { is_situation_type = giga_situation_scorched }
+            add_situation_progress = -24
+        }
+        ai_chance = {
+            base = 1
+        }
+    }
+
+    option = {
+        name = giga_scorched.004.a.continuity
+        capital_scope = {
+            add_deposit = d_katzenland_commemoration_creation
+        }
+        every_situation = {
+            limit = { is_situation_type = giga_situation_scorched }
+            add_situation_progress = 24
+        }
+        ai_chance = {
+            base = 1
+        }
+    }
+
+    #check if all events have been done
+    after = {
+        hidden_effect = {
+            set_or_change_variable = {
+                which = giga_scorched_questions_answered
+                value = 1
+            }
+        }
+        if = {
+            limit = {
+                # AND = {
+                #     has_country_flag = scorched_origin_event_1
+                #     has_country_flag = scorched_origin_event_2
+                #     has_country_flag = scorched_origin_event_3
+                #     has_country_flag = scorched_origin_event_4
+                # }
+                check_variable = {
+                    which = giga_scorched_questions_answered
+                    value = 4
+                }
+            }
+            country_event = { id = giga_scorched.008 }
+        }
+    }
+}
+
+country_event = {
+    id = giga_scorched.005
+    is_triggered_only = yes
+
+    picture = GFX_evt_cosmic_storms_windswept_fates
+    title = giga_scorched.005.name
+    desc = giga_scorched.005.desc
+
+    immediate = {
+        set_country_flag = triggered_scorched_event_2
+    }
+
+    option = {
+        name = giga_scorched.005.a.renewal
+        add_modifier = {
+            modifier = giga_scorched_archaeologists
+            days = -1
+        }
+        every_situation = {
+            limit = { is_situation_type = giga_situation_scorched }
+            add_situation_progress = -24
+        }
+        ai_chance = {
+            base = 1
+        }
+    }
+
+    option = {
+        name = giga_scorched.005.a.continuity
+        add_modifier = {
+            modifier = giga_scorched_conservation
+            days = -1
+        }
+        # custom_tooltip = giga_scorched.005.a.continuity.tooltip
+        # hidden_effect = {
+        #     set_country_flag = giga_incandescent_unity #modifies the Incandescent trait
+        # }
+        # every_situation = {
+        #     limit = { is_situation_type = giga_situation_scorched }
+        #     add_situation_progress = 24
+        # }
+        ai_chance = {
+            base = 1
+        }
+    }
+
+    #check if all events have been done
+    after = {
+        hidden_effect = {
+            set_or_change_variable = {
+                which = giga_scorched_questions_answered
+                value = 1
+            }
+        }
+        if = {
+            limit = {
+                # AND = {
+                #     has_country_flag = scorched_origin_event_1
+                #     has_country_flag = scorched_origin_event_2
+                #     has_country_flag = scorched_origin_event_3
+                #     has_country_flag = scorched_origin_event_4
+                # }
+                check_variable = {
+                    which = giga_scorched_questions_answered
+                    value = 4
+                }
+            }
+            country_event = { id = giga_scorched.008 }
+        }
+    }
+}
+
+country_event = {
+    id = giga_scorched.006
+    is_triggered_only = yes
+
+    picture = GFX_evt_alien_cavemen
+    title = giga_scorched.006.name
+    desc = giga_scorched.006.desc
+
+    immediate = {
+        set_country_flag = triggered_scorched_event_3
+    }
+
+    option = {
+        name = giga_scorched.006.a.renewal
+        add_modifier = {
+            modifier = giga_scorched_tenacity
+            days = -1
+        }
+        every_situation = {
+            limit = { is_situation_type = giga_situation_scorched }
+            add_situation_progress = -24
+        }
+        ai_chance = {
+            base = 1
+        }
+    }
+
+    option = {
+        name = giga_scorched.006.a.continuity
+        add_modifier = {
+            modifier = giga_scorched_pioneers
+            days = -1
+        }
+        # custom_tooltip = giga_scorched.006.a.continuity.tooltip
+        # hidden_effect = {
+        #     set_country_flag = giga_incandescent_amenities #modifies the Incandescent trait
+        # }
+        every_situation = {
+            limit = { is_situation_type = giga_situation_scorched }
+            add_situation_progress = 24
+        }
+        ai_chance = {
+            base = 1
+        }
+    }
+
+    #check if all events have been done
+    after = {
+        hidden_effect = {
+            set_or_change_variable = {
+                which = giga_scorched_questions_answered
+                value = 1
+            }
+        }
+        if = {
+            limit = {
+                # AND = {
+                #     has_country_flag = scorched_origin_event_1
+                #     has_country_flag = scorched_origin_event_2
+                #     has_country_flag = scorched_origin_event_3
+                #     has_country_flag = scorched_origin_event_4
+                # }
+                check_variable = {
+                    which = giga_scorched_questions_answered
+                    value = 4
+                }
+            }
+            country_event = { id = giga_scorched.008 }
+        }
+    }
+}
+
+country_event = {
+    id = giga_scorched.007
+    is_triggered_only = yes
+
+    picture = GFX_evt_star_chart
+    title = giga_scorched.007.name
+    desc = giga_scorched.007.desc
+
+    immediate = {
+        set_country_flag = triggered_scorched_event_4
+    }
+
+    option = {
+        name = giga_scorched.007.a.renewal
+        add_modifier = {
+            modifier = giga_scorched_everseeking
+            days = -1
+        }
+        every_situation = {
+            limit = { is_situation_type = giga_situation_scorched }
+            add_situation_progress = -24
+        }
+        ai_chance = {
+            base = 1
+        }
+    }
+
+    option = {
+        name = giga_scorched.007.a.continuity
+        custom_tooltip = giga_scorched.007.a.continuity.tooltip
+        hidden_effect = {
+            set_country_flag = giga_incandescent_efficiency #modifies the Incandescent trait
+        }
+        every_situation = {
+            limit = { is_situation_type = giga_situation_scorched }
+            add_situation_progress = 24
+        }
+        ai_chance = {
+            base = 1
+        }
+    }
+
+    #check if all events have been done
+    after = {
+        hidden_effect = {
+            set_or_change_variable = {
+                which = giga_scorched_questions_answered
+                value = 1
+            }
+        }
+        if = {
+            limit = {
+                # AND = {
+                #     has_country_flag = scorched_origin_event_1
+                #     has_country_flag = scorched_origin_event_2
+                #     has_country_flag = scorched_origin_event_3
+                #     has_country_flag = scorched_origin_event_4
+                # }
+                check_variable = {
+                    which = giga_scorched_questions_answered
+                    value = 4
+                }
+            }
+            country_event = { id = giga_scorched.008 }
+        }
+    }
+}
+
+country_event = {
+    id = giga_scorched.008
+    is_triggered_only = yes
+
+    picture = GFX_evt_unity_symbol
+    title = giga_scorched.008.name
+    desc = giga_scorched.008.desc
+
+    immediate = {
+        set_country_flag = tech_katzen_atomic_munitions_from_scorched #needs to run beforehand to trigger tech swap in option tooltips
+    }
+
+    option = {
+        trigger = {
+            check_variable = {
+                which = scorched_situation_final_position
+                value < 100
+            }
+        }
+        name = giga_scorched.008.a.renewal
+        hidden_effect = {
+            remove_country_flag = tech_katzen_atomic_munitions_from_scorched #remove the tech swap if the option with the tech isn't chosen
+        }
+        add_modifier = {
+            modifier = giga_scorched_interstellar_tradition
+            days = -1
+        }
+        capital_scope = {
+            remove_modifier = irradiated_desert_planet
+            add_modifier = {
+                modifier = irradiated_desert_planet_rehabilitated
+                days = -1
+            }
+        }
+        give_next_terraforming_tech_option_effect = yes
+        every_situation = {
+            limit = { is_situation_type = giga_situation_scorched }
+            destroy_situation = this
+        }
+    }
+
+    option = {
+        trigger = {
+            NOR = { #this is also a backup option
+                check_variable = {
+                    which = scorched_situation_final_position
+                    value < 100
+                }
+                check_variable = {
+                    which = scorched_situation_final_position
+                    value > 200
+                }
+            }
+        }
+        name = giga_scorched.008.a.synthesis
+        add_modifier = {
+            modifier = giga_scorched_alloyed_identity
+            days = -1
+        }
+        add_monthly_resource_mult = {
+            resource = society_research
+            value = @tier4researchreward
+            min = @tier4researchmin
+            max = @tier4researchmax
+        }
+        hidden_effect = {
+            remove_country_flag = tech_katzen_atomic_munitions_from_scorched #remove the tech swap if the option with the tech isn't chosen
+        }
+        every_situation = {
+            limit = { is_situation_type = giga_situation_scorched }
+            destroy_situation = this
+        }
+    }
+
+    option = {
+        trigger = {
+            check_variable = {
+                which = scorched_situation_final_position
+                value > 200
+            }
+        }
+        name = giga_scorched.008.a.continuity
+        if = {
+            limit = {
+                NOT = {
+                    has_technology = tech_katzen_atomic_munitions #who is going to have this by this point lmao
+                }
+            }
+            set_country_flag = katzen_atomic_munitions_possible
+            add_research_option = tech_katzen_atomic_munitions
+            add_tech_progress = {
+                tech = tech_katzen_atomic_munitions
+                progress = 0.5 #otherwise it's too costly given how early this event occurs
+            }
+        }
+        hidden_effect = {
+            set_country_flag = giga_scorched_habitability_preference #opens the Irradiated Desert World Preference trait for modification
+        }
+        every_owned_planet = {
+            limit = {
+                has_planet_flag = giga_scorched_homeworld@root
+            }
+            every_owned_pop_group = {
+                modify_species = {
+                    species = this
+                    add_traits_at_start_of_list = yes
+                    ideal_planet_class = pc_katzenland
+                    add_trait = trait_pc_katzenland_preference
+                }
+            }
+            hidden_effect = {
+                every_owned_pop_group = {
+                    modify_species = {
+                        species = this
+                        remove_trait = trait_pc_desert_preference #very compat much cleanliness
+                        remove_trait = trait_pc_arid_preference
+                        remove_trait = trait_pc_savannah_preference
+                        remove_trait = trait_pc_tropical_preference
+                        remove_trait = trait_pc_continental_preference
+                        remove_trait = trait_pc_ocean_preference
+                        remove_trait = trait_pc_arctic_preference
+                        remove_trait = trait_pc_tundra_preference
+                        remove_trait = trait_pc_alpine_preference
+                        remove_trait = trait_pc_volcanic_preference
+                    }
+                }
+            }
+        }
+        custom_tooltip = giga_scorched.008.a.continuity.tooltip
+        every_situation = {
+            limit = { is_situation_type = giga_situation_scorched }
+            destroy_situation = this
+        }
+    }
+}

@@ -60,7 +60,10 @@ lunar_disco_ball_0 = {
 	placement_rules = {
 		planet_possible = {
 			OR = {
-				giga_is_moon = yes
+				AND = {
+					giga_is_moon = yes
+					NOR = { is_colony = yes } # dont... dont build it on a colony
+				}
 				AND = {
 					giga_is_moon = no
 					custom_tooltip = {
@@ -313,50 +316,19 @@ lunar_disco_ball_2 = {
 			script = megastructures/generic_parts/giga_mega_alloy_cost
 			alloys = 2000
 		}
-		upkeep = {
-			trigger = {
-				planet = { check_variable = { which = giga_disco_moon_setting value = 0 } }
-			}
-			rare_crystals = 5
-			energy = 50
-			alloys = 25
-		}
-		upkeep = {
-			trigger = {
-				planet = { check_variable = { which = giga_disco_moon_setting value = 1 } }
-			}
-			rare_crystals = 7.5
-			energy = 75
-			alloys = 38
-		}
-		upkeep = {
-			trigger = {
-				planet = { check_variable = { which = giga_disco_moon_setting value = 2 } }
-			}
-			rare_crystals = 7.5
-			energy = 75
-			alloys = 38
-		}
-		upkeep = {
-			trigger = {
-				planet = { check_variable = { which = giga_disco_moon_setting value = 3 } }
-			}
-			rare_crystals = 10
-			energy = 100
-			alloys = 50
-		}
-		upkeep = {
-			trigger = {
-				planet = { check_variable = { which = giga_disco_moon_setting value = 4 } }
-			}
-			rare_crystals = 0.5
-			energy = 5
-			alloys = 2
-		}
 	}
 
 	potential = { NOT = { has_global_flag = disco_moon_disabled } }
 	possible = { from = { has_technology = giga_tech_disco_moon } }
+
+	overclock_loc_key = DISCO_MOON
+	overclock_types = {
+		giga_overclock_disco_lightshow
+		giga_overclock_disco_repro
+		giga_overclock_disco_indoc
+		giga_overclock_disco_nonight
+		giga_overclock_disco_off
+	}
 
 	ai_weight = { factor = 10 } # If we can build it, we will build it
 	on_build_complete = {
@@ -367,29 +339,10 @@ lunar_disco_ball_2 = {
 				limit = { NOT = { has_global_flag = managing_giga_megastructure } }
 				country_event = { id = giga_dialog.203 }	# Notification
 			}
-			if = {
-				limit = {
-					NOR = {
-						has_global_flag = giga_achievements_disabled
-						has_country_flag = giga_achievement_60
-					}
-				}
-				set_country_flag = giga_achievement_60
-				set_timed_country_flag = { flag = giga_achievement_60_notification days = 30 }
-				giga_achievement_sound = yes
-			}
 		}
 		fromfrom.planet = {
 			if = {
 				limit = { NOT = { has_global_flag = managing_giga_megastructure } }
-				set_variable = {
-					which = giga_disco_moon_setting
-					value = 0
-				}
-				set_variable = {
-					which = giga_failure_chance
-					value = 0
-				}
 				orbit? = {
 					add_modifier = { modifier = "disco_moon_modifier" days = -1 }
 					every_moon = {
@@ -426,18 +379,7 @@ lunar_disco_ball_2 = {
 	dismantle_time = 360
 	
 	on_dismantle_complete = {
-		random_system_planet = {
-			limit = { 
-				is_planet_class = pc_disco_moon 
-				NOT = { 
-					solar_system = { 
-						any_system_megastructure = { 
-							is_megastructure_type = lunar_disco_ball_2
-							planet? = { is_same_value = root }
-						} 
-					} 
-				}
-			}
+		fromfrom.planet = {
 			change_pc = pc_barren_cold
 			clear_disco_moon_modifiers = yes
 			remove_carrier_flag = megastructure
