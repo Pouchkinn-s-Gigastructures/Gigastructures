@@ -1,0 +1,262 @@
+scoped_name = "GALACTIC_HALLS_NAME"
+entity = $ENTITY$
+construction_entity = $ENTITY$
+portrait = "GFX_megastructure_galactic_halls_background"
+emitter = yes
+place_entity_on_planet_plane = no
+locked_module_custom_tooltip = LOCKED_GALACTIC_HALL_MODULE_SLOT_DESC
+entity_offset = { x = -16 y = 4 }
+build_time = 1800
+resources = {
+	category = megastructures_galactic_halls
+	cost = {
+		alloys = 2500
+		unity = 5000
+		influence = 500
+	}
+	upkeep = {
+		energy = 2
+	}
+	upkeep = {
+		energy = 1
+		mult = owner.value:galactic_hall_extra_upkeep
+	}
+}
+
+construction_blocks_and_blocked_by = self_type
+prerequisites = { "tech_galactic_halls" }
+modules = {
+	galactic_hall_module_information
+	galactic_hall_module_culture
+	galactic_hall_module_defense
+	galactic_hall_module_peace
+	galactic_hall_module_truth
+	galactic_hall_module_welfare
+	galactic_hall_module_propagation
+	galactic_hall_module_integration
+	galactic_hall_module_commerce
+}
+initial_module_capacity = 1
+max_module_capacity = 3
+show_prereqs = no
+
+potential = {
+	is_country_type = default
+	is_nomadic = no
+	NOT = {
+		any_owned_megastructure = {
+			is_megastructure_galactic_halls = yes
+		}
+	}
+	ideology? = { is_$ETHIC$ = yes }
+}
+
+possible = {
+	hidden_trigger = {
+		exists = starbase
+	}
+	custom_tooltip = {
+		fail_text = "requires_inside_border"
+		is_inside_border = from
+	}
+	custom_tooltip = {
+		fail_text = "requires_surveyed_system"
+		NOT = {
+			any_system_planet = {
+				is_surveyed = {
+					who = prev.from
+					status = no
+				}
+			}
+		}
+	}
+}
+
+placement_rules = {
+	planet_possible = {
+		custom_tooltip = {
+			fail_text = "requires_no_anomaly"
+			NOT = { has_anomaly = yes }
+		}
+		if = {
+			limit = {
+				solar_system = {
+					any_system_planet = { is_colony = yes }
+				}
+			}
+			is_colony = yes
+			is_owned_by = from
+			custom_tooltip = {
+				fail_text = "requires_no_existing_megastructure"
+				NOT = { has_planet_flag = has_megastructure }
+			}
+		}
+		else = {
+			custom_tooltip = {
+				fail_text = "requires_not_minor_planetary_body"
+				NOR = {
+					is_asteroid = yes
+					is_moon = yes
+				}
+			}
+			custom_tooltip = {
+				fail_text = "requires_not_star"
+				is_star = no
+			}
+			custom_tooltip = {
+				fail_text = "requires_not_astral_scar"
+				is_astral_scar = no
+			}
+			custom_tooltip = {
+				fail_text = "requires_not_ring_world"
+				is_ringworld = no
+			}
+			custom_tooltip = {
+				fail_text = "requires_no_existing_megastructure"
+				has_any_megastructure = no
+			}
+		}
+	}
+}
+
+triggered_planet_modifier = {
+	potential = {
+		is_colony = yes
+		owner = { is_gestalt = no }
+	}
+	planet_amenities_add = 1500
+	mult = owner.value:scripted_modifier_mult|MODIFIER|hall_colony_effect_mult|
+}
+triggered_planet_modifier = {
+	potential = {
+		is_colony = yes
+		owner = { is_gestalt = yes }
+	}
+	planet_amenities_no_happiness_add = 1500
+	mult = owner.value:scripted_modifier_mult|MODIFIER|hall_colony_effect_mult|
+}
+triggered_planet_modifier = {
+	potential = { is_colony = yes }
+	planetary_ascension_effect_mult = 0.25
+	pop_government_ethic_attraction = 0.5
+	colony_ideological_reach_mult = 0.1
+	mult = owner.value:scripted_modifier_mult|MODIFIER|hall_colony_effect_mult|
+}
+
+on_build_complete = {
+	if = {
+		limit = {
+			from? = { exists = ideology }
+		}
+		fromfrom = {
+			add_emitter_to_ideology = {
+				target = root.from.ideology
+				owner = root.from
+			}
+			planet = {
+				set_planet_flag = has_galactic_hall_megastructure
+				set_planet_flag = megastructure
+				set_planet_flag = has_megastructure
+			}
+		}
+	}
+	from = {
+		country_event = { id = tutorial.2650 }
+	}
+}
+
+scripted_action = { galactic_hall_relocate }
+
+dismantle_cost = {
+	category = megastructures
+	cost = {
+		energy = 500
+	}
+}
+
+dismantle_time = 360
+
+dismantle_potential = {
+	always = yes
+}
+
+dismantle_possible = {
+	from = { is_at_war = no }
+}
+
+on_dismantle_complete = {
+	fromfrom = { on_galactic_hall_deleted = yes }
+}
+
+# Root = System
+# From = Country
+ai_weight = {
+	factor = 1
+	modifier = {
+		add = 5
+		is_owned_by = from
+		is_affected_by_bad_ideology = { COUNTRY = from }
+	}
+	modifier = {
+		add = 1
+		OR = {
+			any_system_planet_colony = {
+				is_owned_by = from
+				planet_stability < @stabilitylevel2
+			}
+			any_system_ship_colony = {
+				is_owned_by = from
+				planet_stability < @stabilitylevel2
+			}
+		}
+	}
+	modifier = {
+		add = 1
+		OR = {
+			any_system_planet_colony = {
+				is_owned_by = from
+				is_planet_revolting = yes
+			}
+			any_system_ship_colony = {
+				is_owned_by = from
+				is_planet_revolting = yes
+			}
+		}
+	}
+	modifier = {
+		add = 3
+		ideology? = {
+			is_ideology_custodian = from
+		}
+	}
+	modifier = {
+		add = 1
+		from = { ideological_momentum < @ideology_momentum_low }
+	}
+	modifier = {
+		add = 3
+		from = { ideological_momentum < @ideology_momentum_moderately_low }
+	}
+	modifier = {
+		add = 5
+		from = { ideological_momentum < @ideology_momentum_dangerously_low }
+	}
+	modifier = {
+		factor = 0
+		NOR = {
+			any_system_planet_colony = {
+				is_owned_by = from
+				is_capital = yes
+			}
+			any_system_ship_colony = {
+				is_owned_by = from
+				is_capital = yes
+			}
+		}
+	}
+}
+
+outliner_trigger = {
+	exists = owner
+	NOT = { has_megastructure_flag = giga_outliner_hidden_by_@owner }
+}
