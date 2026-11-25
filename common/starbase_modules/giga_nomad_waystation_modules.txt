@@ -1,0 +1,663 @@
+#	remote_network_resource_collection = yes - enables centralized and remote resource collection from all the waystations with this building in the network.
+
+# Note that Waystation DO NOT use starbase buildings.
+
+# If you add a new waystation module, also add it to common/inline_scripts/waystation/ai_design.txt
+# and use existing weights if possible, to avoid further overwrite.
+
+
+@kugel_module_build_time = 360
+@kugel_module_build_cost_alloys = 1000
+@kugel_module_build_cost_influence = 100
+@kugel_module_tier1_storage = 12500
+@kugel_module_tier2_storage = 25000
+@kugel_module_tier3_storage = 50000
+@kugel_module_tier1_OR = 2500
+@kugel_module_tier2_OR = 5000
+@kugel_module_tier3_OR = 10000
+
+giga_kugelblitz_waystation_module_upgrade_dummy = {
+    icon = GFX_giga_arkship_kugel
+    starbase_type = waystation
+    construction_days = 360
+    category = sm_economy_cat
+    potential = {
+        always = no
+    }
+    possible = {
+        always = yes #to prevent line saying "can never be constructed"
+    }
+    starbase_limit = {
+        base = 2
+    }
+
+    resources = {
+        category = starbase_waystations_modules
+        cost = {
+            alloys = @kugel_module_build_cost_alloys
+            influence = @kugel_module_build_cost_influence
+        }
+        upkeep = {
+            alloys = 15
+            energy = 50
+        }
+    }
+
+
+    triggered_country_modifier = {
+        potential = {
+            always = yes
+        }
+        situation_nomad_economy_max_progress_add = @kugel_module_tier2_OR
+        country_resource_max_add = @kugel_module_tier2_storage
+    }
+    triggered_station_modifier = {
+        potential = {
+            always = yes
+        }
+        starbase_stockpile_capacity_add = @kugel_module_tier2_storage
+    }
+
+    ai_weight = {
+        weight = 100 #INTENTIONALLY NOT ADDED IN starbase_types.txt!!
+    }
+}
+
+# Kugelblitz
+giga_kugelblitz_waystation_module = {
+    #Tier 1
+    icon = GFX_giga_arkship_kugel
+    section = "SHIPYARD_STARBASE_SECTION"
+    construction_days = @kugel_module_build_time
+    starbase_type = waystation
+    category = sm_economy_cat
+
+    starbase_limit = {
+        base = 2
+    }
+
+    potential = {
+        NOT = { has_global_flag = kugel_disabled }
+        owner? = {
+            has_technology = giga_tech_kugelblitz_nomad
+        }
+        is_waystation_starbase = yes
+    }
+
+    show_in_tech = "giga_tech_kugelblitz"
+    show_tech_unlock_if = {
+        is_nomadic = yes
+    }
+
+    resources = {
+        category = starbase_waystations_modules
+        cost = {
+            alloys = @kugel_module_build_cost_alloys
+            influence = @kugel_module_build_cost_influence
+        }
+        upkeep = {
+            alloys = 15
+            energy = 50
+        }
+    }
+
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                NOT = {
+                    has_technology = tech_mega_engineering
+                }
+            }
+        }
+        starbase_stockpile_capacity_add = @kugel_module_tier1_storage
+    }
+    triggered_country_modifier = {
+        potential = {
+            owner? = {
+                NOT = {
+                    has_technology = tech_mega_engineering
+                }
+            }
+        }
+        situation_nomad_economy_max_progress_add = @kugel_module_tier1_OR
+        country_resource_max_add = @kugel_module_tier1_storage
+    }
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                NOT = {
+                    has_technology = tech_mega_engineering
+                }
+            }
+        }
+        custom_tooltip = sm_kugelblitz_upgrade_module_waystation_tt
+        show_only_custom_tooltip = no
+    }
+
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                has_technology = tech_mega_engineering
+            }
+        }
+        starbase_stockpile_capacity_add = @kugel_module_tier2_storage
+    }
+    triggered_country_modifier = {
+        potential = {
+            owner? = {
+                has_technology = tech_mega_engineering
+            }
+        }
+        situation_nomad_economy_max_progress_add = @kugel_module_tier2_OR
+        country_resource_max_add = @kugel_module_tier2_storage
+    }
+
+    on_finished = {
+        owner? = {
+            set_country_flag = has_recently_built_kugelblitz
+        }
+    }
+
+    ai_weight = {
+        weight = 100 #use same weight here - ai weighting is done in starbase_types.txt
+    }
+}
+
+giga_ehof_resource_module = {
+    icon = "GFX_waystation_ehof_resource_module"
+    section = "REFINERY_STARBASE_SECTION"
+    construction_days = @waystation_build_time_180
+    starbase_type = waystation
+    category = sm_economy_cat
+
+    starbase_limit = {
+        base = 1
+    }
+
+    potential = {
+        is_waystation_starbase = yes
+        owner? = {
+            OR = {
+                has_technology = tech_negative_e_s
+                has_technology = tech_ehof_sentient_tier_1
+            }
+        }
+    }
+    show_in_tech = tech_negative_e_s
+    show_tech_unlock_if = {
+        AND = {
+            NOT = { has_global_flag = ehof_disabled }
+            is_nomadic = yes
+        }
+    }
+
+    possible = {
+        #sentient metal not yet discovered -> failtext only shows negative mass
+        if = {
+            limit = {
+                owner? = {
+                    has_technology = tech_negative_e_s
+                    NOT = { has_technology = tech_ehof_sentient_tier_1 }
+                }
+            }
+            custom_tooltip =  {
+                fail_text = requires_negative_mass_deposit
+                AND = {
+                    owner? = {
+                        AND = {
+                            has_technology = tech_negative_e_s
+                            NOT = { has_technology = tech_ehof_sentient_tier_1 }
+                        }
+                    }
+                    system_has_station_resource = {
+                        RESOURCE = giga_sr_negative_mass
+                    }
+                }
+            }
+        }
+        else_if = {
+            limit = {
+                owner? = {
+                    has_technology = tech_ehof_sentient_tier_1
+                    NOT = { has_technology = tech_negative_e_s }
+                }
+            }
+            custom_tooltip =  {
+                fail_text = requires_sentient_metal_deposit
+                AND = {
+                    owner? = {
+                        AND = {
+                            has_technology = tech_ehof_sentient_tier_1
+                            NOT = { has_technology = tech_negative_e_s }
+                        }
+                    }
+                    system_has_station_resource = {
+                        RESOURCE = giga_sr_sentient_metal
+                    }
+                }
+            }
+        }
+        else = {
+            #both resources discovered -> failtext shows both
+            custom_tooltip = {
+                fail_text = requires_negative_mass_or_sentient_metal_deposit
+                AND = {
+                    owner? = {
+                        AND = {
+                            has_technology = tech_ehof_sentient_tier_1
+                            has_technology = tech_negative_e_s
+                        }
+                    }
+                    OR = {
+                        system_has_station_resource = {
+                            RESOURCE = giga_sr_negative_mass
+                        }
+                        system_has_station_resource = {
+                            RESOURCE = giga_sr_sentient_metal
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #Resources
+    ##same cost & upkeep as refinery module.
+    resources = {
+        category = starbase_waystations_modules
+        cost = {
+            alloys = @waystation_cost_alloys_100
+        }
+        upkeep = {
+            trade = @waystation_upkeep_trade_2
+        }
+    }
+
+    collected_system_resources = {
+        giga_sr_negative_mass = {
+            owner? = {
+                has_technology = tech_negative_e_s
+            }
+        }
+        giga_sr_sentient_metal = {
+            owner? = {
+                has_technology = tech_ehof_sentient_tier_1
+            }
+        }
+    }
+
+    #Custom Tooltips
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                AND = {
+                    has_technology = tech_negative_e_s
+                    NOT = { has_technology = tech_ehof_sentient_tier_1 }
+                }
+            }
+        }
+        custom_tooltip = allow_negative_mass_collection
+        show_only_custom_tooltip = no
+    }
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                AND = {
+                    has_technology = tech_ehof_sentient_tier_1
+                    NOT = { has_technology = tech_negative_e_s }
+                }
+            }
+        }
+        custom_tooltip = allow_sentient_metal_collection
+        show_only_custom_tooltip = no
+    }
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                AND = {
+                    has_technology = tech_negative_e_s
+                    has_technology = tech_ehof_sentient_tier_1
+                }
+            }
+        }
+        custom_tooltip = allow_negative_mass_or_sentient_metal_collection
+        show_only_custom_tooltip = no
+    }
+
+    #Stockpile modifiers
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                has_technology = tech_negative_e_s
+            }
+            system_has_station_resource = {
+                RESOURCE = giga_sr_negative_mass
+            }
+        }
+        starbase_stockpile_giga_sr_negative_mass_capacity_add = @waystation_stockpile_125
+    }
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                has_technology = tech_ehof_sentient_tier_1
+            }
+            system_has_station_resource = {
+                RESOURCE = giga_sr_sentient_metal
+            }
+        }
+        starbase_stockpile_giga_sr_sentient_metal_capacity_add = @waystation_stockpile_125
+    }
+
+    #Wayline pact
+    triggered_system_modifier = {
+        potential = {
+            exists = owner
+            owner? = {
+                has_technology = tech_negative_e_s
+                NOT = {
+                    has_technology = tech_ehof_sentient_tier_1
+                }
+            }
+            space_owner? = {
+                NOT = {
+                    benefits_from_waystation_network = {
+                        NOMAD = root.owner
+                        SYSTEM_OWNER = this
+                    }
+                }
+            }
+        }
+        #only tooltip needs to change
+        custom_tooltip = waystation_collection_penalty_negative_mass_tt
+        show_only_custom_tooltip = yes
+        station_gatherers_giga_sr_negative_mass_produces_mult = -0.25
+        station_gatherers_giga_sr_sentient_metal_produces_mult = -0.25
+    }
+    triggered_system_modifier = {
+        potential = {
+            exists = owner
+            owner? = {
+                has_technology = tech_ehof_sentient_tier_1
+                NOT = {
+                    has_technology = tech_negative_e_s
+                }
+            }
+            space_owner? = {
+                NOT = {
+                    benefits_from_waystation_network = {
+                        NOMAD = root.owner
+                        SYSTEM_OWNER = this
+                    }
+                }
+            }
+        }
+        #only tooltip needs to change
+        custom_tooltip = waystation_collection_penalty_sentient_metal_tt
+        show_only_custom_tooltip = yes
+        station_gatherers_giga_sr_negative_mass_produces_mult = -0.25
+        station_gatherers_giga_sr_sentient_metal_produces_mult = -0.25
+    }
+    triggered_system_modifier = {
+        potential = {
+            exists = owner
+            owner? = {
+                has_technology = tech_negative_e_s
+                has_technology = tech_ehof_sentient_tier_1
+            }
+            space_owner? = {
+                NOT = {
+                    benefits_from_waystation_network = {
+                        NOMAD = root.owner
+                        SYSTEM_OWNER = this
+                    }
+                }
+            }
+        }
+        #only tooltip needs to change
+        custom_tooltip = waystation_collection_penalty_negative_mass_or_sentient_metal_tt
+        show_only_custom_tooltip = yes
+        station_gatherers_giga_sr_negative_mass_produces_mult = -0.25
+        station_gatherers_giga_sr_sentient_metal_produces_mult = -0.25
+    }
+
+    #Sacred Path
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                has_country_flag = sacred_path_joyous_enlightenment
+            }
+            has_neighboring_waystation = yes
+            system_has_station_resource = {
+                RESOURCE = giga_sr_negative_mass
+            }
+        }
+        custom_tooltip = blessings_joyous_enlightenment_tt
+        show_only_custom_tooltip = no
+        starbase_collected_system_giga_sr_negative_mass_add = @waystation_joyous_path_add_4
+    }
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                has_country_flag = sacred_path_joyous_enlightenment
+                has_technology = tech_ehof_sentient_tier_1
+            }
+            has_neighboring_waystation = yes
+            system_has_station_resource = {
+                RESOURCE = giga_sr_sentient_metal
+            }
+        }
+        custom_tooltip = blessings_joyous_enlightenment_tt
+        show_only_custom_tooltip = no
+        starbase_collected_system_giga_sr_sentient_metal_add = @waystation_joyous_path_add_4
+    }
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                has_country_flag = sacred_path_middle_path
+            }
+            is_sacred_site_waystation = no
+            system_has_station_resource = {
+                RESOURCE = giga_sr_negative_mass
+            }
+        }
+        custom_tooltip = bonus_middle_path_tt
+        show_only_custom_tooltip = no
+        starbase_collected_system_giga_sr_negative_mass_add = @waystation_middle_path_add_2
+    }
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                has_country_flag = sacred_path_middle_path
+                has_technology = tech_ehof_sentient_tier_1
+            }
+            is_sacred_site_waystation = no
+            system_has_station_resource = {
+                RESOURCE = giga_sr_sentient_metal
+            }
+        }
+        custom_tooltip = bonus_middle_path_tt
+        show_only_custom_tooltip = no
+        starbase_collected_system_giga_sr_sentient_metal_add = @waystation_middle_path_add_2
+    }
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                has_country_flag = sacred_path_middle_path
+            }
+            is_sacred_site_waystation = yes
+            system_has_station_resource = {
+                RESOURCE = giga_sr_negative_mass
+            }
+        }
+        custom_tooltip = bonus_sacred_site_tt
+        show_only_custom_tooltip = no
+        starbase_collected_system_giga_sr_negative_mass_add = @waystation_sacred_site_add_4
+    }
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                has_country_flag = sacred_path_middle_path
+                has_technology = tech_ehof_sentient_tier_1
+            }
+            is_sacred_site_waystation = yes
+            system_has_station_resource = {
+                RESOURCE = giga_sr_sentient_metal
+            }
+        }
+        custom_tooltip = bonus_sacred_site_tt
+        show_only_custom_tooltip = no
+        starbase_collected_system_giga_sr_sentient_metal_add = @waystation_sacred_site_add_4
+    }
+
+    ai_weight = {
+        weight = 100 #use same weight here - ai weighting is done in starbase_types.txt
+    }
+}
+
+giga_iodizium_resource_module = {
+    icon = "GFX_orbitalring_module_giga_iodizium_hub"
+    section = "REFINERY_STARBASE_SECTION"
+    construction_days = @waystation_build_time_180
+    starbase_type = waystation
+    category = sm_economy_cat
+
+    starbase_limit = {
+        base = 1
+    }
+
+    potential = {
+        is_waystation_starbase = yes
+        owner? = {
+            has_technology = giga_tech_fusion_suppressor
+        }
+    }
+    show_in_tech = giga_tech_fusion_suppressor
+    show_tech_unlock_if = {
+        AND = {
+            NOT = { has_global_flag = suppressor_disabled }
+            is_nomadic = yes
+        }
+    }
+
+    possible = {
+        custom_tooltip = {
+            fail_text = requires_iodizium_deposit
+            system_has_station_resource = {
+                RESOURCE = giga_sr_iodizium
+            }
+        }
+    }
+
+    #Resources
+    ##same cost & upkeep as refinery module.
+    resources = {
+        category = starbase_waystations_modules
+        cost = {
+            alloys = @waystation_cost_alloys_100
+        }
+        upkeep = {
+            trade = @waystation_upkeep_trade_2
+        }
+    }
+
+    collected_system_resources = {
+        giga_sr_iodizium = {
+            owner? = {
+                has_technology = giga_tech_fusion_suppressor
+            }
+        }
+    }
+
+    #Custom Tooltips
+    station_modifier = {
+        custom_tooltip = allow_iodizium_collection
+        show_only_custom_tooltip = no
+    }
+
+    #Stockpile modifiers
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                has_technology = giga_tech_fusion_suppressor
+            }
+            system_has_station_resource = {
+                RESOURCE = giga_sr_iodizium
+            }
+        }
+        starbase_stockpile_giga_sr_iodizium_capacity_add = @waystation_stockpile_125
+    }
+
+    #Wayline pact
+    triggered_system_modifier = {
+        potential = {
+            exists = owner
+            owner? = {
+                has_technology = giga_tech_fusion_suppressor
+            }
+            system_has_station_resource = {
+                RESOURCE = giga_sr_iodizium
+            }
+            space_owner? = {
+                NOT = {
+                    benefits_from_waystation_network = {
+                        NOMAD = root.owner
+                        SYSTEM_OWNER = this
+                    }
+                }
+            }
+        }
+        custom_tooltip = waystation_collection_penalty_iodizium_tt
+        show_only_custom_tooltip = yes
+        station_gatherers_giga_sr_iodizium_produces_mult = -0.25
+    }
+
+    #Sacred Path
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                has_country_flag = sacred_path_joyous_enlightenment
+            }
+            has_neighboring_waystation = yes
+            system_has_station_resource = {
+                RESOURCE = giga_sr_iodizium
+            }
+        }
+        custom_tooltip = blessings_joyous_enlightenment_tt
+        show_only_custom_tooltip = no
+        starbase_collected_system_giga_sr_iodizium_add = @waystation_joyous_path_add_4
+    }
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                has_country_flag = sacred_path_middle_path
+            }
+            is_sacred_site_waystation = no
+            system_has_station_resource = {
+                RESOURCE = giga_sr_iodizium
+            }
+        }
+        custom_tooltip = bonus_middle_path_tt
+        show_only_custom_tooltip = no
+        starbase_collected_system_giga_sr_iodizium_add = @waystation_middle_path_add_2
+    }
+    triggered_station_modifier = {
+        potential = {
+            owner? = {
+                has_country_flag = sacred_path_middle_path
+            }
+            is_sacred_site_waystation = yes
+            system_has_station_resource = {
+                RESOURCE = giga_sr_iodizium
+            }
+        }
+        custom_tooltip = bonus_sacred_site_tt
+        show_only_custom_tooltip = no
+        starbase_collected_system_giga_sr_iodizium_add = @waystation_sacred_site_add_4
+    }
+
+    ai_weight = {
+        weight = 100 #use same weight here - ai weighting is done in starbase_types.txt
+    }
+}
+
+

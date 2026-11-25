@@ -17,7 +17,7 @@ ship_event = {
 		NOT = { has_global_flag = meopa_spawned_as_fe }
 		controller = { NOT = { has_country_flag = encountered_paluush } }
 		from = {
-			has_star_flag = giga_system_six
+			has_star_flag = giga_system_gatzo
 			any_system_planet = { has_planet_flag = paluushia }
 		}
 	}
@@ -56,9 +56,52 @@ country_event = {
 		room = paluush_room
 	}
 
-	option = { trigger = { OR = { has_valid_civic = civic_fanatic_purifiers has_valid_civic = civic_scorched_earth } }	name = SCUM }
-	option = { trigger = { OR = { has_valid_civic = civic_hive_devouring_swarm has_menace_perk = menp_behemoth_ever_hungry has_valid_civic = civic_hive_scorched_earth } } name = TASTY }
-	option = { trigger = { has_valid_civic = civic_machine_terminator }	name = EXTERMINATE }
+	option = {
+		trigger = {
+			OR = {
+				is_genocidal_infernal = yes
+				has_valid_civic = civic_fanatic_purifiers
+			}
+		}
+		name = SCUM
+		add_monthly_resource_mult = {
+			resource = society_research
+			value = @ehof_tier6researchreward
+			min = @ehof_tier6researchmin
+			max = @ehof_tier6researchmax
+		}
+	}
+
+	option = {
+		trigger = {
+			OR = {
+				has_valid_civic = civic_hive_devouring_swarm
+				has_menace_perk = menp_behemoth_ever_hungry
+				has_valid_civic = civic_hive_scorched_earth
+			}
+		}
+		name = TASTY
+		add_monthly_resource_mult = {
+			resource = society_research
+			value = @ehof_tier6researchreward
+			min = @ehof_tier6researchmin
+			max = @ehof_tier6researchmax
+		}
+	}
+
+	option = {
+		trigger = {
+			has_valid_civic = civic_machine_terminator
+		}
+		name = EXTERMINATE
+		add_monthly_resource_mult = {
+			resource = society_research
+			value = @ehof_tier6researchreward
+			min = @ehof_tier6researchmin
+			max = @ehof_tier6researchmax
+		}
+	}
+
 	option = {
 		trigger = {
 			is_homicidal = no
@@ -498,7 +541,14 @@ namespace = giga_katzenland
 ship_event = {
 	id = giga_katzenland.001
 	title = "giga_katzenland.001.name"
-	desc = "giga_katzenland.001.desc"
+	desc = {
+		text = "giga_katzenland.001.desc"
+		trigger = { from = { NOT = { has_carrier_flag = site_katzenland_completed } } }
+	}
+	desc = { #someone has already completely finished the digsite
+		text = "giga_katzenland.001.digsite_completed.desc"
+		trigger = { from = { has_carrier_flag = site_katzenland_completed } }
+	}
 	picture = GFX_evt_relic_world_street
 	show_sound = event_ghost_town
 	location = from
@@ -512,7 +562,37 @@ ship_event = {
 
 	option = {
 		name = "giga_katzenland.001.a"
-		hidden_effect = { from = { create_archaeological_site = site_katzenland } }
+		hidden_effect = { from = { if = { limit = { NOT = { has_carrier_flag = site_katzenland_completed } } create_archaeological_site = site_katzenland } } }
+	}
+
+	option = {
+		trigger = {
+			owner = {
+				is_scavenger = yes
+			}
+		}
+		name = "giga_katzenland.001.scavengers"
+		hidden_effect = { from = { if = { limit = { NOT = { has_carrier_flag = site_katzenland_completed } } create_archaeological_site = site_katzenland } } }
+	}
+
+	option = {
+		trigger = {
+			owner = {
+				is_galactic_curators_empire = yes
+			}
+		}
+		name = "giga_katzenland.001.curators"
+		hidden_effect = { from = { if = { limit = { NOT = { has_carrier_flag = site_katzenland_completed } } create_archaeological_site = site_katzenland } } }
+	}
+
+	option = {
+		trigger = {
+			owner = {
+				has_valid_civic = civic_private_prospectors
+			}
+		}
+		name = "giga_katzenland.001.prospectors"
+		hidden_effect = { from = { if = { limit = { NOT = { has_carrier_flag = site_katzenland_completed } } create_archaeological_site = site_katzenland } } }
 	}
 }
 
@@ -729,6 +809,7 @@ country_event = {
 		name = "giga_katzenland.007.b"
 		trigger = {
 			is_homicidal = no
+			values_others = no
 		}
 		add_monthly_resource_mult = {
 			resource = society_research
@@ -744,6 +825,18 @@ country_event = {
 		}
 		add_monthly_resource_mult = {
 			resource = society_research
+			value = 12
+		}
+	}
+
+	# Let her go free
+	option = {
+		name = "giga_katzenland.007.d"
+		trigger = {
+			is_homicidal = no
+		}
+		add_monthly_resource_mult = {
+			resource = unity
 			value = 12
 		}
 	}
@@ -802,7 +895,12 @@ fleet_event = {
 	show_sound = event_dig_site
 	is_triggered_only = yes
 
-	immediate = {	fromfrom = { set_site_progress_locked = yes } }
+	immediate = {
+		fromfrom = { set_site_progress_locked = yes }
+		from = {
+			set_carrier_flag = site_katzenland_completed
+		}
+	}
 	after = {		fromfrom = { set_site_progress_locked = no } }
 
 	specimen = meopa_detonator
@@ -811,54 +909,27 @@ fleet_event = {
 		name = "giga_katzenland.009.a"
 		trigger = {
 			owner = {
-				NOT = { has_country_flag = found_flusion_katzens }
-			}
-		}
-		owner = {
-			if = {
-				limit = { is_reanimator = yes } #Meopa
-				country_event = { id = giga_katzenland.010 days = 90 }
-			}
-			set_country_flag = found_katzenland_katzens_nuked
-			small_artifact_reward = yes
-			if = {
-				limit = {
-					NOT = {
-						has_technology = giga_tech_terraform_barren
-						has_global_flag = terraform_barren_disabled
-					}
-				}
-				add_research_option = giga_tech_terraform_barren
-				add_tech_progress = {
-					tech = giga_tech_terraform_barren
-					progress = 0.25
+				NOR = {
+					has_country_flag = found_flusion_katzens
+					is_egalitarian = yes
+					is_authoritarian = yes
+					is_xenophobe = yes
 				}
 			}
-			add_modifier = {
-				modifier = katzenland_terraform_knowledge
-				days = -1
-			}
-			add_monthly_resource_mult = {
-				resource = society_research
-				value = @tier5researchreward
-				min = @tier5researchmin
-				max = @tier5researchmax
-			}
 		}
+		katzenland_found_truth_effects = yes
 	}
 
 	option = {
-		name = "giga_katzenland.009.b"
+		name = "giga_katzenland.009.knowflusion"
 		trigger = {
 			owner = {
 				has_country_flag = found_flusion_katzens
 			}
 		}
+
+		katzenland_found_truth_effects = yes
 		owner = {
-			if = {
-				limit = { is_reanimator = yes } #Meopa
-				country_event = { id = giga_katzenland.010 days = 90 }
-			}
 			hidden_effect = {
 				if = {
 					limit = {
@@ -873,32 +944,135 @@ fleet_event = {
 				}
 			}
 			country_event = { id = giga_flusion.002 }
-			set_country_flag = found_katzenland_katzens_nuked
-			small_artifact_reward = yes
-			if = {
-				limit = {
-					NOT = {
-						has_technology = giga_tech_terraform_barren
-						has_global_flag = terraform_barren_disabled
-					}
-				}
-				add_research_option = giga_tech_terraform_barren
-				add_tech_progress = {
-					tech = giga_tech_terraform_barren
-					progress = 0.25
-				}
-			}
-			add_modifier = {
-				modifier = katzenland_terraform_knowledge
-				days = -1
-			}
-			add_monthly_resource_mult = {
-				resource = society_research
-				value = @tier5researchreward
-				min = @tier5researchmin
-				max = @tier5researchmax
+		}
+	}
+
+	# option = { #me when there are too many options for the Stellaris UI :kaisertroll: (RIP 13 possible responses)
+	# 	name = "giga_katzenland.009.wiseleader"
+	# 	trigger = {
+	# 		owner = {
+	# 			OR = {
+	# 				has_origin = origin_legendary_leader
+	# 				has_valid_civic = civic_philosopher_king
+	# 			}
+	# 		}
+	# 	}
+	# 	katzenland_found_truth_effects = yes
+	# }
+
+	option = {
+		name = "giga_katzenland.009.nomadic"
+		trigger = {
+			owner = {
+				is_nomadic = yes
+				NOT = { has_origin = origin_forever_cruise }
 			}
 		}
+		katzenland_found_truth_effects = yes
+	}
+
+	option = {
+		name = "giga_katzenland.009.forevercruise"
+		trigger = {
+			owner = {
+				has_origin = origin_forever_cruise
+				NOT = { has_country_flag = forever_cruise_over }
+			}
+		}
+		katzenland_found_truth_effects = yes
+	}
+
+	option = {
+		name = "giga_katzenland.009.postapocalyptic"
+		trigger = {
+			owner = {
+				OR = {
+					has_origin = origin_post_apocalyptic
+					has_origin = origin_post_apocalyptic_machines
+				}
+			}
+		}
+		katzenland_found_truth_effects = yes
+	}
+
+	option = {
+		name = "giga_katzenland.009.egalitarian"
+		trigger = {
+			owner = {
+				OR = {
+					is_egalitarian = yes
+					has_valid_civic = civic_parliamentary_system
+				}
+			}
+		}
+		katzenland_found_truth_effects = yes
+	}
+
+	option = {
+		name = "giga_katzenland.009.authoritarian"
+		trigger = {
+			owner = {
+				OR = {
+					is_fanatic_authoritarian = yes
+					has_valid_civic = civic_police_state
+					is_egalitarian = no #no egal+authoritarian response because there are too many options
+				}
+			}
+		}
+		katzenland_found_truth_effects = yes
+	}
+
+	option = {
+		name = "giga_katzenland.009.genocidal"
+		trigger = {
+			owner = {
+				OR = { #not all genocidals
+					has_valid_civic = civic_fanatic_purifiers
+					has_valid_civic = civic_machine_terminator
+				}
+			}
+		}
+		katzenland_found_truth_effects = yes
+	}
+
+	option = {
+		name = "giga_katzenland.009.scorched"
+		trigger = {
+			owner = {
+				is_genocidal_infernal = yes
+			}
+		}
+		katzenland_found_truth_effects = yes
+	}
+
+	option = {
+		name = "giga_katzenland.009.servitors"
+		trigger = {
+			owner = {
+				has_valid_civic = civic_machine_servitor
+			}
+		}
+		katzenland_found_truth_effects = yes
+	}
+
+	# option = {
+	# 	name = "giga_katzenland.009.memorialists"
+	# 	trigger = {
+	# 		owner = {
+	# 			is_memorialist_empire = yes
+	# 		}
+	# 	}
+	# 	katzenland_found_truth_effects = yes
+	# }
+
+	option = {
+		name = "giga_katzenland.009.xenophobe"
+		trigger = {
+			owner = {
+				is_xenophobe = yes
+			}
+		}
+		katzenland_found_truth_effects = yes
 	}
 }
 
@@ -938,6 +1112,7 @@ country_event = {
 	show_sound = event_necrophage
 
 	immediate = {
+		set_country_flag = country_revived_meopa
 		create_species = {
 			name = "Revived Katzen"
 			plural = "Revived Katzens"
@@ -1133,12 +1308,6 @@ country_event = {
 	show_sound = event_alien_signal
 	is_triggered_only = yes
 
-	immediate = {
-		owner = {
-			set_country_flag = found_all_katzens
-		}
-	}
-
 	specimen = meopian_expedition_chunk
 
 	option = {
@@ -1230,31 +1399,16 @@ country_event = {
 				limit = { has_modifier = katzen_orbital_bombardment_shield }
 				remove_modifier = katzen_orbital_bombardment_shield
 			}
-			set_planet_flag = flusion_katzen_nuked
 			change_pc = pc_katzenland
+			remove_all_districts = yes
+			remove_all_buildings = yes
 			clear_blockers = yes
 			clear_deposits = yes
 			add_planet_devastation = -100
 			add_deposit = d_bomb_crater
 			add_deposit = d_bomb_crater
-			add_deposit = d_bomb_crater
-			add_deposit = d_bomb_crater
-			add_deposit = d_bomb_crater
-			add_deposit = d_bomb_crater
-			add_deposit = d_bomb_crater
 			add_deposit = d_radioactive_wasteland
-			add_deposit = d_radioactive_wasteland
-			add_deposit = d_radioactive_wasteland
-			add_deposit = d_radioactive_wasteland
-			add_deposit = d_radioactive_wasteland
-			add_deposit = d_searing_desert
-			add_deposit = d_searing_desert
-			add_deposit = d_tempestous_mountain
-			add_deposit = d_geothermal_vent
-			add_deposit = d_ore_rich_caverns
-			add_deposit = d_rich_mountain
-			add_deposit = d_dust_desert
-			add_deposit = d_bubbling_swamp
+			create_katzenland_deposits_new = yes
 			add_modifier = {
 				modifier = "katzenland_planet"
 				days = -1
@@ -1262,26 +1416,7 @@ country_event = {
 			set_planet_entity = {
 				entity = flusion_planet_deserted_entity
 			}
-			while = {
-				count = 3
-				remove_district = district_generator
-			}
-			while = {
-				count = 3
-				remove_district = district_mining
-			}
-			while = {
-				count = 3
-				remove_district = district_city
-			}
-			while = {
-				count = 3
-				remove_district = district_farming
-			}
-			while = {
-				count = 28
-				random_owned_pop_group = { kill_single_pop = yes }
-			}
+			every_owned_pop_group = { kill_all_pop = yes }
 		}
 	}
 
@@ -1319,7 +1454,14 @@ country_event = {
 country_event = {
 	id = giga_flusion.005
 	title = "giga_flusion.005.name"
-	desc = "giga_flusion.005.desc"
+	desc = {
+		trigger = { NOT = { has_country_flag = tech_katzen_atomic_munitions_from_scorched } }
+		text = "giga_flusion.005.desc"
+	}
+	desc = {
+		trigger = { has_country_flag = tech_katzen_atomic_munitions_from_scorched }
+		text = "giga_flusion.005.scorched.desc"
+	}
 
 	picture = GFX_evt_relic_world_street
 	show_sound = event_radio_chatter
@@ -1328,13 +1470,17 @@ country_event = {
 		set_country_flag = katzen_atomic_munitions_possible
 	}
 	option = {
+		trigger = {
+			NOT = { has_country_flag = tech_katzen_atomic_munitions_from_scorched }
+		}
 		name = "giga_flusion.005.a"
 		add_research_option = tech_katzen_atomic_munitions
 		add_tech_progress = {
 			tech = tech_katzen_atomic_munitions
-			progress = 0.25
+			progress = 0.2
 		}
 		hidden_effect = {
+			set_country_flag = tech_katzen_atomic_munitions_from_katzens
 			if = {
 				limit = {
 					NOR = {
@@ -1350,8 +1496,42 @@ country_event = {
 	}
 
 	option = {
+		trigger = {
+			NOR = {
+				has_country_flag = tech_katzen_atomic_munitions_from_scorched
+				has_origin = origin_scorched
+			}
+		}
 		name = "giga_flusion.005.b"
 		remove_country_flag = katzen_atomic_munitions_possible
+	}
+
+	option = {
+		trigger = {
+			NOT = { has_country_flag = tech_katzen_atomic_munitions_from_scorched }
+			has_origin = origin_scorched
+		}
+		add_monthly_resource_mult = {
+			resource = unity
+			value = @tier4unityreward
+			min = @tier4unitymin
+			max = @tier4unitymax
+		}
+		name = "giga_flusion.005.scorched.b"
+		remove_country_flag = katzen_atomic_munitions_possible
+	}
+
+	option = {
+		trigger = {
+			has_country_flag = tech_katzen_atomic_munitions_from_scorched
+		}
+		add_monthly_resource_mult = {
+			resource = engineering_research
+			value = @tier4researchreward
+			min = @tier4researchmin
+			max = @tier4researchmax
+		}
+		name = "giga_flusion.005.c"
 	}
 }
 
@@ -1461,41 +1641,59 @@ event = {
 }
 
 #Apply Katzen Engineering to a planet
-planet_event = {
+carrier_event = {
 	id = giga_flusion.200
 	hide_window = yes
 	is_triggered_only = yes
 
 	trigger = {
 		has_orbital_bombardment_stance = katzen
-		is_planet_habitable = yes
+		is_planet_habitable = yes #can transform machine, hive and tomb, unlike armageddon/pox in action.81
+		count_owned_pop_amount = {
+			count <= 200
+		}
 	}
 
 	immediate = {
 		owner = {
-			add_static_war_exhaustion = {
-				attacker = from
-				location = root
-				value_for_planet_destruction = 0.5
+			if = {
+				limit = {
+					owner = {
+						is_at_war_with = from
+					}
+				}
+				add_static_war_exhaustion = {
+					attacker = from
+					location = root
+					value_for_planet_destruction = 0.5
+				}
 			}
 			set_country_flag = planet_got_katzenland
 			add_opinion_modifier = { who = from modifier = opinion_katzenland_my_planet }
 			save_event_target_as = empire_got_katzenland
+			if = {
+				limit = {
+					NAND = {
+						has_origin = origin_progenitor_hive
+						root = { is_capital = yes }
+					}
+				}
+				country_event = { id = giga_flusion.202 }
+			}
+			else = {
+				country_event = { id = origin.3265 }
+			}
 		}
 		every_country = { #Apply opinion modifiers
 			limit = {
 				NOT = { is_in_federation_with = from }
-				NOT = { is_subject = yes }
+				is_subject = no
 				is_fanatic_xenophobe = no #Xenophobes don't care
 				ehof_default_country = yes
 				NOT = { has_country_flag = planet_got_katzenland }
 				NOR = { #Genocidal empires don't care
-					has_valid_civic = civic_fanatic_purifiers
-					has_valid_civic = civic_hive_devouring_swarm
-					has_valid_civic = civic_machine_terminator
-					event_target:empire_got_katzenland = { has_valid_civic = civic_fanatic_purifiers }
-					event_target:empire_got_katzenland = { has_valid_civic = civic_hive_devouring_swarm }
-					event_target:empire_got_katzenland = { has_valid_civic = civic_machine_terminator }
+					is_homicidal = yes
+					event_target:empire_got_katzenland = { is_homicidal = yes }
 				}
 				#Only care if its a "normal" empire
 				event_target:empire_got_katzenland = {
@@ -1513,47 +1711,27 @@ planet_event = {
 		if = {
 			limit = {
 				habitable_structure = no
-				NOR = {
-					is_planet_class = pc_ringworld_habitable 
-					# is_planet_class = pc_ringworld_machine
-					# is_planet_class = pc_ringworld_hive
-					# is_planet_class = pc_ringworld_city
+				NOT = {
+					is_planet_class = pc_ringworld_habitable
 				}
 			}
 			from = { country_event = { id = giga_flusion.201 } }
-			remove_all_buildings = yes
+			change_pc = pc_katzenland
 			remove_all_districts = yes
+			remove_all_buildings = yes
 			clear_blockers = yes
 			clear_deposits = yes
+			create_katzenland_deposits_new = yes
+			every_owned_pop_group = { kill_all_pop = yes }
+			destroy_colony = yes
 			add_modifier = {
 				modifier = "irradiated_desert_planet"
 				days = -1
 			}
-			while = {
-				count = 12
-				create_katzenland_deposits = yes
-			}
-			while = {
-				count = 28
-				random_owned_pop_group = { kill_single_pop = yes }
-			}
-			remove_modifier = "natural_beauty"
-			remove_modifier = "atmospheric_aphrodisiac"
-			remove_modifier = "atmospheric_hallucinogen"
-			remove_modifier = "lush_planet"
-			remove_modifier = "dangerous_wildlife"
-			destroy_colony = yes
-			change_pc = pc_barren
-			change_pc = pc_katzenland
 		}
 		else_if = {
 			limit = {
-				OR = {
-					is_planet_class = pc_ringworld_habitable 
-					# is_planet_class = pc_ringworld_machine
-					# is_planet_class = pc_ringworld_hive
-					# is_planet_class = pc_ringworld_city
-				}
+				is_planet_class = pc_ringworld_habitable
 			}
 			from = { country_event = { id = giga_flusion.201 } }
 			remove_all_buildings = yes
@@ -1578,18 +1756,15 @@ planet_event = {
 				habitable_structure = yes
 				NOT = { is_planet_class = pc_habitat }
 			}
-			while = {
-				count = 28
-				random_owned_pop_group = { kill_single_pop = yes }
-			}
+			every_owned_pop_group = { kill_all_pop = yes }
 			remove_all_buildings = yes
 			remove_all_districts = yes
 			destroy_colony = yes
 		}
-		set_planet_flag = katzen_nuked
 	}
 }
 
+# Planet is turned into Irradiated Desert World by Atomic bombing stance (bombarder)
 country_event = {
 	id = giga_flusion.201
 	title = "giga_flusion.201.name"
@@ -1600,6 +1775,9 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
+		trigger = {
+			has_country_flag = tech_katzen_atomic_munitions_from_katzens
+		}
 		name = "giga_flusion.201.a"
 		add_monthly_resource_mult = {
 			resource = unity
@@ -1607,6 +1785,57 @@ country_event = {
 			min = @tier3unitymin
 			max = @tier3unitymax
 		}
+	}
+
+	option = {
+		trigger = {
+			has_country_flag = tech_katzen_atomic_munitions_from_scorched
+			has_origin = origin_scorched
+		}
+		name = "giga_flusion.201.b"
+		add_monthly_resource_mult = {
+			resource = unity
+			value = @tier3unityreward
+			min = @tier3unitymin
+			max = @tier3unitymax
+		}
+	}
+}
+
+# Planet is turned into Irradiated Desert World by Atomic bombing stance (former owner)
+country_event = {
+	id = giga_flusion.202
+	title = "giga_flusion.201.name"
+	desc = "giga_flusion.202.desc"
+	picture = GFX_evt_relic_world_street
+	show_sound = event_ghost_town
+	location = from
+	is_triggered_only = yes
+
+	option = {
+		name = "giga_flusion.202.a"
+		custom_tooltip = bombed_to_katzenland_world
+	}
+
+	option = {
+		trigger = { is_capitalist = yes }
+		name = "giga_flusion.202.b"
+		custom_tooltip = bombed_to_katzenland_world
+	}
+
+	option = {
+		trigger = {
+			fromfrom = {
+				OR = {
+					katzen_country_type = yes
+					has_country_flag = giga_meopa_fe
+					#not the pony Kaiser this time
+					has_country_flag = katzen_civil_war_faction
+				}
+			}
+		}
+		name = "giga_flusion.202.c"
+		custom_tooltip = bombed_to_katzenland_world
 	}
 }
 
@@ -1623,12 +1852,9 @@ planet_event = { #trigger the Mondkanone immediately if guaranteed
 		NOT = { has_planet_flag = muno_project_event }
 		NOT = { has_global_flag = flusion_muno_event_happened }
 		event_target:gigamuno = {
-			AND = {
-				exists = THIS
-				NOR = {
-					has_carrier_flag = has_megastructure
-					is_colony = yes
-				}
+			NOR = {
+				has_carrier_flag = has_megastructure
+				is_colony = yes
 			}
 		}
 	}
@@ -1872,7 +2098,7 @@ country_event = {
 	desc = "giga_flusion.301.desc"
 	picture = GFX_evt_satellite_in_orbit
 	show_sound = event_radio_chatter
-	location = from
+	location = event_target:gigamuno
 	is_triggered_only = yes
 
 	option = {
@@ -1921,7 +2147,7 @@ country_event = {
 	desc = "giga_flusion.320.desc"
 	picture = GFX_evt_landing_ship_2
 	show_sound = event_mystic_reveal
-	location = from
+	location = event_target:gigamuno
 	is_triggered_only = yes
 
 	immediate = {
@@ -1968,7 +2194,7 @@ country_event = {
 	desc = "giga_flusion.321.desc"
 	picture = GFX_evt_partition
 	show_sound = event_radio_chatter
-	location = from
+	location = event_target:gigaflusion
 	is_triggered_only = yes
 
 	option = {
@@ -1985,7 +2211,7 @@ country_event = {
 	id = giga_flusion.322
 	title = "giga_flusion.322.name"
 	desc = "giga_flusion.322.desc"
-	location = from
+	location = event_target:gigaflusion
 	is_triggered_only = yes
 
 	diplomatic = yes
@@ -2058,7 +2284,7 @@ country_event = {
 		allow = {
 			resource_stockpile_compare = {
 				resource = alloys
-				value >= 100
+				value >= 250
 			}
 		}
 		hidden_effect = {
@@ -2178,7 +2404,7 @@ country_event = {
 	id = giga_flusion.3232
 	title = "giga_flusion.3232.name"
 	desc = "giga_flusion.3232.desc"
-	location = from
+	location = event_target:gigamuno
 	picture = GFX_evt_analyzing_artifacts
 	show_sound = event_administrative_work
 
@@ -2722,7 +2948,7 @@ country_event = {
 	}
 	picture = GFX_evt_ship_travel
 	show_sound = event_ringworld_build_complete
-	location = from
+	location = event_target:gigaflusion
 	is_triggered_only = yes
 
 	immediate = {
@@ -2817,7 +3043,7 @@ country_event = {
 	desc = "giga_flusion.402.desc"
 	picture = GFX_evt_partition
 	show_sound = event_radio_chatter
-	location = from
+	location = event_target:gigaflusion
 	is_triggered_only = yes
 
 	trigger = {
@@ -2940,7 +3166,7 @@ ship_event = {
 		from = {
 			AND = {
 				count_ship_in_system = { limit = { is_ship_size = giga_war_moon_flusion }	count >= 1 }
-				has_star_flag = giga_system_seven
+				has_star_flag = giga_system_jublio
 			}
 		}
 	}
@@ -2961,6 +3187,16 @@ ship_event = {
 		trigger = {
 			controller = {
 				is_homicidal = yes
+			}
+		}
+	}
+
+	option = { #Respect.
+		name = "giga_flusion.405.c"
+		trigger = {
+			controller = {
+				is_homicidal = no
+				is_xenophobe = yes
 			}
 		}
 	}

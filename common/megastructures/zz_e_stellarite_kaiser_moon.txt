@@ -13,7 +13,7 @@ stellarite_kaiser_moon_0 = {
 	
 	build_time = 1800
 	resources = {
-		category = giga_megastructures
+		category = giga_attack_moon
 		cost = {
 			influence = 100
 		}
@@ -26,33 +26,50 @@ stellarite_kaiser_moon_0 = {
 
 	potential = {
 		has_technology = giga_tech_stellarite_kaiser_moon
+		NOT = { has_global_flag = warmoon_disabled }
+		OR = {
+			has_global_flag = warmoon_capped_u
+			is_country_type = katzenartig_imperium
+			check_variable = {
+				which = giga_current_warmoon
+				value < value:giga_warmoon_limit
+			}
+		}
 	}
 
 	possible = {
 		custom_tooltip = { fail_text = "requires_inside_border"		is_inside_border = from }
+		custom_tooltip = {
+			fail_text = "requires_not_capped"
+			from = {
+				OR = {
+					has_global_flag = warmoon_capped_u
+					is_country_type = katzenartig_imperium
+					check_variable = {
+						which = giga_current_warmoon
+						value < value:giga_warmoon_limit
+					}
+				}
+			}
+		}
 	}
 
 	placement_rules = {
 		planet_possible = {
-			custom_tooltip = { fail_text = "must_build_size_567"				planet_size >= 5 planet_size <= 7 }
-			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
-			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
-			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
-			custom_tooltip = { fail_text = "requires_not_asteroid"				is_asteroid = no }
-			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
-			custom_tooltip = {
-				fail_text = "requires_not_astral_scar"
-				is_astral_scar = no
+			custom_tooltip = { fail_text = "must_build_size_567"
+				planet_size <= 10
 			}
 			custom_tooltip = {
 				fail_text = "must_build_around_molten_barren_stripmined"
-				OR = {
-					giga_is_frozen = yes
-					giga_is_barren_cn = yes
-					giga_is_molten = yes
-					is_planet_class = pc_core_mined
-				}
+				giga_can_be_war_moon = yes
 			}
+			custom_tooltip = { fail_text = "requires_no_anomaly"				has_anomaly = no }
+			custom_tooltip = { fail_text = "requires_no_existing_megastructure"	planet_has_no_megastructure = yes }
+			custom_tooltip = { fail_text = "requires_survey_not_habitable"		is_surveyed = { who = prev.from status = yes } is_planet_habitable = no }
+			custom_tooltip = { fail_text = "requires_no_crisis_planet"			NOT = { has_planet_flag = crisis_vital_planet } }
+			custom_tooltip = { fail_text = "requires_not_asteroid"				is_asteroid = no }
+			custom_tooltip = { fail_text = "requires_not_star"					is_star = no }
+			custom_tooltip = { fail_text = "requires_not_astral_scar" is_astral_scar = no }
 		}
 	}
 
@@ -131,11 +148,14 @@ stellarite_kaiser_moon_0 = {
 		save_event_target_as = giga_system
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		from = {
+			set_timed_country_flag = { flag = has_recently_built_war_moon years = 5 }
 			country_event = { id = giga_katzen.0905 }	# Notification
+			change_variable = { which = giga_current_warmoon value = 1 }
 		}
 		fromfrom.planet = {
 			if = { limit = { exists = orbital_station } orbital_station = { dismantle = yes } }
 			giga_set_has_mega_flag = yes
+			set_carrier_flag = megastructure
 			set_planet_size = 6
 		}
 	}
@@ -154,13 +174,13 @@ stellarite_kaiser_moon_1 = {
 	
 	build_time = 2700
 	resources = {
-		category = giga_megastructures
+		category = giga_attack_moon
 		cost = {
 			energy = 50000
 		}
 		inline_script = {
 			script = megastructures/generic_parts/giga_mega_alloy_cost
-			alloys = 30000
+			alloys = 42000 #double normal
 		}
 		upkeep = {
 			energy = 350
@@ -168,6 +188,7 @@ stellarite_kaiser_moon_1 = {
 		}
 	}
 
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
 	possible = { from = { has_technology = giga_tech_stellarite_kaiser_moon } }
 
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
@@ -191,13 +212,13 @@ stellarite_kaiser_moon_2 = {
 	
 	build_time = 3600
 	resources = {
-		category = giga_megastructures
+		category = giga_attack_moon
 		cost = {
 			energy = 75000
 		}
 		inline_script = {
 			script = megastructures/generic_parts/giga_mega_alloy_cost
-			alloys = 30000
+			alloys = 66000 #double normal
 		}
 		upkeep = {
 			energy = 750
@@ -205,6 +226,7 @@ stellarite_kaiser_moon_2 = {
 		}
 	}
 
+	potential = { NOT = { has_global_flag = warmoon_disabled } }
 	possible = { from = { has_technology = giga_tech_stellarite_kaiser_moon } }
 
 	ai_weight = { factor = value:giga_ai_base_continue } # If we can build it, we will build it
@@ -212,17 +234,15 @@ stellarite_kaiser_moon_2 = {
 		save_event_target_as = giga_system
 		if = { limit = { exists = fromfrom.planet } fromfrom.planet = { save_event_target_as = giga_planet } }
 		from = {
-			save_event_target_as = kaiser_moon_builder
 			country_event = { id = giga_katzen.0907 }				# Notification
 			set_country_flag = has_built_or_repaired_megastructure	# Triggers Galactic Wonders
 			create_fleet = {
 				name = "Stellarite Kaiser Moon"
 				settings = {
 					spawn_debris = no
-					is_boss = yes
 				}
 				effect = {
-					set_owner = event_target:kaiser_moon_builder
+					set_owner = from
 					create_ship = {
 						name = "Stellarite Kaiser Moon"
 						design = "Stellarite Kaiser Moon"
